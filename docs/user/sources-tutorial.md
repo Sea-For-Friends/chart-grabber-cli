@@ -38,6 +38,10 @@ Its first line names two weather frames; section 6 uses them. To try a source on
 `DefURLBase` to the real address. A public server allows a few test tiles. It may forbid bulk download: read its terms
 first. You are responsible for what you download.
 
+If you take a source from someone else, read its `params.txt` and `GetUrlScript.txt` first. A script can make web
+requests to any address when `IsUseDownloaderInScript=1`; the sources guide, section "What a script may not do", says what
+it can and cannot do.
+
 ## 1. Where sources live, and which format to use
 
 A source is one of two things:

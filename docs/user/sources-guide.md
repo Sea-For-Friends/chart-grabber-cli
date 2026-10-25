@@ -28,6 +28,9 @@ A source is one of two things:
   This is the format SAS.Planet uses, so a `.zmp` folder written for SAS.Planet works here.
 - a single file whose name ends in `.source.json`, with the same content written as JSON.
 
+A `.zmp` folder from another person can carry a script that makes web requests. Before you use one, read
+[what a script may not do](#what-a-script-may-not-do) and look at its `params.txt` and `GetUrlScript.txt`.
+
 Both are found anywhere below the folder you pass with `--maps`, up to six levels deep. Folders whose name starts with
 a dot are skipped. The examples keep their sources in the directory `my-sources`; run the commands from its parent:
 

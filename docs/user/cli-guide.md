@@ -626,14 +626,27 @@ The SAS.Planet map catalogue has about 500 sources. You can also keep sources of
 The terms of use of those sources are your responsibility: some forbid bulk download or offline use, and the program
 does not check them.
 
-**The full catalogue.** The catalogue is a download from the SAS.Planet website. Open
-https://www.sasgis.org/download1/archive.pl in a browser. The page is in Russian. Under the heading "Наборы карт"
-(map sets), in the line "полный набор карт" (full map set), click "СКАЧАТЬ" (download). The link points to
-`http://parasite.kicks-ass.org:3000/sasgis/maps/archive/master.zip` (plain http). The browser saves `maps-master.zip`
-(about 2.7 MB) into `~/Downloads`. Then unpack it and point `--maps` at the folder:
+**The full catalogue.** The SAS.Planet developers keep the catalogue in a repository:
+http://parasite.kicks-ass.org:3000/sasgis/maps . Its history of changes is at
+http://parasite.kicks-ass.org:3000/sasgis/maps/commits/branch/master . Download the whole catalogue as one zip file
+from http://parasite.kicks-ass.org:3000/sasgis/maps/archive/master.zip . The official SAS.Planet download page
+(https://www.sasgis.org/download1/archive.pl, in Russian) links to the same archive.
+
+The server is not secure. The address is plain http with no encryption, so a browser marks it "Not secure", and
+anything in transit can be read or changed on the way. The archive has no checksum, so you cannot check it. Download
+with care. The file should be about 2.7 MB (2 846 487 bytes on 2026-10-25). Look at the `params.txt` and
+`GetUrlScript.txt` of a source before you use it (see below).
+
+The repository page shows "20 years ago" next to most files. Many commits there carry the date 2007-01-01, the day the
+files were loaded. The history page shows the latest change (2025-06-29, at the time of writing).
+
+Download it with `curl`, or save the link from a browser. The file is about 2.7 MB. Unpack it; the folder is named
+`maps`. Then point `--maps` at that folder:
 
 ```
-unzip -q ~/Downloads/maps-master.zip -d ~/Downloads
+cd ~/Downloads
+curl -L -o maps-master.zip http://parasite.kicks-ass.org:3000/sasgis/maps/archive/master.zip
+unzip -q maps-master.zip
 ```
 
 ```
@@ -642,6 +655,20 @@ $ chart-grabber-cli sources --maps ~/Downloads/maps | wc -l
 ```
 
 The first line is the header, the other 514 are sources.
+
+**Sources from other places carry code.** A map source (a `.zmp` folder) can hold a script, `GetUrlScript.txt`, that the
+program runs for every tile.
+
+- The program does not let a script read or write files, test whether a file exists, or open `file:///` addresses.
+  It stops a script that runs longer than about 5 seconds.
+- A script can still make web requests to any address, your local network included, when the source's `params.txt`
+  sets `IsUseDownloaderInScript=1`. It can also read, write and delete tiles in its own source's tile cache, not in the
+  whole cache.
+- Before you use a source from a place you do not know, open its `params.txt` and `GetUrlScript.txt`. Look for
+  `IsUseDownloaderInScript=1` first.
+- Do not use map packs from download sites that re-upload the catalogue. Use the repository above.
+
+The sources guide, section "What a script may not do", has the details.
 
 **Several folders.** Give `--maps` once for each folder. The program reads them in the order given. If a source with
 the same GUID is in more than one folder, the later folder wins and the program prints one warning for that GUID. Put
