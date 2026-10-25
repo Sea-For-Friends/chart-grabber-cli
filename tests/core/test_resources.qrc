@@ -1,0 +1,9 @@
+<!-- Two dummy files under :/cg for ConfigProviderResource tests (docs/specs/core.md 7 fixture
+     summary: "a .qrc with two dummy files under :/cg"). Not real legacy resources: legacy's own
+     two real identifiers (ABOUTICON.png, LOGOI.jpg) belong to the ui .qrc, a later ticket. -->
+<RCC>
+    <qresource prefix="/cg">
+        <file alias="dummy_a.txt">resources/dummy_a.txt</file>
+        <file alias="dummy_b.txt">resources/dummy_b.txt</file>
+    </qresource>
+</RCC>

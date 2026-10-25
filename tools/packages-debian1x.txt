@@ -1,0 +1,32 @@
+# Build dependencies of the gates (T-0289), one apt package per line; the same names on Debian 12/13 and Ubuntu 24.04.
+# Source: find_package / pkg_check_modules in CMakeLists.txt files, tools/nocmake_build.sh (pkg-config, libdb5.3), tools/validate.sh.
+build-essential
+cmake
+ninja-build
+pkgconf
+ccache
+git
+python3
+python-is-python3
+clang
+qt6-base-dev
+# T-0343 (ADR-0014): Qt Qml (QJSEngine) for the maptype module; pulls libqt6qml6 at run time, Qt6Qml.pc for pkg-config. Same name on Debian 12/13, Ubuntu 24.04/26.04.
+qt6-declarative-dev
+qt6-image-formats-plugins
+libcurl4-openssl-dev
+libsqlite3-dev
+libarchive-dev
+libwebp-dev
+libjpeg-dev
+libpng-dev
+zlib1g-dev
+libbrotli-dev
+libzstd-dev
+libdb5.3-dev
+libproj-dev
+libgtest-dev
+tzdata
+locales
+# T-0294: debug symbols of libdb (separate debug files, same version as libdb5.3t64 / libdb5.3), so the TSan suppressions
+# (__db_pthread_mutex_lock, __db_pthread_mutex_readlock) match the stripped library by function name. Lives in main on all systems.
+libdb5.3-dbg

@@ -1,0 +1,40 @@
+# T-0313: the SAS_* tool variables that were renamed to CG_* (one name per line, without the prefix).
+# Read by tools/lib/env_compat.sh and tools/lib/env_compat.py; tools/rename_env_vm.sh rewrites exactly these names.
+# REMOVE-AFTER: next release (together with the two files above).
+BUILD_ONLY
+CCACHE
+GATE_PRIORITY
+GATE_PRIORITY_DONE
+JOBS
+LAND_BISECT
+LAND_DEBIAN12
+LAND_GATE
+LAND_TEST_FAULT
+LAND_TEST_MATRIX_NOGATES
+LOAD_LIMIT
+MATRIX_INPLACE
+MODULES
+NO_CACHE
+NO_PCH
+NPROC
+PARITY_ROOT
+PCH
+PRINT_SETS
+ROOT
+SELFTEST_TMP
+TEST_TARGET
+TEST_TIMEOUT
+TIDY_TMP
+TSAN_RUNS
+VM_BOOT_TIMEOUT
+VM_BUILD_ONLY
+VM_CPUS
+VM_ENV
+VM_HOME
+VM_KEEP
+VM_LOCKFD
+VM_LOCK_PARENT
+VM_MEM
+VM_REPO
+VM_WAIT
+VM_WAIT_SECONDS

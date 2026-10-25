@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "guid": "{A830C100-49C8-4623-957A-60B85C39FBE0}",
+  "name": "Navionics Marine Charts",
+  "group": { "": "Marine\\Navionics", "ru": "Морские\\Navionics", "uk": "Морські\\Navionics" },
+  "url": "https://tile{s}.navionics.com/viewer/api/v1/tile/{z}/{x}/{y}",
+  "servers": ["1", "2", "3", "4", "5"],
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "navionics",
+  "allowHttp": true,
+  "script": { "file": "navionics.js" }
+}

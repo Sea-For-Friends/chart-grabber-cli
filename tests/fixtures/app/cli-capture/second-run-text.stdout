@@ -1,0 +1,14 @@
+Radar
+snapshot 2026-10-15 21:10 UTC
+ zoom  SAS z  tiles  bbox  present  marked missing          to download
+    1      2      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+    2      3      2     2     0.0%            0.0%   ~40.0 KB (assumed)
+    3      4      6     6     0.0%            0.0%  ~120.0 KB (assumed)
+total             9     9                           ~180.0 KB (assumed)
+Radar
+ zoom  tiles  present  marked missing  missing    size
+    1      1        1               0        0  0.1 KB
+    2      2        2               0        0  0.2 KB
+    3      6        6               0        0  0.6 KB
+total      9        9               0        0  0.9 KB
+written: <tmp>/out/base.mbtiles  9 tiles  20.0 KB  snapshot 2026-10-15 21:10 UTC

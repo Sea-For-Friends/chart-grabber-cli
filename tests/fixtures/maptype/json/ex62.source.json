@@ -1,0 +1,12 @@
+{
+  "format": 1,
+  "guid": "{9A360A54-7A70-402D-8A11-D570BD759B5B}",
+  "name": { "": "Bing - Satellite", "ru": "Bing - Спутник" },
+  "group": { "": "Satellite", "ru": "Спутниковые" },
+  "sortIndex": 10,
+  "url": "http://ecn.t0.tiles.virtualearth.net/tiles/a{q}.jpeg?g={ver}",
+  "version": "0",
+  "contentType": "image/jpeg; image/png",
+  "ext": ".jpg",
+  "nameInCache": "vesat"
+}

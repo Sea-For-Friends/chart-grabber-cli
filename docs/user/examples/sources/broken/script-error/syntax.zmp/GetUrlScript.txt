@@ -1,0 +1,4 @@
+begin
+  ResultURL := GetURLBase + IntToStr(GetX) + '.png'
+  ResultURL := ResultURL;
+end.

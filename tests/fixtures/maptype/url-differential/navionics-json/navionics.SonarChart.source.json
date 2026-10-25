@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "guid": "{247A02DC-5204-46FC-8D23-828AFC83A434}",
+  "name": "Navionics SonarChart(TM)",
+  "group": { "": "Marine\\Navionics", "ru": "Морские\\Navionics", "uk": "Морські\\Navionics" },
+  "url": "https://tile{s}.navionics.com/viewer/api/v1/tile/{z}/{x}/{y}",
+  "servers": ["1", "2", "3", "4", "5"],
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "navionics_sonarchart",
+  "allowHttp": true,
+  "script": { "file": "navionics.SonarChart.js" }
+}

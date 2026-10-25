@@ -1,0 +1,109 @@
+; T-0015D golden: Maps.by.zmp - TDoublePoint records, Assigned(DefProjConverter), RoundEx 9,
+; and the else branch.
+; TL.X:=GetLLon; TL.Y:=GetTLat; BR.X:=GetRLon; BR.Y:=GetBLat;
+; if Assigned(DefProjConverter) then begin
+;   M:=DefProjConverter.LonLat2XY(TL); N:=DefProjConverter.LonLat2XY(BR);
+;   ResultURL := B+RoundEx(M.X,9)+','+RoundEx(N.Y,9)+','+RoundEx(N.X,9)+','+RoundEx(M.Y,9);
+; end else ResultURL := 'invalid_url';
+; The [P1]..[P4] sections use the test's IdentityProjConverter (LonLat2XY/xy2LonLat both the
+; identity function), per the ticket's instruction, so M.X=GetLLon, N.Y=GetBLat, N.X=GetRLon,
+; M.Y=GetTLat - the same L,B,R,T shape as maps 16/17, RoundEx precision 9.
+; [NilConverter] uses DefProjConverter=nullptr, asserting the else branch.
+
+[P1]
+GetX=0
+GetY=0
+GetZ=1
+GetURLBase=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=
+Version=
+Lang=en
+GetLLon=0xc066800000000000
+GetTLat=0x40554345b1a549d7
+GetRLon=0x4066800000000000
+GetBLat=0xc0554345b1a549d7
+GetLMetr=0xc1731bf8457c1093
+GetTMetr=0x41731bf8457c1093
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc1731bf8457c1096
+RequestHead=
+ResultURL=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=-180.000000000,-85.051128780,180.000000000,85.051128780
+PostData=
+
+[P2]
+GetX=1
+GetY=1
+GetZ=2
+GetURLBase=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=
+Version=
+Lang=en
+GetLLon=0x0000000000000000
+GetTLat=0x0000000000000000
+GetRLon=0x4066800000000000
+GetBLat=0xc0554345b1a549d7
+GetLMetr=0x0000000000000000
+GetTMetr=0xbe0854a640000000
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc1731bf8457c1096
+RequestHead=
+ResultURL=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=0.000000000,-85.051128780,180.000000000,0.000000000
+PostData=
+
+[P3]
+GetX=1234
+GetY=5678
+GetZ=14
+GetURLBase=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=
+Version=
+Lang=en
+GetLLon=0xc05f716000000000
+GetTLat=0xc04c72d106451ff3
+GetRLon=0xc05f6e9000000000
+GetBLat=0xc04c75e338c6817c
+GetLMetr=0xc16ab456331a2029
+GetTMetr=0xc15d85b60f592b9d
+GetRMetr=0xc16ab1f2b41170a6
+GetBMetr=0xc15d8a7d0d6a8a9f
+RequestHead=
+ResultURL=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=-125.771484375,-56.920996758,-125.727539063,-56.897003921
+PostData=
+
+[P4]
+GetX=131071
+GetY=87654
+GetZ=18
+GetURLBase=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=
+Version=
+Lang=en
+GetLLon=0x40667fe980000000
+GetTLat=0xc049e5541f458723
+GetRLon=0x4066800000000000
+GetBLat=0xc049e58bc9c71028
+GetLMetr=0x41731be52983cb17
+GetTMetr=0xc159cc0a310d73ff
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc159cc56a0ee89ef
+RequestHead=
+ResultURL=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=179.997253418,-51.793328497,180.000000000,-51.791629704
+PostData=
+
+[NilConverter]
+; DefProjConverter=nil -> Assigned() is False -> the else branch: ResultURL:='invalid_url'.
+; Coordinates are irrelevant to this branch (P1's, arbitrarily).
+GetX=0
+GetY=0
+GetZ=1
+GetURLBase=http://maps.by:8080/geoserver/gwc/service/wms?LAYERS=gkgc%3Amaps_by&STYLES=&FORMAT=image%2Fpng8&TILESORIGIN=-20037508.34%2C-20037508.34&TILED=true&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG%3A900913&WIDTH=256&HEIGHT=256&BBOX=
+Version=
+Lang=en
+GetLLon=0xc066800000000000
+GetTLat=0x40554345b1a549d7
+GetRLon=0x4066800000000000
+GetBLat=0xc0554345b1a549d7
+GetLMetr=0xc1731bf8457c1093
+GetTMetr=0x41731bf8457c1093
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc1731bf8457c1096
+RequestHead=
+DefProjConverterNil=1
+ResultURL=invalid_url
+PostData=

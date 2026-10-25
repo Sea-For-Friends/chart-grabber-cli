@@ -1,0 +1,616 @@
+{
+  "layouts": {
+    "es": {
+      "dir": "cache_es",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "01/01-0-0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "06/06-03-07.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "07/B3852/07-45-67.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "09/D64/09-200-130.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "10/E0914/10-300-450.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "10-350-450/11/F2128/11-0700-0900.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "04/04-2-5.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "gm1": {
+      "dir": "cache_gmt_tiles",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "z0/0/0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "z5/7/3.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "z6/67/12345.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "z8/130/200.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "z9/450/300.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "z10/900/700.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "z3/5/2.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "gm2": {
+      "dir": "cache_gmt_aux",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "z0/0_0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "z5/7_3.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "z6/67_12345.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "z8/130_200.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "z9/450_300.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "z10/900_700.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "z3/5_2.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "gm3": {
+      "dir": "cache_gmt_bing",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "0/0/0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "5/7/3.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "6/67/12345.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "8/130/200.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "9/450/300.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "10/900/700.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "3/5/2.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "gmv": {
+      "dir": "cache_old",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "01/t.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "06/tqqtss.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "07/trrrqts.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "09/tsrqqrqtq.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "10/tsttrqrrtq.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "11/tstsqrrrsqq.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "04/ttrt.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "mobac": {
+      "dir": "cache_ma",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "0/0/0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "5/3/7.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "6/12345/67.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "8/200/130.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "9/300/450.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "10/700/900.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "3/2/5.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "osmand": {
+      "dir": "cache_osmand",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "0/0/0.jpg.tile",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "5/3/7.jpg.tile",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "6/12345/67.jpg.tile",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "8/200/130.jpg.tile",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "9/300/450.jpg.tile",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "10/700/900.jpg.tile",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "3/2/5.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "sas": {
+      "dir": "cache",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "z1/0/x0/0/y0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "z6/0/x3/0/y7.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "z7/12/x12345/0/y67.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "z9/0/x200/0/y130.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "z10/0/x300/0/y450.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "z11/0/x700/0/y900.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "z4/0/x2/0/y5.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    },
+    "tms": {
+      "dir": "cache_tms",
+      "tiles": [
+        {
+          "kind": "tile",
+          "mtime": 1700000000,
+          "relpath": "0/0/0.jpg",
+          "roundtrip": true,
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000001,
+          "relpath": "5/3/24.jpg",
+          "roundtrip": true,
+          "x": 3,
+          "y": 7,
+          "z": 5
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000002,
+          "relpath": "6/12345/-4.jpg",
+          "roundtrip": false,
+          "x": 12345,
+          "y": 67,
+          "z": 6
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000003,
+          "relpath": "8/200/125.jpg",
+          "roundtrip": true,
+          "x": 200,
+          "y": 130,
+          "z": 8
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000004,
+          "relpath": "9/300/61.jpg",
+          "roundtrip": true,
+          "x": 300,
+          "y": 450,
+          "z": 9
+        },
+        {
+          "kind": "tile",
+          "mtime": 1700000005,
+          "relpath": "10/700/123.jpg",
+          "roundtrip": true,
+          "x": 700,
+          "y": 900,
+          "z": 10
+        },
+        {
+          "kind": "tne",
+          "mtime": 1700000006,
+          "relpath": "3/2/2.tne",
+          "roundtrip": true,
+          "x": 2,
+          "y": 5,
+          "z": 3
+        }
+      ]
+    }
+  }
+}

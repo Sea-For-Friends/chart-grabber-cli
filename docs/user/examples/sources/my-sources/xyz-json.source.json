@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000002}",
+  "name": "Tutorial XYZ (JSON)",
+  "group": "Tutorial",
+  "url": "http://127.0.0.1:8765/xyz/{z}/{x}/{y}.png",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "Tutorial_XYZ_JSON",
+  "license": "Test tiles, no real map data"
+}

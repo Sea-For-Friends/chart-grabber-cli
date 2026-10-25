@@ -1,0 +1,7 @@
+[PARAMS]
+GUID={7E1D0A00-3C5B-4F21-9A60-000000000013}
+name=Café Latin1
+DefURLBase=http://127.0.0.1:8765/xyz/{z}/{x}/{y}.png
+ContentType=image/png
+Ext=.png
+NameInCache=Enc_Latin1

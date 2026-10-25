@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000025}",
+  "name": "Misspelt key",
+  "url": "http://127.0.0.1:8765/xyz/{z}/{x}/{y}.png",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "Unknown_Key",
+  "extension": ".png"
+}

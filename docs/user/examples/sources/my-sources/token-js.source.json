@@ -1,0 +1,12 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-00000000000B}",
+  "name": "Tutorial token (JS)",
+  "group": "Tutorial",
+  "url": "http://127.0.0.1:8765/token-tiles/",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "Tutorial_Token_JS",
+  "allowHttp": true,
+  "script": { "file": "token-js.js" }
+}

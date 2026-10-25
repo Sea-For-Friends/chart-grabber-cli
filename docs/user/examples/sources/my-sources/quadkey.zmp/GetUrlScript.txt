@@ -1,0 +1,10 @@
+var q: string;
+    i, d: integer;
+begin
+  q := '';
+  for i := GetZ - 1 downto 1 do begin
+    d := ((GetX shr (i - 1)) and 1) + 2 * ((GetY shr (i - 1)) and 1);
+    q := q + IntToStr(d);
+  end;
+  ResultURL := GetURLBase + q + '.png';
+end.

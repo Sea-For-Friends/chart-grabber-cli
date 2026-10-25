@@ -1,0 +1,5 @@
+var n: integer;
+begin
+  n := GetX div (GetZ - GetZ);
+  ResultURL := GetURLBase + IntToStr(n) + '.png';
+end.

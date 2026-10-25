@@ -1,0 +1,113 @@
+; T-0015D golden: megafonpro.zmp - array[0..35] of char and array[0..20] of byte, Char+string,
+; long div/mod chains, array index from GetZ (out of the FILLED range at GetZ=21, not
+; exercised by P1-P4: max[0..19] is filled, P4's GetZ=18 reads the filled max[18]=16).
+; half := Round(IntPower(2,GetZ-2)) [note: intpower(2,GetZ-1)/2, exact for a power of two];
+; sxy chosen from 4 mutually-exclusive ifs comparing GetX/GetY to half; dx3/dy3 := abs(half-
+; GetX/GetY); when GetZ>3, dx2:=dx3 div max[GetZ] etc (max[getz] in-bounds & filled for our
+; 4 points); base-35 digit extraction (div/mod 35, three levels) indexes the 36-char alphabet
+; array 'a'.
+; ResultURL := GetURLBase+'Z'+IntToStr(19-GetZ)+sxy+'/L1'+strx1+'Z'+stry1+'/L2'+strx2+'Z'+
+;   stry2+'/'+strx3+'Z'+stry3+'.png'
+; P1,P2 (GetZ<=3): dx2=dy2=dx1=dy1=0 (the 'if GetZ>3' block never runs, top-level ints stay
+;   zero-initialised, I1) and dx3=dy3=0 too (X,Y equal 'half' exactly at these two points) ->
+;   every base-35 digit is 0, sxy='/A'.
+; P3 (GetZ=14): half=4096; dx3=|4096-1234|=2862, dy3=|4096-5678|=1582 (GetY>=half,GetX<half
+;   -> sxy='/B'); dx2=2862 div 16=178, dy2=1582 div 16=98; dx1=178 div 16=11, dy1=98 div 16=6;
+;   base-35 split of 2862 -> (2,11,27) i.e. ppx3=2,px3=11,x3=27 (a[2]+a[11]+a[27]='2BR'
+;   reversed build order gives 'RB2'? see the golden's exact string, hand-traced digit by
+;   digit in docs/handoffs/T-0015D.md).
+; P4 (GetZ=18): half=65536; dx3=|65536-131071|=65535 -> px3:=dx3 div 35=1872 (1872*35=65520,
+;   remainder 15=x3), ppx3:=px3 div 35=53 (53*35=1855, remainder 17=px3 after subtracting
+;   ppx3*35). Since ppx3(=53)>0, `strx3:=a[ppx3]+strx3;` runs and indexes a[53] - OUT OF RANGE
+;   for `a: array[0..35] of char` (36 elements, valid indices 0..35). This is a genuine
+;   array-bounds violation in the LEGACY SCRIPT ITSELF (see docs/parity/map-corpus-defects.md),
+;   independent of the port defect below - but it IS derivable to a DEFINED outcome
+;   (docs/handoffs/T-0015D-review.md finding 2): the PascalScript VM range-checks every static-
+;   array index at run time (uPSRuntime.pas:7127-7135, `if Param >= Size then CMD_Err2(
+;   erCustomError, 'Static array index out of bounds (%d). Length is %d.')`), so this ends in a
+;   defined script runtime error - "Static array index out of bounds (53). Length is 36." - and
+;   `buildRequest` fails; no request is ever built. Added below as an expected-error section.
+;
+; PD-1 (port defect, renamed from PD-101/PD-102 - see docs/handoffs/T-0015D.md, finding 3): the
+; interpreter did not implement ValueKind::Array indexing at all, and this script's very first
+; statement (a[0]:='0';) is an array-index assignment, so every section below - P1-P3's value
+; goldens and P4's expected-error golden alike - failed with ErrorCode::Unsupported through
+; UrlScript::buildRequest before any of the arithmetic (or the range check) ever ran.
+; FIXED by T-0032 (Interpreter::evalIndex/execStmt's IndexAssign case) - see docs/handoffs/T-0032.md.
+
+[P1]
+GetX=0
+GetY=0
+GetZ=1
+GetURLBase=http://193.201.231.106/
+Version=
+Lang=en
+GetLLon=0xc066800000000000
+GetTLat=0x40554345b1a549d7
+GetRLon=0x4066800000000000
+GetBLat=0xc0554345b1a549d7
+GetLMetr=0xc1731bf8457c1093
+GetTMetr=0x41731bf8457c1093
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc1731bf8457c1096
+RequestHead=
+ResultURL=http://193.201.231.106/Z18/A/L10Z0/L20Z0/0Z0.png
+PostData=
+
+[P2]
+GetX=1
+GetY=1
+GetZ=2
+GetURLBase=http://193.201.231.106/
+Version=
+Lang=en
+GetLLon=0x0000000000000000
+GetTLat=0x0000000000000000
+GetRLon=0x4066800000000000
+GetBLat=0xc0554345b1a549d7
+GetLMetr=0x0000000000000000
+GetTMetr=0xbe0854a640000000
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc1731bf8457c1096
+RequestHead=
+ResultURL=http://193.201.231.106/Z17/A/L10Z0/L20Z0/0Z0.png
+PostData=
+
+[P3]
+GetX=1234
+GetY=5678
+GetZ=14
+GetURLBase=http://193.201.231.106/
+Version=
+Lang=en
+GetLLon=0xc05f716000000000
+GetTLat=0xc04c72d106451ff3
+GetRLon=0xc05f6e9000000000
+GetBLat=0xc04c75e338c6817c
+GetLMetr=0xc16ab456331a2029
+GetTMetr=0xc15d85b60f592b9d
+GetRMetr=0xc16ab1f2b41170a6
+GetBMetr=0xc15d8a7d0d6a8a9f
+RequestHead=
+ResultURL=http://193.201.231.106/Z5/B/L1BZ6/L253Z2S/2BRZ1A7.png
+PostData=
+
+[P4]
+GetX=131071
+GetY=87654
+GetZ=18
+GetURLBase=http://193.201.231.106/
+Version=
+Lang=en
+GetLLon=0x40667fe980000000
+GetTLat=0xc049e5541f458723
+GetRLon=0x4066800000000000
+GetBLat=0xc049e58bc9c71028
+GetLMetr=0x41731be52983cb17
+GetTMetr=0xc159cc0a310d73ff
+GetRMetr=0x41731bf8457c1093
+GetBMetr=0xc159cc56a0ee89ef
+RequestHead=
+ExpectError=1
+ErrorText=Static array index out of bounds (53). Length is 36.
+PostData=

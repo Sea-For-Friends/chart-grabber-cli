@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "guid": "{1F1D2343-8575-4BEE-8C33-DBFEF8D53BE5}",
+  "name": "Navionics Marine Charts",
+  "group": { "": "Marine\\Navionics", "ru": "Морские\\Navionics", "uk": "Морські\\Navionics" },
+  "layer": true,
+  "url": "https://tile{s}.navionics.com/viewer/api/v1/tile/{z}/{x}/{y}",
+  "servers": ["1", "2", "3", "4", "5"],
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "navionics_layer",
+  "allowHttp": true,
+  "emptyTiles": ["iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAABFUlEQVR4nO3BMQEAAADCoPVP7WsIoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBPAABPO1TCQAAAABJRU5ErkJggg=="],
+  "script": { "file": "navionics.layer.js" }
+}

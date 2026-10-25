@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000027}",
+  "name": "JS endless loop",
+  "url": "http://127.0.0.1:8765/quad/",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "ScriptJsLoop",
+  "script": { "code": "function getUrl(tile, ctx) { while (true) { } }" }
+}

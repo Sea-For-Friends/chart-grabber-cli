@@ -1,0 +1,12 @@
+[PARAMS]
+GUID={9A360A54-7A70-402D-8A11-D570BD759B5B}
+name=Bing - Satellite
+name_ru=Bing - Спутник
+ParentSubMenu=Satellite
+ParentSubMenu_ru=Спутниковые
+pnum=10
+DefURLBase=http://ecn.t0.tiles.virtualearth.net/tiles/a{q}.jpeg?g={ver}
+Version=0
+ContentType=image/jpeg; image/png
+Ext=.jpg
+NameInCache=vesat

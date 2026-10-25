@@ -1,0 +1,13 @@
+[PARAMS]
+GUID={7E1D0A00-3C5B-4F21-9A60-000000000006}
+name=Tutorial sea temperature (WMS, now)
+ParentSubMenu=Tutorial
+DefURLBase=http://127.0.0.1:8765/wms?service=WMS&version=1.3.0&request=GetMap&layers=sea-temp&styles=&crs=EPSG:3857&bbox={bbox}&width=256&height=256&format=image/png&time={ver}
+ContentType=image/png
+Ext=.png
+NameInCache=Tutorial_SeaTemp
+CacheType=71
+SnapshotIndex=http://127.0.0.1:8765/caps.xml
+SnapshotIndexType=wms-default
+SnapshotItem=sea-temp
+SnapshotPick=nearest-now

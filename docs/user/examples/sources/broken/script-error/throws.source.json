@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000021}",
+  "name": "JS throws",
+  "url": "http://127.0.0.1:8765/quad/",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "ScriptJsThrow",
+  "script": { "code": "function getUrl(tile, ctx) { return ctx.urlBase + tile.quad.toString() + \".png\"; }" }
+}

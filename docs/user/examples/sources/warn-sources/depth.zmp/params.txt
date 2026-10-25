@@ -1,0 +1,10 @@
+[PARAMS]
+GUID={7E1D0A00-3C5B-4F21-9A60-000000000009}
+name=Tutorial depth
+ParentSubMenu=Tutorial
+DefURLBase=http://127.0.0.1:8765/depth/{z}/{x}/{y}.png
+ContentType=image/png
+Ext=.png
+NameInCache=Tutorial_Depth
+NavigationWarning=1
+TermsOfUseWarning=https://example.org/terms

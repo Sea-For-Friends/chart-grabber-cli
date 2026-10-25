@@ -1,0 +1,4 @@
+# LeakSanitizer suppressions, used by `tools/validate.sh --asan`. Empty on purpose (T-0101): nothing is suppressed.
+# The Qt font-engine cache that once showed up in the maptype tests was our own test's doing (a function-local static
+# QGuiApplication destroyed too late) and is fixed in tests/maptype/maptype_test_util.h. Add an entry only for a
+# third-party leak, with the exact frame and the reason; nothing of ours may be listed.

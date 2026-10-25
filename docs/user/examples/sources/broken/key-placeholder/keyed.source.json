@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000026}",
+  "name": "Keyed server",
+  "url": "http://127.0.0.1:8765/keyed/{z}/{x}/{y}.png?key=KEY",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "Keyed"
+}

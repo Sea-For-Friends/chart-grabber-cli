@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><WMS_Capabilities xmlns:inspire_vs="http://inspire.ec.europa.eu/schemas/inspire_vs/1.0" xmlns:inspire_common="http://inspire.ec.europa.eu/schemas/common/1.0" version="1.3.0" updateSequence="28917" xmlns="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wms https://maps.dwd.de/geoserver/schemas/wms/1.3.0/capabilities_1_3_0.xsd http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 https://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd">
+  <Service>
+    <Name>WMS</Name>
+    <Title>DWD GeoServer WMS</Title>
+    <Abstract>This is the Web Map Server of DWD.</Abstract>
+    <KeywordList>
+      <Keyword>meteorology</Keyword>
+      <Keyword>climatology</Keyword>
+    </KeywordList>
+    <OnlineResource xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/"/>
+    <ContactInformation>
+      <ContactPersonPrimary>
+        <ContactPerson/>
+        <ContactOrganization>Deutscher Wetterdienst</ContactOrganization>
+      </ContactPersonPrimary>
+      <ContactPosition/>
+      <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>Frankfurter Strasse 135</Address>
+        <City>Offenbach</City>
+        <StateOrProvince>Hessen</StateOrProvince>
+        <PostCode>63067</PostCode>
+        <Country>Germany</Country>
+      </ContactAddress>
+      <ContactVoiceTelephone/>
+      <ContactFacsimileTelephone/>
+      <ContactElectronicMailAddress>info@dwd.de</ContactElectronicMailAddress>
+    </ContactInformation>
+    <Fees>none</Fees>
+    <AccessConstraints>https://www.dwd.de/copyright</AccessConstraints>
+  </Service>
+  <Capability>
+    <Request>
+      <GetCapabilities>
+        <Format>text/xml</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/dwd/Radar_wn-analysis_1x1km_ger/ows?SERVICE=WMS&amp;"/>
+            </Get>
+            <Post>
+              <OnlineResource xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/dwd/Radar_wn-analysis_1x1km_ger/ows?SERVICE=WMS&amp;"/>
+            </Post>
+          </HTTP>
+        </DCPType>
+      </GetCapabilities>
+      <GetMap>
+        <Format>image/png</Format>
+        <Format>application/atom+xml</Format>
+        <Format>application/json;type=utfgrid</Format>
+        <Format>application/pdf</Format>
+        <Format>application/rss+xml</Format>
+        <Format>application/vnd.google-earth.kml+xml</Format>
+        <Format>application/vnd.google-earth.kml+xml;mode=networklink</Format>
+        <Format>application/vnd.google-earth.kmz</Format>
+        <Format>image/geotiff</Format>
+        <Format>image/geotiff8</Format>
+        <Format>image/gif</Format>
+        <Format>image/jpeg</Format>
+        <Format>image/png; mode=8bit</Format>
+        <Format>image/svg+xml</Format>
+        <Format>image/tiff</Format>
+        <Format>image/tiff8</Format>
+        <Format>image/vnd.jpeg-png</Format>
+        <Format>image/vnd.jpeg-png8</Format>
+        <Format>text/html; subtype=openlayers</Format>
+        <Format>text/html; subtype=openlayers2</Format>
+        <Format>text/html; subtype=openlayers3</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/dwd/Radar_wn-analysis_1x1km_ger/ows?SERVICE=WMS&amp;"/>
+            </Get>
+          </HTTP>
+        </DCPType>
+      </GetMap>
+      <GetFeatureInfo>
+        <Format>text/plain</Format>
+        <Format>application/vnd.ogc.gml</Format>
+        <Format>text/xml</Format>
+        <Format>application/vnd.ogc.gml/3.1.1</Format>
+        <Format>text/xml; subtype=gml/3.1.1</Format>
+        <Format>text/html</Format>
+        <Format>text/javascript</Format>
+        <Format>application/json</Format>
+        <DCPType>
+          <HTTP>
+            <Get>
+              <OnlineResource xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/dwd/Radar_wn-analysis_1x1km_ger/ows?SERVICE=WMS&amp;"/>
+            </Get>
+          </HTTP>
+        </DCPType>
+      </GetFeatureInfo>
+    </Request>
+    <Exception>
+      <Format>XML</Format>
+      <Format>INIMAGE</Format>
+      <Format>BLANK</Format>
+      <Format>JSON</Format>
+      <Format>JSONP</Format>
+    </Exception>
+    <inspire_vs:ExtendedCapabilities>
+      <inspire_common:MetadataUrl>
+        <inspire_common:URL>https://gdk.gdi-de.org/gdi-de/srv/eng/csw?request=GetRecordById&amp;version=2.0.2&amp;service=CSW&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full&amp;id=de.dwd.services.wms</inspire_common:URL>
+        <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>
+      </inspire_common:MetadataUrl>
+      <inspire_common:SupportedLanguages>
+        <inspire_common:DefaultLanguage>
+          <inspire_common:Language>ger</inspire_common:Language>
+        </inspire_common:DefaultLanguage>
+      </inspire_common:SupportedLanguages>
+      <inspire_common:ResponseLanguage>
+        <inspire_common:Language>ger</inspire_common:Language>
+      </inspire_common:ResponseLanguage>
+    </inspire_vs:ExtendedCapabilities>
+    <Layer>
+      <Title>DWD GeoServer WMS</Title>
+      <Abstract>This is the Web Map Server of DWD.</Abstract>
+      <!--Limited list of EPSG projections:-->
+      <CRS>EPSG:3044</CRS>
+      <CRS>EPSG:3045</CRS>
+      <CRS>EPSG:3413</CRS>
+      <CRS>EPSG:3857</CRS>
+      <CRS>EPSG:4258</CRS>
+      <CRS>EPSG:4326</CRS>
+      <CRS>EPSG:4839</CRS>
+      <CRS>EPSG:25832</CRS>
+      <CRS>EPSG:25833</CRS>
+      <CRS>EPSG:31467</CRS>
+      <CRS>EPSG:31468</CRS>
+      <CRS>EPSG:900913</CRS>
+      <CRS>EPSG:1000001</CRS>
+      <EX_GeographicBoundingBox>
+        <westBoundLongitude>1.4633015102566664</westBoundLongitude>
+        <eastBoundLongitude>18.731616454665566</eastBoundLongitude>
+        <southBoundLatitude>45.684605781367544</southBoundLatitude>
+        <northBoundLatitude>56.21940322990386</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:3044" minx="5059591.658137469" miny="-86848.61851209903" maxx="6273185.465444936" maxy="1257713.9988850113"/>
+      <BoundingBox CRS="EPSG:3045" minx="5059172.671289301" miny="-553813.4168270875" maxx="6313248.629910294" maxy="790580.300397889"/>
+      <BoundingBox CRS="EPSG:3413" minx="2729302.0959179876" miny="-3475407.99373063" maxx="4524418.087971714" maxy="-1666256.3890245836"/>
+      <BoundingBox CRS="EPSG:3857" minx="162893.97899880027" miny="5729950.328541203" maxx="2085194.0054682754" maxy="7602217.1933928775"/>
+      <BoundingBox CRS="EPSG:4258" minx="45.684605824157885" miny="1.4633015102566664" maxx="56.2194032639021" maxy="18.731616454665566"/>
+      <BoundingBox CRS="EPSG:4326" minx="45.684605781367544" miny="1.4633015102566664" maxx="56.21940322990386" maxy="18.731616454665566"/>
+      <BoundingBox CRS="EPSG:4839" minx="-591321.6277240092" miny="-704662.8683937563" maxx="615606.3188587086" maxy="642159.65583043"/>
+      <BoundingBox CRS="EPSG:25832" minx="-86848.61851209903" miny="5059591.658137469" maxx="1257713.9988850113" maxy="6273185.465444936"/>
+      <BoundingBox CRS="EPSG:25833" minx="-553813.4168270875" miny="5059172.671289301" maxx="790580.300397889" maxy="6313248.629910294"/>
+      <BoundingBox CRS="EPSG:31467" minx="5061173.038297571" miny="2912992.0666481685" maxx="6275265.011087267" maxy="4258101.353474766"/>
+      <BoundingBox CRS="EPSG:31468" minx="5061048.6898754565" miny="3679401.37278819" maxx="6282624.708444141" maxy="5024493.395601846"/>
+      <BoundingBox CRS="EPSG:900913" minx="162893.97899880027" miny="5729950.328541203" maxx="2085194.0054682754" maxy="7602217.1933928775"/>
+      <BoundingBox CRS="EPSG:1000001" minx="-718.5554418559122" miny="-4840.6129302471845" maxx="734.8364043341331" maxy="-3567.413806352546"/>
+      <Layer>
+        <Name>Fachlayer</Name>
+        <Title>Fachlayer</Title>
+        <Layer>
+          <Name>Wetter</Name>
+          <Title>Wetter</Title>
+          <Layer>
+            <Name>Radar</Name>
+            <Title>Radar</Title>
+            <Layer queryable="1" opaque="0">
+              <Name>Radar_wn-analysis_1x1km_ger</Name>
+              <Title>Deutsches Radarkomposit</Title>
+              <Abstract>Achtung: Am 24.11.2026 wird die Scanreichweite dieses Niederschlagsprodukt von 150km auf 180km-Reichweite vergrößert. Das inhaltliche Abdeckungsgebiet wird größer; entsprechend verringern sich die bisherigen NaN-Bereiche. Die BBox-Werte ändern sich lediglich geringfügig. Der Name des Layers bleibt unverändert.&#13;
+&#13;
+Deutsches Radarkomposit WN</Abstract>
+              <KeywordList>
+                <Keyword>OBS:DWD.WN_TOP_VIEW</Keyword>
+                <Keyword>WCS</Keyword>
+                <Keyword>NinJo Radar Raster Store</Keyword>
+              </KeywordList>
+              <CRS>EPSG:4326</CRS>
+              <BoundingBox CRS="EPSG:4326" minx="45.684605781367544" miny="1.4633015102566664" maxx="56.21940322990386" maxy="18.731616454665566"/>
+              <BoundingBox CRS="EPSG:3044" minx="5059591.658137469" miny="-86848.61851209903" maxx="6273185.465444936" maxy="1257713.9988850113"/>
+              <BoundingBox CRS="EPSG:3045" minx="5059172.671289301" miny="-553813.4168270875" maxx="6313248.629910294" maxy="790580.300397889"/>
+              <BoundingBox CRS="EPSG:3413" minx="2729302.0959179876" miny="-3475407.99373063" maxx="4524418.087971714" maxy="-1666256.3890245836"/>
+              <BoundingBox CRS="EPSG:3857" minx="162893.97899880027" miny="5729950.328541203" maxx="2085194.0054682754" maxy="7602217.1933928775"/>
+              <BoundingBox CRS="EPSG:4258" minx="45.684605824157885" miny="1.4633015102566664" maxx="56.2194032639021" maxy="18.731616454665566"/>
+              <BoundingBox CRS="EPSG:4839" minx="-591321.6277240092" miny="-704662.8683937563" maxx="615606.3188587086" maxy="642159.65583043"/>
+              <BoundingBox CRS="EPSG:25832" minx="-86848.61851209903" miny="5059591.658137469" maxx="1257713.9988850113" maxy="6273185.465444936"/>
+              <BoundingBox CRS="EPSG:25833" minx="-553813.4168270875" miny="5059172.671289301" maxx="790580.300397889" maxy="6313248.629910294"/>
+              <BoundingBox CRS="EPSG:31467" minx="5061173.038297571" miny="2912992.0666481685" maxx="6275265.011087267" maxy="4258101.353474766"/>
+              <BoundingBox CRS="EPSG:31468" minx="5061048.6898754565" miny="3679401.37278819" maxx="6282624.708444141" maxy="5024493.395601846"/>
+              <BoundingBox CRS="EPSG:900913" minx="162893.97899880027" miny="5729950.328541203" maxx="2085194.0054682754" maxy="7602217.1933928775"/>
+              <BoundingBox CRS="EPSG:1000001" minx="-718.5554418559122" miny="-4840.6129302471845" maxx="734.8364043341331" maxy="-3567.413806352546"/>
+              <Dimension name="time" default="2026-10-15T20:10:00Z" units="ISO8601">2026-10-12T00:00:00.000Z/2026-10-15T20:10:00.000Z/PT5M</Dimension>
+              <Style>
+                <Name>radar_wn-analysis_1x1km_ger</Name>
+                <Title>reflectivity</Title>
+                <Abstract>style for reflectivity</Abstract>
+                <LegendURL width="110" height="436">
+                  <Format>image/png</Format>
+                  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://maps.dwd.de/geoserver/dwd/Radar_wn-analysis_1x1km_ger/ows?service=WMS&amp;version=1.3.0&amp;request=GetLegendGraphic&amp;format=image%2Fpng&amp;width=20&amp;height=20&amp;layer=Radar_wn-analysis_1x1km_ger"/>
+                </LegendURL>
+              </Style>
+            </Layer>
+          </Layer>
+        </Layer>
+      </Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>

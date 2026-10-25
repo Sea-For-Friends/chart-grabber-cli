@@ -1,0 +1,24 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {"name": "base", "hidden": true, "generator": "Ninja",
+     "environment": {"CCACHE_BASEDIR": "${sourceDir}", "CCACHE_NOHASHDIR": "1", "CCACHE_MAXSIZE": "20Gi"}},
+    {"name": "debug", "inherits": "base", "binaryDir": "build/debug", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug"}},
+    {"name": "release", "inherits": "base", "binaryDir": "build/release", "cacheVariables": {"CMAKE_BUILD_TYPE": "Release"}},
+    {"name": "asan", "inherits": "base", "binaryDir": "build/asan", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "CG_ENABLE_ASAN": "ON"}},
+    {"name": "tsan", "inherits": "base", "binaryDir": "build/tsan", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "CG_ENABLE_TSAN": "ON"}}
+  ],
+  "buildPresets": [
+    {"name": "base", "hidden": true, "configurePreset": "base",
+     "environment": {"CCACHE_BASEDIR": "${sourceDir}", "CCACHE_NOHASHDIR": "1", "CCACHE_MAXSIZE": "20Gi"}},
+    {"name": "debug", "inherits": "base", "configurePreset": "debug"},
+    {"name": "release", "inherits": "base", "configurePreset": "release"},
+    {"name": "asan", "inherits": "base", "configurePreset": "asan"},
+    {"name": "tsan", "inherits": "base", "configurePreset": "tsan"}
+  ],
+  "testPresets": [
+    {"name": "debug", "configurePreset": "debug", "output": {"outputOnFailure": true}},
+    {"name": "asan", "configurePreset": "asan", "output": {"outputOnFailure": true}},
+    {"name": "tsan", "configurePreset": "tsan", "output": {"outputOnFailure": true}}
+  ]
+}

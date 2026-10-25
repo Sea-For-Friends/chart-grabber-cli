@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "guid": "{00000000-0000-4000-8000-000000000001}",
+  "name": "Example token service",
+  "url": "https://tiles.example.org/{z}/{x}/{y}.png",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "example_token_service",
+  "allowHttp": true,
+  "script": {
+    "file": "example-token.js"
+  }
+}

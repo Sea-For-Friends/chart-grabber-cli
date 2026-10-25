@@ -1,0 +1,76 @@
+Chart Grabber core
+==================
+
+Licence of this program: GPL-3.0-or-later. The full text is in the file LICENSE next to this one. The source code is in the
+repository this package was built from; the version and the commit are printed by `chart-grabber-cli --version`.
+
+Source code: https://github.com/Sea-For-Friends/chart-grabber-cli tag v2026.10.11
+Source code of the third-party packages (MSYS2): https://repo.msys2.org/mingw/sources/ (source archives named
+mingw-w64-<name>-<version>.src.tar.zst) and https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-<name> (page of each package).
+
+This file lists the third-party components that the Windows zip (chart-grabber-cli-<version>-win64.zip) carries. All of them are
+unmodified binaries of the MSYS2 UCRT64 repository (https://www.msys2.org/, packages mingw-w64-ucrt-x86_64-<name>); the source of
+every package is linked from its page at https://packages.msys2.org/ and is built from the recipes in
+https://github.com/msys2/MINGW-packages. The licence text of each component is in licenses\<name>\ of the zip.
+Where MSYS2 ships no licence file for a package (libidn2, lz4), licenses\<name>\ holds the upstream texts: licenses\lz4\ has
+LICENSE (lz4 v1.10.0, programs: GPL-2.0-or-later) and lib-LICENSE (the library, BSD-2-Clause); licenses\libidn2\ has COPYING (GPL-3.0, the base text of LGPL-3.0),
+COPYING.LESSERv3 (LGPL-3.0) and COPYING.unicode (libidn2 v2.3.8).
+
+Qt (LGPL-3.0-only)
+------------------
+The zip links Qt 6 (Qt6Core.dll, Qt6Gui.dll, Qt6Network.dll, Qt6Qml.dll) and loads its plugins (platforms\, imageformats\, tls\) dynamically.
+The Qt libraries are used under the GNU Lesser General Public Licence version 3 (licenses\qt6-base\LGPL-3.0-only.txt, with the
+GPL-3.0 text next to it). You may replace them with your own build of Qt that has the same minor version (6.12): stop the
+program, put your Qt6Core.dll, Qt6Gui.dll, Qt6Network.dll, Qt6Qml.dll (and the Qt6Qml*.dll it needs) and the plugin DLLs into this folder (the folders platforms, imageformats
+and tls) over the shipped ones, and start chart-grabber-cli.exe again; nothing is linked statically and nothing checks the files.
+The Qt source is available from https://download.qt.io/official_releases/qt/ and from the MSYS2 package source named above.
+
+Linux packages
+--------------
+The Linux .deb packages carry no copy of these components: they depend on the libraries of the Debian or Ubuntu release, and those
+packages ship their own copyright files (/usr/share/doc/<package>/copyright). Nothing is listed here for them.
+
+Components of the Windows zip
+-----------------------------
+One row per MSYS2 package: name | version | licence (SPDX expression, from the package metadata) | upstream URL.
+The check tools/vm/notice_check.sh fails the build of the zip when a DLL belongs to a package that has no row, when a version
+differs from the one in tools/vm/manifests/win10.txt, or when licenses\<name>\ is missing.
+
+brotli | 1.2.0-1 | MIT | https://github.com/google/brotli
+bzip2 | 1.0.8-4 | bzip2-1.0.6 | https://sourceware.org/bzip2/
+curl-winssl | 8.23.0-1 | curl | https://curl.se/
+double-conversion | 3.4.0-1 | BSD-3-Clause | https://github.com/google/double-conversion
+freetype | 2.15.0-1 | FTL OR GPL-2.0-or-later | https://www.freetype.org/
+gettext-runtime | 1.0-1 | LGPL-2.1-or-later | https://www.gnu.org/software/gettext/
+glib2 | 2.90.1-1 | LGPL-2.1-or-later | https://gitlab.gnome.org/GNOME/glib
+graphite2 | 1.3.15-1 | LGPL-2.1-or-later | https://github.com/silnrsi/graphite
+harfbuzz | 14.6.0-1 | MIT | https://harfbuzz.github.io/
+icu | 78.3-4 | ICU | https://icu.unicode.org/
+jbigkit | 2.1-6 | GPL-2.0-or-later | https://www.cl.cam.ac.uk/~mgk25/jbigkit/
+lerc | 4.1.1-1 | Apache-2.0 | https://github.com/Esri/lerc
+libarchive | 3.8.10-1 | BSD-2-Clause | https://www.libarchive.org/
+libb2 | 0.98.1-3 | CC0-1.0 | https://blake2.net/
+libdeflate | 1.26-1 | MIT | https://github.com/ebiggers/libdeflate
+libgcc | 16.2.0-6 | GPL-3.0-or-later WITH GCC-exception-3.1 | https://gcc.gnu.org
+libiconv | 1.19-1 | LGPL-2.1-or-later | https://www.gnu.org/software/libiconv/
+libidn2 | 2.3.8-4 | GPL-2.0-or-later OR LGPL-3.0-or-later | https://www.gnu.org/software/libidn/#libidn2
+libjpeg-turbo | 3.2.0-1 | IJG AND BSD-3-Clause AND Zlib | https://libjpeg-turbo.virtualgl.org/
+libpng | 1.6.59-1 | libpng-2.0 | http://www.libpng.org/pub/png/libpng.html
+libpsl | 0.21.5-3 | MIT | https://rockdaboot.github.io/libpsl/
+libssh2-wincng | 1.11.1-2 | BSD-3-Clause | https://libssh2.org/
+libstdc++ | 16.2.0-6 | GPL-3.0-or-later WITH GCC-exception-3.1 | https://gcc.gnu.org
+libtiff | 4.7.2-2 | MIT | https://libtiff.gitlab.io/libtiff/
+libunistring | 1.4.2-1 | LGPL-3.0-or-later OR GPL-3.0-or-later | https://www.gnu.org/software/libunistring
+libwebp | 1.6.0-1 | BSD-3-Clause | https://developers.google.com/speed/webp/
+libwinpthread | 14.0.0.r495.g63ebe6cdb-2 | MIT AND BSD-3-Clause | https://www.mingw-w64.org/
+lz4 | 1.10.0-1 | BSD-2-Clause | https://lz4.github.io/lz4/
+md4c | 0.6.0-1 | MIT | https://github.com/mity/md4c
+pcre2 | 10.49-1 | BSD-3-Clause | https://pcre.org/
+proj | 9.8.1-1 | MIT | https://trac.osgeo.org/proj/
+qt6-base | 6.12.0-1 | LGPL-3.0-only | https://www.qt.io
+qt6-declarative | 6.12.0-1 | LGPL-3.0-only WITH Qt-GPL-exception-1.0 AND BSD-3-Clause AND GFDL-1.3-no-invariants-only AND GPL-2.0-only AND GPL-3.0-only | https://www.qt.io
+qt6-imageformats | 6.12.0-1 | LGPL-3.0-only | https://www.qt.io
+sqlite3 | 3.54.0-1 | blessing (public domain) | https://www.sqlite.org/
+xz | 5.8.4-1 | 0BSD AND LGPL-2.1-or-later AND GPL-2.0-or-later | https://tukaani.org/xz
+zlib | 1.3.2-2 | Zlib | https://www.zlib.net/
+zstd | 1.5.7-2 | BSD-3-Clause OR GPL-2.0-or-later | https://facebook.github.io/zstd/

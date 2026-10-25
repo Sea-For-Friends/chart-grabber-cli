@@ -1,0 +1,38 @@
+# T-0036 (clang-tidy 23.1.1) - checks disabled below, one reason each:
+# -bugprone-signed-bitwise: LLVM 23 flags every signed operand of & | ^ << >>; ported codecs/SQLite flags rely on it (1:1 port, no bit-arithmetic rewrites).
+# -bugprone-std-exception-baseclass: fires on WkbParseError, a project exception type not derived from std::exception (ported design).
+# -performance-use-std-move: new in LLVM 21+, absent when the gate last passed; style-only hint on unchanged files.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-signed-bitwise,
+  -bugprone-std-exception-baseclass,
+  cppcoreguidelines-owning-memory,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  misc-unused-using-decls,
+  modernize-use-override,
+  modernize-use-nullptr,
+  modernize-use-using,
+  modernize-loop-convert,
+  performance-*,
+  -performance-use-std-move,
+  readability-container-size-empty,
+  readability-redundant-smartptr-get,
+  readability-identifier-naming
+WarningsAsErrors: '*'
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.AbstractClassPrefix
+    value: I
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase

@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "guid": "{7E1D0A00-3C5B-4F21-9A60-000000000018}",
+  "name": "No tags",
+  "url": "http://127.0.0.1:8765/xyz/tile.png",
+  "contentType": "image/png",
+  "ext": ".png",
+  "nameInCache": "NoTags"
+}

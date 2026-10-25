@@ -1,0 +1,12 @@
+[PARAMS]
+GUID={51C1079B-B55D-4DF7-A410-ADC118F53AB1}
+name=OpenTopoMap
+ParentSubMenu=Land
+DefURLBase=https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png
+ServerNames=a,b,c
+RequestHead=Referer: https://opentopomap.org/
+ContentType=image/png
+Ext=.png
+NameInCache=Osm_Topo_Map
+Sleep=200
+License=Map data (c) OpenStreetMap contributors, SRTM | Map style (c) OpenTopoMap (CC-BY-SA)

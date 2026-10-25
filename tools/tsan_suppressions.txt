@@ -1,0 +1,46 @@
+# ThreadSanitizer suppressions. T-0333: the libdb lock-order entries (T-0023B2, T-0294) went with the BerkeleyDB
+# backend (owner 2026-10-21); restore them from tag archive/with-berkeleydb if the backend ever returns.
+
+# T-0195: glibc time-zone cache. Two threads that read the wall clock at the same moment
+# (QDateTime::currentDateTime -> localtime_r -> __tz_convert -> tzset_internal) are reported as a
+# data race between free(old_tz) and the strdup(tz) that replaces it. The access is serialised by
+# glibc: glibc 2.44 time/tzset.c takes `__libc_lock_lock (tzset_lock)` at line 572 in __tz_convert
+# (unlock :592) and at line 549 in __tzset (unlock :560); tzset_internal (line 367; free (old_tz)
+# :401, old_tz = __strdup (tz) :402) is only called with that lock held. TSan does not intercept
+# the internal libc lock, so the report is a false positive (verbatim report: docs/handoffs/T-0181.md
+# finding 3). The libc frames of the report are not symbolised (libc.so.6 is stripped; the stack shows
+# `free` of libtsan, an anonymous libc frame and `strdup`), so the only library frame that can be
+# named is `strdup`, anchored so that it matches that function and no other (`^...$`). Every one of
+# the 11 reports of the T-0195 reproduction (region and storage tests, 30 runs each) carried it; none
+# is matched by a frame of our own code, and `called_from_lib:libc.so` is NOT used.
+# Date 2026-10-14, approved by the user 2026-10-14 (T-0181 decision, option 1).
+race:^strdup$
+
+# T-0201: GDBus worker thread of the system proxy lookup (libgio, started by Qt/libproxy inside
+# QNetworkProxyFactory::systemProxyForQuery). The first lookup of the process makes gio create its 'gdbus'
+# thread, and the download worker that made the call hands objects to it: strings of the subscriber table
+# (read by the gdbus thread in g_str_equal / strcmp of schedule_callbacks), queue nodes (freed in
+# g_queue_pop_head), the send buffer (g_socket_send_message_with_timeout), the eventfd of a GMainContext
+# (closed in g_main_context_unref). Every report is a race between the download worker, inside that one call,
+# and the thread 'gdbus'. The hand-over is serialised by glib itself: GDBusConnection::lock, taken by glib 2.90.1
+# gio/gdbusconnection.c around the subscription (g_dbus_connection_signal_subscribe :3894, unlock :3995;
+# strings from g_strdup in signal_data_new_take) and around the dispatch (on_worker_message_received :2685 ->
+# distribute_signals :4425 -> schedule_callbacks :4270, unlock :2687), is a GMutex (gdbusconnection.c:451,
+# :476); on Linux GMutex is glib's own futex mutex (glib/gthread-posix.c:77 USE_NATIVE_MUTEX, :846, slow path
+# :934, wake :962): an atomic compare-exchange plus a futex syscall inside uninstrumented libglib, which TSan
+# does not intercept. The installed libglib-2.0.so.0 confirms it: g_mutex_lock is a `lock cmpxchg` on the GMutex
+# word, and its pthread_mutex_lock use is for GRecMutex only. The same holds for the refcounts and queues of
+# the other shapes (uninstrumented atomics). So TSan sees no happens-before edge: false positive. The port cannot
+# fix it: the write is in the worker inside the lookup, the access in gio's own thread, and a QMutex around
+# systemProxyForQuery gives TSan no edge to that thread (docs/handoffs/T-0201.md). The libgio frames are static
+# functions of a stripped library (shown as <null> + offset; no debug package, debuginfod has no entry for the
+# build id), so the entry is anchored on the one port frame that every report carries: the worker stack ends in
+# SystemProxyResolver::resolve (src/cg/net/proxy_resolver.cpp, symbolised as `resolve`; its call into Qt is
+# in the noinline systemProxies() so that this frame is kept by TSan's frame-pointer unwinder). The file also
+# holds the credential cache, whose state is guarded by a QMutex that TSan sees; a race in it would be hidden
+# too (accepted; no race known). Not used: called_from_lib:libglib/libgio (it also hides the lock operations
+# of glib, TSan then reports false lock-order inversions) and the library module name (every stack with a
+# libgio frame). Reproductions: every fresh process of cli_end_to_end_test run without the entry carried the
+# reports (see the handoff for the counts).
+# Date 2026-10-15, owner approval 2026-10-15 (decisions-pending, wave 2 rulings); global entries need the landing gate `full`.
+race:proxy_resolver.cpp
