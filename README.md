@@ -4,12 +4,13 @@
 OpenCPN opens as a chart. It runs on Linux without a display. It does not display maps, plan routes, or convert vector
 charts (S-57, S-63).
 
-It is a Qt 6 command-line port of the tile downloader and chart tools of
+It is an independent Qt 6 command-line port of the tile downloader and chart tools of
 [SAS.Planet](https://github.com/sasgis/sas.planet.src), and it is the engine behind the Chart Grabber plugin for
 OpenCPN.
 
-This project is not affiliated with or endorsed by SAS.Planet, OpenCPN or OpenCPN's Chart Downloader plugin
-(`chartdldr_pi`). It is derived from SAS.Planet and is released under the GPL-3.0-or-later, like the original.
+It is not an official SAS.Planet project, and it is not affiliated with or endorsed by SAS.Planet, OpenCPN or OpenCPN's Chart
+Downloader plugin (`chartdldr_pi`). It is derived from SAS.Planet and is released under the GPL-3.0-or-later, like the original.
+Thanks to the SAS.Planet authors.
 
 ## Install
 

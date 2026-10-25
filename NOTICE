@@ -1,5 +1,10 @@
-Chart Grabber core
-==================
+Chart Grabber CLI
+=================
+
+Chart Grabber CLI is an independent port of SAS.Planet (https://github.com/sasgis/sas.planet.src) to C++ and Qt. It is not an official
+SAS.Planet project. Thanks to the SAS.Planet authors.
+SAS.Planet: Copyright (C) 2007-2026 SAS.Planet development team, licensed under the GNU General Public License version 3 or (at your option)
+any later version. This port is licensed the same way: GPL-3.0-or-later.
 
 Licence of this program: GPL-3.0-or-later. The full text is in the file LICENSE next to this one. The source code is in the
 repository this package was built from; the version and the commit are printed by `chart-grabber-cli --version`.

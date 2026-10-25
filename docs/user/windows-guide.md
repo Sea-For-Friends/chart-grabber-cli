@@ -76,7 +76,7 @@ Go to the program's folder and ask for its version:
 ```
 PS> cd "C:\Program Files\Chart Grabber CLI"
 PS> .\chart-grabber-cli.exe --version
-chart-grabber-cli 2026.10.11 (…)
+chart-grabber-cli 2026.10.11 (5242f5140bcf)
 ```
 
 The `.\` in front means "the program in this folder". PowerShell does not run a program from the current folder
@@ -90,7 +90,7 @@ the window:
 PS> $env:Path += ";C:\Program Files\Chart Grabber CLI"
 PS> cd $HOME
 PS> chart-grabber-cli --version
-chart-grabber-cli 2026.10.11 (…)
+chart-grabber-cli 2026.10.11 (5242f5140bcf)
 ```
 
 The rest of this guide uses that form. Every new window needs the first line again. To make it permanent, open the

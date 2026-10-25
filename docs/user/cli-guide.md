@@ -30,7 +30,7 @@ The file `NOTICE` in the zip lists the third-party libraries that come with it a
 
 ```
 $ chart-grabber-cli --version
-chart-grabber-cli 2026.10.11 (…)
+chart-grabber-cli 2026.10.11 (5242f5140bcf)
 ```
 
 A map source is a folder ending in `.zmp` (or a file ending in `.source.json`) that tells the program where a map's
