@@ -1,78 +1,75 @@
-# Chart Grabber core
+# Chart Grabber CLI
 
-`chart-grabber-cli` downloads map tiles of an area from an online map source and writes them into an MBTiles file that
-OpenCPN opens as a chart. It runs on Linux without a display. It does not display maps, plan routes, or convert vector
-charts (S-57, S-63).
+Chart Grabber downloads map tiles of the area you choose and saves them in one file. You copy the file to the boat and
+open it in OpenCPN as a chart, with no internet at sea. The program is called `chart-grabber-cli`. You type commands
+into it; it has no windows. The Chart Grabber plugin for OpenCPN can run it for you:
+[plugin page](https://github.com/Sea-For-Friends/chartgrabber_pi).
 
-It is an independent Qt 6 command-line port of the tile downloader and chart tools of
-[SAS.Planet](https://github.com/sasgis/sas.planet.src), and it is the engine behind the Chart Grabber plugin for
-OpenCPN.
+It does not show maps, plan routes or convert official vector charts.
 
-It is not an official SAS.Planet project, and it is not affiliated with or endorsed by SAS.Planet, OpenCPN or OpenCPN's Chart
-Downloader plugin (`chartdldr_pi`). It is derived from SAS.Planet and is released under the GPL-3.0-or-later, like the original.
-Thanks to the SAS.Planet authors.
+## Systems it runs on
+
+- Debian 12: 64-bit PC
+- Debian 13: 64-bit PC and ARM 64-bit
+- Raspberry Pi OS 64-bit (the "trixie" version, which is Debian 13): ARM 64-bit, uses the Debian 13 ARM package
+- Ubuntu 24.04 and 26.04: 64-bit PC and ARM 64-bit
+- Windows 10 and 11: 64-bit PC
+- Other Linux, 64-bit PC: a single program file
+
+## Download
+
+| Your system | File |
+|---|---|
+| Debian 12, 64-bit PC | [chart-grabber-cli_2026.10.11_debian12_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_debian12_amd64.deb) |
+| Debian 13, 64-bit PC | [chart-grabber-cli_2026.10.11_debian13_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_debian13_amd64.deb) |
+| Debian 13, ARM 64-bit, and Raspberry Pi OS 64-bit | [chart-grabber-cli_2026.10.11_debian13_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_debian13_arm64.deb) |
+| Ubuntu 24.04, 64-bit PC | [chart-grabber-cli_2026.10.11_ubuntu2404_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2404_amd64.deb) |
+| Ubuntu 24.04, ARM 64-bit | [chart-grabber-cli_2026.10.11_ubuntu2404_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2404_arm64.deb) |
+| Ubuntu 26.04, 64-bit PC | [chart-grabber-cli_2026.10.11_ubuntu2604_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2604_amd64.deb) |
+| Ubuntu 26.04, ARM 64-bit | [chart-grabber-cli_2026.10.11_ubuntu2604_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2604_arm64.deb) |
+| Windows 10 and 11, 64-bit PC | [chart-grabber-cli-2026.10.11-win64.zip](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli-2026.10.11-win64.zip) |
+| Other Linux, 64-bit PC | [chart-grabber-cli-2026.10.11-linux-x86_64](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli-2026.10.11-linux-x86_64) |
+
+All files, and the checksums to verify them, are on the [releases page](https://github.com/Sea-For-Friends/chart-grabber-cli/releases).
 
 ## Install
 
-Download the `.deb` for your system from the Releases page of this repository:
+1. Download the file for your system from the table.
+2. Install it.
+   - Debian, Ubuntu, Raspberry Pi OS: open a terminal in the folder with the file and run
+     `sudo apt install ./chart-grabber-cli_*.deb`.
+   - Windows: unzip the file. The [Windows guide](docs/user/windows-guide.md) shows each click.
+   - Other Linux: make the file runnable with `chmod +x chart-grabber-cli-2026.10.11-linux-x86_64`.
+3. Check that it runs. On Debian, Ubuntu and Raspberry Pi OS type `chart-grabber-cli --help`. On Windows run
+   `chart-grabber-cli.exe --help` in the unzipped folder. On other Linux run
+   `./chart-grabber-cli-2026.10.11-linux-x86_64 --help`.
 
-- Debian 13: amd64 and arm64
-- Debian 12: amd64
-- Ubuntu 24.04 and 26.04: amd64 and arm64
+You then see a list of commands.
 
-Then install it:
+## Make your first chart
 
-```
-$ sudo apt install ./chart-grabber-cli_*.deb
-$ chart-grabber-cli --version
-chart-grabber-cli 2026.10.4 (cca1543da939)
-```
-
-The version number is the year, the month and the number of the release in that month.
-
-## Make a chart
-
-The program brings no map sources. You pass it a folder of map-source definitions with `--maps`. Without it the
-program stops with exit code 3:
-
-```
-$ chart-grabber-cli sources
-error: no map sources given: pass --maps DIR, a folder of map-source definitions (repeat --maps for more folders)
-```
-
-How to get a folder of sources, list them, download an area and write the chart is in the
-[user guide](docs/user/cli-guide.md); on Windows start with the [Windows guide](docs/user/windows-guide.md). How to
-write a source of your own is in the [sources tutorial](docs/user/sources-tutorial.md) and the [sources guide](docs/user/sources-guide.md).
+The program brings no map sources. You need a folder of map-source definitions and you give it to every command.
+The [user guide](docs/user/cli-guide.md) explains how to list the sources, check the size of a download, download an
+area and write the chart. Windows users start with the [Windows guide](docs/user/windows-guide.md).
 
 Some map providers forbid bulk download in their terms of use. Read the terms of a source before you use it. You are
 responsible for what you download.
 
-## Use it with OpenCPN
-
-The Chart Grabber plugin for OpenCPN calls `chart-grabber-cli` for you. Plugin repository:
-`https://github.com/Sea-For-Friends/chartgrabber_pi`
-
-## Build from source
-
-You need Debian 12 or 13 (or a system with the same libraries), Qt 6.4 or newer, CMake and a C++23 compiler. The
-packages are listed in [tools/packages-debian1x.txt](tools/packages-debian1x.txt).
-
-```
-$ git clone https://github.com/Sea-For-Friends/chart-grabber-cli.git
-$ cd chart-grabber-cli
-$ cmake --preset release
-$ cmake --build --preset release
-```
-
-The program is `build/release/cli/chart-grabber-cli`. To change the code, read [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Documents
+## More documents
 
 - [User guide](docs/user/cli-guide.md)
 - [Windows guide](docs/user/windows-guide.md)
-- [Sources tutorial](docs/user/sources-tutorial.md)
-- [Sources guide](docs/user/sources-guide.md)
+- [Write your own map source: tutorial](docs/user/sources-tutorial.md)
+- [Write your own map source: reference](docs/user/sources-guide.md)
 - [Changelog](CHANGELOG.md)
-- [Contributing](CONTRIBUTING.md)
+- [Building from source](BUILDING.md)
 - [Security](SECURITY.md)
-- [Licence](LICENSE)
+
+## About
+
+Chart Grabber is an independent port of the tile downloader and chart tools of
+[SAS.Planet](https://github.com/sasgis/sas.planet.src). It is not an official SAS.Planet project, and it is not
+affiliated with or endorsed by SAS.Planet, OpenCPN or OpenCPN's Chart Downloader plugin. Thanks to the SAS.Planet
+authors.
+
+It is free software under the GNU General Public License, version 3 or later, like the original. See [LICENSE](LICENSE).
