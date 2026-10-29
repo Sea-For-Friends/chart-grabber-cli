@@ -14,7 +14,6 @@ It does not show maps, plan routes or convert official vector charts.
 - Raspberry Pi OS 64-bit (the "trixie" version, which is Debian 13): ARM 64-bit, uses the Debian 13 ARM package
 - Ubuntu 24.04 and 26.04: 64-bit PC and ARM 64-bit
 - Windows 10 and 11: 64-bit PC
-- Other Linux, 64-bit PC: a single program file
 
 ## Download
 
@@ -28,7 +27,6 @@ It does not show maps, plan routes or convert official vector charts.
 | Ubuntu 26.04, 64-bit PC | [chart-grabber-cli_2026.10.11_ubuntu2604_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2604_amd64.deb) |
 | Ubuntu 26.04, ARM 64-bit | [chart-grabber-cli_2026.10.11_ubuntu2604_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli_2026.10.11_ubuntu2604_arm64.deb) |
 | Windows 10 and 11, 64-bit PC | [chart-grabber-cli-2026.10.11-win64.zip](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli-2026.10.11-win64.zip) |
-| Other Linux, 64-bit PC | [chart-grabber-cli-2026.10.11-linux-x86_64](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.11/chart-grabber-cli-2026.10.11-linux-x86_64) |
 
 All files, and the checksums to verify them, are on the [releases page](https://github.com/Sea-For-Friends/chart-grabber-cli/releases).
 
@@ -39,10 +37,8 @@ All files, and the checksums to verify them, are on the [releases page](https://
    - Debian, Ubuntu, Raspberry Pi OS: open a terminal in the folder with the file and run
      `sudo apt install ./chart-grabber-cli_*.deb`.
    - Windows: unzip the file. The [Windows guide](docs/user/windows-guide.md) shows each click.
-   - Other Linux: make the file runnable with `chmod +x chart-grabber-cli-2026.10.11-linux-x86_64`.
 3. Check that it runs. On Debian, Ubuntu and Raspberry Pi OS type `chart-grabber-cli --help`. On Windows run
-   `chart-grabber-cli.exe --help` in the unzipped folder. On other Linux run
-   `./chart-grabber-cli-2026.10.11-linux-x86_64 --help`.
+   `chart-grabber-cli.exe --help` in the unzipped folder.
 
 You then see a list of commands.
 
