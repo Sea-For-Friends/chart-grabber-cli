@@ -13,8 +13,11 @@
 
 #include "cg/geo/log_geo.h"
 #include "cg/geo/proj/proj4_defines.h"
+#include "cg/geo/proj/proj_data_dir.h"
 
+#include <QFileInfo>
 #include <QString>
+#include <QtGlobal>
 
 #include <mutex>
 #include <unordered_set>
@@ -102,6 +105,23 @@ void logProjDbFallbackOnce(const QByteArray& key) {
 // correct by construction: the same string always builds the same PJ*, so sharing it across
 // ProjConverterImpl instances that carry that string is exactly what we want, and a freed-then-
 // reused address can never alias a different CRS's cache entry.
+// T-0376: a relocated Linux CLI keeps proj.db next to the exe (Windows: libproj already looks in
+// its own directory). An explicit PROJ_DATA / PROJ_LIB always wins; otherwise PROJ's own lookup.
+void applyBundledProjData(PJ_CONTEXT* ctx) {
+    // /proc/self/exe exists on Linux only; elsewhere (Windows) exeDir stays empty and nothing changes.
+    const QString exeDir = QFileInfo(QStringLiteral("/proc/self/exe")).canonicalPath();
+    if (exeDir.isEmpty()) {
+        return;
+    }
+    const QString dir = bundledProjDataDir(exeDir, qEnvironmentVariableIsSet("PROJ_DATA") ||
+                                                       qEnvironmentVariableIsSet("PROJ_LIB"));
+    if (!dir.isEmpty()) {
+        const QByteArray path = dir.toUtf8();
+        const char* paths[] = {path.constData()};
+        proj_context_set_search_paths(ctx, 1, paths);
+    }
+}
+
 struct ThreadProjState {
     PJ_CONTEXT* ctx = nullptr;
     std::unordered_map<QByteArray, PJ*> pjByKey;
@@ -109,6 +129,7 @@ struct ThreadProjState {
     ThreadProjState() {
         ctx = proj_context_create();
         if (ctx != nullptr) {
+            applyBundledProjData(ctx);
             proj_context_set_enable_network(ctx, 0);
         }
     }
@@ -235,6 +256,7 @@ bool ProjConverterFactory::isAvailable() const noexcept {
     if (ctx == nullptr) {
         return false;
     }
+    applyBundledProjData(ctx);
     const bool ok = proj_context_get_database_path(ctx) != nullptr;
     proj_context_destroy(ctx);
     return ok;

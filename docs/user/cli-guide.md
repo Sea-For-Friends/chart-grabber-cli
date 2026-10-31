@@ -23,6 +23,9 @@ Contents: [Before the first chart](#before-the-first-chart-the-map-sources) ·
 
 The program runs on Linux, and on 64-bit Windows 10 or later from the zip `chart-grabber-cli-<version>-win64.zip`
 (unzip it into any folder and run `chart-grabber-cli.exe` from a terminal; the examples in this guide are Linux shell lines).
+On Linux, unpack `chart-grabber-cli-<version>-linux-x86_64.tar.gz` (or `-linux-arm64.tar.gz`) into any folder and run
+`chart-grabber-cli` from it; keep the unpacked folder together. The libraries and a font are inside. The computer needs
+glibc 2.36 or newer (Debian 12, Ubuntu 24.04) and the packages `libopengl0 libglx0 libegl1` (OpenCPN installs them too).
 `windows-guide.md` next to this guide installs and uses the program step by step on Windows, with PowerShell and `cmd` lines.
 The Windows zip decodes PNG, BMP, JPEG, WebP, GIF, TIFF, ICO and ICNS images.
 The file `NOTICE` in the zip lists the third-party libraries that come with it and their licences; their texts are in `licenses\`.
@@ -30,7 +33,7 @@ The file `NOTICE` in the zip lists the third-party libraries that come with it a
 
 ```
 $ chart-grabber-cli --version
-chart-grabber-cli 2026.10.11 (5242f5140bcf)
+chart-grabber-cli 2026.10.13 (a970b543798b)
 ```
 
 A map source is a folder ending in `.zmp` (or a file ending in `.source.json`) that tells the program where a map's
@@ -832,6 +835,7 @@ snapshot 2026-10-21 15:00 UTC
 $ chart-grabber-cli download --maps="$MAPS" --source="Demo waves" --bbox=-1.34,50.74,-1.24,50.78 --zooms=5-6 --time=2026-10-20T13:00:00Z
 error: --time 2026-10-20T13:00:00Z is not a time of "Demo waves" (range 2022-11-01T03:00:00Z..2026-10-29T00:00:00Z, step 3 h)
 $ chart-grabber-cli run --maps="$MAPS" --source="RainViewer radar (worldwide, current)" --time=+24h --bbox=-1.34,50.74,-1.24,50.78 --zooms=5-6 --out=charts/x.mbtiles
+warning: --source "RainViewer radar (worldwide, current)" is a layer in its ZMP; it is exported as a base map
 error: --time: "RainViewer radar (worldwide, current)" has no selectable time
 $ chart-grabber-cli export --maps="$MAPS" --source="Demo waves" --bbox=-1.34,50.74,-1.24,50.78 --zooms=5-6 --time=+24h --out=charts/w.mbtiles
 error: --time is not accepted by export: export uses the frame stored by the last download
@@ -952,8 +956,9 @@ Write every option as `--name=value`.
 | Saved download state | `~/.local/share/chart-grabber/AutoSave/` | — |
 | Frame of each weather source (section 13) | `~/.local/share/chart-grabber/Snapshots/<GUID>.conf` | — |
 | Chart files | where `--out` says | `--out`, `--overlay-out` |
+| Fonts (Linux tar.gz only) | `~/.cache/chart-grabber/fontroot/`, made at the first start | `--datadir=DIR` (then `DIR/fontroot/`) |
 
-Earlier versions named the weather frame files `<GUID>.ini`. The first command that reads such a file renames it and
+Earlier versions named the weather frame files `<GUID>.ini`. The first command that reads such a file (`export`, `resume`) renames it and
 says so on stderr:
 
 ```
@@ -977,7 +982,7 @@ If the new directory already exists, nothing is moved and nothing is printed. If
 the old directory is used as it is.
 
 With `--datadir=DIR` (or `--datadir DIR`) all of the above except the map sources and the chart files move into `DIR`: `DIR/chart-grabber.conf`,
-`DIR/cache_sqlite/`, `DIR/AutoSave/`, `DIR/Snapshots/`. `DIR/Maps/` is not read. `--portable`, or a file `chart-grabber.conf` or
+`DIR/cache_sqlite/`, `DIR/AutoSave/`, `DIR/Snapshots/`, `DIR/fontroot/` (Linux tar.gz). `DIR/Maps/` is not read. `--portable`, or a file `chart-grabber.conf` or
 `portable.txt` next to the program, does the same with the program's own directory. A settings file `SASPlanet.ini` in such a directory is no longer read:
 rename it to `chart-grabber.conf`.
 

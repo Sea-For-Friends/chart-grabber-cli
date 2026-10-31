@@ -5,7 +5,7 @@ that OpenCPN opens as a chart. It runs in a terminal window; it has no windows o
 display maps, plan routes, or convert vector charts (S-57, S-63).
 
 This guide is for Windows 10 or later, 64-bit, and for people who have never typed a command. The commands and the
-output below are from version 2026.10.11, Windows 10 22H2, Windows PowerShell 5.1 and `cmd`. Everything the program does
+output below are from version 2026.10.13, Windows 10 22H2, Windows PowerShell 5.1 and `cmd`. Everything the program does
 that is not specific to Windows is in `cli-guide.md`, in the same folder as this file.
 
 Contents: [1. Install](#1-how-to-install-the-program) ·
@@ -76,7 +76,7 @@ Go to the program's folder and ask for its version:
 ```
 PS> cd "C:\Program Files\Chart Grabber CLI"
 PS> .\chart-grabber-cli.exe --version
-chart-grabber-cli 2026.10.11 (5242f5140bcf)
+chart-grabber-cli 2026.10.13 (a970b543798b)
 ```
 
 The `.\` in front means "the program in this folder". PowerShell does not run a program from the current folder
@@ -90,7 +90,7 @@ the window:
 PS> $env:Path += ";C:\Program Files\Chart Grabber CLI"
 PS> cd $HOME
 PS> chart-grabber-cli --version
-chart-grabber-cli 2026.10.11 (5242f5140bcf)
+chart-grabber-cli 2026.10.13 (a970b543798b)
 ```
 
 The rest of this guide uses that form. Every new window needs the first line again. To make it permanent, open the

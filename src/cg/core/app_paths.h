@@ -37,6 +37,13 @@ struct AppPaths {
                                                  const QString& roamingDataDirOverride = QString());
 
     [[nodiscard]] QString mainConfigFilePath() const; // configDir + "/chart-grabber.conf"
+
+    // T-0382: the value of the last "--datadir=DIR" / "--datadir DIR" in the arguments, exactly as detect()
+    // reads it (the single place that parses it; cli/main.cpp calls it before QGuiApplication). present
+    // (optional) tells whether the flag was there at all; the value is empty for "--datadir=" and for a
+    // trailing "--datadir".
+    [[nodiscard]] static QString explicitDataDirArgument(const QStringList& arguments,
+                                                         bool* present = nullptr);
 };
 
 } // namespace cg::core

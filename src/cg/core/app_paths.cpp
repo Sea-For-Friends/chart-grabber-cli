@@ -120,14 +120,7 @@ void moveRoamingDir(const QString& dir, const QString& roamingDir, QString& note
 
 } // namespace
 
-Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& applicationDirOverride,
-                                  const QString& roamingDataDirOverride) {
-    AppPaths paths;
-    paths.applicationDir =
-        applicationDirOverride.isEmpty() ? QCoreApplication::applicationDirPath() : applicationDirOverride;
-
-    // ADR-0011: "--datadir" is an explicit override (legacy CLI switches preserved), independent
-    // of the portable-vs-XDG auto-detection below, and takes precedence over "--portable".
+QString AppPaths::explicitDataDirArgument(const QStringList& arguments, bool* present) {
     QString explicitDataDir;
     bool sawDataDirFlag = false;
     static const QString kDataDirPrefix = QStringLiteral("--datadir=");
@@ -145,6 +138,22 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
             ++i;
         }
     }
+    if (present != nullptr) {
+        *present = sawDataDirFlag;
+    }
+    return explicitDataDir;
+}
+
+Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& applicationDirOverride,
+                                  const QString& roamingDataDirOverride) {
+    AppPaths paths;
+    paths.applicationDir =
+        applicationDirOverride.isEmpty() ? QCoreApplication::applicationDirPath() : applicationDirOverride;
+
+    // ADR-0011: "--datadir" is an explicit override (legacy CLI switches preserved), independent
+    // of the portable-vs-XDG auto-detection below, and takes precedence over "--portable".
+    bool sawDataDirFlag = false;
+    const QString explicitDataDir = explicitDataDirArgument(arguments, &sawDataDirFlag);
 
     if (sawDataDirFlag) {
         // finding 7: reject an empty override rather than silently falling through to auto-detect.

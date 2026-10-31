@@ -135,6 +135,29 @@ TEST_F(AppPathsTest, EmptyDataDirIsRejectedNotAutoDetected) {
     ASSERT_FALSE(result.has_value());
 }
 
+// T-0382: cli/main.cpp puts the fontconfig sysroot into the data directory; it reads --datadir through this
+// function.
+TEST_F(AppPathsTest, ExplicitDataDirArgumentReadsBothFormsAndTheLastWins) {
+    bool present = true;
+    EXPECT_EQ(AppPaths::explicitDataDirArgument({QStringLiteral("download"), QStringLiteral("--portable")},
+                                                &present),
+              QString());
+    EXPECT_FALSE(present);
+    EXPECT_EQ(AppPaths::explicitDataDirArgument({QStringLiteral("--datadir=/a")}, &present),
+              QStringLiteral("/a"));
+    EXPECT_TRUE(present);
+    EXPECT_EQ(
+        AppPaths::explicitDataDirArgument({QStringLiteral("--datadir"), QStringLiteral("rel/b")}, &present),
+        QStringLiteral("rel/b"));
+    EXPECT_EQ(AppPaths::explicitDataDirArgument({QStringLiteral("--datadir=/a"), QStringLiteral("x"),
+                                                 QStringLiteral("--datadir"), QStringLiteral("/c")}),
+              QStringLiteral("/c"));
+    EXPECT_EQ(AppPaths::explicitDataDirArgument({QStringLiteral("--datadir=")}, &present), QString());
+    EXPECT_TRUE(present);
+    EXPECT_EQ(AppPaths::explicitDataDirArgument({QStringLiteral("--datadir")}, &present), QString());
+    EXPECT_TRUE(present);
+}
+
 // T-0311 (a): D rows of this ticket (directories SAS.Planet -> chart-grabber, one-time move). HOME points to
 // a temporary directory, so the XDG test-mode roots (<HOME>/.qttest/config and /share) are private. T-0340:
 // the roots are asked from Qt (the parent of the application folder it reports), because Windows has no XDG

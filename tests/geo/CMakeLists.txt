@@ -41,6 +41,7 @@ set(CG_GEO_TEST_SRCS
   # T-0110: pointIsEmpty = IsNan(X) or IsNan(Y) (u_GeoFunc.pas:552)
   geo_types_test.cpp
   config_provider_helpers_test.cpp # T-0158
+  proj_data_dir_test.cpp # T-0376
 )
 cg_add_test(geo_test ${CG_GEO_TEST_SRCS})
 target_link_libraries(geo_test PRIVATE cg_geo cg_core Qt6::Core)

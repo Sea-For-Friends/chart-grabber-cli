@@ -27,6 +27,7 @@ add_library(cg_geo STATIC
   projected_calc.cpp
   # T-0020 (geo slice E): the PROJ 9 adapter, custom CRS / datum-shift display.
   proj/proj_converter.cpp
+  proj/proj_data_dir.cpp
   # T-0019A1 (geo slice D1): coordinate representation enums/settings, degrToStr formatting.
   coord_representation.cpp
   coord_to_string.cpp

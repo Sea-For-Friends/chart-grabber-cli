@@ -52,7 +52,7 @@ out=$(CG_MODULES=fixtures timeout 20 tools/validate.sh --changed 2>&1); rc=$?
   || { echo "tools/validate_selftest.sh:1: SELFTEST: tests/fixtures was accepted as a CG_MODULES token: $(head -c 300 <<<"$out")"; bad=1; }
 # T-0345: a code diff that also touches tools/vm runs the vm selftests (stubs record the call), a failing one fails the gate
 mkdir tools/vm
-for s in lock derive migrate win image; do printf '#!/usr/bin/env bash\necho %s >> "$CG_MARK"\n[[ -z ${CG_STUB_FAIL:-} || %s != "$CG_STUB_FAIL" ]]\n' "$s" "$s" > "tools/vm/${s}_selftest.sh"; chmod +x "tools/vm/${s}_selftest.sh"; done
+for s in lock derive migrate win image bundle_check watch; do printf '#!/usr/bin/env bash\necho %s >> "$CG_MARK"\n[[ -z ${CG_STUB_FAIL:-} || %s != "$CG_STUB_FAIL" ]]\n' "$s" "$s" > "tools/vm/${s}_selftest.sh"; chmod +x "tools/vm/${s}_selftest.sh"; done
 git add tools/vm; git commit -qm vmstubs
 mk="$d/mark"; : > "$mk"
 out=$(CG_MARK="$mk" CG_MODULES=core timeout 20 tools/validate.sh --changed 2>&1)

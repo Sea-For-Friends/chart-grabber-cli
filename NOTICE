@@ -9,7 +9,7 @@ any later version. This port is licensed the same way: GPL-3.0-or-later.
 Licence of this program: GPL-3.0-or-later. The full text is in the file LICENSE next to this one. The source code is in the
 repository this package was built from; the version and the commit are printed by `chart-grabber-cli --version`.
 
-Source code: https://github.com/Sea-For-Friends/chart-grabber-cli tag v2026.10.11
+Source code: https://github.com/Sea-For-Friends/chart-grabber-cli tag v2026.10.13
 Source code of the third-party packages (MSYS2): https://repo.msys2.org/mingw/sources/ (source archives named
 mingw-w64-<name>-<version>.src.tar.zst) and https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-<name> (page of each package).
 
@@ -34,6 +34,8 @@ Linux packages
 --------------
 The Linux .deb packages carry no copy of these components: they depend on the libraries of the Debian or Ubuntu release, and those
 packages ship their own copyright files (/usr/share/doc/<package>/copyright). Nothing is listed here for them.
+The self-contained Linux bundles (chart-grabber-cli-<version>-linux-<arch>.tar.gz) carry Debian 12 libraries; their own NOTICE
+lists those packages, and licenses/<package>/copyright holds the copyright file of each.
 
 Components of the Windows zip
 -----------------------------
