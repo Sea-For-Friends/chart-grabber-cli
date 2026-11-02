@@ -122,7 +122,8 @@ std::string kindOf(const ITileRequestResultPtr& r) {
     if (!r) {
         return "null";
     }
-    const std::type_info& t = typeid(*r);
+    const ITileRequestResult& obj = *r;
+    const std::type_info& t = typeid(obj);
     if (t == typeid(TileRequestResultOk)) {
         return "Ok";
     }

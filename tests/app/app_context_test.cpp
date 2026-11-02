@@ -204,12 +204,28 @@ TEST_F(AppContextTest, RequestCloseIsIdempotent) {
 // nobody called requestClose, returns without a hang and leaves no thread of its own (the collector thread
 // :735-741 is joined).
 TEST_F(AppContextTest, DestructionClosesJoinsThreadsAndReturnsInTime) {
+    if (cg::core::platform::kIsApple) {
+        GTEST_SKIP() << "the Mach thread count includes libdispatch workers that come and go: no stable "
+                        "baseline (T-0396)";
+    }
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
     writeZmp(defaultMapsDir(), QStringLiteral("a.zmp"), kGuidA, "Map A", 1);
     // ThreadSanitizer starts its own background thread when the first thread of the process is created and
     // keeps it: create and join one thread first, so that the baseline already holds it.
     std::thread([] {}).join();
-    const int threadsBefore = threadCount();
+    // T-0399: on a slow emulated machine (armhf chroot under qemu TCG) the kernel still counts the joined
+    // thread for a few ms: take the baseline once three reads 50 ms apart agree
+    int threadsBefore = threadCount();
+    for (int stable = 0, tries = 0; stable < 2 && tries < 100; ++tries) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        const int now = threadCount();
+        if (now == threadsBefore) {
+            ++stable;
+        } else {
+            stable = 0;
+            threadsBefore = now;
+        }
+    }
 
     std::stop_token token;
     std::chrono::steady_clock::time_point destroyStart;

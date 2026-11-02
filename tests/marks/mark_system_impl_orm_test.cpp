@@ -12,6 +12,7 @@
 // the system through the factory of the list. Synchronisation is by semaphores only: no sleeps.
 #include "cg/core/notifier.h"
 #include "cg/core/path_config.h"
+#include "cg/core/platform/test_support.h"
 #include "cg/marks/c_mark_system.h"
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_db_by_impl.h"
@@ -197,7 +198,8 @@ TEST(MarkSystemImplORM, PersistenceThroughTheFacadesAcrossARestart) {
     }
 
     // The file as the first run left it: plain SQL.
-    EXPECT_FALSE(QFile::exists(file + QStringLiteral("-wal"))); // the last connection checkpointed and closed
+    EXPECT_TRUE(cg::core::platform::walGoneOrEmptyAfterClose(
+        file + QStringLiteral("-wal"))); // the last connection checkpointed and closed
     EXPECT_EQ(sqlRows(file, "SELECT ID,cName FROM Category ORDER BY ID"),
               (QStringList{QStringLiteral("1|") + kTown, QStringLiteral("2|") + kStreet}));
     EXPECT_EQ(
@@ -339,7 +341,8 @@ TEST(MarkSystemImplORM, ReadOnlyConfigRefusesEveryWriteAndLeavesTheFileUnchanged
         EXPECT_EQ(chain.errorCount.load(), 0);
     }
     EXPECT_EQ(fileBytes(file), before);
-    EXPECT_FALSE(QFile::exists(file + QStringLiteral("-wal")));
+    EXPECT_TRUE(cg::core::platform::walGoneOrEmptyAfterClose(
+        file + QStringLiteral("-wal"))); // the last connection checkpointed and closed
     EXPECT_EQ(sqlRows(file, "SELECT ID,cName FROM Category ORDER BY ID"),
               (QStringList{QStringLiteral("1|") + kTown}));
     EXPECT_TRUE(sqlRows(file, "SELECT mvMark,mvVisible FROM MarkView ORDER BY mvMark").isEmpty());

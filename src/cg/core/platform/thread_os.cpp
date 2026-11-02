@@ -7,6 +7,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include <cstdint>
 #include <pthread.h>
 #include <unistd.h>
 #endif
@@ -31,11 +32,21 @@ long currentThreadId() noexcept {
 #else
 void setCurrentThreadName(const QString& name) noexcept {
     const QByteArray bytes = name.toUtf8().left(15);
+#ifdef __APPLE__
+    ::pthread_setname_np(bytes.constData()); // macOS names only the calling thread
+#else
     ::pthread_setname_np(::pthread_self(), bytes.constData());
+#endif
 }
 
 long currentThreadId() noexcept {
+#ifdef __APPLE__
+    std::uint64_t id = 0;
+    ::pthread_threadid_np(nullptr, &id);
+    return static_cast<long>(id);
+#else
     return static_cast<long>(::gettid());
+#endif
 }
 #endif
 

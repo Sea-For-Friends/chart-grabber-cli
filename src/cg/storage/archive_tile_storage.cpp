@@ -8,8 +8,11 @@
 #include "cg/core/platform/native_path.h"
 #include "cg/storage/tile_date.h"
 
+#include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>
+#include <ctime>
+#include <limits>
 #include <utility>
 
 namespace cg::storage {
@@ -131,6 +134,13 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     if (container == ArchiveTileStorage::Container::Tar && mtimeSecs < 0) {
         mtimeSecs = kLegacyTarPre1970ClampSecs; // F9
     }
+    if constexpr (sizeof(time_t) < sizeof(qint64)) {
+        // 32-bit time_t (Debian 12 armhf): archive_entry_set_mtime takes a time_t, and a larger value (the
+        // 2040 clamp above) would wrap and make the writer fail; clamp to the representable range. 64-bit
+        // platforms keep the legacy value.
+        mtimeSecs = std::clamp<qint64>(mtimeSecs, std::numeric_limits<time_t>::min(),
+                                       std::numeric_limits<time_t>::max());
+    }
     archive_entry_set_mtime(e, mtimeSecs, 0);
     if (container == ArchiveTileStorage::Container::Tar) {
         archive_entry_set_perm(e, kLegacyTarPerm);
@@ -204,7 +214,15 @@ public:
             // read, for tar mtime (`Includes/LibTar.pas` WriteTarHeader/FindNext) and zip dates
             // (`u_ArchiveReadWriteSequentialZip.pas` Add/Next, Delphi's default AInputIsUTC=True) --
             // i.e. toLegacyUnixSeconds/fromLegacyUnixSeconds (tile_date.h), not the POSIX pair.
-            const qint64 mtimeSecs = archive_entry_mtime(entry);
+            qint64 mtimeSecs = archive_entry_mtime(entry);
+            if constexpr (sizeof(time_t) < sizeof(qint64)) {
+                // 32-bit time_t (the linux-armhf bundle): libarchive 3.6.2 wraps the legacy pre-1970 tar
+                // sentinel 2209161600 (Includes/LibTar.pas:539-542, F9 above; year 2040, beyond int32) to
+                // -2085805696 (1903). Map it back, so a legacy tar reads as on a 64-bit platform (D-170).
+                if (mtimeSecs == static_cast<qint64>(static_cast<time_t>(kLegacyTarPre1970ClampSecs))) {
+                    mtimeSecs = kLegacyTarPre1970ClampSecs;
+                }
+            }
             if (ext == QLatin1String(".tne")) {
                 if (ignoreTne_) {
                     continue;

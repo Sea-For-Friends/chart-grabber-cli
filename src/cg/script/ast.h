@@ -14,7 +14,6 @@
 #include <QString>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -29,9 +28,9 @@ namespace cg::script {
 class Arena {
 public:
     template <class T, class... Args> T* make(Args&&... args) {
-        auto owned = std::make_unique<T>(std::forward<Args>(args)...);
-        T* raw = owned.get();
-        cleanups_.push_back([kept = std::move(owned)]() mutable { kept.reset(); });
+        auto owned = std::make_unique<Box<T>>(std::forward<Args>(args)...);
+        T* raw = &owned->value;
+        cleanups_.push_back(std::move(owned));
         return raw;
     }
 
@@ -47,9 +46,19 @@ public:
     }
 
 private:
-    // `std::function` requires its target to be copy-constructible; the captured `unique_ptr<T>`
-    // is not, so this needs the C++23 move-only variant.
-    std::vector<std::move_only_function<void()>> cleanups_;
+    // A type-erased owner per node (one allocation each). std::function needs a copyable target and
+    // std::move_only_function is missing in Apple libc++ before macOS 26.
+    struct BoxBase {
+        BoxBase() = default;
+        BoxBase(const BoxBase&) = delete;
+        BoxBase& operator=(const BoxBase&) = delete;
+        virtual ~BoxBase() = default;
+    };
+    template <class T> struct Box final : BoxBase {
+        template <class... Args> explicit Box(Args&&... args) : value(std::forward<Args>(args)...) {}
+        T value;
+    };
+    std::vector<std::unique_ptr<BoxBase>> cleanups_;
 };
 
 enum class NodeKind : std::uint8_t {

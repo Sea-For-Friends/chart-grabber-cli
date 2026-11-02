@@ -44,6 +44,7 @@ set(CG_CORE_TEST_SRCS
   qt_compat_test.cpp # T-0297
   file_ops_test.cpp # T-0335
   thread_os_test.cpp # T-0335
+  parse_double_test.cpp  # T-0396
   shared_mutex_test.cpp # T-0335
   corpus_skip_test.cpp # T-0370
 )

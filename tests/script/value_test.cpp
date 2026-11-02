@@ -135,6 +135,9 @@ TEST(Value, WrappedToInt64AndUnknownNeverWrap) {
 }
 
 TEST(Value, WrappedToDoubleRoundsFromExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // A long double value whose extra (beyond `double`) mantissa bits are non-zero: narrowing to
     // `double` and back must change the represented value (spec 4.1 N2).
     const long double extended = 1.0L / 3.0L;

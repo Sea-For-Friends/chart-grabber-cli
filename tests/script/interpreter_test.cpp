@@ -777,6 +777,9 @@ TEST(Interpreter, FunctionResultWraps) {
 }
 
 TEST(Interpreter, DoubleSlotRoundsFromExtendedPrecisionOnAssignment) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: `Sqrt` (std::sqrtl) is genuine long double precision; a Double slot narrows it.
     Outcome o = run("var E: Extended; D: Double;\nbegin E := Sqrt(2); D := Sqrt(2); end.");
     ASSERT_RAN_OK(o);
@@ -797,31 +800,49 @@ static void expectExtendedBuiltin(const char* call, long double expected, long d
 }
 
 TEST(Interpreter, ExpIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: Exp is long double precision (std::exp(long double))
     expectExtendedBuiltin("Exp(1)", std::exp(1.0L), static_cast<long double>(std::exp(1.0)));
 }
 
 TEST(Interpreter, LnIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: Ln is long double precision
     expectExtendedBuiltin("Ln(2)", std::log(2.0L), static_cast<long double>(std::log(2.0)));
 }
 
 TEST(Interpreter, SinIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: Sin is long double precision
     expectExtendedBuiltin("Sin(1)", std::sin(1.0L), static_cast<long double>(std::sin(1.0)));
 }
 
 TEST(Interpreter, CosIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: Cos is long double precision
     expectExtendedBuiltin("Cos(1)", std::cos(1.0L), static_cast<long double>(std::cos(1.0)));
 }
 
 TEST(Interpreter, ArcTanIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: ArcTan is long double precision
     expectExtendedBuiltin("ArcTan(1)", std::atan(1.0L), static_cast<long double>(std::atan(1.0)));
 }
 
 TEST(Interpreter, NonIntegralPowerIsExtendedPrecision) {
+    if (sizeof(long double) == sizeof(double)) {
+        GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
+    }
     // spec 4.1 N2: Power(b, non-integral e) = exp(e * log(b)) in long double
     expectExtendedBuiltin("Power(2, 0.5)", std::exp(0.5L * std::log(2.0L)),
                           static_cast<long double>(std::exp(0.5 * std::log(2.0))));

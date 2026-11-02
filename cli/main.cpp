@@ -8,6 +8,7 @@
 #include "cg/app/cli_main.h"
 #include "cg/core/app_paths.h"
 #include "cg/core/platform/file_ops.h"
+#include "cg/core/platform/log_noise.h"
 #include "cg/core/platform/termination_signal.h"
 
 #include <QDir>
@@ -122,6 +123,7 @@ int main(int argc, char* argv[]) {
         QStringLiteral("chart-grabber")); // one directory for both programs (Q-9)
     QCoreApplication::setApplicationVersion(QStringLiteral(CG_TILES_VERSION " (" CG_GIT_COMMIT ")"));
     qputenv("QT_QPA_PLATFORM", "offscreen");
+    cg::core::platform::silenceQtPlatformLogNoise(); // T-0396: macOS only
     // T-0377: Qt loads only the plugins of its own installation (qt.conf of a bundle, else the compiled-in
     // path): a QT_PLUGIN_PATH meant for another Qt (a host application's) would otherwise load that build's
     // offscreen plugin.

@@ -11,7 +11,9 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <utility>
+#include <version>
 
 namespace cg::core {
 
@@ -22,11 +24,31 @@ public:
     Snapshot() = default;
     explicit Snapshot(Ptr initial) : value_(std::move(initial)) {}
 
+#if defined(__cpp_lib_atomic_shared_ptr)
     [[nodiscard]] Ptr get() const noexcept { return value_.load(std::memory_order_acquire); }
     void set(Ptr next) noexcept { value_.store(std::move(next), std::memory_order_release); }
 
 private:
     std::atomic<std::shared_ptr<const T>> value_;
+#else
+    // Apple libc++ has no std::atomic<std::shared_ptr>; a tiny mutex guards the pointer copy.
+    [[nodiscard]] Ptr get() const noexcept {
+        const std::lock_guard<std::mutex> lock(mutex_);
+        return value_;
+    }
+    void set(Ptr next) noexcept {
+        Ptr old;
+        {
+            const std::lock_guard<std::mutex> lock(mutex_);
+            old = std::move(value_);
+            value_ = std::move(next);
+        } // the previous object is released outside the lock
+    }
+
+private:
+    mutable std::mutex mutex_;
+    Ptr value_;
+#endif
 };
 
 } // namespace cg::core

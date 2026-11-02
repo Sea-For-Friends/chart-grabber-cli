@@ -42,6 +42,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <ctime>
+#include <limits>
 #include <memory>
 #include <set>
 #include <utility>
@@ -562,6 +564,21 @@ TEST(ArchiveTileStorage, EntryMtimeUsesLegacyUnixSecondsBothDirectionsAndPre1970
                                           QByteArray("bytes"), false);
             ASSERT_TRUE(saved.has_value());
         }
+        // T-0399: the stored date, read back through the storage's own reader (no bsdtar needed, so it also
+        // runs in the armhf chroot): the legacy sentinel on 64-bit, the largest representable date where
+        // time_t is 32-bit (D-170)
+        {
+            const qint64 expectedSecs = sizeof(time_t) < sizeof(qint64)
+                                            ? static_cast<qint64>(std::numeric_limits<time_t>::max())
+                                            : 2209161600LL;
+            auto reader = openScan(file, std::make_shared<SasTileNameCodec>());
+            ASSERT_NE(reader, nullptr);
+            auto scanned = reader->scanTiles(false, false);
+            ASSERT_TRUE(scanned.has_value());
+            ScannedTiles result = drain(std::move(*scanned));
+            ASSERT_EQ(result.infos.size(), 1u);
+            EXPECT_EQ(result.infos[0].loadDate, fromLegacyUnixSeconds(expectedSecs));
+        }
         if (!QStandardPaths::findExecutable(QStringLiteral("bsdtar")).isEmpty()) {
             QTemporaryDir extractDir;
             ASSERT_TRUE(extractDir.isValid());
@@ -571,9 +588,67 @@ TEST(ArchiveTileStorage, EntryMtimeUsesLegacyUnixSecondsBothDirectionsAndPre1970
             ASSERT_TRUE(proc.waitForFinished(5000));
             const QString extractedPath = extractDir.filePath(expectedName);
             ASSERT_TRUE(QFileInfo::exists(extractedPath)) << extractedPath.toStdString();
-            EXPECT_EQ(QFileInfo(extractedPath).lastModified().toSecsSinceEpoch(), 2209161600LL);
+            // T-0399: a 32-bit time_t (Debian 12 armhf) cannot hold 2040: the writer clamps to the
+            // representable maximum (D row); 64-bit keeps the legacy value
+            const qint64 expectedClamp =
+                sizeof(time_t) < sizeof(qint64) ? std::numeric_limits<time_t>::max() : 2209161600LL;
+            EXPECT_EQ(QFileInfo(extractedPath).lastModified().toSecsSinceEpoch(), expectedClamp);
         }
     }
+}
+
+// T-0399 (D-170): a tar written by legacy holds the pre-1970 sentinel mtime 2209161600
+// (Includes/LibTar.pas:539-542). It is beyond int32: with a 32-bit time_t libarchive 3.6.2 wraps it to 1903
+// when reading. The reader maps it back, so the same tar gives the same load date on every platform. The tar
+// is written by hand (ustar header, octal mtime), because this port's writer cannot store the value on a
+// 32-bit time_t.
+TEST(ArchiveTileStorage, LegacyPre1970SentinelMtimeReadsTheSameOnEveryTimeTWidth) {
+    const QString name =
+        std::make_shared<SasTileNameCodec>()->tilePath(PointI{5, 9}, 3) + QStringLiteral(".jpg");
+    const QByteArray nameUtf8 = name.toUtf8();
+    ASSERT_LT(nameUtf8.size(), 100);
+    QByteArray header(512, '\0');
+    auto put = [&header](int off, const QByteArray& v) {
+        header.replace(off, static_cast<int>(v.size()), v);
+    };
+    auto octal = [](qint64 v, int width) {
+        return QByteArray::number(v, 8).rightJustified(width - 1, '0') + '\0';
+    };
+    put(0, nameUtf8);
+    put(100, octal(0644, 8));
+    put(108, octal(0, 8));
+    put(116, octal(0, 8));
+    put(124, octal(5, 12)); // size of "bytes"
+    put(136, octal(2209161600LL, 12));
+    put(148, QByteArray(8, ' ')); // checksum placeholder
+    header[156] = '0';
+    put(257, QByteArray("ustar\0"
+                        "00",
+                        8));
+    int sum = 0;
+    for (const char c : header) {
+        sum += static_cast<unsigned char>(c);
+    }
+    put(148, octal(sum, 7) + ' ');
+    QByteArray body("bytes");
+    body.append(QByteArray(512 - body.size(), '\0'));
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const QString file = dir.filePath(QStringLiteral("legacy-sentinel.tar"));
+    {
+        QFile f(file);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write(header);
+        f.write(body);
+        f.write(QByteArray(1024, '\0'));
+    }
+    auto reader = openScan(file, std::make_shared<SasTileNameCodec>());
+    ASSERT_NE(reader, nullptr);
+    auto scanned = reader->scanTiles(false, false);
+    ASSERT_TRUE(scanned.has_value());
+    ScannedTiles result = drain(std::move(*scanned));
+    ASSERT_EQ(result.infos.size(), 1u);
+    EXPECT_EQ(result.infos[0].loadDate, fromLegacyUnixSeconds(2209161600LL));
 }
 
 TEST(ArchiveTileStorage, ZipEntryPermissionsAreReadable) {

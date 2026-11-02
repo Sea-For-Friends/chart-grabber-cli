@@ -14,10 +14,11 @@
 
 #include <QByteArray>
 #include <QDateTime>
+#include <QLocale>
 
 #include <gtest/gtest.h>
 
-#include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
@@ -98,9 +99,10 @@ QByteArray blob(const std::string& hex) {
 
 // ---- describing a geometry as text, independent of the code under test ----
 std::string num(double v) {
-    char buf[64];
-    const auto r = std::to_chars(buf, buf + sizeof buf, v);
-    return std::string(buf, r.ptr);
+    // T-0396: Apple libc++ has std::to_chars for double only from macOS 13.3, so the shortest form comes from
+    // Qt
+    const std::string text = QByteArray::number(v, 'g', QLocale::FloatingPointShortest).toStdString();
+    return (v == 0.0 && std::signbit(v) && text == "0") ? "-0" : text; // Qt drops the sign of a negative zero
 }
 
 std::string pts(std::span<const g::LonLat> p) {

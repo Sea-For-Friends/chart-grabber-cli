@@ -121,7 +121,7 @@ ParsedWebp parseWebp(const QByteArray& d) {
                           (static_cast<std::uint32_t>(static_cast<std::uint8_t>(d[5])) << 8) |
                           (static_cast<std::uint32_t>(static_cast<std::uint8_t>(d[6])) << 16) |
                           (static_cast<std::uint32_t>(static_cast<std::uint8_t>(d[7])) << 24);
-    p.sizeFieldMatches = qsizetype{riffSize} + 8 == d.size();
+    p.sizeFieldMatches = static_cast<qsizetype>(riffSize) + 8 == d.size();
     qsizetype at = 12;
     while (at + 8 <= d.size()) {
         p.chunks.push_back(fourcc(d, at));

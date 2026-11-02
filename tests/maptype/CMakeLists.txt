@@ -49,3 +49,7 @@ target_include_directories(maptype_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(maptype_test PRIVATE
   CG_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
 )
+# T-0399: GCC 12 (seen on 32-bit ARM, the armhf chroot; the condition is the compiler, so it also applies on Debian 12 x86_64/arm64) reports a false -Wrestrict ("literal" + std::string&&, GCC PR105329) in this one test file; -Werror stays everywhere else
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+  set_source_files_properties(tile_download_request_builder_js_test.cpp PROPERTIES COMPILE_OPTIONS -Wno-restrict)
+endif()

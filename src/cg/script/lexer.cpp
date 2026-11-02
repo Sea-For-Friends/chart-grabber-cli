@@ -4,7 +4,8 @@
 
 #include "cg/script/lexer.h"
 
-#include <charconv>
+#include "cg/core/platform/parse_double.h"
+
 #include <cstdlib>
 #include <utility>
 
@@ -324,7 +325,9 @@ Token Lexer::readNumber() {
     if (isReal) {
         token.kind = TokenKind::RealLiteral;
         double value = 0.0;
-        std::from_chars(real.constData(), real.constData() + real.size(), value);
+        static_cast<void>(core::platform::parseDouble(
+            real.constData(), real.constData() + real.size(),
+            value)); // T-0396: from_chars where available; out of range leaves 0.0
         token.realValue = value;
     } else {
         token.kind = TokenKind::IntLiteral;

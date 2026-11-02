@@ -171,7 +171,12 @@ TEST(GitCommitScript, CommittedStampFileIsTheExportSubstPlaceholder) {
     const QString repo = QDir(cgFixturesDir()).absoluteFilePath(QStringLiteral("../.."));
     QFile f(repo + QStringLiteral("/cli/archive_commit.txt"));
     ASSERT_TRUE(f.open(QIODevice::ReadOnly));
-    EXPECT_EQ(QString::fromUtf8(f.readAll()), QStringLiteral("$Format:%H$\n"));
+    const QString stamp = QString::fromUtf8(f.readAll());
+    if (!QFileInfo::exists(
+            repo + QStringLiteral("/.git"))) { // a git-archive tree: export-subst has expanded the stamp
+        GTEST_SKIP() << "no .git beside the sources: built from a git archive";
+    }
+    EXPECT_EQ(stamp, QStringLiteral("$Format:%H$\n"));
     QFile a(repo + QStringLiteral("/.gitattributes"));
     ASSERT_TRUE(a.open(QIODevice::ReadOnly));
     EXPECT_TRUE(

@@ -13,6 +13,7 @@
 // goes from nothing to the built backend). No sleeps.
 #include "cg/core/language_manager.h"
 #include "cg/core/path_config.h"
+#include "cg/core/platform/test_support.h"
 #include "cg/geo/geometry_lonlat.h"
 #include "cg/marks/c_mark_system.h"
 #include "cg/marks/mark_category.h"
@@ -215,7 +216,8 @@ TEST(MarkSystem, OpenWriteRestartAndReadTheSameDatabase) {
 
     // The file as the system left it: plain SQL on the closed file (no -wal: the last connection
     // checkpointed).
-    EXPECT_FALSE(QFile::exists(file + QStringLiteral("-wal")));
+    EXPECT_TRUE(cg::core::platform::walGoneOrEmptyAfterClose(
+        file + QStringLiteral("-wal"))); // the last connection checkpointed and closed
     EXPECT_EQ(sqlRows(file, "SELECT ID,cName FROM Category ORDER BY ID"),
               (QStringList{QStringLiteral("1|") + kTown, QStringLiteral("2|") + kStreet}));
     EXPECT_EQ(

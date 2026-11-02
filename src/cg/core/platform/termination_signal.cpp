@@ -221,7 +221,7 @@ TerminationSignal::TerminationSignal() {
 #else
     struct sigaction action{};
     action.sa_handler = &onSignal;
-    ::sigemptyset(&action.sa_mask);
+    sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
     ::sigaction(SIGINT, &action, &oldIntAction);
     ::sigaction(SIGTERM, &action, &oldTermAction);

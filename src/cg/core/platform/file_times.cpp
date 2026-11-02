@@ -91,7 +91,11 @@ Result<qint64> fileMTime(const QString& path) {
     if (::stat(localPath.constData(), &st) != 0) {
         return ioFail(path, "stat");
     }
+#ifdef __APPLE__
+    return static_cast<qint64>(st.st_mtimespec.tv_sec);
+#else
     return static_cast<qint64>(st.st_mtim.tv_sec);
+#endif
 }
 #endif
 

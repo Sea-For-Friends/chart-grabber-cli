@@ -119,7 +119,7 @@ TEST(ClosePoly, WithEmptyAtEnd) {
     expectPoint(s, {1, 0});
     expectPoint(s, {1, 1});
     DoublePoint out;
-    s->next(out); // one unchecked next() (the synthesized trailing break)
+    static_cast<void>(s->next(out)); // one unchecked next() (the synthesized trailing break)
     expectDone(s);
 }
 
@@ -205,7 +205,7 @@ TEST(FilterEqual, WithEmptyAtEnd) {
     expectPoint(s, {0, 2});
     expectPoint(s, {2, 0});
     DoublePoint out;
-    s->next(out); // one unchecked next() (the pass-through separator)
+    static_cast<void>(s->next(out)); // one unchecked next() (the pass-through separator)
     expectDone(s);
 }
 

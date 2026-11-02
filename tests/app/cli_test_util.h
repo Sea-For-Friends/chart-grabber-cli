@@ -7,6 +7,7 @@
 // runCapture runs cg::app::runCli with file descriptors 1 and 2 redirected to temporary files, because
 // Console writes to the process's stdout / stderr.
 #include "cg/app/cli_main.h"
+#include "cg/core/platform/log_noise.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -22,6 +23,13 @@
 #include <unistd.h>
 
 namespace cg::app::test {
+
+// T-0396 (macOS only, see log_noise.h): the tests compare the CLI's stderr; the rule is set before main()
+// (env rules survive QLoggingCategory::setFilterRules()).
+inline const bool kQuietQtPlatformNoise = [] {
+    cg::core::platform::silenceQtPlatformLogNoise();
+    return true;
+}();
 
 struct Captured {
     int rc = -1;

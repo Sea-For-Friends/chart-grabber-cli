@@ -19,6 +19,11 @@
 #include <windows.h>
 // after windows.h
 #include <tlhelp32.h>
+#elif defined(__APPLE__)
+#include <fcntl.h>
+#include <mach/mach.h>
+#include <sys/event.h>
+#include <unistd.h>
 #else
 #include <poll.h>
 #include <sys/inotify.h>
@@ -35,6 +40,23 @@ namespace cg::core::platform {
 #else
     return ::geteuid() == 0;
 #endif
+}
+
+// True on macOS (T-0396): the few tests whose expectation is a Linux/ICU/SQLite-build detail ask this instead
+// of carrying a platform #ifdef (the macOS system SQLite leaves the -wal file of a closed database; the
+// native QCollator orders punctuation differently from the ICU root order).
+inline constexpr bool kIsApple =
+#ifdef __APPLE__
+    true;
+#else
+    false;
+#endif
+
+// The -wal file of a database whose last connection has closed (checkpointed): gone on Linux and Windows; the
+// macOS system SQLite leaves it behind, but empty (T-0396).
+[[nodiscard]] inline bool walGoneOrEmptyAfterClose(const QString& walPath) {
+    const QFileInfo info(walPath);
+    return !info.exists() || (kIsApple && info.size() == 0);
 }
 
 // Number of threads of this process (T-0340): the entries of /proc/self/task on Linux, the thread snapshot of
@@ -56,6 +78,18 @@ namespace cg::core::platform {
     }
     ::CloseHandle(snapshot);
     return count;
+#elif defined(__APPLE__)
+    thread_act_array_t threads = nullptr;
+    mach_msg_type_number_t count = 0;
+    if (::task_threads(::mach_task_self(), &threads, &count) != KERN_SUCCESS) {
+        return -1;
+    }
+    for (mach_msg_type_number_t i = 0; i < count; ++i) {
+        ::mach_port_deallocate(::mach_task_self(), threads[i]);
+    }
+    ::vm_deallocate(::mach_task_self(), reinterpret_cast<vm_address_t>(threads),
+                    count * sizeof(thread_act_t));
+    return static_cast<int>(count);
 #else
     std::error_code ec;
     int count = 0;
@@ -91,14 +125,30 @@ namespace cg::core::platform {
 #endif
 }
 
-// Waits for an entry to be created in a directory: inotify IN_CREATE on Linux, FindFirstChangeNotification on
-// Windows.
+// Waits for an entry to be created in a directory: inotify IN_CREATE on Linux, kqueue EVFILT_VNODE on macOS,
+// FindFirstChangeNotification on Windows.
 class DirectoryWatch {
 public:
     explicit DirectoryWatch(const QString& dir) {
 #ifdef _WIN32
         handle_ = ::FindFirstChangeNotificationW(reinterpret_cast<const wchar_t*>(dir.utf16()), FALSE,
                                                  FILE_NOTIFY_CHANGE_FILE_NAME);
+#elif defined(__APPLE__)
+        dirFd_ = ::open(dir.toLocal8Bit().constData(), O_RDONLY | O_CLOEXEC);
+        fd_ = ::kqueue();
+        if (dirFd_ < 0 && fd_ >= 0) {
+            ::close(fd_);
+            fd_ = -1;
+        }
+        if (fd_ >= 0) {
+            struct kevent change{};
+            EV_SET(&change, static_cast<uintptr_t>(dirFd_), EVFILT_VNODE, EV_ADD | EV_CLEAR, NOTE_WRITE, 0,
+                   nullptr);
+            if (::kevent(fd_, &change, 1, nullptr, 0, nullptr) < 0) {
+                ::close(fd_);
+                fd_ = -1;
+            }
+        }
 #else
         fd_ = ::inotify_init1(IN_CLOEXEC);
         if (fd_ >= 0 && ::inotify_add_watch(fd_, dir.toLocal8Bit().constData(), IN_CREATE) < 0) {
@@ -116,6 +166,11 @@ public:
         if (fd_ >= 0) {
             ::close(fd_);
         }
+#ifdef __APPLE__
+        if (dirFd_ >= 0) {
+            ::close(dirFd_);
+        }
+#endif
 #endif
     }
     DirectoryWatch(const DirectoryWatch&) = delete;
@@ -132,6 +187,10 @@ public:
     [[nodiscard]] bool waitForCreate(int timeoutMs) const {
 #ifdef _WIN32
         return ::WaitForSingleObject(handle_, static_cast<DWORD>(timeoutMs)) == WAIT_OBJECT_0;
+#elif defined(__APPLE__)
+        struct kevent fired{};
+        const timespec timeout{timeoutMs / 1000, static_cast<long>(timeoutMs % 1000) * 1000000L};
+        return ::kevent(fd_, nullptr, 0, &fired, 1, &timeout) > 0;
 #else
         pollfd waiting{fd_, POLLIN, 0};
         return ::poll(&waiting, 1, timeoutMs) > 0;
@@ -143,6 +202,9 @@ private:
     HANDLE handle_ = INVALID_HANDLE_VALUE;
 #else
     int fd_ = -1;
+#ifdef __APPLE__
+    int dirFd_ = -1;
+#endif
 #endif
 };
 

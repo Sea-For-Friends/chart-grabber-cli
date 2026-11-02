@@ -12,23 +12,31 @@ It does not show maps, plan routes or convert official vector charts.
 - Debian 12: 64-bit PC
 - Debian 13: 64-bit PC and ARM 64-bit
 - Raspberry Pi OS 64-bit (the "trixie" version, which is Debian 13): ARM 64-bit, uses the Debian 13 ARM package
+- Raspberry Pi OS 32-bit, and Debian 12 and 13 for 32-bit ARM (armhf): Raspberry Pi 2, 3, 4, 5 and Zero 2 W; not
+  the first Pi Zero or Pi 1
+  (Raspberry Pi OS 32-bit reports the OpenCPN ABI `raspbian-armhf`; it uses the same linux-armhf bundle)
 - Ubuntu 24.04 and 26.04: 64-bit PC and ARM 64-bit
+- macOS 12 and newer: Apple Silicon and Intel Macs
 - Windows 10 and 11: 64-bit PC
+- OpenCPN installed from Flathub (Flatpak runtimes 24.08 and 25.08): 64-bit PC and ARM 64-bit
 
 ## Download
 
 | Your system | File |
 |---|---|
-| Debian 12, 64-bit PC | [chart-grabber-cli_2026.10.13_debian12_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_debian12_amd64.deb) |
-| Debian 13, 64-bit PC | [chart-grabber-cli_2026.10.13_debian13_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_debian13_amd64.deb) |
-| Debian 13, ARM 64-bit, and Raspberry Pi OS 64-bit | [chart-grabber-cli_2026.10.13_debian13_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_debian13_arm64.deb) |
-| Ubuntu 24.04, 64-bit PC | [chart-grabber-cli_2026.10.13_ubuntu2404_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_ubuntu2404_amd64.deb) |
-| Ubuntu 24.04, ARM 64-bit | [chart-grabber-cli_2026.10.13_ubuntu2404_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_ubuntu2404_arm64.deb) |
-| Ubuntu 26.04, 64-bit PC | [chart-grabber-cli_2026.10.13_ubuntu2604_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_ubuntu2604_amd64.deb) |
-| Ubuntu 26.04, ARM 64-bit | [chart-grabber-cli_2026.10.13_ubuntu2604_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli_2026.10.13_ubuntu2604_arm64.deb) |
-| Other Linux (64-bit PC), Debian 12+ or Ubuntu 24.04+ | [chart-grabber-cli-2026.10.13-linux-x86_64.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli-2026.10.13-linux-x86_64.tar.gz) |
-| Other Linux (ARM 64-bit), Debian 12+ or Ubuntu 24.04+ | [chart-grabber-cli-2026.10.13-linux-arm64.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli-2026.10.13-linux-arm64.tar.gz) |
-| Windows 10 and 11, 64-bit PC | [chart-grabber-cli-2026.10.13-win64.zip](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.13/chart-grabber-cli-2026.10.13-win64.zip) |
+| Debian 12, 64-bit PC | [chart-grabber-cli_2026.10.14_debian12_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_debian12_amd64.deb) |
+| Debian 13, 64-bit PC | [chart-grabber-cli_2026.10.14_debian13_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_debian13_amd64.deb) |
+| Debian 13, ARM 64-bit, and Raspberry Pi OS 64-bit | [chart-grabber-cli_2026.10.14_debian13_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_debian13_arm64.deb) |
+| Ubuntu 24.04, 64-bit PC | [chart-grabber-cli_2026.10.14_ubuntu2404_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_ubuntu2404_amd64.deb) |
+| Ubuntu 24.04, ARM 64-bit | [chart-grabber-cli_2026.10.14_ubuntu2404_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_ubuntu2404_arm64.deb) |
+| Ubuntu 26.04, 64-bit PC | [chart-grabber-cli_2026.10.14_ubuntu2604_amd64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_ubuntu2604_amd64.deb) |
+| Ubuntu 26.04, ARM 64-bit | [chart-grabber-cli_2026.10.14_ubuntu2604_arm64.deb](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli_2026.10.14_ubuntu2604_arm64.deb) |
+| Other Linux (64-bit PC), Debian 12+ or Ubuntu 24.04+ | [chart-grabber-cli-2026.10.14-linux-x86_64.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli-2026.10.14-linux-x86_64.tar.gz) |
+| Other Linux (ARM 64-bit), Debian 12+ or Ubuntu 24.04+ | [chart-grabber-cli-2026.10.14-linux-arm64.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli-2026.10.14-linux-arm64.tar.gz) |
+| Raspberry Pi OS 32-bit, Debian 12 or 13 armhf (Raspberry Pi 2 and newer, not Pi Zero or Pi 1) | [chart-grabber-cli-2026.10.14-linux-armhf.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli-2026.10.14-linux-armhf.tar.gz) |
+| macOS 12 and newer, Apple Silicon and Intel | [chart-grabber-cli-2026.10.14-macos-universal.tar.gz](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli-2026.10.14-macos-universal.tar.gz) |
+| OpenCPN from Flathub (Flatpak 24.08 or 25.08) | the "Other Linux" file above for your computer: 64-bit PC or ARM 64-bit |
+| Windows 10 and 11, 64-bit PC | [chart-grabber-cli-2026.10.14-win64.zip](https://github.com/Sea-For-Friends/chart-grabber-cli/releases/download/v2026.10.14/chart-grabber-cli-2026.10.14-win64.zip) |
 
 All files, and the checksums to verify them, are on the [releases page](https://github.com/Sea-For-Friends/chart-grabber-cli/releases).
 
@@ -39,9 +47,13 @@ All files, and the checksums to verify them, are on the [releases page](https://
    - Debian, Ubuntu, Raspberry Pi OS: open a terminal in the folder with the file and run
      `sudo apt install ./chart-grabber-cli_*.deb`.
    - Linux tar.gz: needs the packages `libopengl0 libglx0 libegl1`. Unpack it with `tar xzf chart-grabber-cli-*.tar.gz`,
-     then run `./chart-grabber-cli-*/chart-grabber-cli`.
+     then run `./chart-grabber-cli-*/chart-grabber-cli`. The same file works inside OpenCPN's Flatpak.
+   - macOS: unpack it with `tar xzf chart-grabber-cli-*-macos-universal.tar.gz`. The program has no Apple developer
+     signature, so macOS may refuse to start a copy downloaded with a web browser. Then clear the download mark of the
+     folder once: `xattr -dr com.apple.quarantine chart-grabber-cli-2026.10.14-macos-universal`.
    - Windows: unzip the file. The [Windows guide](docs/user/windows-guide.md) shows each click.
-3. Check that it runs. On Debian, Ubuntu and Raspberry Pi OS type `chart-grabber-cli --help`. On Windows run
+3. Check that it runs. On Debian, Ubuntu and Raspberry Pi OS with the package type `chart-grabber-cli --help`. From a
+   tar.gz (Linux or macOS) run `./chart-grabber-cli-*/chart-grabber-cli --help`. On Windows run
    `chart-grabber-cli.exe --help` in the unzipped folder.
 
 You then see a list of commands.

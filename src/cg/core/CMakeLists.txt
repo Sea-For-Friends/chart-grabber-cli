@@ -52,6 +52,9 @@ add_library(cg_core STATIC
   version.cpp
   platform/file_times.cpp  # T-0021F1
   platform/thread_os.cpp  # T-0056
+  platform/exe_dir.cpp  # T-0396
+  platform/parse_double.cpp  # T-0396
+  platform/log_noise.cpp  # T-0396
   content_type_func.cpp  # T-0183
   platform/termination_signal.cpp  # T-0186
   platform/terminal.cpp  # T-0186

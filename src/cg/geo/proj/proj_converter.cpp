@@ -11,6 +11,7 @@
 
 #include "cg/geo/proj_converter.h"
 
+#include "cg/core/platform/exe_dir.h"
 #include "cg/geo/log_geo.h"
 #include "cg/geo/proj/proj4_defines.h"
 #include "cg/geo/proj/proj_data_dir.h"
@@ -108,8 +109,8 @@ void logProjDbFallbackOnce(const QByteArray& key) {
 // T-0376: a relocated Linux CLI keeps proj.db next to the exe (Windows: libproj already looks in
 // its own directory). An explicit PROJ_DATA / PROJ_LIB always wins; otherwise PROJ's own lookup.
 void applyBundledProjData(PJ_CONTEXT* ctx) {
-    // /proc/self/exe exists on Linux only; elsewhere (Windows) exeDir stays empty and nothing changes.
-    const QString exeDir = QFileInfo(QStringLiteral("/proc/self/exe")).canonicalPath();
+    // Empty where the directory is unknown (Windows), then nothing changes (T-0396: platform::executableDir).
+    const QString exeDir = cg::core::platform::executableDir();
     if (exeDir.isEmpty()) {
         return;
     }

@@ -118,8 +118,8 @@ TEST(MapTypeListBuilder, DuplicatesAndOrderAreKeptAndExchangeRemoveSetItemWork) 
 
 TEST(MapTypeListBuilder, IndexErrorsThrowOutOfRange) {
     auto builder = builderWith({fakeMap(guidN(1)), fakeMap(guidN(2))});
-    EXPECT_THROW(builder->item(2), std::out_of_range);
-    EXPECT_THROW(builder->item(-1), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(builder->item(2)), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(builder->item(-1)), std::out_of_range);
     EXPECT_THROW(builder->setItem(2, nullptr), std::out_of_range);
     EXPECT_THROW(builder->remove(2), std::out_of_range);
     EXPECT_THROW(builder->exchange(0, 2), std::out_of_range);
@@ -169,8 +169,8 @@ TEST(MapTypeListBuilder, NilItemIsAcceptedByAddButNotByMakeCopyOrMakeAndClear) {
     auto builder = builderWith({a, nullptr});
     ASSERT_EQ(builder->count(), 2);
     EXPECT_EQ(builder->item(1), nullptr);
-    EXPECT_THROW(builder->makeCopy(), std::logic_error);
-    EXPECT_THROW(builder->makeAndClear(), std::logic_error);
+    EXPECT_THROW(static_cast<void>(builder->makeCopy()), std::logic_error);
+    EXPECT_THROW(static_cast<void>(builder->makeAndClear()), std::logic_error);
     EXPECT_EQ(builder->count(), 2);
     EXPECT_EQ(builder->item(0), a);
 

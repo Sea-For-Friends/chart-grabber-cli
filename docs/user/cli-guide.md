@@ -23,9 +23,15 @@ Contents: [Before the first chart](#before-the-first-chart-the-map-sources) ·
 
 The program runs on Linux, and on 64-bit Windows 10 or later from the zip `chart-grabber-cli-<version>-win64.zip`
 (unzip it into any folder and run `chart-grabber-cli.exe` from a terminal; the examples in this guide are Linux shell lines).
-On Linux, unpack `chart-grabber-cli-<version>-linux-x86_64.tar.gz` (or `-linux-arm64.tar.gz`) into any folder and run
-`chart-grabber-cli` from it; keep the unpacked folder together. The libraries and a font are inside. The computer needs
-glibc 2.36 or newer (Debian 12, Ubuntu 24.04) and the packages `libopengl0 libglx0 libegl1` (OpenCPN installs them too).
+On Linux, unpack `chart-grabber-cli-<version>-linux-x86_64.tar.gz` (or `-linux-arm64.tar.gz`, or `-linux-armhf.tar.gz`
+for 32-bit ARM such as Raspberry Pi OS 32-bit on a Pi 2 or newer; OpenCPN reports that system's ABI as
+`raspbian-armhf`, and it uses the same linux-armhf bundle) into any folder and run `chart-grabber-cli` from it;
+keep the unpacked folder together. The libraries and a font are inside. The computer needs Debian 12, Ubuntu 24.04 or
+newer and the packages `libopengl0 libglx0 libegl1` (OpenCPN installs them too). The 64-bit PC and ARM 64-bit files
+also run inside OpenCPN's Flatpak (runtimes 24.08 and 25.08).
+On macOS 12 or newer (Apple Silicon or Intel), unpack `chart-grabber-cli-<version>-macos-universal.tar.gz` the same way.
+The program has no Apple developer signature; if macOS refuses to start a downloaded copy, clear the download mark once
+with `xattr -dr com.apple.quarantine chart-grabber-cli-<version>-macos-universal`.
 `windows-guide.md` next to this guide installs and uses the program step by step on Windows, with PowerShell and `cmd` lines.
 The Windows zip decodes PNG, BMP, JPEG, WebP, GIF, TIFF, ICO and ICNS images.
 The file `NOTICE` in the zip lists the third-party libraries that come with it and their licences; their texts are in `licenses\`.
@@ -33,7 +39,7 @@ The file `NOTICE` in the zip lists the third-party libraries that come with it a
 
 ```
 $ chart-grabber-cli --version
-chart-grabber-cli 2026.10.13 (a970b543798b)
+chart-grabber-cli 2026.10.14 (951d3db248cc)
 ```
 
 A map source is a folder ending in `.zmp` (or a file ending in `.source.json`) that tells the program where a map's

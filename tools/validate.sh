@@ -16,6 +16,7 @@
 #           .gitignore, .gitattributes) is not gated: "gate: skipped, docs-only diff", PASS, exit 0; any other path counts
 #           as code. tools/ only -> the selftests of the changed tools (validate*.sh -> --selftest; the plain run too
 #           when a script the gate itself runs changed).
+#   --classify=REV  (T-0418) prints the diff class of REV..HEAD (docs|tools|tools-gate|code|code-tools) and exits; used by tools/land.py.
 #   --selftest  (T-0236) checks the diff classifier above and the skip modes in a throwaway repo (tools/validate_selftest.sh); no build.
 #   --tsan  (T-0025) builds/runs the ThreadSanitizer preset (or nocmake fallback when scoped)
 #           instead of the debug build; skips format/hygiene/tidy/parity (unrelated to tsan).
@@ -25,7 +26,7 @@ source tools/lib/env_compat.sh   # T-0313: SAS_* -> CG_* (REMOVE-AFTER: next rel
 # T-0320: public tree (the filtered export has no process machinery): the private-only steps are skipped, each with one line.
 PUBLIC=0; { [[ ! -d .claude ]] || [[ ! -f tools/land.py ]] || [[ ! -d docs/parity ]]; } && PUBLIC=1
 pub_skip(){ echo "validate: public tree, skipping $1"; }
-SELFTEST=0; FAST=0; TSAN=0; ASAN=0; NOCACHE=0; CHANGED_BASE=""
+CLASSIFY_BASE=""; SELFTEST=0; FAST=0; TSAN=0; ASAN=0; NOCACHE=0; CHANGED_BASE=""
 for a in "$@"; do
   case "$a" in
     --fast) FAST=1 ;;
@@ -35,6 +36,7 @@ for a in "$@"; do
     --selftest) SELFTEST=1 ;;
     --changed) CHANGED_BASE=$(git merge-base HEAD master 2>/dev/null || git merge-base HEAD main 2>/dev/null || echo HEAD) ;;
     --changed=*) CHANGED_BASE="${a#--changed=}" ;;
+    --classify=*) CLASSIFY_BASE="${a#--classify=}" ;;
   esac
 done
 # T-0345: the win10 VM runs this gate under MSYS2; the selftests of the Linux-only release tooling (deb/yaml, export, SPDX CRLF) are skipped there
@@ -60,6 +62,16 @@ diff_class() {
   done
   echo "$cls"
 }
+# T-0418: --classify=REV prints the class of the diff REV..HEAD (docs | tools | tools-gate | code | code-tools) and exits.
+# tools/land.py uses it to pick the landing gates (one classifier, no second path list). Fail closed: a git failure prints code.
+if [[ -n "$CLASSIFY_BASE" ]]; then
+  if CH=$(git diff --no-renames --name-only "$CLASSIFY_BASE" HEAD -- 2>/dev/null); then
+    C=$(printf '%s\n' "$CH" | diff_class)
+    if [[ $C == code ]] && printf '%s\n' "$CH" | grep -q '^tools/'; then C=code-tools; fi
+    echo "$C"
+  else echo code; fi
+  exit 0
+fi
 # T-0269: parse check of the workflow scripts (docs/conventions/workflows/*.js). A script is the body of an async function
 # (top-level await and return, `export const meta` -> `const meta`), so it is checked wrapped like that with `node --check`.
 # Prints one finding line per broken file to stdout; WF_N = files checked, WF_BAD = files that failed. No node: warning only.
@@ -132,8 +144,9 @@ if [[ -n "$CHANGED_BASE" ]]; then
         if [[ $PUBLIC -eq 0 ]] && grep -qE '^tools/(public_identity_selftest\.sh|public-identity\.conf|lib/public_identity\.sh|build_deb\.sh|vm/package_win\.sh|vm/win10/package_in_vm\.sh)$|^NOTICE$' <<<"$TF"; then tools/public_identity_selftest.sh >/dev/null 2>&1 || { echo "tools/public_identity_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi
         if [[ $PUBLIC -eq 0 ]] && grep -qE '^tools/add_spdx(_selftest)?\.sh$' <<<"$TF"; then tools/add_spdx_selftest.sh >/dev/null 2>&1 || { echo "tools/add_spdx_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi
         if grep -qE '^tools/(land(_selftest)?\.(py|sh)|lib/.*)$' <<<"$TF"; then if [[ $PUBLIC -eq 1 ]]; then pub_skip "land_selftest"; else tools/land_selftest.sh >/dev/null 2>&1 || { echo "tools/land_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi; fi
-        if grep -qE '^tools/vm/' <<<"$TF" && [[ -d tools/vm ]]; then tools/vm/lock_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/lock_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/derive_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/derive_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/migrate_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/migrate_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/win_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/win_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/image_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/image_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/bundle_check_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/bundle_check_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/watch_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/watch_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi  # T-0377: bundle_check
+        if grep -qE '^tools/vm/' <<<"$TF" && [[ -d tools/vm ]]; then tools/vm/lock_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/lock_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/derive_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/derive_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/migrate_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/migrate_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/win_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/win_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/image_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/image_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/bundle_check_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/bundle_check_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/rebuild_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/rebuild_selftest.sh:1: SELFTEST: failed"; TB=1; }; tools/vm/watch_selftest.sh >/dev/null 2>&1 || { echo "tools/vm/watch_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi  # T-0377: bundle_check
         if grep -qE '^tools/agents/' <<<"$TF" && [[ -d tools/agents ]]; then tools/agents/watch_selftest.sh >/dev/null 2>&1 || { echo "tools/agents/watch_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi  # T-0390
+        if grep -qE '^tools/macos/' <<<"$TF" && [[ -d tools/macos ]]; then tools/macos/build_bundle_selftest.sh >/dev/null 2>&1 || { echo "tools/macos/build_bundle_selftest.sh:1: SELFTEST: failed"; TB=1; }; fi  # T-0396
         if [[ $TB -ne 0 ]]; then echo "FAIL (tool selftests)"; exit 1; fi
         if [[ $DCLS == tools ]]; then echo "gate: tools-only diff, selftests run"; echo PASS; exit 0; fi
         if [[ $DCLS == code-tools ]]; then echo "gate: code diff touching tools/, tool selftests passed, full gate follows"; else echo "gate: tools diff, selftests passed, plain run follows"; fi ;;
