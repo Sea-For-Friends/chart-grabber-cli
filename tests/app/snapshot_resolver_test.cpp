@@ -323,7 +323,7 @@ TEST_F(SnapshotStoreTest, SaveWritesTheFileOfTheSpecInUtc) {
     ASSERT_TRUE(saveSnapshot(dir(), u"{G}"_s, s, resolved).has_value());
     EXPECT_EQ(slurp(file()),
               QByteArray("[Snapshot]\nVersion=/v2/radar/7b6bac246650\nTime=2026-10-15T20:10:00Z\n"
-                         "DateOnly=0\nResolved=2026-10-15T18:04:05Z\n"));
+                         "DateOnly=0\nResolved=2026-10-15T18:04:05Z\nReference=\nReferenceSeen=\n"));
     EXPECT_FALSE(QFileInfo::exists(file() + u".part"_s));
 }
 
@@ -334,14 +334,16 @@ TEST_F(SnapshotStoreTest, DateOnlyUnknownTimeAndNonAsciiVersionAreWrittenAsTheyA
     day.dateOnly = true;
     ASSERT_TRUE(saveSnapshot(dir(), u"{G}"_s, day, utc(2026, 10, 16, 1, 2, 3)).has_value());
     EXPECT_EQ(slurp(file()), QByteArray("[Snapshot]\nVersion=2026-10-15\nTime=2026-10-15\nDateOnly=1\n"
-                                        "Resolved=2026-10-16T01:02:03Z\n"));
+                                        "Resolved=2026-10-16T01:02:03Z\nReference=\nReferenceSeen=\n"));
 
     Snapshot unknown;
     unknown.version = u"Город/1"_s;
     ASSERT_TRUE(saveSnapshot(dir(), u"{G}"_s, unknown, utc(2026, 10, 16, 1, 2, 3)).has_value());
-    EXPECT_EQ(slurp(file()),
-              QByteArray("[Snapshot]\nVersion=\xD0\x93\xD0\xBE\xD1\x80\xD0\xBE\xD0\xB4/1\nTime=\n"
-                         "DateOnly=0\nResolved=2026-10-16T01:02:03Z\n")); // replaced, UTF-8
+    EXPECT_EQ(
+        slurp(file()),
+        QByteArray(
+            "[Snapshot]\nVersion=\xD0\x93\xD0\xBE\xD1\x80\xD0\xBE\xD0\xB4/1\nTime=\n"
+            "DateOnly=0\nResolved=2026-10-16T01:02:03Z\nReference=\nReferenceSeen=\n")); // replaced, UTF-8
 }
 
 TEST_F(SnapshotStoreTest, SaveFailuresAreIoErrorsThatNameTheirPath) {

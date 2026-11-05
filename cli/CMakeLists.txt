@@ -18,15 +18,4 @@ install(TARGETS chart-grabber-cli RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} CO
 
 # T-0291: no map sources are installed (ADR-0017).
 
-# T-0301: the user guides and the changelog go to /usr/share/doc/chart-grabber-cli/ (the .deb packs the cli component).
-# The changelog is installed as CHANGELOG (owner 2026-10-18); the guides keep their .md names.
-install(FILES
-  ${CMAKE_SOURCE_DIR}/docs/user/cli-guide.md
-  ${CMAKE_SOURCE_DIR}/docs/user/sources-guide.md
-  ${CMAKE_SOURCE_DIR}/docs/user/sources-tutorial.md
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/chart-grabber-cli COMPONENT cli)
-# T-0365: the tutorial's example sources, next to the guides (the guides link flat, the examples are in examples/sources/).
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/docs/user/examples/sources
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/chart-grabber-cli/examples COMPONENT cli)
-install(FILES ${CMAKE_SOURCE_DIR}/CHANGELOG.md
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/chart-grabber-cli RENAME CHANGELOG COMPONENT cli)
+# Owner 2026-11-05: no documentation in the packages (it is on GitHub); the .deb carries copyright + README (cmake/cli_package.cmake).

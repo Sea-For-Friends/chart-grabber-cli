@@ -351,7 +351,7 @@ private:
 
 } // namespace
 
-// Proof 7: the golden text of a small estimate. Layout (handoff): columns zoom, SAS z (1-based), tiles, bbox,
+// Proof 7: the golden text of a small estimate. Layout (handoff): columns zoom, z+1 (1-based), tiles, bbox,
 // present, marked missing, to download; shares in percent with one decimal; bytes through dataSizeConvert
 // with
 // "~" (4000 / 1024 = 3.9 KB; 97000 / 1024 = 94.7 KB; total 101000 / 1024 = 98.6 KB); two blanks between
@@ -371,10 +371,10 @@ TEST_F(TableLocale, EstimateTableGolden) {
     b.shareMarkedMissing = 0.075;
     b.bytesToDownload = 97000;
     const QStringList expected{
-        QStringLiteral(" zoom  SAS z  tiles  bbox  present  marked missing  to download"),
-        QStringLiteral("    3      4      2     2    50.0%            0.0%      ~3.9 KB"),
-        QStringLiteral("    6      7     80   120    12.5%            7.5%     ~94.7 KB"),
-        QStringLiteral("total            82   122                              ~98.6 KB"),
+        QStringLiteral(" zoom  z+1  tiles  bbox  present  marked missing  to download"),
+        QStringLiteral("    3    4      2     2    50.0%            0.0%      ~3.9 KB"),
+        QStringLiteral("    6    7     80   120    12.5%            7.5%     ~94.7 KB"),
+        QStringLiteral("total          82   122                              ~98.6 KB"),
     };
     EXPECT_EQ(estimateTable({a, b}, converter).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
 }
@@ -389,9 +389,9 @@ TEST_F(TableLocale, EstimateTableMarksAssumedSizes) {
     a.bytesToDownload = 573440;
     a.assumed = true;
     const QStringList expected{
-        QStringLiteral(" zoom  SAS z  tiles  bbox  present  marked missing          to download"),
-        QStringLiteral("    6      7     80    80     0.0%            0.0%  ~560.0 KB (assumed)"),
-        QStringLiteral("total            80    80                           ~560.0 KB (assumed)"),
+        QStringLiteral(" zoom  z+1  tiles  bbox  present  marked missing          to download"),
+        QStringLiteral("    6    7     80    80     0.0%            0.0%  ~560.0 KB (assumed)"),
+        QStringLiteral("total          80    80                           ~560.0 KB (assumed)"),
     };
     EXPECT_EQ(estimateTable({a}, converter).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
 }

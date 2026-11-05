@@ -43,4 +43,10 @@ set(CG_DEB_PACKAGE_NAME chart-grabber-cli)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/debian-copyright.in ${CMAKE_BINARY_DIR}/debian-copyright @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/debian-copyright DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${CG_DEB_PACKAGE_NAME}
   RENAME copyright COMPONENT cli)
+# Owner 2026-11-05: no documentation in the package; one short README with the links to GitHub (tools/lib/README-package.in).
+string(REGEX REPLACE "\\.git$" "" CG_README_REPO "${CG_PUBLIC_REPO_URL}")
+set(CG_README_VERSION "${PROJECT_VERSION}")
+configure_file(${CMAKE_SOURCE_DIR}/tools/lib/README-package.in ${CMAKE_BINARY_DIR}/README-package @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/README-package DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${CG_DEB_PACKAGE_NAME}
+  RENAME README COMPONENT cli)
 include(CPack)

@@ -93,7 +93,7 @@ coordinates arbitrarily since the `else` branch never reads them.
   before concluding it wasn't a mistake in this derivation. `zoomify_usage_example.zmp`'s
   `const m_nWidth = 9910; m_nHeight = 7476;` therefore read as `0` everywhere they're used. This is
   the only one of the 21 maps that declares a top-level `const`. Corpus scope
-  (docs/handoffs/T-0015D-review.md): 8 of 350 `GetUrlScript.txt` declare `const` — Navionics ×4,
+  (docs/handoffs/T-0015D-review.md): 8 of 350 `GetUrlScript.txt` declare `const` — the 4 token-service maps,
   `Google/GoogleSat`, `Yandex/YaTraf`, `_broken_maps/_low_quality_/kartasbp.ru`, this map.
   **FIXED by T-0032** (`Parser::foldConstExpr` + `CompiledScript::constValue`) — see
   `docs/handoffs/T-0032.md`.

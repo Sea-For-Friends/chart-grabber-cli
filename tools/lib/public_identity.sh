@@ -27,6 +27,10 @@ cg_identity_require_real() {
   echo "$1: refusing: tools/public-identity.conf still holds a placeholder (PUBLIC_REPO_URL='$PUBLIC_REPO_URL', PLUGIN_REPO_URL='$PLUGIN_REPO_URL', MAINTAINER='$MAINTAINER'); set the real values, or CG_ALLOW_PLACEHOLDER=1 for a local test build" >&2
   exit 2
 }
+# cg_package_readme VERSION    stdin (tools/lib/README-package.in) -> stdout: @CG_README_VERSION@ and @CG_README_REPO@ (the public repository URL) filled in
+cg_package_readme() {
+  sed -e "s|@CG_README_VERSION@|$1|g" -e "s|@CG_README_REPO@|${PUBLIC_REPO_URL%.git}|g"
+}
 cg_stamp_text() {
   local ver=$1 addr=${MAINTAINER##*<}
   addr=${addr%>}

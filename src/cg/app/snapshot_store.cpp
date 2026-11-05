@@ -79,9 +79,11 @@ core::Result<void> saveSnapshot(const QString& dir, const QString& guid, const S
         return core::fail(core::ErrorCode::IoError, file.errorString());
     }
     const QString text =
-        QStringLiteral("[Snapshot]\nVersion=%1\nTime=%2\nDateOnly=%3\nResolved=%4\n")
+        QStringLiteral("[Snapshot]\nVersion=%1\nTime=%2\nDateOnly=%3\nResolved=%4\nReference=%5\n"
+                       "ReferenceSeen=%6\n")
             .arg(s.version, snapshotTimeIso(s), s.dateOnly ? QStringLiteral("1") : QStringLiteral("0"),
-                 resolvedUtc.toUTC().toString(QStringLiteral("yyyy-MM-ddTHH:mm:ssZ")));
+                 resolvedUtc.toUTC().toString(QStringLiteral("yyyy-MM-ddTHH:mm:ssZ")),
+                 referenceIso(s.reference), referenceIso(s.referenceSeen));
     if (file.write(text.toUtf8()) < 0 || !file.commit()) {
         return core::fail(core::ErrorCode::IoError, file.errorString());
     }
@@ -112,7 +114,31 @@ std::optional<Snapshot> loadSnapshot(const QString& dir, const QString& guid) {
         s.time = parsed->time;
         s.dateOnly = parsed->dateOnly;
     }
+    // T-0443: a missing / empty / unreadable key stays invalid
+    const auto readRun = [&section](QStringView key) {
+        const QString text = section->readString(key, {}).trimmed();
+        const auto parsed = snapshotFromText(QStringLiteral("x"), text);
+        return parsed && !text.isEmpty() ? parsed->time : QDateTime();
+    };
+    s.reference = readRun(u"Reference");
+    s.referenceSeen = readRun(u"ReferenceSeen");
     return s;
+}
+
+void carryReference(Snapshot& taken, const std::optional<Snapshot>& stored, const QDateTime& nowUtc) {
+    taken.referenceChanged = false;
+    taken.referenceWas = QDateTime();
+    if (!taken.reference.isValid()) {
+        taken.referenceSeen = QDateTime();
+        return;
+    }
+    if (stored && stored->reference == taken.reference && stored->referenceSeen.isValid()) {
+        taken.referenceSeen = stored->referenceSeen;
+        return;
+    }
+    taken.referenceSeen = nowUtc;
+    taken.referenceWas = stored ? stored->reference : QDateTime();
+    taken.referenceChanged = true;
 }
 
 } // namespace cg::app

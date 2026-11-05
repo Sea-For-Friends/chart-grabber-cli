@@ -225,13 +225,13 @@ INSTANTIATE_TEST_SUITE_P(
         // compile `1.\maps\.nlp` outright without R3; TRegExpr reads `\m` as literal 'm'.
         CorpusCase{"here.com.terrain.zmp", "1.\\maps\\.nlp", QByteArray(), "server1.maps.nlp/x", 0,
                    "1.maps.nlp"},
-        // The 4 Navionics maps' `configuration_token` extraction - without R1
+        // The 4 token-service maps' `configuration_token` extraction - without R1
         // (DotMatchesEverythingOption) a newline inside the JSON body truncates the greedy `.*`.
-        CorpusCase{"Navionics configuration_token", "\"configuration_token\":\"(.*)\"", QByteArray(),
+        CorpusCase{"token-service configuration_token", "\"configuration_token\":\"(.*)\"", QByteArray(),
                    "{\"configuration_token\":\"AB\nCD\"}", 1, "AB\nCD"},
-        // The 4 Navionics maps' `access_token` extraction (note the trailing comma in the literal
+        // The 4 token-service maps' `access_token` extraction (note the trailing comma in the literal
         // pattern - part of the JSON syntax the pattern anchors on).
-        CorpusCase{"Navionics access_token", "\"access_token\":\"(.*)\",", QByteArray(),
+        CorpusCase{"token-service access_token", "\"access_token\":\"(.*)\",", QByteArray(),
                    "{\"access_token\":\"XY\nZ\",\"other\":1}", 1, "XY\nZ"},
         // 42 calls - the itoworld.com tile-server relay rewrite.
         CorpusCase{"t.beta.itoworld.com relay (42 calls)", "t\\.beta\\.itoworld\\.com",

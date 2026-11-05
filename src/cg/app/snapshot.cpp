@@ -154,8 +154,39 @@ struct WmsLayer {
     bool hasName = false;
     bool hasTimeDefault = false;
     QString timeDefault;
-    QString timeValues; // T-0337: the text of that Dimension (list and/or start/end/step)
+    QString timeValues;  // T-0337: the text of that Dimension (list and/or start/end/step)
+    bool hasRef = false; // T-0443: a direct Dimension reference_time was seen
+    QString refDefault;
+    QString refValues;
 };
+
+// T-0443: the model run of a reference_time dimension: its default, else the last item of the list (a
+// start/end/step item gives its end). Nothing to read = no change; an unreadable text is kept in
+// referenceBad.
+core::Result<Snapshot> withRun(core::Result<Snapshot> chosen, bool has, const QString& defaultText,
+                               const QString& values) {
+    if (!chosen || !has) {
+        return chosen;
+    }
+    QString text = defaultText.trimmed();
+    if (text.isEmpty()) {
+        for (const QString& part : values.split(QLatin1Char(','))) {
+            if (!part.trimmed().isEmpty()) {
+                text = part.trimmed();
+            }
+        }
+        const QStringList fields = text.split(QLatin1Char('/'));
+        if (fields.size() == 3) {
+            text = fields[1].trimmed();
+        }
+    }
+    if (const auto run = snapshotFromText(QStringLiteral("x"), text); run && !text.isEmpty()) {
+        chosen->reference = run->time;
+    } else {
+        chosen->referenceBad = text;
+    }
+    return chosen;
+}
 
 // §3.2 wms-default.
 core::Result<Snapshot> parseWmsDefault(const SnapshotDefinition& def, const QByteArray& body) {
@@ -210,6 +241,14 @@ core::Result<Snapshot> parseWmsDefault(const SnapshotDefinition& def, const QByt
                 layer.hasTimeDefault = true;
                 layer.timeValues = xml.readElementText(QXmlStreamReader::SkipChildElements);
                 --depth; // readElementText consumed the end tag
+            } else if (name == u"Dimension" && !layer.hasRef &&
+                       xml.attributes()
+                               .value(QStringLiteral("name"))
+                               .compare(u"reference_time", Qt::CaseInsensitive) == 0) {
+                layer.hasRef = true;
+                layer.refDefault = xml.attributes().value(QStringLiteral("default")).toString();
+                layer.refValues = xml.readElementText(QXmlStreamReader::SkipChildElements);
+                --depth; // readElementText consumed the end tag
             }
         } else if (xml.isEndElement()) {
             if (!open.empty() && layers[static_cast<size_t>(open.back())].depth == depth) {
@@ -235,9 +274,13 @@ core::Result<Snapshot> parseWmsDefault(const SnapshotDefinition& def, const QByt
             return parseFail(Tr::tr("layer %1 has no default time").arg(def.item));
         }
         if (def.pick == SnapshotPick::NearestNow) {
-            return withFrameList(def, layer.timeValues, nearestToNow(def.item, layer.timeValues, def.now));
+            return withRun(
+                withFrameList(def, layer.timeValues, nearestToNow(def.item, layer.timeValues, def.now)),
+                layer.hasRef, layer.refDefault, layer.refValues);
         }
-        return withFrameList(def, layer.timeValues, snapshotFromText(layer.timeDefault, layer.timeDefault));
+        return withRun(
+            withFrameList(def, layer.timeValues, snapshotFromText(layer.timeDefault, layer.timeDefault)),
+            layer.hasRef, layer.refDefault, layer.refValues);
     }
     if (xml.hasError()) {
         return notCapabilities();
@@ -251,8 +294,11 @@ struct WmtsLayer {
     bool hasName = false;
     bool hasTime = false; // a direct Dimension with Identifier time was seen
     QString timeDefault;
-    QString timeRange;  // the first Value with a start/end/step form; empty = none
-    QString timeValues; // T-0337: every Value, joined with ','
+    QString timeRange;   // the first Value with a start/end/step form; empty = none
+    QString timeValues;  // T-0337: every Value, joined with ','
+    bool hasRef = false; // T-0443: a direct Dimension with Identifier reference_time was seen
+    QString refDefault;
+    QString refValues;
 };
 
 // The Dimension element just started: its direct children Identifier, Default and Value; deeper elements are
@@ -292,6 +338,11 @@ void readWmtsDimension(QXmlStreamReader& xml, WmtsLayer& layer) {
         layer.timeDefault = def;
         layer.timeRange = range;
         layer.timeValues = values.join(QLatin1Char(','));
+    }
+    if (!layer.hasRef && id.compare(u"reference_time", Qt::CaseInsensitive) == 0) { // T-0443
+        layer.hasRef = true;
+        layer.refDefault = def;
+        layer.refValues = values.join(QLatin1Char(','));
     }
 }
 
@@ -564,7 +615,8 @@ core::Result<Snapshot> parseWmtsDefault(const SnapshotDefinition& def, const QBy
             }
             return parseFail(Tr::tr("layer %1 has no default time").arg(def.item));
         }
-        return chooseWmtsTime(def, layer);
+        return withRun(chooseWmtsTime(def, layer), layer.hasRef && !def.time, layer.refDefault,
+                       layer.refValues);
     }
     if (xml.hasError()) {
         return notCapabilities();
@@ -787,6 +839,15 @@ QString snapshotTimeIso(const Snapshot& s) {
     const QDateTime utc = s.time.toUTC();
     return utc.toString(s.dateOnly ? QStringLiteral("yyyy-MM-dd")
                                    : QStringLiteral("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+}
+
+QString referenceIso(const QDateTime& run) {
+    return run.isValid() ? run.toUTC().toString(QStringLiteral("yyyy-MM-dd'T'HH:mm:ss'Z'")) : QString();
+}
+
+QString referenceText(const QDateTime& run) {
+    return run.isValid() ? run.toUTC().toString(QStringLiteral("yyyy-MM-dd HH:mm")) + QStringLiteral(" UTC")
+                         : Tr::tr("unknown");
 }
 
 } // namespace cg::app

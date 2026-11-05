@@ -1,0 +1,13 @@
+Chart Grabber CLI @CG_README_VERSION@
+
+Not for navigation.
+
+The documentation is not shipped in this package; it is on GitHub (default branch, no version):
+
+  CLI guide:         @CG_README_REPO@/blob/HEAD/docs/user/cli-guide.md
+  Windows guide:     @CG_README_REPO@/blob/HEAD/docs/user/windows-guide.md
+  Sources guide:     @CG_README_REPO@/blob/HEAD/docs/user/sources-guide.md
+  Integrations:      @CG_README_REPO@/blob/HEAD/docs/user/integrations.md
+  Changelog:         @CG_README_REPO@/blob/HEAD/CHANGELOG.md
+
+Licence texts are in LICENSE, NOTICE and licenses/ (in the .deb: copyright, next to this file).

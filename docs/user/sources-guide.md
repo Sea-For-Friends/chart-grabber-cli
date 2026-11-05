@@ -291,10 +291,10 @@ wrong tile does not stay in your real cache:
 ```
 $ chart-grabber-cli download --maps=my-sources --cache=test-cache --source="Demo XYZ (OpenStreetMap)" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12-13
 Demo XYZ (OpenStreetMap)
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-   12     13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-   13     14      2     2     0.0%            0.0%  ~40.0 KB (assumed)
-total             3     3                           ~60.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+   12   13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+   13   14      2     2     0.0%            0.0%  ~40.0 KB (assumed)
+total           3     3                           ~60.0 KB (assumed)
 Demo XYZ (OpenStreetMap)  z13  0/3 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
 Demo XYZ (OpenStreetMap)  z14  3/3 (100%)  downloaded 3 tiles 20.5 KB  left ~0.0 KB ~00:00:00
 Demo XYZ (OpenStreetMap)
@@ -399,9 +399,9 @@ does not hide it. `sources` and `export` do not print it. The notice follows the
 ```
 $ chart-grabber-cli download --maps=warn-sources --cache=test-cache --source="Demo depth" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12
 Demo depth
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-   12     13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-total             1     1                           ~20.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+   12   13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+total           1     1                           ~20.0 KB (assumed)
 warning: "Demo depth": the provider's terms of use may not allow downloading tiles for offline use. Read https://example.org/terms before downloading; you are responsible for complying.
 warning: "Demo depth": not for navigation. This source is not an official nautical chart; do not use it to navigate.
 Demo depth  z13  0/1 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~

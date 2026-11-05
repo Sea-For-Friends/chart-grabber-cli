@@ -182,7 +182,7 @@ QStringList estimateTable(const std::vector<ZoomEstimate>& estimates,
         return assumed ? text + QStringLiteral(" (assumed)") : text;
     };
     QList<QStringList> rows;
-    rows.push_back({QStringLiteral("zoom"), QStringLiteral("SAS z"), QStringLiteral("tiles"),
+    rows.push_back({QStringLiteral("zoom"), QStringLiteral("z+1"), QStringLiteral("tiles"),
                     QStringLiteral("bbox"), QStringLiteral("present"), QStringLiteral("marked missing"),
                     QStringLiteral("to download")});
     qint64 tiles = 0;

@@ -72,6 +72,12 @@ struct Snapshot {
     // listed frame is later). False for wmts-domain, none-refetch, --time, a previous frame and a stored
     // snapshot.
     bool newest = false;
+    // T-0443: the model run (the layer's reference_time). wms-default / wmts-default only.
+    QDateTime reference;           // UTC; invalid = the layer has no reference_time (or none could be read)
+    QDateTime referenceSeen;       // UTC; when this run was first seen; invalid when reference is invalid
+    bool referenceChanged = false; // transient, never stored: the run differs from the stored one
+    QDateTime referenceWas; // transient: the stored run that referenceChanged replaced (invalid = none)
+    QString referenceBad;   // transient: the text of a reference_time that could not be read
 };
 
 // §2. nullopt = a static source. Error (ErrorCode::ParseError) = S-14 with the detail of §3.4.
@@ -92,6 +98,10 @@ snapshotDefinition(const maptype::IMapType& map);
 [[nodiscard]] QString
 snapshotTimeText(const Snapshot& s);                      // "2026-10-15 20:10 UTC" | "2026-10-15" | "unknown"
 [[nodiscard]] QString snapshotTimeIso(const Snapshot& s); // "2026-10-15T20:10:00Z" | "2026-10-15" | ""
+
+// T-0443: a model run as "2026-11-05T00:00:00Z" ("" when invalid) / "2026-11-05 00:00 UTC" ("unknown").
+[[nodiscard]] QString referenceIso(const QDateTime& run);
+[[nodiscard]] QString referenceText(const QDateTime& run);
 
 // T-0249 (Q-W3): every "{year}" of a credit text replaced by the year.
 [[nodiscard]] QString withYear(QString text, int year);

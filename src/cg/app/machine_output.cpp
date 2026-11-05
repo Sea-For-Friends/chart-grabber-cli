@@ -86,7 +86,7 @@ QString writtenRecord(const QString& guid, const QString& path, qint64 tiles, qi
 }
 
 QString snapshotRecord(const QString& guid, const Snapshot& s) {
-    return tsvLine(u"snapshot", {guid, snapshotTimeIso(s), s.version});
+    return tsvLine(u"snapshot", {guid, snapshotTimeIso(s), s.version, referenceIso(s.reference)});
 }
 
 QString phaseRecord(QStringView name, const QString& guid) {

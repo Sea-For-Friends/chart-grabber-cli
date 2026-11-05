@@ -27,4 +27,9 @@ namespace cg::app {
 // snapshotFromText (an unreadable time stays invalid = unknown).
 [[nodiscard]] std::optional<Snapshot> loadSnapshot(const QString& dir, const QString& guid);
 
+// T-0443 (weather-sources.md 4.2): the run of `taken` against the stored snapshot. No run: no seen time.
+// The same run as the stored one: its seen time. Otherwise (no store, no Reference key, another or an
+// older run): seen = nowUtc and referenceChanged.
+void carryReference(Snapshot& taken, const std::optional<Snapshot>& stored, const QDateTime& nowUtc);
+
 } // namespace cg::app

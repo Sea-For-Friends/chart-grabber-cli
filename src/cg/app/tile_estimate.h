@@ -76,7 +76,7 @@ estimateTiles(const maptype::IMapType& map, const geo::IGeometryLonLatPolygon& a
 // S-13: false when every zoom has no tile at all (the caller refuses with exit 3).
 [[nodiscard]] bool anyTile(const std::vector<ZoomEstimate>& estimates);
 
-// stdout lines: header, one row per zoom (0-based zoom, then the 1-based "SAS z"), a total row. Byte figures
+// stdout lines: header, one row per zoom (0-based zoom, then the 1-based "z+1"), a total row. Byte figures
 // go through dataSizeConvert and carry "~".
 [[nodiscard]] QStringList estimateTable(const std::vector<ZoomEstimate>& estimates,
                                         const geo::ValueToStringConverter& converter);

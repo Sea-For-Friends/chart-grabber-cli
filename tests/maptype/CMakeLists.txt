@@ -41,13 +41,18 @@ set(CG_MAPTYPE_TEST_SRCS
   source_json_container_test.cpp          # T-0224
   tile_download_request_builder_js_test.cpp # T-0225
   js_script_watchdog_test.cpp             # T-0225
-  url_differential_test.cpp               # T-0280
+  bundled_source_licence_test.cpp         # T-0454
 )
+# T-0442: url_differential_test.cpp is not in the public export (tools/public-manifest.txt); the public tree builds without it.
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/url_differential_test.cpp)
+  list(APPEND CG_MAPTYPE_TEST_SRCS url_differential_test.cpp)  # T-0280
+endif()
 cg_add_test(maptype_test ${CG_MAPTYPE_TEST_SRCS})
 target_link_libraries(maptype_test PRIVATE cg_maptype cg_vector cg_storage cg_geo cg_core Qt6::Core Qt6::Gui Qt6::Qml)
 target_include_directories(maptype_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(maptype_test PRIVATE
   CG_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
+  CG_MAP_SOURCES_DIR="${CMAKE_SOURCE_DIR}/data/map-sources" # T-0454
 )
 # T-0399: GCC 12 (seen on 32-bit ARM, the armhf chroot; the condition is the compiler, so it also applies on Debian 12 x86_64/arm64) reports a false -Wrestrict ("literal" + std::string&&, GCC PR105329) in this one test file; -Werror stays everywhere else
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)

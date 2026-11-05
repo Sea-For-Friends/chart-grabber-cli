@@ -1494,3 +1494,18 @@ TEST_F(RunnerTest, RealRunWithTwoWorkersCoversTheAreaOnce) {
     EXPECT_EQ(requestedTiles(rig), nineTiles());
     EXPECT_EQ(rig.subsystem->requests().size(), 9u);
 }
+
+// T-0450: the job folder a session prefix names (the lock of a resumed file).
+TEST(JobDirOfSessionPrefix, T0450_NamesTheFirstSegmentAndNeverLeavesAutoSave) {
+    using namespace Qt::StringLiterals;
+    const QString root = QStringLiteral("/d/AutoSave");
+    EXPECT_EQ(DownloadRunner::jobDirOfSessionPrefix(root, u"abc/{G}/"_s), u"/d/AutoSave/abc"_s);
+    EXPECT_EQ(DownloadRunner::jobDirOfSessionPrefix(root, u"abc/{G}/01_"_s), u"/d/AutoSave/abc"_s);
+    EXPECT_EQ(DownloadRunner::jobDirOfSessionPrefix(root + u"/"_s, u"abc/{G}"_s), u"/d/AutoSave/abc"_s);
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(root, QString()).isEmpty());
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(root, u"abc"_s).isEmpty());
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(root, u"abc/"_s).isEmpty());
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(root, u"../x/{G}/"_s).isEmpty());
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(root, u"abc/../{G}/"_s).isEmpty());
+    EXPECT_TRUE(DownloadRunner::jobDirOfSessionPrefix(QString(), u"abc/{G}/"_s).isEmpty());
+}

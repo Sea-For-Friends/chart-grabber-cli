@@ -71,6 +71,7 @@ responsible for what you download.
 
 - [User guide](docs/user/cli-guide.md)
 - [Windows guide](docs/user/windows-guide.md)
+- Using the charts with Signal K or AvNav: [Using the charts with other navigation software](docs/user/integrations.md)
 - [Write your own map source: tutorial](docs/user/sources-tutorial.md)
 - [Write your own map source: reference](docs/user/sources-guide.md)
 - [Changelog](CHANGELOG.md)

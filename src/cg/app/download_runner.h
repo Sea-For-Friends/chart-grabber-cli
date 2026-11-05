@@ -39,8 +39,8 @@ enum class DownloadOutcome : std::uint8_t {
     WorkerFailed,
     FrameNotServed, // T-0356: stopped because the newest young frame has no served tile
                     // (source.frameFallback)
-    Refused         // resume: no file could be started (exit 3); runCli checks the files first, so it stays
-                    // unreachable there
+    Refused         // exit 3: resume: no file could be started (runCli checks the files first); T-0445: the
+                    // session lock of the job is held by another run
 };
 
 struct DownloadPolicy {
@@ -79,6 +79,9 @@ public:
                                       const std::shared_ptr<const geo::IGeometryLonLatPolygon>& area);
     // `sourceNames[i]` is the name of the map of `slsFiles[i]` (the progress line shows it).
     [[nodiscard]] DownloadOutcome resume(const QStringList& slsFiles, const QStringList& sourceNames);
+
+    // T-0450: the job folder a session prefix `<id>/<guid>/...` writes to; empty = none (no lock).
+    [[nodiscard]] static QString jobDirOfSessionPrefix(const QString& autoSaveDir, const QString& prefix);
 
     // app-cli.md 1.9: the first 12 hex digits of SHA-1 over the inputs that decide what a session means.
     [[nodiscard]] static QString jobId(const Job& job, const maptype::IMapType& map,

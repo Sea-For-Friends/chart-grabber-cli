@@ -73,8 +73,8 @@ constexpr InterfaceMethod kProjConverterFactoryMethods[] = {{"GetByEPSG", 1}, {"
 // The script-visible signature is `DoHttpRequest(url, requestHeader, postData, var responseHeader,
 // var responseData): Cardinal` - 5 arguments, not the 3 of the host-side C++ `IHttpDownloader`
 // (script_host.h), which returns an `HttpReply` record instead of using two var parameters.
-// Corpus-verified (GGC/*, Google/GoogleSat.zmp, Navionics/*, Yandex/YaTraf.zmp all pass 5 args) -
-// legacy is truth over the inferred spec mapping; see handoff open questions.
+// Corpus-verified (GGC/*, Google/GoogleSat.zmp, the 4 token-service maps, Yandex/YaTraf.zmp all pass 5 args)
+// - legacy is truth over the inferred spec mapping; see handoff open questions.
 constexpr InterfaceMethod kHttpDownloaderMethods[] = {{"DoHttpRequest", 5}};
 constexpr InterfaceMethod kScriptGlobalMethods[] = {
     {"SetVar", 2},   {"GetVar", 1}, {"Exists", 1}, {"SetVarTS", 2}, {"GetVarTS", 1},
@@ -1885,7 +1885,8 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
                     }
                 }
                 // spec 3.3 S10 applies to interface methods too - `Global.Lock;`/`Global.Unlock;`
-                // (Google/GoogleSat.zmp, Navionics/*) call a zero-arg method with no parentheses.
+                // (Google/GoogleSat.zmp, the 4 token-service maps) call a zero-arg method with no
+                // parentheses.
                 std::vector<Node*> args = atKind(TokenKind::LParen) ? parseArgList() : std::vector<Node*>{};
                 if (method == nullptr) {
                     errorAt(memberLine, memberColumn,

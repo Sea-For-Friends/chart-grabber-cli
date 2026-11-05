@@ -27,10 +27,12 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
+#include <QLockFile>
 #include <QLoggingCategory>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QRegularExpression>
+#include <QSysInfo>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
@@ -38,7 +40,9 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cerrno>
 #include <chrono>
+#include <csignal>
 #include <memory>
 #include <stop_token>
 #include <thread>
@@ -287,6 +291,19 @@ protected:
         return f.readAll();
     }
 
+    // T-0445: an interrupted `download` leaves a session; returns the job folder AutoSave/<id> (the parent
+    // of the folder of the .sls), empty when no session was left.
+    QString leaveSession() {
+        servePyramid(400);
+        const Captured first = runInterrupted(job(u"download"_s, u"Template Map"_s), 2);
+        EXPECT_EQ(first.rc, 130) << qPrintable(first.err);
+        const QStringList files = sessionFiles();
+        if (files.isEmpty()) {
+            return {};
+        }
+        return QFileInfo(files.first()).dir().absolutePath() + u"/.."_s;
+    }
+
     QTemporaryDir root_;
     HttpTestServer server_;
 };
@@ -533,6 +550,183 @@ TEST_F(CliEndToEnd, TerminationLeavesASessionAndTheSecondRunFetchesOnlyTheRest) 
     all.sort();
     EXPECT_EQ(all, areaPaths()); // together they fetched every tile of the area
     EXPECT_EQ(rows(outFile()), u"9"_s);
+}
+
+// T-0445: the job's session lock (AutoSave/<id>/run.lock). A lock held by another
+// process refuses the run with exit 3: no request, the session untouched; released, the run continues it.
+TEST_F(CliEndToEnd, T0445_HeldJobLockRefusesTheDownloadAndLeavesTheSessionAlone) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    const auto before = sessionBytes();
+    const qsizetype requestsBefore = requestCount();
+    {
+        QLockFile lock(jobDir + u"/run.lock"_s);
+        lock.setStaleLockTime(0);
+        ASSERT_TRUE(lock.tryLock(0));
+        const Captured c = runCapture(job(u"download"_s, u"Template Map"_s));
+        EXPECT_EQ(c.rc, 3) << qPrintable(c.err);
+        EXPECT_TRUE(c.err.contains(u"error: another run of this job is in progress (lock "_s + jobDir +
+                                   u"/run.lock, pid "_s + QString::number(getpid()) + u" on "_s))
+            << qPrintable(c.err);
+        EXPECT_EQ(requestCount(), requestsBefore);
+        EXPECT_EQ(sessionBytes(), before);
+        EXPECT_EQ(totalLines(c.out).size(), 1) << qPrintable(c.out); // the estimate only, no fill report
+        // --restart must not delete the session of the holder either
+        const Captured restart = runCapture(job(u"download"_s, u"Template Map"_s, {u"--restart"_s}));
+        EXPECT_EQ(restart.rc, 3) << qPrintable(restart.err);
+        EXPECT_EQ(sessionBytes(), before);
+    }
+    const Captured again = runCapture(job(u"download"_s, u"Template Map"_s));
+    EXPECT_EQ(again.rc, 0) << qPrintable(again.err);
+    EXPECT_FALSE(QFileInfo::exists(jobDir + u"/run.lock"_s)); // the lock of the run is released
+    EXPECT_TRUE(sessionFiles().isEmpty());                    // the completed session is removed
+}
+
+// T-0451: a `download` refused by the job lock starts nothing, so it writes no `phase download` record; once
+// the lock is free the same run writes it, after `phase estimate`.
+TEST_F(CliEndToEnd, T0451_RefusedDownloadWritesNoPhaseDownloadRecord) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    const QString guid = u"{AB0000C3-0000-0000-0000-0000000000C3}"_s;
+    QStringList args = job(u"download"_s, u"Template Map"_s, {u"--progress=lines"_s});
+    args.removeAll(u"--no-progress"_s); // it wins over --progress=lines (job.cpp: applied in order)
+    {
+        QLockFile lock(jobDir + u"/run.lock"_s);
+        lock.setStaleLockTime(0);
+        ASSERT_TRUE(lock.tryLock(0));
+        const Captured refused = runCapture(args);
+        EXPECT_EQ(refused.rc, 3) << qPrintable(refused.err);
+        EXPECT_FALSE(refused.err.contains(u"phase\tdownload"_s)) << qPrintable(refused.err);
+    }
+    const Captured run = runCapture(args);
+    EXPECT_EQ(run.rc, 0) << qPrintable(run.err);
+    const QStringList lines = run.err.split(u'\n', Qt::SkipEmptyParts);
+    const qsizetype estimate = lines.indexOf(u"phase\testimate\t%1"_s.arg(guid));
+    const qsizetype download = lines.indexOf(u"phase\tdownload\t%1"_s.arg(guid));
+    ASSERT_GE(estimate, 0) << qPrintable(run.err);
+    ASSERT_GE(download, 0) << qPrintable(run.err);
+    EXPECT_EQ(download, estimate + 1) << qPrintable(run.err); // the first record after the estimate ones
+}
+
+// A lock file of a process that is not running (kill -9) is taken over: the run goes on.
+TEST_F(CliEndToEnd, T0445_LockOfADeadProcessIsStale) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    qint64 pid = 4194000;
+    while (::kill(static_cast<pid_t>(pid), 0) == 0 || errno != ESRCH) {
+        ++pid;
+    }
+    QFile lockFile(jobDir + u"/run.lock"_s);
+    ASSERT_TRUE(lockFile.open(QIODevice::WriteOnly));
+    lockFile.write(QByteArray::number(pid) + "\nsomeapp\n" + QSysInfo::machineHostName().toLocal8Bit() +
+                   "\n");
+    lockFile.close();
+    const Captured c = runCapture(job(u"download"_s, u"Template Map"_s));
+    EXPECT_EQ(c.rc, 0) << qPrintable(c.err);
+}
+
+// Two runs of the same job at once: exactly one gets the lock; the other is refused with exit 3 and the
+// session of the first is not deleted.
+TEST_F(CliEndToEnd, T0445_TwoConcurrentRunsOfOneJobOneIsRefused) {
+    servePyramid(300);
+    Captured first;
+    Captured second;
+    {
+        std::jthread holder([&] { first = runCapture(job(u"download"_s, u"Template Map"_s)); });
+        const auto deadline = std::chrono::steady_clock::now() + 20s;
+        while (requestCount() < 1 && std::chrono::steady_clock::now() < deadline) {
+            std::this_thread::sleep_for(2ms);
+        }
+        second = runCapture(job(u"download"_s, u"Template Map"_s));
+    }
+    EXPECT_EQ(second.rc, 3) << qPrintable(second.err);
+    EXPECT_EQ(first.rc, 0) << qPrintable(first.err);
+    // the two runs share the redirected stderr while they overlap: the text is looked for in both
+    EXPECT_TRUE((first.err + second.err).contains(u"another run of this job is in progress"_s));
+    EXPECT_EQ(requested(), areaPaths()); // each tile once: the refused run asked for nothing
+}
+
+// resume of a file in AutoSave/<id>/ takes the same lock; a file elsewhere is not locked.
+TEST_F(CliEndToEnd, T0445_ResumeOfASessionWhoseJobLockIsHeldIsRefused) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    const QStringList files = sessionFiles();
+    ASSERT_FALSE(files.isEmpty());
+    const auto before = sessionBytes();
+    const qsizetype requestsBefore = requestCount();
+    {
+        QLockFile lock(jobDir + u"/run.lock"_s);
+        lock.setStaleLockTime(0);
+        ASSERT_TRUE(lock.tryLock(0));
+        const Captured c = runCapture(QStringList{u"resume"_s, files.first()} + common());
+        EXPECT_EQ(c.rc, 3) << qPrintable(c.err);
+        EXPECT_TRUE(c.err.contains(u"another run of this job is in progress"_s)) << qPrintable(c.err);
+        EXPECT_EQ(requestCount(), requestsBefore);
+        EXPECT_EQ(sessionBytes(), before);
+    }
+    const Captured again = runCapture(QStringList{u"resume"_s, files.first()} + common());
+    EXPECT_EQ(again.rc, 0) << qPrintable(again.err);
+    EXPECT_TRUE(sessionFiles().isEmpty());
+}
+
+// T-0450: a copy of the session file outside AutoSave is locked by the job its AutoSavePrefix names.
+TEST_F(CliEndToEnd, T0450_ResumeOfACopyOutsideAutoSaveTakesTheJobLock) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    const QStringList files = sessionFiles();
+    ASSERT_FALSE(files.isEmpty());
+    const QString elsewhere = root_.filePath(u"elsewhere"_s);
+    ASSERT_TRUE(QDir().mkpath(elsewhere));
+    const QString copy = elsewhere + u"/x.sls"_s;
+    ASSERT_TRUE(QFile::copy(files.first(), copy));
+    const auto before = sessionBytes();
+    const qsizetype requestsBefore = requestCount();
+    {
+        QLockFile lock(jobDir + u"/run.lock"_s);
+        lock.setStaleLockTime(0);
+        ASSERT_TRUE(lock.tryLock(0));
+        const Captured c = runCapture(QStringList{u"resume"_s, copy} + common());
+        EXPECT_EQ(c.rc, 3) << qPrintable(c.err);
+        EXPECT_TRUE(c.err.contains(u"another run of this job is in progress"_s)) << qPrintable(c.err);
+        EXPECT_EQ(requestCount(), requestsBefore);
+        EXPECT_EQ(sessionBytes(), before); // nothing new written under AutoSave
+    }
+    const Captured again = runCapture(QStringList{u"resume"_s, copy} + common());
+    EXPECT_EQ(again.rc, 0) << qPrintable(again.err);
+}
+
+// T-0450: a session file of AutoSave without an AutoSavePrefix (a GUI session) is locked by its own folder.
+TEST_F(CliEndToEnd, T0450_ResumeOfAFileWithoutPrefixInAutoSaveLocksItsOwnJobFolder) {
+    const QString jobDir = QDir::cleanPath(leaveSession());
+    ASSERT_FALSE(jobDir.isEmpty());
+    const QStringList files = sessionFiles();
+    ASSERT_FALSE(files.isEmpty());
+    QByteArray text;
+    {
+        QFile in(files.first());
+        ASSERT_TRUE(in.open(QIODevice::ReadOnly));
+        text = in.readAll();
+    }
+    QByteArray stripped;
+    for (const QByteArray& line : text.split('\n')) {
+        if (!line.startsWith("AutoSavePrefix=")) {
+            stripped += line + '\n';
+        }
+    }
+    ASSERT_NE(stripped.size(), text.size()) << "the file has no AutoSavePrefix line";
+    {
+        QFile out(files.first());
+        ASSERT_TRUE(out.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        out.write(stripped);
+    }
+    const qsizetype requestsBefore = requestCount();
+    QLockFile lock(jobDir + u"/run.lock"_s);
+    lock.setStaleLockTime(0);
+    ASSERT_TRUE(lock.tryLock(0));
+    const Captured c = runCapture(QStringList{u"resume"_s, files.first()} + common());
+    EXPECT_EQ(c.rc, 3) << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"another run of this job is in progress"_s)) << qPrintable(c.err);
+    EXPECT_EQ(requestCount(), requestsBefore);
 }
 
 // T-0332 e2e: a real TerminationSignal and a real pipe. The "stop" line arrives after two requests: the run
@@ -898,7 +1092,7 @@ TEST_F(CliEndToEnd, EstimateCountsTheAreaAndSendsNoRequest) {
     ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
     EXPECT_EQ(requestCount(), 0);
     const QStringList lines = simplifiedLines(c.out);
-    // zoom, SAS z (zoom + 1), tiles, bbox tiles
+    // zoom, z+1 (zoom + 1), tiles, bbox tiles
     EXPECT_TRUE(std::ranges::any_of(lines, [](const QString& l) { return l.startsWith(u"1 2 1 1 "_s); }))
         << qPrintable(c.out);
     EXPECT_TRUE(std::ranges::any_of(lines, [](const QString& l) { return l.startsWith(u"2 3 2 2 "_s); }))

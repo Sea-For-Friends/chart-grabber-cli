@@ -67,20 +67,37 @@ TEST(MachineOutput, SnapshotRecordAndWrittenFieldFiveKeepTheLayout) {
     Snapshot s;
     s.version = u"/v2/radar/7b6bac246650"_s;
     s.time = cg::core::platform::utcDateTime(QDate(2026, 10, 15), QTime(20, 10, 0));
-    EXPECT_EQ(snapshotRecord(u"{G}"_s, s), u"snapshot\t{G}\t2026-10-15T20:10:00Z\t/v2/radar/7b6bac246650"_s);
+    EXPECT_EQ(snapshotRecord(u"{G}"_s, s),
+              u"snapshot\t{G}\t2026-10-15T20:10:00Z\t/v2/radar/7b6bac246650\t"_s);
 
     Snapshot day;
     day.version = u"2026-10-15"_s;
     day.time = cg::core::platform::utcDateTime(QDate(2026, 10, 15), QTime(0, 0, 0));
     day.dateOnly = true;
-    EXPECT_EQ(snapshotRecord(u"{G}"_s, day), u"snapshot\t{G}\t2026-10-15\t2026-10-15"_s);
+    EXPECT_EQ(snapshotRecord(u"{G}"_s, day), u"snapshot\t{G}\t2026-10-15\t2026-10-15\t"_s);
 
     Snapshot unknown;
     unknown.version = u"Город"_s;
-    EXPECT_EQ(snapshotRecord(u"{G}"_s, unknown), u"snapshot\t{G}\t\tГород"_s);
+    EXPECT_EQ(snapshotRecord(u"{G}"_s, unknown), u"snapshot\t{G}\t\tГород\t"_s);
 
     EXPECT_EQ(writtenRecord(u"{G}"_s, u"/x/a.mbtiles"_s, 77, 4096, u"2026-10-15T20:10:00Z"_s),
               u"written\t{G}\t/x/a.mbtiles\t77\t4096\t2026-10-15T20:10:00Z"_s);
+}
+
+// T-0443 (weather-sources.md 5.4): the model run is field index 4 of `snapshot`, ISO UTC, empty without one.
+TEST(MachineOutput, SnapshotRecordCarriesTheModelRunAsFieldFive) {
+    Snapshot s;
+    s.version = u"V"_s;
+    s.time = cg::core::platform::utcDateTime(QDate(2026, 11, 5), QTime(6, 0, 0));
+    s.reference = cg::core::platform::utcDateTime(QDate(2026, 11, 5), QTime(0, 0, 0));
+    const QStringList with = snapshotRecord(u"{G}"_s, s).split(u'\t');
+    ASSERT_EQ(with.size(), 5);
+    EXPECT_EQ(with[4], u"2026-11-05T00:00:00Z"_s);
+
+    s.reference = QDateTime();
+    const QStringList without = snapshotRecord(u"{G}"_s, s).split(u'\t');
+    ASSERT_EQ(without.size(), 5);
+    EXPECT_EQ(without[4], QString());
 }
 
 // T-0203: the layouts of cli-requirements.md section 3, as literals.

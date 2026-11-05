@@ -106,7 +106,7 @@ public:
     // FEAT-NET-016. Blocking. Called on the download worker thread that is running the script,
     // with the per-map script lock held - see spec 8. 5 script-visible arguments, not 3 returning
     // a record (T-0013 review D-2, ruled 2026-09-18): corpus-verified across GGC/*,
-    // Google/GoogleSat.zmp, Navionics/* and Yandex/YaTraf.zmp, which all pass exactly 5. The two
+    // Google/GoogleSat.zmp, the 4 token-service maps and Yandex/YaTraf.zmp, which all pass exactly 5. The two
     // `var` output parameters are observable independently of the result - a script reads
     // `responseHeader` after the call even when the Cardinal result is non-zero - so they cannot
     // be folded into a return-by-value record; legacy is truth over an earlier record-shape draft.

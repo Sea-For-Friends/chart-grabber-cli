@@ -3,7 +3,7 @@
 A chart source is a small definition that tells `chart-grabber-cli` where the tiles of a map are on the internet. This
 tutorial builds one step by step: a plain tile server, a source with a script, a WMS server, a weather source. Every
 step is a command you can run. It does not list every key; the reference is [sources-guide.md](sources-guide.md), and
-the commands in general are in [cli-guide.md](cli-guide.md).
+the commands in general are in [cli-guide.md](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md).
 
 Contents: [Set up](#set-up) · [1. Where sources live](#1-where-sources-live-and-which-format-to-use) ·
 [2. A minimal XYZ source](#2-a-minimal-xyz-source) · [3. Test a source](#3-test-a-source) ·
@@ -166,11 +166,11 @@ area in the Solent:
 ```
 $ chart-grabber-cli estimate --maps=my-sources --cache=test-cache --source="Tutorial XYZ" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12-14
 Tutorial XYZ
- zoom  SAS z  tiles  bbox  present  marked missing          to download
-   12     13      1     1     0.0%            0.0%   ~20.0 KB (assumed)
-   13     14      2     2     0.0%            0.0%   ~40.0 KB (assumed)
-   14     15      4     4     0.0%            0.0%   ~80.0 KB (assumed)
-total             7     7                           ~140.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing          to download
+   12   13      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+   13   14      2     2     0.0%            0.0%   ~40.0 KB (assumed)
+   14   15      4     4     0.0%            0.0%   ~80.0 KB (assumed)
+total           7     7                           ~140.0 KB (assumed)
 ```
 
 Each zoom level has four times the tiles of the one before. The sizes are a guess ("assumed") until the cache holds
@@ -183,7 +183,7 @@ reads. The directory given to `--out` must exist.
 $ mkdir charts
 $ chart-grabber-cli run --maps=my-sources --cache=test-cache --source="Tutorial XYZ" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12-14 --out=charts/
 Tutorial XYZ
- zoom  SAS z  tiles  bbox  present  marked missing          to download
+ zoom  z+1  tiles  bbox  present  marked missing          to download
 …
 total             7     7                           ~140.0 KB (assumed)
 Tutorial XYZ  z13  0/7 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
@@ -432,13 +432,13 @@ source	{7E1D0A00-3C5B-4F21-9A60-000000000007}	map	Tutorial frames (JSON index)	i
 $ chart-grabber-cli estimate --maps=my-sources --cache=snap-cache --source="Tutorial frames (JSON index)" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12
 Tutorial frames (JSON index)
 snapshot: taken when downloading
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-   12     13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-total             1     1                           ~20.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+   12   13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+total           1     1                           ~20.0 KB (assumed)
 $ chart-grabber-cli download --maps=my-sources --cache=snap-cache --source="Tutorial frames (JSON index)" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12
 Tutorial frames (JSON index)
 snapshot 2026-10-24 16:20 UTC
- zoom  SAS z  tiles  bbox  present  marked missing         to download
+ zoom  z+1  tiles  bbox  present  marked missing         to download
 …
 Tutorial frames (JSON index)
  zoom  tiles  present  marked missing  missing    size
@@ -494,12 +494,12 @@ frame used. The source in `lag/` points its tiles at a path where the newest fra
 
 ```
 $ chart-grabber-cli download --maps=lag --cache=lag-cache --source="Tutorial lagging frames" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12 --format=tsv
-snapshot	{7E1D0A00-3C5B-4F21-9A60-000000000008}	2026-10-24T16:20:00Z	2026-10-24T16:20:00Z
+snapshot	{7E1D0A00-3C5B-4F21-9A60-000000000008}	2026-10-24T16:20:00Z	2026-10-24T16:20:00Z	
 estimate	{7E1D0A00-3C5B-4F21-9A60-000000000008}	12	1	1	0.0000	0.0000	20480	1	20480
 Tutorial lagging frames  z13  0/1 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
 Tutorial lagging frames  z13  1/1 (100%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~00:00:00
 warning: the newest frame 2026-10-24 16:20 UTC of "Tutorial lagging frames" is not served yet; using the previous frame 2026-10-24 16:10 UTC
-snapshot	{7E1D0A00-3C5B-4F21-9A60-000000000008}	2026-10-24T16:10:00Z	2026-10-24T16:10:00Z
+snapshot	{7E1D0A00-3C5B-4F21-9A60-000000000008}	2026-10-24T16:10:00Z	2026-10-24T16:10:00Z	
 Tutorial lagging frames  z13  1/1 (100%)  downloaded 1 tiles 0.4 KB  left ~0.0 KB ~00:00:00
 fill	{7E1D0A00-3C5B-4F21-9A60-000000000008}	12	1	1	0	0	400
 ```
@@ -508,7 +508,7 @@ The frame times are those of your server's start. The step back happens only whi
 old; if no warning appears, stop the test server and start it again.
 
 The index types `wmts-default`, `wmts-domain` and `none-refetch`, and the option `--time` for forecast layers, are in
-the reference and in [cli-guide.md](cli-guide.md#13-weather-the-current-picture).
+the reference and in [cli-guide.md](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md#13-weather-the-current-picture).
 
 ## 7. Warnings for the user of your source
 
@@ -537,9 +537,9 @@ TermsOfUseWarning=https://example.org/terms
 ```
 $ chart-grabber-cli download --maps=warn-sources --cache=test-cache --source="Tutorial depth" --bbox=-1.30,50.76,-1.28,50.77 --zooms=12
 Tutorial depth
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-   12     13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-total             1     1                           ~20.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+   12   13      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+total           1     1                           ~20.0 KB (assumed)
 warning: "Tutorial depth": the provider's terms of use may not allow downloading tiles for offline use. Read https://example.org/terms before downloading; you are responsible for complying.
 warning: "Tutorial depth": not for navigation. This source is not an official nautical chart; do not use it to navigate.
 Tutorial depth  z13  0/1 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~

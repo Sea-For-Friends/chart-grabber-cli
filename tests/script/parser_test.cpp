@@ -65,7 +65,8 @@ TEST(Parser, VarSectionList) {
     EXPECT_PARSES("var A, B, C: Integer;\nbegin end.");
 }
 TEST(Parser, MultipleVarSectionsInterleave) {
-    // spec 3.3 S11: `Navionics/navionics.zmp` has const, const, function, function, var, begin.
+    // spec 3.3 S11: the first of the 4 token-service maps of the SAS maps archive has const, const, function,
+    // function, var, begin.
     EXPECT_PARSES("const A = 1;\nconst B = 2;\nvar C: Integer;\nbegin end.");
 }
 TEST(Parser, FunctionDecl) {
@@ -136,7 +137,7 @@ TEST(Parser, RepeatUntilRunsAtLeastOnce) {
     EXPECT_PARSES("var I: Integer;\nbegin I := 0; repeat I := I + 1; until I = 10; end.");
 }
 TEST(Parser, TryFinallyAlwaysRuns) {
-    // spec 3.3 S9: `Navionics/*`, `Google/GoogleSat.zmp`, `Yandex/*` use `finally`.
+    // spec 3.3 S9: the 4 token-service maps, `Google/GoogleSat.zmp`, `Yandex/*` use `finally`.
     EXPECT_PARSES("begin try ResultURL := 'a'; finally ResultURL := 'b'; end; end.");
 }
 TEST(Parser, TryExceptSwallows) {

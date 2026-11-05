@@ -6,6 +6,7 @@
 // No FEAT tag (T-0242: Features none). Fixtures: tests/fixtures/app/snapshot (real answers of the services).
 #include "cg/app/app_context.h"
 #include "cg/app/snapshot.h"
+#include "cg/app/snapshot_store.h"
 #include "cg/core/platform/qt_compat.h"
 #include "cg/maptype/map_type_set.h"
 
@@ -1395,4 +1396,219 @@ TEST(SnapshotPreviousFrame, WmtsDefaultPickAndTimeOption) {
                                          "<Value>2026-10-19T09:00:00Z/2026-10-19T12:00:00Z/PT1H</Value>"));
     ASSERT_TRUE(asked.has_value());
     EXPECT_FALSE(asked->newest);
+}
+
+// ---- 5. T-0443: the model run (reference_time) and its store
+
+namespace {
+
+QDateTime utcAt(int y, int mo, int d, int h) {
+    return cg::core::platform::utcDateTime(QDate(y, mo, d), QTime(h, 0));
+}
+
+// wms-default over one layer "w" with the time default 2026-11-05T06:00:00Z and `extra` inside the layer.
+cg::core::Result<Snapshot> wmsRun(const QByteArray& extra, const QByteArray& outer = {}) {
+    return parseSnapshotIndex(def(SnapshotIndexType::WmsDefault, QStringLiteral("w")),
+                              wmsDoc(outer +
+                                     "<Layer><Name>w</Name><Dimension name=\"time\" "
+                                     "default=\"2026-11-05T06:00:00Z\"/>" +
+                                     extra + "</Layer>"));
+}
+
+cg::core::Result<Snapshot> wmtsRun(const QByteArray& extra) {
+    return parseSnapshotIndex(def(SnapshotIndexType::WmtsDefault, QStringLiteral("L")),
+                              capsDoc(capsLayer("L", timeDim("2026-11-05T06:00:00Z") + extra)));
+}
+
+} // namespace
+
+TEST(SnapshotRun, WmsDefaultAttributeThenLastOfTheListThenTheEndOfARange) {
+    const auto withDefault =
+        wmsRun("<Dimension name=\"reference_time\" default=\"2026-11-05T00:00:00Z\">2026-11-04T12:00:00Z,"
+               "2026-11-05T00:00:00Z</Dimension>");
+    ASSERT_TRUE(withDefault.has_value());
+    EXPECT_EQ(withDefault->reference, utcAt(2026, 11, 5, 0));
+
+    // the case of the name does not matter, the default wins over a later list item; date only = 00:00Z
+    const auto upper = wmsRun("<Dimension name=\"REFERENCE_TIME\" default=\"2026-11-03\">2026-11-04T12:00:00Z"
+                              "</Dimension>");
+    ASSERT_TRUE(upper.has_value());
+    EXPECT_EQ(upper->reference, utcAt(2026, 11, 3, 0));
+
+    const auto list = wmsRun("<Dimension name=\"reference_time\">2026-11-05T00:00:00Z,2026-11-04T12:00:00Z,"
+                             "2026-11-04T18:00:00Z</Dimension>");
+    ASSERT_TRUE(list.has_value());
+    EXPECT_EQ(list->reference, utcAt(2026, 11, 4, 18)); // the LAST item, not the latest
+
+    const auto range = wmsRun("<Dimension name=\"reference_time\">2026-11-01T00:00:00Z/2026-11-05T12:00:00Z/"
+                              "PT6H</Dimension>");
+    ASSERT_TRUE(range.has_value());
+    EXPECT_EQ(range->reference, utcAt(2026, 11, 5, 12));
+    EXPECT_TRUE(range->referenceBad.isEmpty());
+}
+
+TEST(SnapshotRun, WmsAbsentOrUnreadable) {
+    const auto none = wmsRun({});
+    ASSERT_TRUE(none.has_value());
+    EXPECT_FALSE(none->reference.isValid());
+    EXPECT_TRUE(none->referenceBad.isEmpty());
+
+    // as the time Dimension, only a direct child of the chosen layer counts (no inheritance from a parent)
+    const auto parentOnly = parseSnapshotIndex(
+        def(SnapshotIndexType::WmsDefault, QStringLiteral("w")),
+        wmsDoc("<Dimension name=\"reference_time\" default=\"2026-11-05T00:00:00Z\"/><Layer><Name>w</Name>"
+               "<Dimension name=\"time\" default=\"2026-11-05T06:00:00Z\"/></Layer>"));
+    ASSERT_TRUE(parentOnly.has_value());
+    EXPECT_FALSE(parentOnly->reference.isValid());
+
+    const auto garbage = wmsRun("<Dimension name=\"reference_time\" default=\"yesterday\"/>");
+    ASSERT_TRUE(garbage.has_value()); // the run goes on
+    EXPECT_FALSE(garbage->reference.isValid());
+    EXPECT_EQ(garbage->referenceBad, QStringLiteral("yesterday"));
+    EXPECT_EQ(garbage->version, QStringLiteral("2026-11-05T06:00:00Z"));
+
+    const auto empty = wmsRun("<Dimension name=\"reference_time\"/>");
+    ASSERT_TRUE(empty.has_value());
+    EXPECT_FALSE(empty->reference.isValid());
+}
+
+TEST(SnapshotRun, WmtsDefaultThenLastValueThenAbsentThenGarbage) {
+    const auto withDefault =
+        wmtsRun(timeDim("2026-11-05T00:00:00Z", "<Value>2026-11-04T12:00:00Z</Value>", "reference_time"));
+    ASSERT_TRUE(withDefault.has_value());
+    EXPECT_EQ(withDefault->reference, utcAt(2026, 11, 5, 0));
+
+    const auto lastValue = wmtsRun("<Dimension><ows:Identifier>reference_time</ows:Identifier>"
+                                   "<Value>2026-11-05T00:00:00Z</Value><Value>2026-11-04T18:00:00Z</Value>"
+                                   "</Dimension>");
+    ASSERT_TRUE(lastValue.has_value());
+    EXPECT_EQ(lastValue->reference, utcAt(2026, 11, 4, 18));
+
+    const auto none = wmtsRun({});
+    ASSERT_TRUE(none.has_value());
+    EXPECT_FALSE(none->reference.isValid());
+
+    const auto garbage = wmtsRun(timeDim("nonsense", {}, "reference_time"));
+    ASSERT_TRUE(garbage.has_value());
+    EXPECT_FALSE(garbage->reference.isValid());
+    EXPECT_EQ(garbage->referenceBad, QStringLiteral("nonsense"));
+}
+
+TEST(SnapshotRun, WmtsTimeOfTheUserHasNoRun) {
+    const auto userTime = parseSnapshotIndex(
+        timed(QStringLiteral("L"), "2026-11-05T06:00:00Z", "2026-11-05T07:00:00Z"),
+        capsDoc(capsLayer("L", timeDim("2026-11-05T06:00:00Z",
+                                       "<Value>2026-11-05T00:00:00Z/2026-11-06T00:00:00Z/PT6H</Value>") +
+                                   timeDim("2026-11-05T00:00:00Z", {}, "reference_time"))));
+    ASSERT_TRUE(userTime.has_value());
+    EXPECT_FALSE(userTime->reference.isValid());
+}
+
+TEST(SnapshotRun, StoreRoundTripOldFileAndTheReferenceText) {
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    Snapshot s;
+    s.version = QStringLiteral("V1");
+    s.time = utcAt(2026, 11, 5, 6);
+    s.reference = utcAt(2026, 11, 5, 0);
+    s.referenceSeen = utcAt(2026, 11, 5, 9);
+    ASSERT_TRUE(cg::app::saveSnapshot(dir.path(), QStringLiteral("{G}"), s, utcAt(2026, 11, 5, 10)));
+    QFile file(dir.path() + QStringLiteral("/{G}.conf"));
+    ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+    EXPECT_EQ(file.readAll(), QByteArray("[Snapshot]\nVersion=V1\nTime=2026-11-05T06:00:00Z\nDateOnly=0\n"
+                                         "Resolved=2026-11-05T10:00:00Z\nReference=2026-11-05T00:00:00Z\n"
+                                         "ReferenceSeen=2026-11-05T09:00:00Z\n"));
+    const auto back = cg::app::loadSnapshot(dir.path(), QStringLiteral("{G}"));
+    ASSERT_TRUE(back.has_value());
+    EXPECT_EQ(back->reference, utcAt(2026, 11, 5, 0));
+    EXPECT_EQ(back->referenceSeen, utcAt(2026, 11, 5, 9));
+    EXPECT_FALSE(back->referenceChanged);
+
+    // no run: both keys empty and read back invalid
+    s.reference = QDateTime();
+    s.referenceSeen = QDateTime();
+    ASSERT_TRUE(cg::app::saveSnapshot(dir.path(), QStringLiteral("{N}"), s, utcAt(2026, 11, 5, 10)));
+    QFile none(dir.path() + QStringLiteral("/{N}.conf"));
+    ASSERT_TRUE(none.open(QIODevice::ReadOnly));
+    EXPECT_TRUE(none.readAll().endsWith("Reference=\nReferenceSeen=\n"));
+    const auto noRun = cg::app::loadSnapshot(dir.path(), QStringLiteral("{N}"));
+    ASSERT_TRUE(noRun.has_value());
+    EXPECT_FALSE(noRun->reference.isValid());
+    EXPECT_FALSE(noRun->referenceSeen.isValid());
+
+    // a file of the version before (no keys) and one with unreadable ones
+    QFile old(dir.path() + QStringLiteral("/{O}.conf"));
+    ASSERT_TRUE(old.open(QIODevice::WriteOnly));
+    old.write("[Snapshot]\nVersion=V0\nTime=2026-11-05T06:00:00Z\nDateOnly=0\nResolved=2026-11-05T10:00:00Z\n"
+              "Reference=oops\nReferenceSeen=\n");
+    old.close();
+    const auto bad = cg::app::loadSnapshot(dir.path(), QStringLiteral("{O}"));
+    ASSERT_TRUE(bad.has_value());
+    EXPECT_EQ(bad->version, QStringLiteral("V0"));
+    EXPECT_FALSE(bad->reference.isValid());
+    EXPECT_FALSE(bad->referenceSeen.isValid());
+
+    EXPECT_EQ(cg::app::referenceIso(utcAt(2026, 11, 5, 0)), QStringLiteral("2026-11-05T00:00:00Z"));
+    EXPECT_EQ(cg::app::referenceText(utcAt(2026, 11, 5, 0)), QStringLiteral("2026-11-05 00:00 UTC"));
+    EXPECT_EQ(cg::app::referenceText(QDateTime()), QStringLiteral("unknown"));
+}
+
+TEST(SnapshotRun, CarryReferenceTable) {
+    const QDateTime now = utcAt(2026, 11, 5, 12);
+    const QDateTime run1 = utcAt(2026, 11, 5, 0);
+    const QDateTime run2 = utcAt(2026, 11, 5, 6);
+    const QDateTime seen = utcAt(2026, 11, 5, 3);
+    Snapshot stored;
+    stored.version = QStringLiteral("V");
+    stored.reference = run1;
+    stored.referenceSeen = seen;
+
+    Snapshot noRun; // no run: nothing seen, nothing changed, whatever the store holds
+    noRun.referenceSeen = seen;
+    noRun.referenceChanged = true;
+    cg::app::carryReference(noRun, stored, now);
+    EXPECT_FALSE(noRun.referenceSeen.isValid());
+    EXPECT_FALSE(noRun.referenceChanged);
+
+    Snapshot same;
+    same.reference = run1;
+    cg::app::carryReference(same, stored, now);
+    EXPECT_EQ(same.referenceSeen, seen);
+    EXPECT_FALSE(same.referenceChanged);
+
+    Snapshot newer;
+    newer.reference = run2;
+    cg::app::carryReference(newer, stored, now);
+    EXPECT_EQ(newer.referenceSeen, now);
+    EXPECT_TRUE(newer.referenceChanged);
+    EXPECT_EQ(newer.referenceWas, run1);
+
+    Snapshot older; // a rollback is a change too
+    older.reference = utcAt(2026, 11, 4, 18);
+    cg::app::carryReference(older, stored, now);
+    EXPECT_EQ(older.referenceSeen, now);
+    EXPECT_TRUE(older.referenceChanged);
+
+    Snapshot first;
+    first.reference = run1;
+    cg::app::carryReference(first, std::nullopt, now);
+    EXPECT_EQ(first.referenceSeen, now);
+    EXPECT_TRUE(first.referenceChanged);
+    EXPECT_FALSE(first.referenceWas.isValid());
+
+    Snapshot upgraded; // a store without Reference / ReferenceSeen
+    upgraded.reference = run1;
+    Snapshot oldStore;
+    oldStore.version = QStringLiteral("V");
+    cg::app::carryReference(upgraded, oldStore, now);
+    EXPECT_EQ(upgraded.referenceSeen, now);
+    EXPECT_TRUE(upgraded.referenceChanged);
+
+    Snapshot noSeen; // the same run but no seen time stored: renewed
+    noSeen.reference = run1;
+    Snapshot halfStore = stored;
+    halfStore.referenceSeen = QDateTime();
+    cg::app::carryReference(noSeen, halfStore, now);
+    EXPECT_EQ(noSeen.referenceSeen, now);
+    EXPECT_TRUE(noSeen.referenceChanged);
 }

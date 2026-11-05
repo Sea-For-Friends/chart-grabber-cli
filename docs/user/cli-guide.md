@@ -3,6 +3,8 @@
 `chart-grabber-cli` downloads map tiles of an area from an online map source and writes them into an MBTiles file
 that OpenCPN opens as a chart. It does not display maps, plan routes, or convert vector charts (S-57, S-63).
 
+This guide describes the latest release. A feature that older releases (2026.10.x) do not have is marked "since <version>".
+
 Contents: [Before the first chart](#before-the-first-chart-the-map-sources) ·
 [1. Make a chart of an area](#1-how-to-make-an-offline-chart-of-an-area-for-opencpn) ·
 [2. Choose a source](#2-how-to-choose-a-map-source) ·
@@ -39,7 +41,7 @@ The file `NOTICE` in the zip lists the third-party libraries that come with it a
 
 ```
 $ chart-grabber-cli --version
-chart-grabber-cli 2026.10.14 (951d3db248cc)
+chart-grabber-cli 2026.11.1 (abbe831b4db3)
 ```
 
 A map source is a folder ending in `.zmp` (or a file ending in `.source.json`) that tells the program where a map's
@@ -100,14 +102,14 @@ $ cd ~
 $ mkdir -p charts
 $ chart-grabber-cli run --maps="$MAPS" --source="Sentinel-2 Cloudless 2025 (EOX)" --bbox=-1.34,50.74,-1.24,50.78 --zooms=10-15 --out=charts/
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles  bbox  present  marked missing          to download
-   10     11      1     1     0.0%            0.0%   ~20.0 KB (assumed)
-   11     12      1     1     0.0%            0.0%   ~20.0 KB (assumed)
-   12     13      2     2     0.0%            0.0%   ~40.0 KB (assumed)
-   13     14      6     6     0.0%            0.0%  ~120.0 KB (assumed)
-   14     15     20    20     0.0%            0.0%  ~400.0 KB (assumed)
-   15     16     70    70     0.0%            0.0%    ~1.4 MB (assumed)
-total           100   100                             ~2.0 MB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing          to download
+   10   11      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+   11   12      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+   12   13      2     2     0.0%            0.0%   ~40.0 KB (assumed)
+   13   14      6     6     0.0%            0.0%  ~120.0 KB (assumed)
+   14   15     20    20     0.0%            0.0%  ~400.0 KB (assumed)
+   15   16     70    70     0.0%            0.0%    ~1.4 MB (assumed)
+total         100   100                             ~2.0 MB (assumed)
 Sentinel-2 Cloudless 2025 (EOX)  z11  0/100 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
 Sentinel-2 Cloudless 2025 (EOX)  z16  100/100 (100%)  downloaded 100 tiles 479.2 KB  left ~0.0 KB ~00:00:00
 Sentinel-2 Cloudless 2025 (EOX)
@@ -131,7 +133,8 @@ written: …/charts/Sentinel2-Cloudless-2025.mbtiles  100 tiles  564.0 KB
   50° 44.4' N is 50.74, 1° 20.4' W is -1.34.
 - A tile is a 256 × 256 pixel picture. A zoom level is a scale step: level 0 shows the whole world in one tile, and
   each next level has twice the detail and four times as many tiles. Levels are counted from 0, as OpenCPN counts
-  them; the `SAS z` column and the `z11` in the progress line count the same levels from 1.
+  them; the `z+1` column and the `z11` in the progress line count the same levels from 1. (Since 2026.11.1 the column
+  is named `z+1`; 2026.10.x prints `SAS z` there.)
 - At 50° N one pixel is about 97 m at level 10, 6 m at level 14, 1.5 m at level 16 and 0.75 m at level 17. Levels
   10–14 suit a passage, 15–17 an anchorage or a harbour.
 - `--zooms` takes a range (`10-15`), single levels (`12,14`) or both (`8-12,14`).
@@ -203,10 +206,10 @@ sea charts this way.
 ```
 $ chart-grabber-cli download --maps="$MAPS" --source="EMODnet Bathymetry (world)" --bbox=-1.34,50.74,-1.24,50.78 --zooms=6-7
 EMODnet Bathymetry (world)
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-    6      7      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-    7      8      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-total             2     2                           ~40.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+    6    7      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+    7    8      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+total           2     2                           ~40.0 KB (assumed)
 warning: "EMODnet Bathymetry (world)": not for navigation. This source is not an official nautical chart; do not use it to navigate.
 EMODnet Bathymetry (world)  z7  0/2 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
 …
@@ -220,16 +223,16 @@ EMODnet Bathymetry (world)  z7  0/2 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb 
 ```
 $ chart-grabber-cli estimate --maps="$MAPS" --source="Sentinel-2 Cloudless 2025 (EOX)" --bbox=-1.60,50.60,-0.90,50.90 --zooms=10-17
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles   bbox  present  marked missing  to download
-   10     11      6      6    16.7%            0.0%     ~75.7 KB
-   11     12     20     20     5.0%            0.0%    ~207.1 KB
-   12     13     54     54     3.7%            0.0%    ~393.6 KB
-   13     14    187    187     3.2%            0.0%      ~1.2 MB
-   14     15    726    726     2.8%            0.0%      ~3.4 MB
-   15     16   2860   2860     2.3%            0.0%     ~10.3 MB
-   16     17  11352  11352     0.0%            0.0%     ~61.7 MB
-   17     18  44544  44544     0.0%            0.0%    ~242.3 MB
-total         59749  59749                             ~319.6 MB
+ zoom  z+1  tiles   bbox  present  marked missing  to download
+   10   11      6      6    16.7%            0.0%     ~75.7 KB
+   11   12     20     20     5.0%            0.0%    ~207.1 KB
+   12   13     54     54     3.7%            0.0%    ~393.6 KB
+   13   14    187    187     3.2%            0.0%      ~1.2 MB
+   14   15    726    726     2.8%            0.0%      ~3.4 MB
+   15   16   2860   2860     2.3%            0.0%     ~10.3 MB
+   16   17  11352  11352     0.0%            0.0%     ~61.7 MB
+   17   18  44544  44544     0.0%            0.0%    ~242.3 MB
+total       59749  59749                             ~319.6 MB
 ```
 
 - This is the whole Solent from the Needles to Selsey. Level 17 alone is three quarters of the job; dropping one
@@ -287,7 +290,7 @@ written: …/charts/Sentinel2-Cloudless-2025.mbtiles  1216 tiles  3.9 MB
 - To throw the saved state away and scan the area from the start, add `--restart`. Tiles already in the cache are
   checked, not downloaded again.
 
-`resume` continues from the saved state file that the warning names, without repeating the options. It downloads
+`resume` continues from the saved state file that the warning names, without repeating the options. With several files, a file whose job is locked by a live run is skipped with an error while the others continue (since 2026.11.1). This holds for a copy of the file kept outside the program's `AutoSave` folder too: it is locked by the job it belongs to (since 2026.11.1). It downloads
 only; make the chart afterwards with `export` or `run`. A `download` of the area east of Cowes, stopped with Ctrl-C:
 
 ```
@@ -335,7 +338,8 @@ written: …/charts/Sentinel2-Cloudless-2025.mbtiles  100 tiles  564.0 KB
 
 - With `--replace` the estimate counts the tiles already in the cache as to download, here 479.2 KB.
 - `--replace --replace-older-than=2026-10-01` replaces only tiles cached before that date. Without `--replace`, the
-  date option does nothing.
+  date option does nothing, except on a source with a model run, where `--replace-older-than` alone replaces (since 2026.11.1).
+  The same holds for `--retry-missing-older-than` without `--retry-missing` on such a source (since 2026.11.1).
 - `--replace --replace-if-size-differs` replaces a tile only when the server's copy has a different size.
 - Without `--overwrite` an existing chart file is never touched (see Troubleshooting).
 
@@ -357,14 +361,14 @@ $ cat yarmouth-cowes.gpx
 </gpx>
 $ chart-grabber-cli estimate --maps="$MAPS" --source="Sentinel-2 Cloudless 2025 (EOX)" --route=yarmouth-cowes.gpx --corridor-nm=1 --zooms=10-15
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles  bbox  present  marked missing  to download
-   10     11      4     4    25.0%            0.0%     ~45.4 KB
-   11     12      4     4    25.0%            0.0%     ~32.7 KB
-   12     13      6     8    33.3%            0.0%     ~30.3 KB
-   13     14     13    24    30.8%            0.0%     ~68.0 KB
-   14     15     30    72    20.0%            0.0%    ~153.2 KB
-   15     16     90   276    23.3%            0.0%    ~297.9 KB
-total           147   388                             ~627.5 KB
+ zoom  z+1  tiles  bbox  present  marked missing  to download
+   10   11      4     4    25.0%            0.0%     ~45.4 KB
+   11   12      4     4    25.0%            0.0%     ~32.7 KB
+   12   13      6     8    33.3%            0.0%     ~30.3 KB
+   13   14     13    24    30.8%            0.0%     ~68.0 KB
+   14   15     30    72    20.0%            0.0%    ~153.2 KB
+   15   16     90   276    23.3%            0.0%    ~297.9 KB
+total         147   388                             ~627.5 KB
 $ chart-grabber-cli run --maps="$MAPS" --source="Sentinel-2 Cloudless 2025 (EOX)" --route=yarmouth-cowes.gpx --corridor-nm=1 --zooms=10-15 --out=charts/yarmouth-cowes.mbtiles
 …
 Sentinel-2 Cloudless 2025 (EOX)  export  100%
@@ -415,13 +419,13 @@ written: …/charts/solent-overlay.mbtiles  100 tiles  320.0 KB
 ```
 $ chart-grabber-cli estimate --maps="$MAPS" --job=solent.conf --zooms=16
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles  bbox  present  marked missing  to download
-   16     17    228   228   100.0%            0.0%      ~0.0 KB
-total           228   228                               ~0.0 KB
+ zoom  z+1  tiles  bbox  present  marked missing  to download
+   16   17    228   228   100.0%            0.0%      ~0.0 KB
+total         228   228                               ~0.0 KB
 OpenSeaMap Seamarks
- zoom  SAS z  tiles  bbox  present  marked missing        to download
-   16     17    228   228     0.0%            0.0%  ~4.5 MB (assumed)
-total           228   228                           ~4.5 MB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing        to download
+   16   17    228   228     0.0%            0.0%  ~4.5 MB (assumed)
+total         228   228                           ~4.5 MB (assumed)
 ```
 
 - A misspelt key stops the program (exit code 2):
@@ -583,7 +587,7 @@ ever added at the end of a record, so read fields by position and ignore extra o
 | `estimate` | GUID, zoom, tiles, bbox tiles, share present, share marked missing, bytes to download, assumed (`1` when the size is a guess), expected size when complete (every tile of the zoom that is not marked missing, at the mean tile size; it is not what is on disk now, and equals the bytes to download on an empty cache) | `estimate`, `download`, `export`, `run`; one per zoom |
 | `fill` | GUID, zoom, tiles, present, marked missing, missing, bytes | `download`, `run`, `resume`; one per zoom |
 | `session` | GUID, time of the saved state (`yyyy-MM-dd HH:mm:ss`), full path of the `.sls` file | `download`, `run`, `resume` when a download continues |
-| `snapshot` | GUID, time of the weather frame in UTC (`yyyy-MM-ddTHH:mm:ssZ`, only the date for a daily picture, empty when unknown), the provider's name of the frame | `download`, `run`, `export` (before the `estimate` records of a weather source), `resume`; a second record follows when the program steps back to an earlier frame (see the weather section): the last `snapshot` record of a source names the frame used |
+| `snapshot` | GUID, time of the weather frame in UTC (`yyyy-MM-ddTHH:mm:ssZ`, only the date for a daily picture, empty when unknown), the provider's name of the frame, the model run in UTC (same form, empty when the provider gives none; since 2026.11.1, 2026.10.x records have no such field) | `download`, `run`, `export` (before the `estimate` records of a weather source), `resume`; a second record follows when the program steps back to an earlier frame (see the weather section): the last `snapshot` record of a source names the frame used |
 | `written` | GUID, full path of the `.mbtiles` file, tiles, file size in bytes, time of the weather frame (empty for other sources) | `export`, `run` |
 
 In the examples below `→` stands for a TAB.
@@ -591,7 +595,7 @@ In the examples below `→` stands for a TAB.
 ```
 $ chart-grabber-cli sources --maps="$MAPS" --format=tsv --filter=Sea
 source→{25E4232E-08A5-47C5-8D97-E38B5F418A2D}→layer→DWD weather radar (Germany, North Sea and western Baltic coasts)→image/png→3857→71→ok→Weather now/DWD-Radar-Germany.source.json→Weather now→user→snapshot→Source: Deutscher Wetterdienst (DWD), CC BY 4.0→9→0
-source→{91D4F1B4-A7CD-4FC8-95F1-637609068FB2}→map→EMODnet Bathymetry (European seas, depth shading)→image/png→3857→0→ok→Depth/EMODnet-Bathymetry-Europe.source.json→Depth→user→static→EMODnet Bathymetry Consortium→→1
+source→{91D4F1B4-A7CD-4FC8-95F1-637609068FB2}→map→EMODnet Bathymetry (European seas, depth shading)→image/png→3857→0→ok→Depth/EMODnet-Bathymetry-Europe.source.json→Depth→user→static→EMODnet Bathymetry Consortium, CC BY 4.0→→1
 source→{AB8A8685-AEC6-4E16-80DA-DC4AC37E4777}→layer→OpenSeaMap Seamarks→image/png→3857→0→ok→Seamarks and traffic/OpenSeaMap-Seamarks.source.json→Seamarks and traffic→user→static→Seamarks (c) OpenSeaMap contributors, CC-BY-SA→→0
 $ chart-grabber-cli run --maps="$MAPS" --job=solent.conf --format=tsv 2>/dev/null
 estimate→{92122135-6B15-4800-AA9E-3E48C556DA17}→10→1→1→1.0000→0.0000→0→0→15495
@@ -749,11 +753,11 @@ warning: "RainViewer radar (worldwide, current)": zooms 8,9 skipped, the source 
 …
 RainViewer radar (worldwide, current)
 snapshot 2026-10-20 16:50 UTC
- zoom  SAS z  tiles  bbox  present  marked missing         to download
-    5      6      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-    6      7      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-    7      8      1     1     0.0%            0.0%  ~20.0 KB (assumed)
-total             3     3                           ~60.0 KB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing         to download
+    5    6      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+    6    7      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+    7    8      1     1     0.0%            0.0%  ~20.0 KB (assumed)
+total           3     3                           ~60.0 KB (assumed)
 …
 Sentinel-2 Cloudless 2025 (EOX)  export  100%
 written: …/charts/solent-weather.mbtiles  5 tiles  96.0 KB
@@ -761,7 +765,7 @@ RainViewer radar (worldwide, current)  export  100%
 written: …/charts/solent-weather-overlay.mbtiles  3 tiles  72.0 KB  snapshot 2026-10-20 16:50 UTC
 ```
 
-The `snapshot` line, before the tables, gives the time of the frame. `estimate` does not ask the provider and says
+The `snapshot` line, before the tables, gives the time of the frame (and `, model run ...` when the provider names the run of the forecast; since 2026.11.1). Since 2026.11.1 a new model run replaces the cached tiles of the same time and also retries the tiles the old run did not serve (the "missing" marks). `estimate` does not ask the provider and says
 `snapshot: taken when downloading` instead. Ten minutes later the same command with `--overwrite` takes the next one:
 
 ```
@@ -860,6 +864,15 @@ pipe (a file, `< /dev/null`, a terminal) the command is refused with exit code 2
 once. Ctrl-C and `kill` keep working. On stop one line `chart-grabber-cli: stop requested on stdin; exit 143` goes to
 standard error. Without the option standard input is not read.
 
+### Two runs of the same job
+
+Since 2026.11.1.
+
+A job (the same source, area and zooms) holds a lock file `AutoSave/<id>/run.lock` in the data directory while it downloads. A
+second run of the same job that starts meanwhile (for example an overlapping scheduled start) does nothing, prints
+`error: another run of this job is in progress` and ends with exit code 3, so the first run's saved session stays intact. The
+lock of a run that was killed is taken over by the next run on the same computer; on a data directory shared over the network, delete `run.lock` by hand. Different jobs are not locked against each other.
+
 ## Reference
 
 ### Exit codes
@@ -869,7 +882,7 @@ standard error. Without the option standard input is not read.
 | 0 | Done. The fill report may still show missing tiles, unless `--strict` is given. |
 | 1 | Internal error. |
 | 2 | Wrong command line: unknown option, bad value, unreadable job file. |
-| 3 | Job refused before any download: source, area, zoom or output file not usable. |
+| 3 | Job refused before any download: source, area, zoom or output file not usable, or, since 2026.11.1, another run of the same job holds its session lock. |
 | 4 | Download not completed: no progress until the stall timeout, the network or the server is gone (`--max-connection-errors`), tiles could not be saved, or `--strict` with missing tiles. The state is saved; the same command continues. |
 | 5 | The chart file could not be written, or the cache holds no tile for it. |
 | 130 / 143 | Stopped by Ctrl-C / by `kill` (143 also by `--stop-on-stdin`). The state is saved. |

@@ -21,6 +21,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFileInfo>
+#include <QLockFile>
 #include <QRegularExpression>
 #include <QUuid>
 
@@ -44,6 +45,43 @@ constexpr auto kFinishPoll = std::chrono::milliseconds(100);
 struct Tr {
     Q_DECLARE_TR_FUNCTIONS(DownloadRunner)
 };
+
+// T-0445: one lock per job (`<AutoSave>/<id>/run.lock`, outside the session folder `<id>/<guid>`, so no
+// removeRecursively of a session touches it). No age-based staleness (a long download keeps its lock); Qt
+// removes the lock of a dead process of this host by itself. New code: legacy has no inter-process lock (the
+// GUI is one instance, u_DownloadSession.pas:373-397 only reads the session files). Null = refused, the
+// error is printed.
+std::unique_ptr<QLockFile> lockJob(Console& console, const QString& jobDir) {
+    QDir().mkpath(jobDir);
+    auto lock = std::make_unique<QLockFile>(jobDir + QStringLiteral("/run.lock"));
+    lock->setStaleLockTime(0);
+    if (lock->tryLock(0)) {
+        return lock;
+    }
+    switch (lock->error()) {
+    case QLockFile::LockFailedError: {
+        qint64 pid = 0;
+        QString host;
+        QString app;
+        if (lock->getLockInfo(&pid, &host, &app)) {
+            console.error(Tr::tr("another run of this job is in progress (lock %1, pid %2 on %3)")
+                              .arg(lock->fileName())
+                              .arg(pid)
+                              .arg(host));
+        } else {
+            console.error(Tr::tr("another run of this job is in progress (lock %1)").arg(lock->fileName()));
+        }
+        break;
+    }
+    case QLockFile::PermissionError:
+        console.error(Tr::tr("cannot lock %1: %2").arg(lock->fileName(), Tr::tr("no permission")));
+        break;
+    default:
+        console.error(Tr::tr("cannot lock %1: %2").arg(lock->fileName(), Tr::tr("unknown error")));
+        break;
+    }
+    return nullptr;
+}
 
 // What the worker writes as its last line when the area is done (thread_download_tiles.cpp, the context of
 // its own tr(); legacy SAS_MSG_ProcessFilesComplete, u_ResStrings.pas:63).
@@ -473,6 +511,17 @@ QString sessionMapGuid(AppContext& app, const QString& file) {
     }
 }
 
+// T-0450: the AutoSavePrefix key of the file's Session section (u_DownloadSession.pas:416), empty when the
+// file cannot be read. Only the key: the whole session need not load (no map set) to name the job folder.
+QString sessionAutosavePrefix(const QString& file) {
+    const auto ini = core::ConfigProviderIni::open(file);
+    if (!ini) {
+        return {};
+    }
+    const auto section = (*ini)->subItem(u"Session");
+    return section ? section->readString(u"AutoSavePrefix", {}) : QString();
+}
+
 // The line of `run` and of `resume` for each session file they start.
 void noteContinuing(Console& console, const QDateTime& time) {
     console.warning(
@@ -521,11 +570,18 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
 
     const QString id = jobId(job_, *source.map, *area, source.zooms);
     const QString guid = mapGuidText(*source.map);
+    const QString sessionDir = app_.autoSaveDir() + QLatin1Char('/') + id + QLatin1Char('/') + guid;
+    QDir dir(sessionDir);
+
+    // T-0445: held to the end of this source's download, incl. finish() and the removal of the session
+    const auto jobLock = lockJob(console_, app_.autoSaveDir() + QLatin1Char('/') + id);
+    if (!jobLock) {
+        return DownloadOutcome::Refused;
+    }
+    // T-0451: written once the lock is held; a refused run starts nothing, so it writes no `phase download`
     if (ctx.records) {
         console_.progressRecord(phaseRecord(u"download", guid));
     }
-    const QString sessionDir = app_.autoSaveDir() + QLatin1Char('/') + id + QLatin1Char('/') + guid;
-    QDir dir(sessionDir);
 
     std::vector<Slot> runs;
     if (job_.restart) {
@@ -552,6 +608,15 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
                     if (const auto section = (*ini)->subItem(u"Session")) {
                         saved = section->readString(u"VersionDownload", {});
                     }
+                }
+                if (source.snapshot->referenceChanged) { // T-0443
+                    console_.warning(Tr::tr("the model run of \"%1\" changed (%2 -> %3); starting afresh")
+                                         .arg(sourceName(*source.map),
+                                              referenceText(source.snapshot->referenceWas),
+                                              referenceText(source.snapshot->reference)));
+                    dir.removeRecursively();
+                    newest.clear();
+                    break;
                 }
                 if (saved != source.snapshot->version) {
                     console_.warning(Tr::tr("the saved session of \"%1\" is of another snapshot (%2); "
@@ -596,6 +661,30 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
         params.isReplaceIfDifSize = job_.replaceIfSizeDiffers;
         params.isReplaceIfOlder = job_.replaceOlderThan.isValid();
         params.replaceDate = job_.replaceOlderThan.isValid() ? job_.replaceOlderThan : storage::tileDateNow();
+        if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
+            !(job_.replace && !job_.replaceOlderThan.isValid())) {
+            // T-0443: tiles loaded before the model run was first seen are of an older run. The legacy skip
+            // of an existing tile (u_ThreadDownloadTiles.pas:322-325) comes before its date check
+            // (:328-333), so the replace flag is set too.
+            const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
+            params.isReplace = true;
+            params.isReplaceIfOlder = true;
+            if (!job_.replaceOlderThan.isValid() || seen > job_.replaceOlderThan) {
+                params.replaceDate = seen;
+            }
+        }
+        if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
+            !(job_.retryMissing && !job_.retryMissingOlderThan.isValid())) {
+            // T-0449: a TNE marker loaded before the model run was first seen is of an older run, the new run
+            // may serve the tile (legacy skip of a marker: u_ThreadDownloadTiles.pas:335-345). Also under a
+            // bare --replace (it replaces tiles, never markers). A bare --retry-missing retries every marker.
+            const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
+            params.isIgnoreTne = true;
+            params.loadTneOlderDate =
+                job_.retryMissingOlderThan.isValid() && job_.retryMissingOlderThan > seen
+                    ? job_.retryMissingOlderThan
+                    : seen;
+        }
         params.sessionAutosaveInterval = job_.autosaveMin;
         params.sessionAutosaveFilePrefix = id + QLatin1Char('/') + guid + QLatin1Char('/');
         params.splitCount = region::clampSplitCount(*source.map, job_.threads);
@@ -640,6 +729,21 @@ void DownloadRunner::printSessionRecord(const QString& file, const QDateTime& ti
     }
 }
 
+// T-0450: `<id>/<guid>/NN_` -> `<autoSaveDir>/<id>`; new code (the lock has no legacy). Fewer than two
+// segments (a legacy GUI prefix is a bare name), or a "." / ".." segment: empty = no lock.
+QString DownloadRunner::jobDirOfSessionPrefix(const QString& autoSaveDir, const QString& prefix) {
+    const QStringList parts = prefix.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    if (autoSaveDir.isEmpty() || parts.size() < 2) {
+        return {};
+    }
+    for (const QString& part : parts) {
+        if (part == QStringLiteral("..") || part == QStringLiteral(".")) {
+            return {};
+        }
+    }
+    return QDir::cleanPath(autoSaveDir) + QLatin1Char('/') + parts.first();
+}
+
 DownloadOutcome DownloadRunner::resume(const QStringList& slsFiles, const QStringList& sourceNames) {
     if (!starter_) {
         starter_ = std::make_shared<ProviderStarter>(app_);
@@ -650,8 +754,28 @@ DownloadOutcome DownloadRunner::resume(const QStringList& slsFiles, const QStrin
     QStringList files;
     QStringList guids;
     QStringList labels;
+    // T-0445: the lock of each job folder AutoSave/<id>/ the files write to (one per folder: the files of a
+    // route session share it). T-0450: the folder is named by the session's AutoSavePrefix (the new parts go
+    // there wherever the file lies); only a file whose prefix cannot be read is locked by its own folder.
+    const QString autoSave = QFileInfo(app_.autoSaveDir()).canonicalFilePath();
+    std::map<QString, std::unique_ptr<QLockFile>> locks;
     for (qsizetype i = 0; i < slsFiles.size(); ++i) {
         const QString& file = slsFiles.at(i);
+        QString jobDir = DownloadRunner::jobDirOfSessionPrefix(
+            autoSave.isEmpty() ? app_.autoSaveDir() : autoSave, sessionAutosavePrefix(file));
+        const QString guidDir = QFileInfo(file).dir().canonicalPath();
+        if (jobDir.isEmpty() && !autoSave.isEmpty() && guidDir.startsWith(autoSave + QLatin1Char('/'))) {
+            jobDir = QFileInfo(guidDir).dir().canonicalPath();
+        }
+        if (!jobDir.isEmpty()) {
+            if (!locks.contains(jobDir)) {
+                auto lock = lockJob(console_, jobDir);
+                if (!lock) {
+                    continue; // refused: the file is not started (as a file that cannot be continued)
+                }
+                locks.emplace(jobDir, std::move(lock));
+            }
+        }
         try {
             const QString guid = ctx.records ? sessionMapGuid(app_, file) : QString();
             if (!guid.isEmpty()) {
@@ -688,7 +812,6 @@ DownloadOutcome DownloadRunner::resume(const QStringList& slsFiles, const QStrin
     // (as `run` does); a file elsewhere stays.
     const DownloadOutcome outcome = finish(ctx, runs, reason, false);
     if (outcome == DownloadOutcome::Completed) {
-        const QString autoSave = QFileInfo(app_.autoSaveDir()).canonicalFilePath();
         for (const QString& file : files) {
             const QString dir = QFileInfo(file).dir().canonicalPath();
             if (!autoSave.isEmpty() && dir.startsWith(autoSave + QLatin1Char('/'))) {

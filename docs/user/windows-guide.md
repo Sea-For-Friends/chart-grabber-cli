@@ -5,8 +5,8 @@ that OpenCPN opens as a chart. It runs in a terminal window; it has no windows o
 display maps, plan routes, or convert vector charts (S-57, S-63).
 
 This guide is for Windows 10 or later, 64-bit, and for people who have never typed a command. The commands and the
-output below are from version 2026.10.14, Windows 10 22H2, Windows PowerShell 5.1 and `cmd`. Everything the program does
-that is not specific to Windows is in `cli-guide.md`, in the same folder as this file.
+output below are from version 2026.11.1, Windows 10 22H2, Windows PowerShell 5.1 and `cmd`. Everything the program does
+that is not specific to Windows is in the [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md) in the public repository.
 
 Contents: [1. Install](#1-how-to-install-the-program) ·
 [2. Open a terminal and run it](#2-how-to-open-a-terminal-and-run-the-program) ·
@@ -46,7 +46,6 @@ Start menu, right-click "Windows PowerShell" and choose "Run as administrator". 
 PS> Copy-Item .\chart-grabber-cli-*-win64 "C:\Program Files\Chart Grabber CLI" -Recurse
 PS> cd "C:\Program Files\Chart Grabber CLI"
 PS> Get-ChildItem -Directory -Name
-docs
 imageformats
 licenses
 platforms
@@ -62,8 +61,7 @@ proj.db
 - `chart-grabber-cli.exe` is the program. The 50 `.dll` files next to it are the libraries it needs; keep them in the
   same folder. `imageformats`, `platforms`, `tls`, `qt.conf` and `proj.db` are needed as well.
 - `NOTICE` lists the third-party libraries in the zip and their licences. The licence texts are in `licenses\`.
-- `docs\` holds this guide, `cli-guide.md`, `sources-guide.md` (how to write your own map sources) and the change
-  list `CHANGELOG.md`. They are plain text; Notepad opens them.
+- `README.txt` lists where the documentation is: it is not in the zip, it is online (this guide, the [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md), the sources guide and the change list).
 
 ## 2. How to open a terminal and run the program
 
@@ -76,7 +74,7 @@ Go to the program's folder and ask for its version:
 ```
 PS> cd "C:\Program Files\Chart Grabber CLI"
 PS> .\chart-grabber-cli.exe --version
-chart-grabber-cli 2026.10.14 (951d3db248cc)
+chart-grabber-cli 2026.11.1 (abbe831b4db3)
 ```
 
 The `.\` in front means "the program in this folder". PowerShell does not run a program from the current folder
@@ -90,7 +88,7 @@ the window:
 PS> $env:Path += ";C:\Program Files\Chart Grabber CLI"
 PS> cd $HOME
 PS> chart-grabber-cli --version
-chart-grabber-cli 2026.10.14 (951d3db248cc)
+chart-grabber-cli 2026.11.1 (abbe831b4db3)
 ```
 
 The rest of this guide uses that form. Every new window needs the first line again. To make it permanent, open the
@@ -170,18 +168,18 @@ example is the Cowes end of the Solent.
 ```
 PS> chart-grabber-cli estimate --maps="$maps" --source="Sentinel-2 Cloudless 2025 (EOX)" --bbox=-1.34,50.74,-1.24,50.78 --zooms=10-15
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles  bbox  present  marked missing          to download
-   10     11      1     1     0.0%            0.0%   ~20.0 KB (assumed)
-   11     12      1     1     0.0%            0.0%   ~20.0 KB (assumed)
-   12     13      2     2     0.0%            0.0%   ~40.0 KB (assumed)
-   13     14      6     6     0.0%            0.0%  ~120.0 KB (assumed)
-   14     15     20    20     0.0%            0.0%  ~400.0 KB (assumed)
-   15     16     70    70     0.0%            0.0%    ~1.4 MB (assumed)
-total           100   100                             ~2.0 MB (assumed)
+ zoom  z+1  tiles  bbox  present  marked missing          to download
+   10   11      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+   11   12      1     1     0.0%            0.0%   ~20.0 KB (assumed)
+   12   13      2     2     0.0%            0.0%   ~40.0 KB (assumed)
+   13   14      6     6     0.0%            0.0%  ~120.0 KB (assumed)
+   14   15     20    20     0.0%            0.0%  ~400.0 KB (assumed)
+   15   16     70    70     0.0%            0.0%    ~1.4 MB (assumed)
+total         100   100                             ~2.0 MB (assumed)
 ```
 
 Look at the `total` row before a big download. One zoom level more is about four times the tiles. `(assumed)` means
-nothing of this source is stored on your computer yet, so the program guesses 20 KB per tile. The `SAS z` column is
+nothing of this source is stored on your computer yet, so the program guesses 20 KB per tile. The `z+1` column is
 the same zoom level counted from 1; OpenCPN and this guide count from 0.
 
 **Make the chart.** `run` downloads the tiles and writes the chart file. The folder for `--out` must exist:
@@ -190,7 +188,7 @@ the same zoom level counted from 1; OpenCPN and this guide count from 0.
 PS> mkdir charts
 PS> chart-grabber-cli run --maps="$maps" --source="Sentinel-2 Cloudless 2025 (EOX)" --bbox=-1.34,50.74,-1.24,50.78 --zooms=10-15 --out=charts\
 Sentinel-2 Cloudless 2025 (EOX)
- zoom  SAS z  tiles  bbox  present  marked missing          to download
+ zoom  z+1  tiles  bbox  present  marked missing          to download
 …
 total           100   100                             ~2.0 MB (assumed)
 Sentinel-2 Cloudless 2025 (EOX)  z11  0/100 (0%)  downloaded 0 tiles 0.0 KB  left ~~ Kb ~~
@@ -255,7 +253,7 @@ PS> chart-grabber-cli probe --maps="$maps" --filter=Sea --at=-1.29,50.76 --probe
 {AB8A8685-AEC6-4E16-80DA-DC4AC37E4777}  OpenSeaMap Seamarks  ok 12535 image/png
 ```
 
-More tasks, which work the same on Windows, are in `cli-guide.md`: choosing a source (section 2), a chart along a
+More tasks, which work the same on Windows, are in [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md): choosing a source (section 2), a chart along a
 GPX route (6), updating a chart (5), a proxy or a machine without internet (8), weather (13). Write the paths in
 those examples as Windows paths.
 
@@ -349,7 +347,7 @@ written: C:/Users/builder/charts/solent-job.mbtiles  100 tiles  564.0 KB
 - Notepad may save the file as `solent.conf.txt` if you choose "Text documents". Choose "All files" in the Save dialog,
   or turn on File name extensions in the File Explorer View menu to see the real name. Older job files named
   `.ini` work too.
-- More about job files, and the error for a misspelt key, is in `cli-guide.md`, section 7.
+- More about job files, and the error for a misspelt key, is in [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md), section 7.
 
 ## 6. Where the program keeps its files
 
@@ -426,7 +424,7 @@ your own.
 - **Closing the window.** The X button of the console window saves the session and ends the program with exit code 143.
   Run the same command again to continue.
 - **A program that starts the CLI**, such as the OpenCPN plugin, cannot press Ctrl-C. It adds `--stop-on-stdin` and
-  writes the line `stop` to the program's input; the program then ends with exit code 143. See `cli-guide.md`.
+  writes the line `stop` to the program's input; the program then ends with exit code 143. See [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md).
 - **Proxy.** The program uses the proxy set in Windows (Settings, Network & Internet, Proxy), the `http_proxy` and
   `https_proxy` variables, and `--proxy=URL`. In PowerShell set a variable for the window with
   `$env:https_proxy = "http://proxy.example:3128"`. A proxy that is down stops the download with exit code 4, and the
@@ -450,11 +448,11 @@ your own.
 | 143 | Stopped by closing the console window, by `--stop-on-stdin`, or by `kill`. The state is saved. |
 | -1073741515 | Windows could not start the program: a `.dll` is missing (Troubleshooting). |
 
-PowerShell shows the code in `$LASTEXITCODE`, `cmd` in `%ERRORLEVEL%`. The full table is in `cli-guide.md`.
+PowerShell shows the code in `$LASTEXITCODE`, `cmd` in `%ERRORLEVEL%`. The full table is in [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md).
 
 ### Options
 
-`chart-grabber-cli --help` prints the full list of commands and options; `cli-guide.md` has the same text.
+`chart-grabber-cli --help` prints the full list of commands and options; [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md) has the same text.
 
 ## Troubleshooting
 
@@ -509,4 +507,4 @@ Without `--max-connection-errors` the program tries 60 tiles in a row first. Fix
 command again.
 
 **`error: "…" exists; pass --overwrite to replace it`** (exit 3), **`error: no map source matches …`** (exit 3) and the
-other messages not listed here are explained in the Troubleshooting section of `cli-guide.md`.
+other messages not listed here are explained in the Troubleshooting section of [CLI guide](https://github.com/Sea-For-Friends/chart-grabber-cli/blob/HEAD/docs/user/cli-guide.md).

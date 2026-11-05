@@ -276,7 +276,8 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
         const QString& version = versions.at(guid);
         applySnapshot(*map, version);
         const auto stored = loadSnapshot(app.snapshotDir(), guid);
-        Snapshot taken{version, {}, false};
+        Snapshot taken;
+        taken.version = version;
         if (stored && stored->version == version) {
             taken = *stored;
         } else if (auto parsed = snapshotFromText(version, version)) {
@@ -345,6 +346,22 @@ bool isSnapshotSource(const maptype::IMapType& map) {
     return definition && definition->has_value();
 }
 
+// T-0443: a freshly taken snapshot against the stored one (read before the save): the run is carried or
+// renewed, an unreadable run and a new run are said on stderr.
+void noteRun(Snapshot& taken, const QString& name, AppContext& app, const QString& guid, Console& console) {
+    if (!taken.referenceBad.isEmpty()) {
+        console.warning(Tr::tr("cannot read the model run of \"%1\" (reference_time \"%2\")")
+                            .arg(name, taken.referenceBad));
+    }
+    const std::optional<Snapshot> stored = loadSnapshot(app.snapshotDir(), guid);
+    carryReference(taken, stored, QDateTime::currentDateTimeUtc());
+    if (taken.referenceChanged && taken.referenceWas.isValid()) {
+        console.warning(
+            Tr::tr("new model run of \"%1\": %2 (was %3); cached tiles of this frame are replaced")
+                .arg(name, referenceText(taken.reference), referenceText(taken.referenceWas)));
+    }
+}
+
 // download / run: resolve, apply, store; export: apply the stored snapshot; estimate: nothing. Returns the
 // exit code (kExitOk = go on).
 int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::stop_token& termination,
@@ -373,7 +390,7 @@ int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::s
         SnapshotDefinition wanted = **definition;
         wanted.time = job.time; // T-0283: only a wmts-default source has one (resolveJob refused the rest)
         wanted.sourceName = sourceName(*source.map);
-        const auto taken = resolveSnapshot(wanted, *source.map, app, termination);
+        auto taken = resolveSnapshot(wanted, *source.map, app, termination);
         if (!taken) {
             if (taken.error().code() == core::ErrorCode::Cancelled) {
                 return kExitInterrupted;
@@ -387,6 +404,7 @@ int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::s
             return kExitDownloadFailed;
         }
         applySnapshot(*source.map, taken->version);
+        noteRun(*taken, wanted.sourceName, app, guid, console);
         source.map->tileStorage()->setRecordSkippedSaves(true); // T-0352: the prune reads the record
         if (const auto saved = saveSnapshot(app.snapshotDir(), guid, *taken, QDateTime::currentDateTimeUtc());
             !saved) {
@@ -422,7 +440,7 @@ DownloadOutcome downloadPreviousFrame(ResolvedSource& source, const Job& job, Ap
     wanted.time = job.time;
     wanted.sourceName = name;
     wanted.previous = true;
-    const auto taken = resolveSnapshot(wanted, *source.map, app, termination);
+    auto taken = resolveSnapshot(wanted, *source.map, app, termination);
     if (!taken) {
         if (taken.error().code() == core::ErrorCode::Cancelled) {
             return DownloadOutcome::Interrupted;
@@ -434,6 +452,7 @@ DownloadOutcome downloadPreviousFrame(ResolvedSource& source, const Job& job, Ap
         return runner.run(source, area);
     }
     const QString guid = guidText(*source.map);
+    noteRun(*taken, name, app, guid, console);
     if (const auto saved = saveSnapshot(app.snapshotDir(), guid, *taken, QDateTime::currentDateTimeUtc());
         !saved) {
         console.error(Tr::tr("cannot write %1: %2")
@@ -508,7 +527,10 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
             if (estimateOnly) {
                 console.result(Tr::tr("snapshot: taken when downloading"));
             } else if (source.snapshot) {
-                console.result(Tr::tr("snapshot %1").arg(snapshotTimeText(*source.snapshot)));
+                console.result(Tr::tr("snapshot %1").arg(snapshotTimeText(*source.snapshot)) +
+                               (source.snapshot->reference.isValid()
+                                    ? Tr::tr(", model run %1").arg(referenceText(source.snapshot->reference))
+                                    : QString()));
             }
             printLines(console, estimateTable(*estimates, makeConverter()));
         }
@@ -557,6 +579,9 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
                                     .arg(*removed)
                                     .arg(sourceName(*source.map)));
                 }
+            }
+            if (outcome == DownloadOutcome::Refused) { // T-0445: the job lock is held; nothing was touched
+                return kExitRefused;
             }
             const int code =
                 printFillReport(*source.map, **area, source.zooms, app, console, termination, anyMissing,
