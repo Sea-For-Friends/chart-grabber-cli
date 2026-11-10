@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-004, FEAT-NET-014. Ports Test/u_PascalScriptUrlTemplate_Test.pas (TestUrlTemplate,
-// every check verbatim, in order) and u_PascalScriptUrlTemplate.pas; docs/specs/maptype.md 2.8, 7.1, 7.3.
+// Ports Test/u_PascalScriptUrlTemplate_Test.pas (TestUrlTemplate, every check verbatim, in order) and
+// u_PascalScriptUrlTemplate.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/language_manager.h"
 #include "cg/geo/datum.h"
@@ -95,7 +95,7 @@ TEST_F(UrlTemplateTest, TestUrlTemplate) {
     EXPECT_EQ(t.render(request), u"http://example.com/z19/0/x200/0/y300.png"_s);
 }
 
-// {s} is chosen once per ServerNames parse (L-136), with the injected Random(N); the other tags.
+// {s} is chosen once per ServerNames parse, with the injected Random(N); the other tags.
 TEST_F(UrlTemplateTest, ServerChoiceIsMadeOncePerParse) {
     QList<qint32> asked;
     qint32 next = 1;
@@ -106,7 +106,7 @@ TEST_F(UrlTemplateTest, ServerChoiceIsMadeOncePerParse) {
     config->setUrlBase("{s}/{s}");
     config->setServerNames(",a, b\t,c,,");
     const UrlTemplateRequest request{kTile, kZoom, nullptr};
-    // leading separator: the first name is "" (L-139); list = "", a, b, c
+    // leading separator: the first name is ""; list = "", a, b, c
     EXPECT_EQ(t.render(request), u"a/a"_s);
     EXPECT_EQ(t.render(request), u"a/a"_s);
     next = 2;
@@ -115,7 +115,7 @@ TEST_F(UrlTemplateTest, ServerChoiceIsMadeOncePerParse) {
     config->setServerNames("a,b,c");
     EXPECT_EQ(t.render(request), u"c/c"_s);
     config->setServerNames("");
-    EXPECT_EQ(t.render(request), u"c/c"_s); // an empty list keeps the old host (L-138)
+    EXPECT_EQ(t.render(request), u"c/c"_s); // an empty list keeps the old host
 }
 
 struct EdgeRow {
@@ -135,8 +135,8 @@ TEST_F(UrlTemplateTest, ParseEdgeCases) {
         {"{X}{Y}{Z}", u"200300"
                       "18"}, // case-insensitive
         {"{-y}", u"261843"}, // (1 shl 18) - 1 - 300 is a name, not arithmetic
-        {"{foo-bar}", u""},  // unknown tag with an operator renders "" (L-142)
-        {"{z + 1}", u"18"},  // trailing text after the value of z (L-137)
+        {"{foo-bar}", u""},  // unknown tag with an operator renders ""
+        {"{z + 1}", u"18"},  // trailing text after the value of z
         {"{x*2abc}-{X*2}", u"400-400"},
         {"{sas_path}", u"z19/0/x200/0/y300"},
         {"{lang}|{ver}", u"en|"}, // no language file: ""; no version: ""
@@ -179,7 +179,7 @@ TEST_F(UrlTemplateTest, QuadkeyBboxTimestampVersionLanguage) {
               "0.00000000,90.00000000,45.00000000,135.00000000");
 }
 
-// templateToUrl renders the given text for the stored request and leaves it cached (L-143).
+// templateToUrl renders the given text for the stored request and leaves it cached.
 TEST_F(UrlTemplateTest, TemplateToUrl) {
     UrlTemplate t(lang, set, config);
     config->setUrlBase("U{x}");

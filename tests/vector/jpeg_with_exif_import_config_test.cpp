@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_JpegWithExifImportConfig.pas (T-0151, V10).
+// Ports u_JpegWithExifImportConfig.pas.
 #include "cg/vector/appearance_of_mark_point.h"
 #include "cg/vector/category.h"
 #include "cg/vector/import_config.h"

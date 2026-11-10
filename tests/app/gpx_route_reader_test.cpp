@@ -4,9 +4,8 @@
 
 // Tests for src/cg/app/gpx_route_reader (new code; inherits Vector/u_VectorItemTreeImporterXML.pas:162-186,
 // 757-857 and VectorLoaders/u_XmlVectorObjects.pas:356-362, 490-494). Expected values are literals read by
-// eye from the GPX text. The closed vsagps parser has no legacy output; inline inputs are hand-written
-// (see tests/fixtures/app/gpx/README.md).
-// FEAT-GEO-019 (GPX import): contributes through readGpxRoutes; the row stays in held-open.md.
+// eye from the GPX text. The closed vsagps parser has no legacy output; inline inputs are hand-written (see
+// tests/fixtures/app/gpx/README.md).
 #include "cg/app/gpx_route_reader.h"
 
 #include <QBuffer>

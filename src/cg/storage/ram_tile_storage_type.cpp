@@ -29,16 +29,15 @@ RamTileStorageType::build(const TileStorageAbilities& forceAbilities, geo::Proje
                           const core::ContentTypeInfo& mainContentType, TilePyramidNotifierPtr tileNotifier,
                           const QString& path, std::shared_ptr<TileInfoMemCache> cacheTileInfo) {
     // StorageClass::InMemory: applyStorageConfigIni() never looks for a StorageConfig.ini file
-    // (already landed, InMemoryStorageClassNeverLooksForAnIniFile), so `path` does not affect the
-    // narrowed abilities. `path` itself is not forwarded to RamTileStorage -- legacy's own
+    // (InMemoryStorageClassNeverLooksForAnIniFile), so `path` does not affect the narrowed
+    // abilities. `path` itself is not forwarded to RamTileStorage -- legacy's own
     // BuildStorageInternal does not pass APath into TTileStorageInRAM.Create either
-    // (u_TileStorageTypeInRAM.pas:98-107); the storage's path is always "" (T-0021F3a).
+    // (u_TileStorageTypeInRAM.pas:98-107); the storage's path is always "".
     const TileStorageAbilities resolvedAbilities =
         applyStorageConfigIni(abilities_.base, forceAbilities, abilities_.storageClass, path);
 
     // `cacheTileInfo` is forwarded as-is; a null cache is RamTileStorage's own error
-    // (RamTileStorageMemCacheRequired), not re-checked here -- ticket's own instruction ("a null
-    // mem cache is F3a's error, passed through").
+    // (RamTileStorageMemCacheRequired), not re-checked here.
     ITileStoragePtr storage = std::make_shared<RamTileStorage>(
         abilities_, resolvedAbilities, mapVersionFactory_, std::move(projectionSet), std::move(tileNotifier),
         mainContentType, std::move(cacheTileInfo));

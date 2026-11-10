@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (helper predicate; ported with geo_types, fixed by T-0110).
-// Ports: u_GeoFunc.pas PointIsEmpty (:550-552) = IsNan(X) or IsNan(Y). The expected values are
-// derived from that Pascal body, not from the port: IsNan(+/-Inf) is False, IsNan(NaN) is True.
+// A helper predicate. Ports: u_GeoFunc.pas PointIsEmpty (:550-552) = IsNan(X) or IsNan(Y). The
+// expected values are derived from that Pascal body, not from the port: IsNan(+/-Inf) is False,
+// IsNan(NaN) is True.
 
 #include "cg/geo/geo_types.h"
 

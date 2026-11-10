@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-200; docs/specs/core.md 2.14, test plan 7.7
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/config_provider_ini_section.h"
 
@@ -102,7 +101,7 @@ TEST(ConfigProviderIniSection, SubItemNamesStripThePrefix) {
     const auto root = loadQuirksProvider();
     const auto tree = root->subItem(u"Tree");
     ASSERT_NE(tree, nullptr);
-    // D-1: the correct prefix strip, not legacy's list-of-empty-strings bug.
+    // The correct prefix strip, not legacy's list-of-empty-strings bug.
     EXPECT_TRUE(tree->subItemNames().contains(QStringLiteral("Child")));
 }
 
@@ -128,7 +127,7 @@ TEST(ConfigProviderIniSection, ReadIntBoolFloatMatchIniFileRules) {
     EXPECT_EQ(types->readInt(u"IntHex", 0), 31);
     EXPECT_EQ(types->readInt(u"IntBad", -1), -1);
     EXPECT_TRUE(types->readBool(u"BoolOne", false));
-    // Q14: "True" is not an integer, so ReadBool falls back to whichever default was passed.
+    // "True" is not an integer, so ReadBool falls back to whichever default was passed.
     EXPECT_FALSE(types->readBool(u"BoolTrue", false));
     EXPECT_TRUE(types->readBool(u"BoolTrue", true));
     EXPECT_DOUBLE_EQ(types->readFloat(u"FloatComma", 0.0), 3.25);
@@ -161,7 +160,7 @@ TEST(ConfigProviderIniSection, ReadUuidAcceptsOnlyTheStringToGuidForm) {
 }
 
 TEST(ConfigProviderIniSection, ReadUuidDistinguishesStoredNullFromParseFailure) {
-    // Rework finding 4: a legitimately stored null GUID must round-trip, not be conflated with
+    // A legitimately stored null GUID must round-trip, not be conflated with
     // "the string failed to parse" (u_ConfigProviderHelpers.pas:430-448 only falls back to the
     // default on StringToGUID's exception).
     const auto root = loadQuirksProvider();

@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/SML/u_MarkFactorySmlDbInternal.pas (424, class TMarkFactorySmlDbInternal;
-// docs/specs/marks.md section 2.8.4). It implements IMarkFactorySmlInternal (mark_factory_sml_internal.h).
-// Ported in the Pascal order: CalcMultiGeometryCount (:121-133), Create (:137-155), CreatePoint (:157-227),
-// CreateInternalMark (:229-260), CreateLine (:262-310), CreatePoly (:312-361), CreateMark (:363-422).
+// Ports: Src/MarksDB/SML/u_MarkFactorySmlDbInternal.pas (424 lines, class TMarkFactorySmlDbInternal). It
+// implements IMarkFactorySmlInternal (mark_factory_sml_internal.h). Ported in the Pascal order:
+// CalcMultiGeometryCount (:121-133), Create (:137-155), CreatePoint (:157-227), CreateInternalMark
+// (:229-260), CreateLine (:262-310), CreatePoly (:312-361), CreateMark (:363-422).
 //
 // Legacy FHashFunction is not kept: the hashes are the core free functions (core/hash.h), as in MarkFactory.
 // Legacy Assert calls are not ported: the shipped build has assertions off (SASPlanet.dproj:92).

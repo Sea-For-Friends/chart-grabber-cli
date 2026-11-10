@@ -4,8 +4,8 @@
 
 // Tests for src/cg/region/export_mbtiles (Src/RegionProcess/Export/MBTiles/fr_ExportMBTiles.pas, the
 // headless half: GetMBTilesContentType :208-228, GetAllowExport :321-324, GetIsLayer :346-352,
-// GetMapType :359-368, GetDirectTilesCopy :375-418, GetBitmapTileSaver :478-515 format half). T-0183.
-// FEAT-REG-069 (Export to MBTiles) is contributed to, not closed: the recompose path is absent.
+// GetMapType :359-368, GetDirectTilesCopy :375-418, GetBitmapTileSaver :478-515 format half). The
+// recompose path is absent.
 //
 // Rig: FakeMapType (tests/region) with a chosen bitmap flag, content type and projection set.
 // The content types come from the standard registry (image/png, image/jpg, image/webp, image/bmp,

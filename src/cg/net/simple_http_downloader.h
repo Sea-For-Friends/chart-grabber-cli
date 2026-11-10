@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_SimpleHttpDownloader.pas, u_SimpleHttpDownloader.pas:127-170. docs/specs/net.md §2.17.
-// FEAT-NET-016. This is what ADR-0003's `Downloader.DoHttpRequest` script binding calls; `script`
-// must call this, not re-implement it.
+// Ports: i_SimpleHttpDownloader.pas, u_SimpleHttpDownloader.pas:127-170. This is what the
+// script's `Downloader.DoHttpRequest` binding calls; `script` must call this, not re-implement
+// it.
 
 #include "cg/net/downloader.h"
 #include "cg/net/inet_config.h"

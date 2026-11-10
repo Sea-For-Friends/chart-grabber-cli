@@ -47,7 +47,7 @@ QStringList ConfigProviderIniSection::subItemNames() const {
     QStringList names;
     for (const QString& name : file_->sectionNames()) {
         if (name.size() > prefix.size() && name.startsWith(prefix, Qt::CaseInsensitive)) {
-            names.append(name.sliced(prefix.size())); // D-1: correct prefix strip
+            names.append(name.sliced(prefix.size())); // Correct prefix strip
         }
     }
     return names;

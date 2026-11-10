@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: the converter half of Src/ContentType/u_ContentTypeManagerSimple.pas (UpdateConverterMatrix :297-303
-// and its four steps) and GetConverter (u_ContentTypeManagerBase.pas:182-188), docs/specs/maptype.md §2.13.5.
-// kml <-> kmz entries of ConverterMatrixUpdateFixed (:325-362) are T-0178.
+// and its four steps) and GetConverter (u_ContentTypeManagerBase.pas:182-188). The kml <-> kmz entries of
+// ConverterMatrixUpdateFixed (:325-362) are ported too.
 
 #include "cg/bitmap/content_type_manager_bitmap.h"
 #include "cg/core/content_type.h"
@@ -17,7 +17,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-013
 // Built once in the constructor; immutable afterwards, so one instance is shared by all download workers.
 class ContentConverters {
 public:

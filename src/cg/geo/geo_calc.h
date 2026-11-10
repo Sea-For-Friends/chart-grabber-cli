@@ -4,10 +4,7 @@
 
 #pragma once
 // Ports: Src/GeoCalc/i_GeoCalc.pas, u_GeoCalc.pas (the IGeoCalc/TGeoCalc half only --
-// IGeoCalcChangeable/TGeoCalcChangeable is view state and belongs to `ui`, §1.2).
-// docs/specs/geo.md §5.
-//
-// FEAT-GEO-014, FEAT-GEO-015
+// IGeoCalcChangeable/TGeoCalcChangeable is view state and belongs to `ui`).
 
 #include "cg/geo/datum.h"
 #include "cg/geo/geometry_lonlat.h"
@@ -17,9 +14,9 @@
 namespace cg::geo {
 
 // The value half of IGeoCalcConfig (i_GeoCalcConfig.pas:31 TGeoCalcDatumSource). The
-// ConfigElement/IChangeable wrappers around this (u_GeoCalcConfig.pas) are a `ui` ticket -- this
-// module only exports the plain value so `ui` can persist it (key "[GeoCalc] DatumSource",
-// confirm against u_GeoCalcConfig.pas when that ticket lands).
+// ConfigElement/IChangeable wrappers around this (u_GeoCalcConfig.pas) belong to `ui` -- this
+// module only exports the plain value so `ui` can persist it (key "[GeoCalc] DatumSource", to be
+// confirmed against u_GeoCalcConfig.pas when that part is ported).
 struct GeoCalcSettings {
     enum class DatumSource : std::uint8_t { Wgs84, Zmp };
     DatumSource datumSource = DatumSource::Wgs84;

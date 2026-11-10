@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/RegionProcess/Download/u_DownloadSession.pas (Save :230-284, Load :286-478, inner
-// _CheckZoom :293-304 and _ReadZoom :305-324). The key order and the text forms follow
-// docs/specs/region-download.md section 2.3.1 (`:292-352`).
+// _CheckZoom :293-304 and _ReadZoom :305-324). The key order and the text forms are legacy's.
 
 #include "cg/core/config_writer.h"
 #include "cg/geo/config_provider_helpers.h"
@@ -79,9 +78,8 @@ qint64 truncToInt64(double value) {
 
 } // namespace
 
-// FEAT-REG-017
 void DownloadSession::save(core::IConfigWriter& sessionSection) {
-    // unreachable in legacy (u_ProviderTilesDownload.pas:333, :354-355); no register row
+    // unreachable in legacy (u_ProviderTilesDownload.pas:333, :354-355)
     if (!mapType_ || !versionForDownload_) {
         throw std::logic_error("DownloadSession::save: no map type or download version");
     }
@@ -136,7 +134,6 @@ void DownloadSession::save(core::IConfigWriter& sessionSection) {
     geo::writePolygon(sessionSection, polygon_);
 }
 
-// FEAT-REG-019
 void DownloadSession::load(const core::IConfigProviderPtr& sessionSection,
                            const maptype::IMapTypeSet& fullMapsSet,
                            const net::IGlobalDownloadConfig& downloadConfig,

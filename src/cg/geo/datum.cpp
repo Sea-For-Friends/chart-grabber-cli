@@ -17,10 +17,10 @@ namespace {
 
 constexpr double kDeg2Rad = std::numbers::pi / 180.0;
 constexpr double kAreaCancelThreshold = 1e-6; // u_PolygonAreaCalculator.pas cThresh
-constexpr int kCancelPollInterval = 1024;     // docs/specs/geo.md §8.1
+constexpr int kCancelPollInterval = 1024;
 
 // Ports u_PolygonAreaCalculator.pas:100-277 (the GRASS/QGIS series), transcribed exactly. Not
-// GeographicLib's PolygonArea and not the shoelace formula for the ellipsoid branch (§2.3.2).
+// GeographicLib's PolygonArea and not the shoelace formula for the ellipsoid branch.
 class GrassAreaSeries {
 public:
     GrassAreaSeries(double radiusA, double radiusB) noexcept : isEllipsoid_(radiusA != 0.0) {
@@ -231,7 +231,7 @@ public:
 
     [[nodiscard]] std::vector<LonLat> linePoints(LonLat from, LonLat to, int pointCount) const override {
         // u_Datum.pas:321-366. The SAME initial bearing (computed once, from -> to) is reused at
-        // every step; only the *base point* advances (LinePointsReusesInitialBearing, §11.2).
+        // every step; only the *base point* advances (LinePointsReusesInitialBearing).
         Q_ASSERT(pointCount >= 1);
         double distFull = 0.0, initialBearing = 0.0, finalBearing = 0.0;
         geod_inverse(&geod_, from.lat, from.lon, to.lat, to.lon, &distFull, &initialBearing, &finalBearing);
@@ -280,8 +280,8 @@ DatumPtr DatumFactory::byCode(int datumEpsg) const {
 }
 
 DatumPtr DatumFactory::byRadius(double radiusA, double radiusB) const {
-    // u_DatumFactory.pas:103-124, including the asymmetry: the second test can override the
-    // first, and there is deliberately no branch that resolves to 53004 (§2.3.3).
+    // u_DatumFactory.pas:103-124, including the asymmetry: the second test can override the first,
+    // and there is deliberately no branch that resolves to 53004.
     int epsg = 0;
     if (std::abs(radiusA - 6378137.0) < 1.0 && std::abs(radiusB - 6378137.0) < 1.0) {
         epsg = 6055;

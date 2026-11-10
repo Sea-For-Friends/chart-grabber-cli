@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# T-0370: sourced by tools/export_public.sh, tools/build_deb.sh and tools/vm/win10/package_in_vm.sh.
+# Sourced by tools/export_public.sh, tools/build_deb.sh and the Windows packaging script.
 # cg_identity_load [conf]          sets PUBLIC_REPO_URL (the CLI repository), PLUGIN_REPO_URL and MAINTAINER from tools/public-identity.conf (or [conf])
 # cg_identity_is_placeholder       0 when PUBLIC_REPO_URL, PLUGIN_REPO_URL or MAINTAINER still holds a placeholder (an angle-bracket URL, LOGIN)
 # cg_identity_require_real WHAT    exit 2 with a message when a placeholder is set and CG_ALLOW_PLACEHOLDER is not 1

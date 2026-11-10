@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT directly (feeds FEAT-RND-063 tile hashing); docs/specs/core.md 2.9, plan 7.9
+// Feeds the tile hashing.
 #include "cg/core/hash.h"
 
 #include <QByteArray>

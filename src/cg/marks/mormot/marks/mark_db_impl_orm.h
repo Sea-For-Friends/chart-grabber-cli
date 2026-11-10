@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORM.pas (docs/specs/marks.md §2.9.10, §2.9.12). Line numbers in
-// the sources are those of that unit.
+// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORM.pas. Line numbers in the sources are those of that unit.
 //
 // The mark database of the SQLite backend: TConfigDataElementBaseEmptySaveLoad (the RW lock and the change
 // notification, here core::ConfigElement) implementing IMarkDbImpl and IMarkDbInternalORM. Every public
@@ -12,10 +11,10 @@
 // of their own. The lock is non-recursive; legacy never re-enters it in :1-750. One change notification per
 // public call, fired when the write lock is released, after the commit.
 //
-// Ticket T-0114 (O16) defines :1-750: the constructor / destructor, onStateChange, getCategoryId, the single
+// The class is declared WHOLE here. The constructor / destructor, onStateChange, getCategoryId, the single
 // mark readers (getMarkSql, getById, markById, firstMarkByName), ormMarkRecFromMark, getMarkInternalId,
-// updateMarkImpl, updateMark and updateMarkList. The class is declared WHOLE here; the methods of :752-1214
-// are ticket O17's (T-0125): mark_db_impl_orm_query.cpp.
+// updateMarkImpl, updateMark and updateMarkList (:1-750) are in mark_db_impl_orm.cpp; the methods of
+// :752-1214 are in mark_db_impl_orm_query.cpp.
 //
 // Constructor: the four geometry readers / writers of legacy (:211-214) are the GeometryLonLatFactory of the
 // helper (u_MarkDbImplORMHelper's geometry codecs are the free functions of cg/geo/wkb.h); the legacy
@@ -62,7 +61,7 @@ public:
     // IMarkDbInternalORM
     [[nodiscard]] vector::VectorDataItemPtr getById(qint64 id) const override; // :339-350
 
-    // IMarkDbImpl, :1-750 (T-0114)
+    // IMarkDbImpl, :1-750
     vector::VectorDataItemPtr updateMark(const vector::VectorDataItemPtr& oldMark,
                                          const vector::VectorDataItemPtr& newMark) override;  // :627-645
     MarkList updateMarkList(const MarkOrIdList& oldList, const MarkList& newList) override;   // :647-746
@@ -71,7 +70,7 @@ public:
     firstMarkByName(const QString& name,
                     const vector::CategoryPtr& category) const override; // :374-403
 
-    // IMarkDbImpl, :752-1214 (O17, mark_db_impl_orm_query.cpp)
+    // IMarkDbImpl, :752-1214 (mark_db_impl_orm_query.cpp)
     [[nodiscard]] MarkIdList allMarkIdList() const override; // :786-789
     [[nodiscard]] MarkIdList
     markIdListByCategory(const vector::CategoryPtr& category) const override; // :791-800
@@ -113,10 +112,11 @@ private:
     // :324-337; write lock held by the caller. id > 0 by id, else by name (and category when categoryId > 0).
     [[nodiscard]] vector::VectorDataItemPtr getMarkSql(qint64 id = 0, const QString& name = QString(),
                                                        qint64 categoryId = 0) const;
-    // :307-318 (O17 callers only). The row id of an SQLite-backend category, else 0.
+    // :307-318 (callers in mark_db_impl_orm_query.cpp only). The row id of an SQLite-backend category, else
+    // 0.
     [[nodiscard]] static qint64 getCategoryId(const vector::CategoryPtr& category);
-    // :409-529, the appearance mapping of spec 2.9.2. Throws MarkSystemORMError "MarkSystemORM: Unknown
-    // geometry type!" for a geometry that is none of point / line / polygon.
+    // :409-529, the appearance mapping. Throws MarkSystemORMError
+    // "MarkSystemORM: Unknown geometry type!" for a geometry that is none of point / line / polygon.
     [[nodiscard]] static OrmMarkRec ormMarkRecFromMark(const vector::IVectorDataItem& mark);
     // :531-550: the id of a mark (or mark id) of THIS database; false when it has none.
     [[nodiscard]] bool getMarkInternalId(const MarkOrId& mark, qint64& id) const;
@@ -127,7 +127,7 @@ private:
     // The const interface methods take the write lock (they fill caches).
     [[nodiscard]] WriteGuard writeLockConst() const;
 
-    // O17 (:752-784, :806-837, :887-909)
+    // mark_db_impl_orm_query.cpp (:752-784, :806-837, :887-909)
     [[nodiscard]] MarkIdList getMarkIdList(qint64 categoryId = 0) const;
     void getMarkSubset(qint64 categoryId, bool includeHiddenMarks,
                        vector::IVectorItemSubsetBuilder& resultList) const;

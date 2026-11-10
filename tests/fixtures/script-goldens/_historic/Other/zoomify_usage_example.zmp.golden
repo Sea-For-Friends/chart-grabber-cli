@@ -1,4 +1,4 @@
-; T-0015D golden: zoomify_usage_example.zmp - CP1251 source with '{...}' comments containing
+; Golden: zoomify_usage_example.zmp - CP1251 source with '{...}' comments containing
 ; an apostrophe, user Floor/Ceil shadowing the registered builtins (Result:=Trunc(v); if v<>
 ; Result adjust by 1.0 - real floor/ceil for non-negative v, which every value here is), a
 ; procedure assigning a global (GetMaxZoom sets nMaxZoom), Trunc, IntPower, real division.
@@ -26,10 +26,10 @@
 ; corrected.
 ;
 ; P4 (zoom=17): same shape as P3, but nTileGroup's arithmetic overflows 32 bits partway through,
-; and the ENGINE and the PORT diverge on what happens next (docs/handoffs/T-0015D-review.md
-; finding 1). k=256*IntPower(2,6-17)=0.125 (exact), mult:=Trunc(Ceil(9910/k))=Trunc(79280)=79280.
-; GetTilesCount(17) = sum of GetTilesAtZoom(i), i=0..16 = 1,580,529,013 (re-derived independently
-; by the reviewer; no intermediate partial sum crosses 2^31, so this sum itself never wraps).
+; and the ENGINE and the PORT diverge on what happens next. k=256*IntPower(2,6-17)=0.125 (exact),
+; mult:=Trunc(Ceil(9910/k))=Trunc(79280)=79280. GetTilesCount(17) = sum of GetTilesAtZoom(i),
+; i=0..16 = 1,580,529,013 (re-derived independently; no intermediate partial sum crosses 2^31, so
+; this sum itself never wraps).
 ; nTileGroup := (GetX + GetY*mult + GetTilesCount(zoom)) div 256 is where they diverge: in
 ; PascalScript, `Trunc` returns `LongInt` (uPSCompiler.pas:13571) and `GetY` is an S32 script
 ; variable (u_TileDownloadRequestBuilderPascalScriptVars.pas:143), so an S32*S32 product is
@@ -40,21 +40,20 @@
 ;   + GetTilesCount(17) = -1,640,594,401 + 1,580,529,013  =       -60,065,388
 ;   div 256 (Pascal div truncates toward zero)            =          -234,630
 ; nTileGroup = -234630, so legacy's ResultURL ends .../TileGroup-234630/17-131071-87654.jpg. The
-; port keeps integers as qint64 and wraps only on assignment (spec script.md §N1), so it computes
-; the SAME expression without ever wrapping the S32 intermediates and gets a different, larger
-; nTileGroup - that is the port's own integer model, not the engine's, and is wrong (PD-104,
-; new). The golden below records the ENGINE's value (-234630), per the ticket rule that the hand
-; derivation wins over the port when they disagree.
+; port keeps integers as qint64 and wraps only on assignment, so it computes the SAME expression
+; without ever wrapping the S32 intermediates and gets a different, larger nTileGroup - that is
+; the port's own integer model, not the engine's, and is wrong. The golden below records the
+; ENGINE's value (-234630): the hand derivation wins over the port when they disagree.
 ;
-; PD-103 (port defect, see docs/handoffs/T-0015D.md): parser.cpp's parseConstSection() parsed a
+; A port defect: parser.cpp's parseConstSection() parsed a
 ; `const` declaration's value expression but never folded/stored it - the interpreter bound
 ; m_nWidth/m_nHeight to ordinary zero-initialised slots instead of 9910/7476, so every point below
-; read them as 0 and diverged from this derivation. FIXED by T-0032 (Parser::foldConstExpr +
-; CompiledScript::constValue/Interpreter::defaultValueForSlot) - see docs/handoffs/T-0032.md.
+; read them as 0 and diverged from this derivation. FIXED (Parser::foldConstExpr +
+; CompiledScript::constValue/Interpreter::defaultValueForSlot).
 ;
-; PD-104 (port defect, see docs/handoffs/T-0015D-review.md): integer binary-op intermediates are
+; A port defect: integer binary-op intermediates are
 ; computed in the operand's static 32-bit type by the engine but were never wrapped in the port's
-; qint64 model (spec script.md §N1). Fixed by T-0031 (see docs/handoffs/T-0031.md). Every section
+; qint64 model. Fixed. Every section
 ; below (P1-P4) is now asserted, not skipped.
 
 [P1]

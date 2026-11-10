@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-NET-011 -- docs/specs/net.md §2.13, §7.6.
 #include "cg/core/content_detector.h"
 
 #include <QByteArray>

@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkCategoryDB.pas  (the implementation is the facade mark_category_db_by_impl, ticket M5b)
+// Ports: i_MarkCategoryDB.pas (the implementation is the facade mark_category_db_by_impl)
 
 #include "cg/core/notifier.h"
 #include "cg/marks/mark_category.h"

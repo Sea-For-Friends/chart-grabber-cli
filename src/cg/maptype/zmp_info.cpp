@@ -22,8 +22,8 @@ using core::IConfigProviderPtr;
 using core::IStringByLanguagePtr;
 using core::StringByLanguageWithStaticList;
 
-// InternalMakeStringByLanguage (:251-293, spec 2.5.2): the plain value is the default of every
-// language's "<name>_<code>" key; index 0 (en) is read like the others.
+// InternalMakeStringByLanguage: the plain value is the default of every language's "<name>_<code>"
+// key; index 0 (en) is read like the others.
 IStringByLanguagePtr makeStringByLanguage(const core::ILanguageListStatic& langList,
                                           const IConfigProvider& config, const QString& paramName,
                                           const QString& defValue) {
@@ -35,13 +35,13 @@ IStringByLanguagePtr makeStringByLanguage(const core::ILanguageListStatic& langL
     return std::make_shared<const StringByLanguageWithStaticList>(values);
 }
 
-// ReadAnsiString on an INI section (e.g. :941-942): the decoded text, held as bytes (maptype.md 2.6.2).
+// ReadAnsiString on an INI section (e.g. :941-942): the decoded text, held as bytes.
 QByteArray readAnsi(const IConfigProvider& config, QStringView id, const QByteArray& def) {
     const QVariant v = config.value(id);
     return v.isValid() ? v.toString().toUtf8() : def;
 }
 
-// CreateDefaultIcon (:324-351): 32x32 light gray, the first two characters of pnum centred (DV-4: Qt font).
+// CreateDefaultIcon (:324-351): 32x32 light gray, the first two characters of pnum centred (Qt font).
 QImage createDefaultIcon(int pnum) {
     QImage image(32, 32, QImage::Format_ARGB32);
     image.fill(0xFFBFBFBF);
@@ -195,8 +195,8 @@ ZmpInfo::ZmpInfo(const ZmpConfig& zmpConfig, const core::ILanguageManager& langu
                                     QStringLiteral("License"), QString());
     layerZOrder_ = configIniParams_->readInt(u"LayerZOrder", 0);
 
-    // OQ-3 (D-74): u_MapType.pas:376-381 looks the content type up by MainStorageContentType, then by
-    // the extension, and keeps nil when both fail (the map crashes on first use). Rejected here instead.
+    // u_MapType.pas:376-381 looks the content type up by MainStorageContentType, then by the extension,
+    // and keeps nil when both fail (the map crashes on first use). Rejected here instead.
     const auto& storage = *storageConfig_;
     const bool known =
         (!storage.mainContentType.isEmpty() && contentTypes.infoByType(storage.mainContentType)) ||
@@ -229,7 +229,7 @@ void ZmpInfo::loadConfig(const ZmpConfig& zmpConfig, const geo::ProjectionSetFac
 }
 
 // LoadVectorAppearanceConfig :1001-1062. Sub-items Vector/Point, Vector/Line, Vector/Poly of PARAMS; the
-// force flags default to True (vector.md 2.9). A sub-item that is absent leaves its params null.
+// force flags default to True. A sub-item that is absent leaves its params null.
 void ZmpInfo::loadVectorAppearanceConfig(const vector::IAppearanceOfMarkFactory& appearanceOfMarkFactory,
                                          const vector::MarkPictureListPtr& markPictureList,
                                          const IConfigProvider& config) {
@@ -266,7 +266,7 @@ void ZmpInfo::loadVectorAppearanceConfig(const vector::IAppearanceOfMarkFactory&
 }
 
 // LoadGUID :833-839. ReadGUID (u_ConfigProviderHelpers.pas:430-448) gives the default for empty and
-// malformed text alike, so every failure reads "Empty GUID" (LD-8; N-1: braces are required).
+// malformed text alike, so every failure reads "Empty GUID" (a legacy defect; braces are required).
 QUuid ZmpInfo::loadGuid(const IConfigProvider& params) const {
     const QUuid guid = params.readUuid(u"GUID", QUuid());
     if (guid.isNull()) {
@@ -314,7 +314,7 @@ void ZmpInfo::loadTileDownloaderConfig(const ZmpConfig& zmpConfig,
     cfg->maxConnectToServerCount = static_cast<quint32>(
         params.readInt(u"MaxConnectToServerCount", static_cast<qint32>(zmpConfig.maxConnectToServerCount())));
 
-    // LD-7: StrictDelimiter list, then StrToInt of items 0 and 1; the RTL exceptions reach the set's
+    // StrictDelimiter list, then StrToInt of items 0 and 1; the RTL exceptions reach the set's
     // handler as plain messages without the map name.
     const QStringList items = core::parseDelimitedText(
         params.readString(u"IteratorSubRectSize", QStringLiteral("1,1")), u',', u'"', true);

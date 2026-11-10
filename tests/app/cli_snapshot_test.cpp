@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit): end-to-end tests of the snapshot sources of T-0243
-// (docs/specs/weather-sources.md 3.5, 4.1-4.4, 5.1, 5.3, 5.4; ticket acceptance 1-10). No FEAT tag (T-0243:
-// Features none). Legacy facts the design rests on, pinned here: the version of a map is a request setting
-// that the tile is saved under (u_ProviderTilesDownload.pas:354-355); a saved session keeps VersionDownload /
-// VersionCheck / VersionCheckOther (u_DownloadSession.pas:252-254) and its resume takes VersionDownload
+// New code (no legacy unit): end-to-end tests of the snapshot sources. Legacy facts the design rests on,
+// pinned here: the version of a map is a request setting that the tile is saved under
+// (u_ProviderTilesDownload.pas:354-355); a saved session keeps VersionDownload / VersionCheck /
+// VersionCheckOther (u_DownloadSession.pas:252-254) and its resume takes VersionDownload
 // (u_DownloadSession.pas:373-397).
 //
 // Rig: HttpTestServer serves the index at /index.json (scripted: first reply frame A, second frame B, the
@@ -273,8 +272,8 @@ protected:
 
 } // namespace
 
-// Acceptance 1: `run`: the index once, every tile of the snapshot once, the MBTiles hold the tiles of /A2
-// (the last entry of the index), the store file holds the version, the time and the resolve time.
+// `run`: the index once, every tile of the snapshot once, the MBTiles hold the tiles of /A2 (the last
+// entry of the index), the store file holds the version, the time and the resolve time.
 TEST_F(CliSnapshot, RunTakesTheLastFrameOnceAndStoresIt) {
     serveIndex({kIndexA});
     serveTiles("/A2", kShadeA2);
@@ -297,7 +296,7 @@ TEST_F(CliSnapshot, RunTakesTheLastFrameOnceAndStoresIt) {
     const QDateTime resolved =
         QDateTime::fromString(QString::fromLatin1(store[4].mid(9)), u"yyyy-MM-ddTHH:mm:ssZ"_s);
     ASSERT_TRUE(resolved.isValid()) << store[4].constData();
-    EXPECT_EQ(store[5], "Reference="); // T-0443: a source without a model run
+    EXPECT_EQ(store[5], "Reference="); // A source without a model run
     EXPECT_EQ(store[6], "ReferenceSeen=");
     const QDateTime resolvedUtc = cg::core::platform::utcDateTime(resolved.date(), resolved.time());
     EXPECT_GE(resolvedUtc, before);
@@ -305,9 +304,9 @@ TEST_F(CliSnapshot, RunTakesTheLastFrameOnceAndStoresIt) {
     EXPECT_TRUE(store[7].isEmpty());
 }
 
-// Acceptance 2 and 3 (T-0240: a second run an hour later gets newer tiles): the second `run` resolves frame
-// /B and requests every tile of it once, none of /A2; the MBTiles hold only the B bytes; the store file says
-// /B. A third run with the index still /B asks for no tile (the same frame, cached).
+// A second run an hour later gets newer tiles: the second `run` resolves frame /B and requests every tile of
+// it once, none of /A2; the MBTiles hold only the B bytes; the store file says /B. A third run with the
+// index still /B asks for no tile (the same frame, cached).
 TEST_F(CliSnapshot, SecondRunTakesTheNewerFrameAndThirdRunOfTheSameFrameRequestsNoTile) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -332,9 +331,8 @@ TEST_F(CliSnapshot, SecondRunTakesTheNewerFrameAndThirdRunOfTheSameFrameRequests
     EXPECT_EQ(tileZ3x4y2(outFile()), tilePng(kShadeB, 3, 4, 2));
 }
 
-// Acceptance 4: `export` alone exports exactly the stored frame without any request (the older frame was
-// removed from the cache by the second run, T-0246: it must not leak into the file); without the store file
-// it is exit 3.
+// `export` alone exports exactly the stored frame without any request (the older frame was removed from the
+// cache by the second run: it must not leak into the file); without the store file it is exit 3.
 TEST_F(CliSnapshot, ExportUsesTheStoredFrameWithoutARequestAndNeedsTheStoreFile) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -352,8 +350,8 @@ TEST_F(CliSnapshot, ExportUsesTheStoredFrameWithoutARequestAndNeedsTheStoreFile)
     EXPECT_TRUE(lines(exported.out).contains(u"snapshot 2026-10-15 21:10 UTC"_s)) << qPrintable(exported.out);
     EXPECT_TRUE(exported.out.contains(u"  snapshot 2026-10-15 21:10 UTC\n"_s)) << qPrintable(exported.out);
 
-    // the store file names the older frame: export takes that one, not the newest in the cache. T-0246: the
-    // second run removed the older frame from the cache, so the export finds no tile (exit 5)
+    // the store file names the older frame: export takes that one, not the newest in the cache. The second
+    // run removed the older frame from the cache, so the export finds no tile (exit 5)
     ASSERT_TRUE(QFile::remove(storeFile()));
     {
         QFile f(storeFile());
@@ -376,8 +374,8 @@ TEST_F(CliSnapshot, ExportUsesTheStoredFrameWithoutARequestAndNeedsTheStoreFile)
     EXPECT_EQ(server_.requestCount(), before);
 }
 
-// Acceptance 5: `estimate` takes no snapshot (no request, not even the index) and counts no tile as present
-// although the cache holds the tiles of a downloaded frame: the figures are assumed (20 KB a tile).
+// `estimate` takes no snapshot (no request, not even the index) and counts no tile as present although the
+// cache holds the tiles of a downloaded frame: the figures are assumed (20 KB a tile).
 TEST_F(CliSnapshot, EstimateSendsNothingAndCountsNoTileAsPresent) {
     serveIndex({kIndexA});
     serveTiles("/A2", kShadeA2);
@@ -406,8 +404,8 @@ TEST_F(CliSnapshot, EstimateSendsNothingAndCountsNoTileAsPresent) {
     EXPECT_EQ(server_.requestCount(), before);
 }
 
-// Acceptance 6, text: the snapshot line right after the source's name line, before its table, and the
-// `written:` suffix.
+// Text: the snapshot line right after the source's name line, before its table, and the `written:`
+// suffix.
 TEST_F(CliSnapshot, RunTextNamesTheSnapshotAfterTheNameAndAtTheWrittenLine) {
     serveIndex({kIndexA});
     serveTiles("/A2", kShadeA2);
@@ -423,8 +421,8 @@ TEST_F(CliSnapshot, RunTextNamesTheSnapshotAfterTheNameAndAtTheWrittenLine) {
     EXPECT_TRUE(written.match(c.out).hasMatch()) << qPrintable(c.out);
 }
 
-// Acceptance 6, TSV: the `snapshot` record before the estimate records of its source, the `written` record
-// has the time in field 5; the static source's field 5 is empty and it gets no snapshot record.
+// TSV: the `snapshot` record before the estimate records of its source, the `written` record has the time
+// in field 5; the static source's field 5 is empty and it gets no snapshot record.
 TEST_F(CliSnapshot, TsvRunHasTheSnapshotRecordAndTheTimeInTheWrittenRecord) {
     serveIndex({kIndexA});
     serveTiles("/A2", kShadeA2);
@@ -467,10 +465,10 @@ TEST_F(CliSnapshot, TsvRunHasTheSnapshotRecordAndTheTimeInTheWrittenRecord) {
     EXPECT_EQ(radarFields[5], u"2026-10-15T20:10:00Z"_s);
 }
 
-// Acceptance 7: the index does not answer usably: exit 4, `cannot take the snapshot of "Radar": <text>`, no
-// tile request (the index only), no store file, no session, no output file. A 500 is a load error: legacy
-// reports status 0 for a result without server respond (u_SimpleHttpDownloader.pas:113-121), spec 3.4 `no
-// answer from`.
+// The index does not answer usably: exit 4, `cannot take the snapshot of "Radar": <text>`, no tile request
+// (the index only), no store file, no session, no output file. A 500 is a load error: legacy reports status
+// 0 for a result without server respond (u_SimpleHttpDownloader.pas:113-121), so the text is
+// `no answer from`.
 class CliSnapshotResolve : public CliSnapshot {
 protected:
     void expectFailure(const HttpTestServer::Reply& reply, const QString& text) {
@@ -503,7 +501,7 @@ TEST_F(CliSnapshotResolve, AnEmptyBodyIsRefused) {
     expectFailure(jsonReply(""), u"the answer of %1 is empty"_s.arg(indexUrl()));
 }
 
-// 3.5: the termination during the resolve (the index answers slowly) is exit 130, not exit 4: nothing is
+// The termination during the resolve (the index answers slowly) is exit 130, not exit 4: nothing is
 // downloaded, no store file, no output.
 TEST_F(CliSnapshot, TerminationDuringTheResolveIsExit130) {
     server_.addReply("/index.json", jsonReply(kIndexA, 3000));
@@ -533,8 +531,8 @@ TEST_F(CliSnapshot, ARefusedStoreFileDirectoryIsExitFourBeforeAnyTileRequest) {
     EXPECT_FALSE(QFileInfo::exists(outFile()));
 }
 
-// Acceptance 8: the first run is stopped after some tiles of /A2 (server delay), then `run` with the index at
-// /B: the saved session is of another snapshot and is not continued; with the index still at /A2 it is.
+// The first run is stopped after some tiles of /A2 (server delay), then `run` with the index at /B: the saved
+// session is of another snapshot and is not continued; with the index still at /A2 it is.
 TEST_F(CliSnapshot, ASessionOfAnotherSnapshotIsDiscardedAndOfTheSameIsContinued) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2, 400);
@@ -585,8 +583,8 @@ TEST_F(CliSnapshot, ASessionOfTheSameSnapshotIsContinuedWithoutRepeatingTiles) {
     EXPECT_EQ(rowCount(outFile()), u"9"_s);
 }
 
-// Acceptance 9 (u_DownloadSession.pas:252-254): the .sls saved by the interrupted run holds the snapshot in
-// VersionDownload and VersionCheck and VersionCheckOther=0 (a legacy resume sees one frame only).
+// The .sls saved by the interrupted run holds the snapshot in VersionDownload and VersionCheck and
+// VersionCheckOther=0 (a legacy resume sees one frame only; u_DownloadSession.pas:252-254).
 TEST_F(CliSnapshot, TheSavedSessionHoldsTheSnapshotAsItsVersion) {
     serveIndex({kIndexA});
     serveTiles("/A2", kShadeA2, 400);
@@ -606,9 +604,9 @@ TEST_F(CliSnapshot, TheSavedSessionHoldsTheSnapshotAsItsVersion) {
     }
 }
 
-// Acceptance 10 (S-14): a snapshot source on a cache that keeps no versions, or with invalid keys, is
-// refused: the `sources` verdict and `run` / `estimate` / `export` exit 3 with the same text. A static source
-// on the same cache is not refused.
+// A snapshot source on a cache that keeps no versions, or with invalid keys, is refused: the `sources`
+// verdict and `run` / `estimate` / `export` exit 3 with the same text. A static source on the same cache is
+// not refused.
 TEST_F(CliSnapshot, RefusalS14ShowsInTheVerdictAndStopsEveryJobCommand) {
     struct Case {
         const char* name;
@@ -663,11 +661,10 @@ TEST_F(CliSnapshot, AStaticSourceIsNeverResolvedAndNeverGetsAStoreFile) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// T-0244 (docs/specs/weather-sources.md 3.5, 4.3, 5.4; ticket acceptance 1-8): `resume` continues the frame
-// the session names, `probe` resolves, `sources --format=tsv` fields 11 (refresh) and 12 (license). No FEAT
-// tag (Features none). Legacy fact: the resume takes VersionDownload of the saved session
-// (u_DownloadSession.pas:373-397); the port refuses an empty one (spec 4.3), legacy falls back to the base
-// version (:373-378).
+// `resume` continues the frame the session names, `probe` resolves, `sources --format=tsv` fields 11
+// (refresh) and 12 (license). Legacy fact: the resume takes VersionDownload of the saved session
+// (u_DownloadSession.pas:373-397); the port refuses an empty one, legacy falls back to the base version
+// (:373-378).
 namespace {
 
 class CliSnapshotResume : public CliSnapshot {
@@ -723,8 +720,8 @@ protected:
 
 } // namespace
 
-// Acceptance 1: the index now answers B, the resume asks no index and only the tiles of /A2; the time comes
-// from the store file (its Version equals); the fill report counts the nine tiles of /A2.
+// The index now answers B, the resume asks no index and only the tiles of /A2; the time comes from the
+// store file (its Version equals); the fill report counts the nine tiles of /A2.
 TEST_F(CliSnapshotResume, ContinuesTheFrameOfTheSessionAndPrintsTheStoredTime) {
     const QString file = interruptedSession();
     ASSERT_FALSE(file.isEmpty());
@@ -798,8 +795,8 @@ TEST_F(CliSnapshotResume, AStoreFileOfAnotherVersionGivesNoTimeAndIsNotRewritten
     EXPECT_EQ(storeText(), stored);
 }
 
-// Acceptance 2: without the store file the version "/A2" is not a time: unknown, and the TSV `snapshot`
-// record has the empty time field (before the fill records); the resume writes no store file.
+// Without the store file the version "/A2" is not a time: unknown, and the TSV `snapshot` record has
+// the empty time field (before the fill records); the resume writes no store file.
 TEST_F(CliSnapshotResume, WithoutTheStoreFileTheTimeIsUnknownAndNoFileIsWritten) {
     const QString file = interruptedSession();
     ASSERT_FALSE(file.isEmpty());
@@ -838,8 +835,8 @@ TEST_F(CliSnapshotResume, TsvSnapshotRecordHasTheStoredTimeAndTheVersion) {
     EXPECT_FALSE(tsv.out.contains(u"Radar: snapshot"_s)); // the text line is not in TSV mode
 }
 
-// Acceptance 3: a WMS rig (the EUMETView capabilities text served as the index, URL /t/{ver}/...): no store
-// file, the version is a time and is parsed (spec 4.3: "WMS / GIBS versions are times").
+// A WMS rig (the EUMETView capabilities text served as the index, URL /t/{ver}/...): no store file, the
+// version is a time and is parsed.
 TEST_F(CliSnapshotResume, AVersionThatIsATimeIsParsedWhenNoStoreFileHasIt) {
     QFile xml(cg::maptype::test::fixtureDir() +
               u"/app/snapshot/eumetview-mtg_fd-rgb_geocolour-capabilities.xml"_s);
@@ -887,8 +884,8 @@ TEST_F(CliSnapshotResume, AVersionThatIsATimeIsParsedWhenNoStoreFileHasIt) {
     EXPECT_FALSE(QFileInfo::exists(storeFile()));
 }
 
-// Acceptance 4: a session whose VersionDownload is empty names no snapshot: exit 3 with the file in the text,
-// no request, nothing downloaded.
+// A session whose VersionDownload is empty names no snapshot: exit 3 with the file in the text, no request,
+// nothing downloaded.
 TEST_F(CliSnapshotResume, ASessionWithoutAVersionIsRefused) {
     const QString file = interruptedSession();
     ASSERT_FALSE(file.isEmpty());
@@ -902,8 +899,8 @@ TEST_F(CliSnapshotResume, ASessionWithoutAVersionIsRefused) {
     EXPECT_TRUE(c.out.isEmpty()) << qPrintable(c.out);
 }
 
-// Acceptance 5: two files of one map that name /A2 and /B: exit 3 naming the SECOND file (in either order),
-// no request. Two files of the same version are one snapshot: accepted, the snapshot line printed once.
+// Two files of one map that name /A2 and /B: exit 3 naming the SECOND file (in either order), no request.
+// Two files of the same version are one snapshot: accepted, the snapshot line printed once.
 TEST_F(CliSnapshotResume, TwoVersionsOfOneMapRefuseAtTheSecondFileAndTheSameVersionIsOne) {
     const QString file = interruptedSession();
     ASSERT_FALSE(file.isEmpty());
@@ -927,8 +924,9 @@ TEST_F(CliSnapshotResume, TwoVersionsOfOneMapRefuseAtTheSecondFileAndTheSameVers
     EXPECT_EQ(lines(twice.out).count(u"Radar: snapshot 2026-10-15 20:10 UTC"_s), 1) << qPrintable(twice.out);
 }
 
-// S-14 at resume: the source was changed to a cache without versions after the session was saved; the
-// refusal of `run` (same text) comes before anything else, with the file in front.
+// The snapshot refusal at resume: the source was changed to a cache without versions after the
+// session was saved; the refusal of `run` (same text) comes before anything else, with the file in
+// front.
 TEST_F(CliSnapshotResume, ASourceThatBecameInvalidIsRefusedWithTheS14Text) {
     const QString file = interruptedSession();
     ASSERT_FALSE(file.isEmpty());
@@ -942,7 +940,7 @@ TEST_F(CliSnapshotResume, ASourceThatBecameInvalidIsRefusedWithTheS14Text) {
     EXPECT_EQ(server_.requestCount(), before);
 }
 
-// Acceptance 8: the session of a static source resumes as before: no snapshot line or record.
+// The session of a static source resumes as before: no snapshot line or record.
 TEST_F(CliSnapshotResume, AStaticSourceSessionResumesWithoutASnapshotLine) {
     serveStatic();
     const QStringList args = {u"run"_s,     u"--source"_s, u"Template Map"_s, u"--bbox"_s, u"10,30,100,60"_s,
@@ -962,7 +960,7 @@ TEST_F(CliSnapshotResume, AStaticSourceSessionResumesWithoutASnapshotLine) {
     EXPECT_FALSE(QDir(dataDir() + u"/Snapshots"_s).exists());
 }
 
-// ---- probe (acceptance 6)
+// ---- probe
 
 namespace {
 
@@ -990,8 +988,8 @@ TEST_F(CliSnapshotProbe, ResolvesOnceAsksOneTileOfTheFrameAndWritesNoStoreFile) 
     EXPECT_FALSE(QFileInfo::exists(storeFile()));
 }
 
-// The resolve's failure is that row's text (spec 3.4 in the prefix of 3.5): a 5xx has no server respond, 404
-// does; the tile is not asked; the exit code is 4 (a failed row); no store file.
+// The resolve's failure is that row's text: a 5xx has no server respond, 404 does; the tile is not asked;
+// the exit code is 4 (a failed row); no store file.
 class CliSnapshotProbeFailure : public CliSnapshotProbe {
 protected:
     void expectRow(int status, const char* reason, const QString& text) {
@@ -1026,7 +1024,8 @@ TEST_F(CliSnapshotProbe, TerminationDuringTheResolveIsAnInterruptedRow) {
     EXPECT_EQ(tileRequests(), QStringList());
 }
 
-// S-14 joins the skip chain of probe (as the `sources` verdict): no request, a skipped row, exit 0.
+// The snapshot refusal joins the skip chain of probe (as the `sources` verdict): no request, a skipped row,
+// exit 0.
 TEST_F(CliSnapshotProbe, ASourceRefusedByS14IsSkippedWithoutARequest) {
     writeRadar("CacheType=2\r\n");
     const Captured c = runCapture(probeArgs());
@@ -1051,7 +1050,7 @@ TEST_F(CliSnapshotProbe, AStaticSourceAsksNoIndex) {
     EXPECT_EQ(requestPaths(), QStringList{u"/3/6/3.png"_s});
 }
 
-// ---- sources (acceptance 7)
+// ---- sources
 
 // Fields 11 and 12 of the `source` records: the snapshot source says `snapshot` and its License (non-ASCII),
 // the static one `static` and nothing; a source without License has the empty field; an invalid definition
@@ -1068,7 +1067,7 @@ TEST_F(CliSnapshot, SourcesTsvHasTheRefreshAndTheLicenseFields) {
         {"licensed", "CacheType=71\r\nLicense=Данные RainViewer\r\n", "json-last", u"snapshot"_s,
          u"Данные RainViewer"_s},
         {"yearLicense", "CacheType=71\r\nLicense=Data {year}\r\n", "json-last", u"snapshot"_s,
-         u"Data "_s + QString::number(QDateTime::currentDateTimeUtc().date().year())}, // T-0249
+         u"Data "_s + QString::number(QDateTime::currentDateTimeUtc().date().year())},
         {"noLicense", "CacheType=71\r\n", "json-last", u"snapshot"_s, QString()},
         {"invalidDefinition", "CacheType=71\r\n", "xml", u"snapshot"_s, QString()},
     };
@@ -1101,10 +1100,9 @@ TEST_F(CliSnapshot, SourcesTsvHasTheRefreshAndTheLicenseFields) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// T-0246 (docs/specs/weather-sources.md 9; ticket acceptance 1-5): after a completed download of a snapshot
-// source the tiles of every other version in the job's area and zooms are deleted. No FEAT tag (Features
-// none). Inherits Src/RegionProcess/Delete/u_ThreadDeleteTiles.pas ProcessRegion. The cache is read with
-// SQL on its region files (SELECT v, count(*) FROM t GROUP BY v).
+// After a completed download of a snapshot source the tiles of every other version in the job's area and
+// zooms are deleted. Inherits Src/RegionProcess/Delete/u_ThreadDeleteTiles.pas ProcessRegion. The cache is
+// read with SQL on its region files (SELECT v, count(*) FROM t GROUP BY v).
 namespace {
 
 class CliSnapshotPrune : public CliSnapshot {
@@ -1147,8 +1145,8 @@ protected:
 
 } // namespace
 
-// Acceptance 1 and 5: the second run (frame /B) leaves only /B for every tile of the area; with -v stderr
-// says how many tiles of the older frame went; the first run (nothing older) removed none.
+// The second run (frame /B) leaves only /B for every tile of the area; with -v stderr says how many tiles
+// of the older frame went; the first run (nothing older) removed none.
 TEST_F(CliSnapshotPrune, TheSecondRunRemovesTheOlderFrameAndVerboseCountsIt) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -1166,7 +1164,7 @@ TEST_F(CliSnapshotPrune, TheSecondRunRemovesTheOlderFrameAndVerboseCountsIt) {
     EXPECT_EQ(versionCounts(), (QMap<QString, int>{{u"/B"_s, 9}}));
 }
 
-// Acceptance 5: without -v nothing is printed about the removal.
+// Without -v nothing is printed about the removal.
 TEST_F(CliSnapshotPrune, WithoutVerboseNothingIsSaidAboutTheRemoval) {
     firstRunA2();
     const Captured second = runCapture(job(u"run"_s, {u"--overwrite"_s}));
@@ -1176,8 +1174,8 @@ TEST_F(CliSnapshotPrune, WithoutVerboseNothingIsSaidAboutTheRemoval) {
     EXPECT_EQ(versionCounts(), (QMap<QString, int>{{u"/B"_s, 9}})); // it was removed, quietly
 }
 
-// Acceptance 2: the second run covers the zooms 1-2 only: the six tiles of zoom 3 keep frame /A2, the three
-// tiles of zooms 1-2 hold /B only (3 tiles removed).
+// The second run covers the zooms 1-2 only: the six tiles of zoom 3 keep frame /A2, the three tiles of
+// zooms 1-2 hold /B only (3 tiles removed).
 TEST_F(CliSnapshotPrune, TilesOutsideTheJobsZoomsStay) {
     firstRunA2();
     QStringList args = job(u"run"_s, {u"-v"_s, u"--overwrite"_s});
@@ -1189,8 +1187,8 @@ TEST_F(CliSnapshotPrune, TilesOutsideTheJobsZoomsStay) {
     EXPECT_EQ(versionCounts(), (QMap<QString, int>{{u"/A2"_s, 6}, {u"/B"_s, 3}}));
 }
 
-// Acceptance 3: the download of frame /B stalls (the server answers 500 for every tile, --stall-timeout 2):
-// exit 4 and nothing of /A2 is removed, no word about the removal.
+// The download of frame /B stalls (the server answers 500 for every tile, --stall-timeout 2): exit 4 and
+// nothing of /A2 is removed, no word about the removal.
 TEST_F(CliSnapshotPrune, ADownloadThatDidNotCompleteRemovesNothing) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -1205,8 +1203,8 @@ TEST_F(CliSnapshotPrune, ADownloadThatDidNotCompleteRemovesNothing) {
     EXPECT_EQ(versionCounts(), (QMap<QString, int>{{u"/A2"_s, 9}}));
 }
 
-// Acceptance 4: a static source gets no prune. The static "Template Map" shares the cache of "Radar"
-// (NameInCache) so that a prune of it would find the /A2 rows: they stay, and nothing is said.
+// A static source gets no prune. The static "Template Map" shares the cache of "Radar" (NameInCache)
+// so that a prune of it would find the /A2 rows: they stay, and nothing is said.
 TEST_F(CliSnapshotPrune, AStaticSourceIsNeverPruned) {
     firstRunA2();
     const QByteArray host = "http://127.0.0.1:" + QByteArray::number(server_.port());
@@ -1228,9 +1226,9 @@ TEST_F(CliSnapshotPrune, AStaticSourceIsNeverPruned) {
     EXPECT_EQ(counts, (QMap<QString, int>{{u"/A2"_s, 9}})); // Radar's cache file only: no row added or lost
 }
 
-// T-0351: the frame /B is byte-identical to /A2: the SQLite save skips every tile as the same as a stored one
-// (legacy SkipIfSameAsPrev), so /B has no rows. The prune moves the /A2 tiles to /B instead of deleting them:
-// the cache keeps all nine tiles (under /B), the export has them all and a third run requests no tile.
+// The frame /B is byte-identical to /A2: the SQLite save skips every tile as the same as a stored one (legacy
+// SkipIfSameAsPrev), so /B has no rows. The prune moves the /A2 tiles to /B instead of deleting them: the
+// cache keeps all nine tiles (under /B), the export has them all and a third run requests no tile.
 TEST_F(CliSnapshotPrune, IdenticalTilesOfTheNewFrameKeepTheOlderFrameAndTheExportHasEveryTile) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -1253,8 +1251,8 @@ TEST_F(CliSnapshotPrune, IdenticalTilesOfTheNewFrameKeepTheOlderFrameAndTheExpor
     EXPECT_EQ(versionCounts(), (QMap<QString, int>{{u"/B"_s, 9}}));
 }
 
-// T-0351: the exact rule. A tile the new frame lacks (404, no TNE mark) is deleted with its old frame, it is
-// not filled from the old frame; the other eight (identical, skipped by the save) move to the new frame.
+// The exact rule. A tile the new frame lacks (404, no TNE mark) is deleted with its old frame, it is not
+// filled from the old frame; the other eight (identical, skipped by the save) move to the new frame.
 TEST_F(CliSnapshotPrune, ATileTheNewFrameLacksIsDeletedWithItsOldFrameAndTheIdenticalOnesStay) {
     serveIndex({kIndexA, kIndexB});
     serveTiles("/A2", kShadeA2);
@@ -1276,11 +1274,11 @@ TEST_F(CliSnapshotPrune, ATileTheNewFrameLacksIsDeletedWithItsOldFrameAndTheIden
     EXPECT_EQ(rowCount(outFile()), u"8"_s);
 }
 
-// T-0352: the mixed case on a real SQLite cache. The tiles of the empty version (a static source of the same
-// cache, shade 100) are byte-identical to the new frame /B; the older frame /A2 (shade 40) has versioned
-// rows. The save of /B is skipped as identical to the empty-version rows; the prune must move THAT row (shade
-// 100, size and CRC of the refused data), not the newest listed /A2 tile (an old frame shown as current), and
-// the empty-version row must go before the save (the save is skipped while it exists).
+// The mixed case on a real SQLite cache. The tiles of the empty version (a static source of the same cache,
+// shade 100) are byte-identical to the new frame /B; the older frame /A2 (shade 40) has versioned rows. The
+// save of /B is skipped as identical to the empty-version rows; the prune must move THAT row (shade 100, size
+// and CRC of the refused data), not the newest listed /A2 tile (an old frame shown as current), and the
+// empty-version row must go before the save (the save is skipped while it exists).
 TEST_F(CliSnapshotPrune, TheIdenticalEmptyVersionRowIsMovedNotTheNewestListedOne) {
     const QByteArray host = "http://127.0.0.1:" + QByteArray::number(server_.port());
     writeZmp(maps(), {.folder = u"s2.zmp"_s,
@@ -1311,9 +1309,9 @@ TEST_F(CliSnapshotPrune, TheIdenticalEmptyVersionRowIsMovedNotTheNewestListedOne
     EXPECT_EQ(tileZ3x4y2(outFile()), tilePng(100, 3, 4, 2));
 }
 
-// ---- T-0283: wmts-default and --time (docs/specs/weather-sources.md 3.2, app-cli.md 1.2, 1.7). No FEAT tag
-// (Features none). The "Radar" source is rewritten as a WMTS source: its index is a capabilities document of
-// one layer "radar.past" whose time runs 2020-01-01T00:00:00Z .. 2100-01-01T00:00:00Z every 3 h, default
+// ---- wmts-default and --time.
+// The "Radar" source is rewritten as a WMTS source: its index is a capabilities document of one layer
+// "radar.past" whose time runs 2020-01-01T00:00:00Z .. 2100-01-01T00:00:00Z every 3 h, default
 // 2026-10-19T12:00:00.000Z; the tile URL carries TIME={ver} as a query.
 
 namespace {
@@ -1399,8 +1397,8 @@ protected:
 
 } // namespace
 
-// Acceptance 3: the default frame, then --time=+24h as a second snapshot; export names the frame and takes
-// the year of it in the attribution.
+// The default frame, then --time=+24h as a second snapshot; export names the frame and takes the year of
+// it in the attribution.
 TEST_F(CliSnapshotWmts, DefaultFrameThenAForecastFrame) {
     serveFrame("2026-10-19T12:00:00.000Z", 60);
     const Captured first = runCapture(job(u"download"_s));
@@ -1488,8 +1486,7 @@ TEST_F(CliSnapshot, TimeOnASourceWithoutSelectableTimeIsRefusedWithoutARequest) 
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// T-0337 (docs/specs/weather-sources.md 3.2 SnapshotPick, none-refetch): end to end with the real clock. No
-// FEAT tag (Features none).
+// End to end with the real clock.
 namespace {
 
 // The 3 h grid of kWmtsCaps (start at midnight): the frame nearest to `now`.
@@ -1597,8 +1594,8 @@ TEST_F(CliSnapshotNone, EveryDownloadFetchesFreshTilesAndTheOlderFrameIsPruned) 
     EXPECT_EQ(seen, 1);
 }
 
-// T-0351: two runs with byte-identical pictures: the save of the second version is skipped for every tile,
-// the cache must still hold all nine tiles (under the second version) and the export must have them.
+// Two runs with byte-identical pictures: the save of the second version is skipped for every tile, the
+// cache must still hold all nine tiles (under the second version) and the export must have them.
 TEST_F(CliSnapshotNone, TwoIdenticalRunsKeepEveryTile) {
     serveStatic();
     ASSERT_EQ(runCapture(job(u"download"_s)).rc, 0);
@@ -1612,7 +1609,7 @@ TEST_F(CliSnapshotNone, TwoIdenticalRunsKeepEveryTile) {
     EXPECT_EQ(rowCount(outFile()), u"9"_s);
 }
 
-// ---- T-0356: the newest frame is not served yet -> one frame back
+// ---- The newest frame is not served yet -> one frame back
 // -------------------------------------------
 
 namespace {
@@ -1771,8 +1768,8 @@ TEST_F(CliSnapshotFallback, ANewestFrameServedInPartIsKept) {
     EXPECT_FALSE(c.err.contains(u"previous frame"_s));
 }
 
-// TL decision 1: 404 answers do not stop a run early. The first three tiles asked answer 404, the rest are
-// served: the frame is served in part, so it is kept (no step back, the previous frame is never asked).
+// 404 answers do not stop a run early. The first three tiles asked answer 404, the rest are served: the
+// frame is served in part, so it is kept (no step back, the previous frame is never asked).
 TEST_F(CliSnapshotFallback, ThreeLeadingNotFoundAnswersDoNotStopAServedFrame) {
     serveIndex({ageIndex(10)});
     const QStringList paths = areaPaths();
@@ -1855,9 +1852,9 @@ TEST_F(CliSnapshotFallback, OnlyOneStepBack) {
     EXPECT_EQ(c.err.count(u"using the previous frame"_s), 1);
 }
 
-// T-0360 item 5: a frame picked with --time is not "the newest" (a later frame is listed), however young it
-// is (a forecast frame counts as young). All its tiles answer 502: no step back -- no "previous frame" line,
-// the frame before is never asked. Removing `taken->newest` in fixSnapshots (cli_main.cpp) fails this test.
+// A frame picked with --time is not "the newest" (a later frame is listed), however young it is (a forecast
+// frame counts as young). All its tiles answer 502: no step back -- no "previous frame" line, the frame
+// before is never asked. Removing `taken->newest` in fixSnapshots (cli_main.cpp) fails this test.
 TEST_F(CliSnapshotWmts, AFrameChosenWithTimeIsNotReplacedByThePreviousFrame) {
     QFile ini(dataDir() + u"/chart-grabber.conf"_s); // no reset pause
     ASSERT_TRUE(ini.open(QIODevice::WriteOnly));
@@ -1888,10 +1885,10 @@ TEST_F(CliSnapshotWmts, AFrameChosenWithTimeIsNotReplacedByThePreviousFrame) {
     }
 }
 
-// ---- T-0443: a newer model run of the same valid time replaces the cached tiles of the frame
-// (weather-sources.md 4.2, 5.4). Rig: the WMTS source of CliSnapshotWmts, whose capabilities carry a
-// reference_time; the capabilities answer in order (one per run, the last repeats), the tiles of the frame
-// answer R1 bytes first and R2 bytes after.
+// ---- A newer model run of the same valid time replaces the cached tiles of the frame
+// Rig: the WMTS source of CliSnapshotWmts, whose capabilities carry a reference_time; the capabilities
+// answer in order (one per run, the last repeats), the tiles of the frame answer R1 bytes first and R2
+// bytes after.
 
 namespace {
 
@@ -1952,10 +1949,10 @@ protected:
 
 } // namespace
 
-// The four runs of the ticket: R1 fetches every tile; R1 again fetches none; R2 of the SAME valid time
-// fetches every tile again, the export holds the R2 bytes, the note and record field 5 name R2; R2 again
-// fetches none. Removing the referenceSeen branch in DownloadRunner::run (download_runner.cpp) fails the
-// third step, removing isReplace there as well (the legacy skip comes first) fails it too.
+// The four runs: R1 fetches every tile; R1 again fetches none; R2 of the SAME valid time fetches every
+// tile again, the export holds the R2 bytes, the note and record field 5 name R2; R2 again fetches none.
+// Removing the referenceSeen branch in DownloadRunner::run (download_runner.cpp) fails the third step,
+// removing isReplace there as well (the legacy skip comes first) fails it too.
 TEST_F(CliSnapshotRun, ANewRunOfTheSameFrameReplacesTheCachedTilesOnce) {
     serveCaps({kRunR1, kRunR1, kRunR2, kRunR2});
     serveFrame(kFrame, kShadeR1);
@@ -2096,8 +2093,8 @@ TEST_F(CliSnapshotRun, AnUnreadableModelRunIsWarnedAndTheRunGoesOn) {
     EXPECT_EQ(storeValue("Reference="), QString());
 }
 
-// T-0449: the nine tiles of the frame except the one at /3/4/2.png, which answers 404
-// (a TNE marker is written for it).
+// The nine tiles of the frame except the one at /3/4/2.png, which answers 404 (a TNE marker is
+// written for it).
 namespace {
 const QString kMissingTile = u"/3/4/2.png"_s;
 }
@@ -2140,7 +2137,8 @@ protected:
 };
 
 // R1 does not serve T (marker); R2 does: the next run requests and stores T without --retry-missing.
-// Removing `params.isIgnoreTne = true` in the T-0449 block of DownloadRunner::run fails it (T is skipped).
+// Removing `params.isIgnoreTne = true` in the TNE-marker block of DownloadRunner::run fails it (T is
+// skipped).
 TEST_F(CliSnapshotRunRetry, ANewRunRetriesTheMarkerTheOldRunLeft) {
     serveCaps({kRunR1, kRunR2});
     serveFrameWithout(kShadeR1);
@@ -2159,7 +2157,7 @@ TEST_F(CliSnapshotRunRetry, ANewRunRetriesTheMarkerTheOldRunLeft) {
 
 // R2 does not serve T either: one request, the marker stays; a marker written by R2 itself is not retried by
 // the next R2 run (the date is the first sight of the run). Removing the `seen` date (loadTneOlderDate left
-// invalid) in the T-0449 block fails the last step.
+// invalid) in the TNE-marker block fails the last step.
 TEST_F(CliSnapshotRunRetry, AMarkerOfTheNewRunIsAskedOnceAndThenKept) {
     serveCaps({kRunR1, kRunR2, kRunR2});
     serveFrameWithout(kShadeR1);
@@ -2175,15 +2173,14 @@ TEST_F(CliSnapshotRunRetry, AMarkerOfTheNewRunIsAskedOnceAndThenKept) {
     mark = server_.requestCount();
     const Captured third = runJob();
     ASSERT_EQ(third.rc, 0) << qPrintable(third.err);
-    // Only T is asserted: the other eight tiles keep their old load date in this rig (cause not investigated,
-    // see the ticket's open questions) and are asked again.
+    // Only T is asserted: the other eight tiles keep their old load date in this rig (cause not investigated)
+    // and are asked again.
     EXPECT_EQ(missingRequests(mark), QStringList());
 }
 
 // The user's flags keep their meaning: a bare --retry-missing retries every marker, also one the new run
-// wrote;
-// --retry-missing-older-than D later than the first sight of the run decides. Removing the bare-flag guard of
-// the T-0449 block fails the first step, taking `seen` always fails the second.
+// wrote; --retry-missing-older-than D later than the first sight of the run decides. Removing the bare-flag
+// guard of the TNE-marker block fails the first step, taking `seen` always fails the second.
 TEST_F(CliSnapshotRunRetry, TheUsersRetryFlagsKeepTheirMeaning) {
     serveCaps({kRunR1, kRunR2});
     serveFrameWithout(kShadeR1);

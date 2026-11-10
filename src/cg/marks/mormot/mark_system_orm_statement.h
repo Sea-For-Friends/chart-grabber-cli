@@ -4,10 +4,9 @@
 
 #pragma once
 // Ports: nothing of the SAS tree (the call sites are the ORM statements of u_MarkCategoryDbImplORMHelper and
-// u_MarkDbImplORMHelper; mORMot's own execute path).
-// Shared by the SQLite backend helpers (categories/ and marks/): runs one statement the way mORMot does,
-// under the connection mutex ("one lock per statement", docs/specs/marks.md §2.9.5). Hoisted from the
-// anonymous namespaces of the category helper (T-0086) and the mark helper (T-0095).
+// u_MarkDbImplORMHelper; mORMot's own execute path). Shared by the SQLite backend helpers (categories/ and
+// marks/): runs one statement the way mORMot does, under the connection mutex. Hoisted from the anonymous
+// namespaces of the category helper and the mark helper.
 
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 
@@ -67,8 +66,8 @@ void inTransaction(IMarkSystemImplORMClientProvider& provider, bool useTransacti
     }
 }
 
-// mORMot's text of a Double inside an INSERT / UPDATE (docs/specs/marks.md 2.9.2): 15 significant digits,
-// spliced into the statement as a numeric literal.
+// mORMot's text of a Double inside an INSERT / UPDATE: 15 significant digits, spliced into the statement
+// as a numeric literal.
 inline QByteArray doubleLiteral(double value) {
     return QByteArray::number(value, 'g', 15);
 }

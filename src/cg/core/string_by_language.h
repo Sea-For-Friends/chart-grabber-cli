@@ -14,7 +14,6 @@
 
 namespace cg::core {
 
-// FEAT-NET-002
 class IStringByLanguage {
 public:
     virtual ~IStringByLanguage() = default;
@@ -27,8 +26,8 @@ using IStringByLanguagePtr = std::shared_ptr<const IStringByLanguage>;
 
 class StringByLanguageWithStaticList final : public IStringByLanguage {
 public:
-    // The list must not be empty (legacy: Assert, off in release, L-30): with an empty list
-    // getDefault() throws std::out_of_range, as legacy's TStringList raises EStringListError.
+    // The list must not be empty (legacy: Assert, off in release): with an empty list getDefault()
+    // throws std::out_of_range, as legacy's TStringList raises EStringListError.
     explicit StringByLanguageWithStaticList(const QStringList& values);
 
     // index <= 0 or >= count falls back to getDefault().

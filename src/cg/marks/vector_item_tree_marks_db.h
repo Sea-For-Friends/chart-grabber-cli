@@ -5,10 +5,9 @@
 #pragma once
 // Ports: Src/Vector/u_VectorItemTreeMarksDb.pas
 //
-// FEAT-GEO-041 (contributes; the id closes with the later of V-M2 / V-M3, the tables that register this
-// class). Importer-exporter of one marks database file (.sml / .db3). The file is opened through the
-// factory list entry of the database GUID; export writes the tree into the marks database, import reads
-// its category tree back as a vector item tree. The import config is ignored, as in legacy.
+// Importer-exporter of one marks database file (.sml / .db3). The file is opened through the factory
+// list entry of the database GUID; export writes the tree into the marks database, import reads its
+// category tree back as a vector item tree. The import config is ignored, as in legacy.
 
 #include "cg/core/result.h"
 #include "cg/marks/mark_category_factory.h"
@@ -33,7 +32,8 @@ class VectorItemTreeMarksDb final : public vector::IVectorItemTreeExporter,
                                     public vector::IVectorItemTreeImporter { // TVectorItemTreeMarksDb
 public:
     // Collaborators are non-null: a null one is refused with std::invalid_argument at construction (legacy
-    // stores nil and fails at the first call; no D row, as T-0146 did for constructor nulls).
+    // stores nil and fails at the first call; no deviation is recorded, as for the other constructor
+    // nulls).
     VectorItemTreeMarksDb(const QUuid& database, std::shared_ptr<IMarkFactory> markFactory,
                           std::shared_ptr<IMarkCategoryFactory> categoryFactory,
                           vector::AppearanceOfMarkFactoryPtr appearanceOfMarkFactory,

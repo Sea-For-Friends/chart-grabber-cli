@@ -44,7 +44,7 @@ private:
 };
 
 // Legacy SetGPXColorName (u_AppearanceHelper.pas:137-243). The table is kept as written: it is
-// dispatched on the length of the lower-cased name, and the odd mappings are legacy (LV-6).
+// dispatched on the length of the lower-cased name, and the odd mappings are legacy.
 bool ColorSetHelper::setGpxColorName(const QString& name) {
     found_ = false;
     color_ = core::clBlack32;
@@ -78,12 +78,12 @@ bool ColorSetHelper::setGpxColorName(const QString& name) {
             hit(core::clWhite32);
         }
         break;
-    case 6: // Yellow (light yellow, LV-6)
+    case 6: // Yellow (light yellow)
         if (is(QLatin1StringView("yellow"))) {
             hit(core::clLightYellow32);
         }
         break;
-    case 7: // DarkRed, Magenta (dark magenta, LV-6)
+    case 7: // DarkRed, Magenta (dark magenta)
         if (is(QLatin1StringView("darkred"))) {
             hit(core::clDarkRed32);
         } else if (is(QLatin1StringView("magenta"))) {
@@ -106,7 +106,7 @@ bool ColorSetHelper::setGpxColorName(const QString& name) {
             hit(core::clLightGray32);
         }
         break;
-    case 10: // DarkYellow (yellow, LV-6)
+    case 10: // DarkYellow (yellow)
         if (is(QLatin1StringView("darkyellow"))) {
             hit(core::clYellow32);
         }
@@ -258,8 +258,7 @@ AppearancePtr AppearanceHelper::redefinePointAppearance() const {
     const AppearancePointCaptionPtr caption = pointParams_->captionAppearance();
     const AppearancePointIconPtr iconParams = pointParams_->iconAppearance();
     // unreachable in legacy (every TImport*Params caller passes a factory-built appearance:
-    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292); no
-    // register row
+    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292)
     if (!caption || !iconParams) {
         throw std::invalid_argument("null point facet");
     }
@@ -290,16 +289,15 @@ AppearancePtr AppearanceHelper::redefinePointAppearance() const {
                                                            markerSize);
 }
 
-// Legacy RedefineLineAppearance (u_AppearanceHelper.pas:457-482). LV-1: the force flags are the
-// ones ImportLineParams provides (import_config.cpp), reproduced as they are.
+// Legacy RedefineLineAppearance (u_AppearanceHelper.pas:457-482). The force flags are the ones
+// ImportLineParams provides (import_config.cpp), reproduced as they are.
 AppearancePtr AppearanceHelper::redefineLineAppearance() const {
     if (!lineParams_) {
         return nullptr;
     }
     const AppearanceLinePtr line = lineParams_->lineAppearance();
     // unreachable in legacy (every TImport*Params caller passes a factory-built appearance:
-    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292); no
-    // register row
+    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292)
     if (!line) {
         throw std::invalid_argument("null line facet");
     }
@@ -321,8 +319,7 @@ AppearancePtr AppearanceHelper::redefinePolygonAppearance() const {
     const AppearancePolygonBorderPtr border = polyParams_->borderAppearance();
     const AppearancePolygonFillPtr fill = polyParams_->fillAppearance();
     // unreachable in legacy (every TImport*Params caller passes a factory-built appearance:
-    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292); no
-    // register row
+    // u_VectorItemTreeMarksDb.pas:124-137, u_ZmpInfo.pas:1033-1059, fr_MarksGeneralOptions.pas:275-292)
     if (!border || !fill) {
         throw std::invalid_argument("null polygon facet");
     }

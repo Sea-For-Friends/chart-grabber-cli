@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT (core idiom); docs/specs/core.md 2.6, test plan 7.10
 #include "cg/core/operation_notifier.h"
 
 #include <gtest/gtest.h>
@@ -94,11 +93,10 @@ TEST(OperationNotifier, GenerationChangedFiresOnBeginAndCancel) {
     EXPECT_EQ(calls, 2);
 }
 
-// Finding 4 (T-0002A rework): spec §2.6/§3 requires generationChanged_ to fire *outside*
-// mutex_. Mutex is a non-recursive std::shared_mutex (sync.h), so a listener that calls back
-// into the notifier while the mutex is held deadlocks. These two tests exercise exactly the
-// call-backs the finding names and would hang (reported as a timeout failure, not a crash) if
-// the fire were ever moved back inside the lock.
+// generationChanged_ must fire *outside* mutex_. Mutex is a non-recursive std::shared_mutex
+// (sync.h), so a listener that calls back into the notifier while the mutex is held
+// deadlocks. These two tests exercise exactly those call-backs and would hang (reported as a
+// timeout failure, not a crash) if the fire were ever moved back inside the lock.
 TEST(OperationNotifier, GenerationChangedListenerMayCallIsCancelledWithoutDeadlock) {
     OperationNotifier notifier;
     std::atomic<bool> cancelledDuringBegin{true};

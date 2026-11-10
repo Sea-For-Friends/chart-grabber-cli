@@ -2,18 +2,15 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-010 (T-0079: the loop is build/send/save, u_TileDownloaderSimple.pas:152-274) --
-// docs/specs/net.md §2.15, §7.11.
+// The loop is build/send/save, u_TileDownloaderSimple.pas:152-274.
 //
-// Test-count ruling (tech-lead-rulings.md, T-0011B dispatch): the ticket's "17 cases" figure is
-// not a quota; the cases below cover the loop (T-0079: build/send/save, two cancels) and the pacing.
+// The cases below cover the loop (build/send/save, two cancels) and the pacing.
 //
-// §7.11 mentions "an injectable clock"; RetryDownloader's constructor has no clock parameter
-// (net.md :1161-1167, quoted verbatim by the ticket) so none was added here (see
-// docs/handoffs/T-0011B.md). Timing tests instead use small, real millisecond-scale intervals with
-// generous tolerances -- deterministic in the sense that matters (which thread does what, and
-// std::thread::join()/QElapsedTimer bounds, never a sleep-then-poll race), not in the sense of
-// avoiding all wall-clock time, which the fixed API does not allow.
+// RetryDownloader's constructor has no clock parameter, so none was added here. Timing tests
+// instead use small, real millisecond-scale intervals with generous tolerances -- deterministic in
+// the sense that matters (which thread does what, and std::thread::join()/QElapsedTimer bounds,
+// never a sleep-then-poll race), not in the sense of avoiding all wall-clock time, which the fixed
+// API does not allow.
 #include "cg/net/download_result_factory.h"
 #include "cg/net/inet_config.h"
 #include "cg/net/retry_downloader.h"
@@ -318,10 +315,10 @@ TEST(RetryDownloaderTest, CanceledResultIsNotSaved) {
     EXPECT_EQ(send->callCount_, 1);
 }
 
-// u_TileDownloaderSimple.pas:293-318: sleep only the remainder since the last download.
-// T-0093 part 2: seconds-scale and one-sided around a MEASURED origin instead of 140 ms <= x < 280 ms
-// around a nominal 200 ms. The second call must wake at (stamp + interval), where the stamp was taken
-// during the first call, i.e. after `startedAt`. So, measured from `startedAt`:
+// u_TileDownloaderSimple.pas:293-318: sleep only the remainder since the last download. Seconds-scale
+// and one-sided around a MEASURED origin instead of 140 ms <= x < 280 ms around a nominal 200 ms. The
+// second call must wake at (stamp + interval), where the stamp was taken during the first call, i.e.
+// after `startedAt`. So, measured from `startedAt`:
 //   * lower bound: finished >= interval (a call that does not sleep, or sleeps too little, ends near
 //     the head start, ~2.5 s, far below the 4 s interval);
 //   * upper bound: finished < interval + headStart/2 (a call that sleeps the full interval after the
@@ -414,7 +411,7 @@ TEST(RetryDownloaderTest, SleepIsInterruptedByHardCancel) {
     EXPECT_EQ(outcome.result.kind, ResultKind::Canceled);
 }
 
-// T-0329: why a failed tile takes ~35 s with the legacy defaults (TimeOut 40000, DownloadTryCount 2,
+// Why a failed tile takes ~35 s with the legacy defaults (TimeOut 40000, DownloadTryCount 2,
 // SleepOnResetConnection 30000, u_InetConfig.pas:99-101): after a connect error the loop pauses
 // SleepOnResetConnection before EACH further try -- tryCount-1 pauses in all -- and a try that
 // answers does not pause. Scaled down: tryCount 3, pause 300 ms.
@@ -451,7 +448,7 @@ DownloadResult resetByPeer() {
 }
 } // namespace
 
-// T-0329: any other connection error keeps the legacy sleep (here 300 ms between the two attempts).
+// Any other connection error keeps the legacy sleep (here 300 ms between the two attempts).
 TEST(RetryDownloaderTest, OtherConnectionErrorKeepsTheResetConnectionSleep) {
     auto send = std::make_shared<FakeDownloader>(std::vector{resetByPeer()});
     RetryDownloader retry(send, /*tryCount=*/2, /*sleepOnResetMs=*/300, /*waitIntervalMs=*/0);

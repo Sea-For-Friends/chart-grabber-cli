@@ -2,16 +2,15 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-002..010. Ports i_TileFileNameGenerator.pas, i_TileFileNameParser.pas,
-// u_TileFileNameBase.pas, u_TileFileName{SAS,GMV,ES,GM1,GM2,GM3,MOBAC,OsmAnd,TMS}.pas;
-// docs/specs/storage.md §2.10/§2.10.1; fixtures from tools/gen_cache_fixtures.py
-// (tests/fixtures/cache/expected.json).
+// Ports i_TileFileNameGenerator.pas, i_TileFileNameParser.pas, u_TileFileNameBase.pas,
+// u_TileFileName{SAS,GMV,ES,GM1,GM2,GM3,MOBAC,OsmAnd,TMS}.pas; fixtures from
+// tools/gen_cache_fixtures.py (tests/fixtures/cache/expected.json).
 //
-// T-0021C adds the six regex-family codecs (GM1/GM2/GM3/MOBAC/OsmAnd+/TMS): 6 * 7 = 42 cases
-// below, split 3 generate + 3 parse + 1 round-trip per codec, mirroring T-0021B's SAS/GMV/ES
-// section above it. GM1/GM2/GM3/TMS's ParseZoom5 case doubles as the axis-transposition guard
-// (§7.3): the fixture tile at that index has X != Y, so a transposed parse would already fail
-// the plain EXPECT_EQ checks -- named/commented explicitly per the ticket's acceptance criteria.
+// The six regex-family codecs (GM1/GM2/GM3/MOBAC/OsmAnd+/TMS): 6 * 7 = 42 cases below, split 3
+// generate + 3 parse + 1 round-trip per codec, mirroring the SAS/GMV/ES section above it.
+// GM1/GM2/GM3/TMS's ParseZoom5 case doubles as the axis-transposition guard: the fixture tile at
+// that index has X != Y, so a transposed parse would already fail the plain EXPECT_EQ checks --
+// named/commented explicitly.
 #include "cg/storage/codecs/es_tile_name_codec.h"
 #include "cg/storage/codecs/gm1_tile_name_codec.h"
 #include "cg/storage/codecs/gm2_tile_name_codec.h"
@@ -106,7 +105,7 @@ void expectParse(const ITileNameCodec& codec, const FixtureTile& t) {
 
 } // namespace
 
-// --- SAS.Planet (FEAT-STO-002) ------------------------------------------------------------------
+// --- SAS.Planet ------------------------------------------------------------------
 
 TEST(TileNameCodecSas, GenerateZoom0Degenerate) {
     expectGenerate(SasTileNameCodec(), loadLayout(QStringLiteral("sas")).value(0));
@@ -144,7 +143,7 @@ TEST(TileNameCodecSas, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- GoogleMV (FEAT-STO-003) ---------------------------------------------------------------------
+// --- GoogleMV ---------------------------------------------------------------------
 
 TEST(TileNameCodecGmv, GenerateZoom0Degenerate) {
     expectGenerate(GmvTileNameCodec(), loadLayout(QStringLiteral("gmv")).value(0));
@@ -182,7 +181,7 @@ TEST(TileNameCodecGmv, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- EarthSlicer (FEAT-STO-004) -------------------------------------------------------------------
+// --- EarthSlicer -------------------------------------------------------------------
 
 TEST(TileNameCodecEs, GenerateZoom0Degenerate) {
     expectGenerate(EsTileNameCodec(), loadLayout(QStringLiteral("es")).value(0));
@@ -220,7 +219,7 @@ TEST(TileNameCodecEs, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- GlobalMapper Tiles (FEAT-STO-005) ------------------------------------------------------------
+// --- GlobalMapper Tiles ------------------------------------------------------------
 
 TEST(TileNameCodecGm1, GenerateZoom0) {
     expectGenerate(Gm1TileNameCodec(), loadLayout(QStringLiteral("gm1")).value(0));
@@ -234,7 +233,7 @@ TEST(TileNameCodecGm1, GenerateZoom10) {
 TEST(TileNameCodecGm1, ParseZoom5AxisGuard) {
     // (!) u_TileFileNameGM1.pas:70-91 GetTilePoint: "ATileXY.Y := ...; // (!) Y - first, X - last".
     // The fixture tile here has X=3, Y=7 (unequal), so a transposed parse would already fail the
-    // plain EXPECT_EQ below; named explicitly per the ticket's axis-transposition guard.
+    // plain EXPECT_EQ below; named explicitly as the axis-transposition guard.
     expectParse(Gm1TileNameCodec(), loadLayout(QStringLiteral("gm1")).value(1));
 }
 TEST(TileNameCodecGm1, ParseZoom8) {
@@ -261,7 +260,7 @@ TEST(TileNameCodecGm1, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- GlobalMapper Aux (FEAT-STO-006) --------------------------------------------------------------
+// --- GlobalMapper Aux --------------------------------------------------------------
 
 TEST(TileNameCodecGm2, GenerateZoom0) {
     expectGenerate(Gm2TileNameCodec(), loadLayout(QStringLiteral("gm2")).value(0));
@@ -300,7 +299,7 @@ TEST(TileNameCodecGm2, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- GlobalMapper Bing (FEAT-STO-007) -------------------------------------------------------------
+// --- GlobalMapper Bing -------------------------------------------------------------
 
 TEST(TileNameCodecGm3, GenerateZoom0) {
     expectGenerate(Gm3TileNameCodec(), loadLayout(QStringLiteral("gm3")).value(0));
@@ -339,7 +338,7 @@ TEST(TileNameCodecGm3, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- MOBAC (FEAT-STO-008) --------------------------------------------------------------------------
+// --- MOBAC --------------------------------------------------------------------------
 
 TEST(TileNameCodecMobac, GenerateZoom0) {
     expectGenerate(MobacTileNameCodec(), loadLayout(QStringLiteral("mobac")).value(0));
@@ -377,7 +376,7 @@ TEST(TileNameCodecMobac, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- OsmAnd+ (FEAT-STO-009) --------------------------------------------------------------------------
+// --- OsmAnd+ --------------------------------------------------------------------------
 
 TEST(TileNameCodecOsmand, GenerateZoom0) {
     expectGenerate(OsmandTileNameCodec(), loadLayout(QStringLiteral("osmand")).value(0));
@@ -420,7 +419,7 @@ TEST(TileNameCodecOsmand, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- TMS (FEAT-STO-010) -----------------------------------------------------------------------------
+// --- TMS -----------------------------------------------------------------------------
 
 TEST(TileNameCodecTms, GenerateZoom0) {
     expectGenerate(TmsTileNameCodec(), loadLayout(QStringLiteral("tms")).value(0));
@@ -464,7 +463,7 @@ TEST(TileNameCodecTms, RoundTripAllFixtureTiles) {
     }
 }
 
-// --- 5 hand-written cases (T-0021B, SAS/GMV/ES only) ------------------------------------------------
+// --- 5 hand-written cases (SAS/GMV/ES only) ------------------------------------------------
 
 TEST(TileNameCodec, UnparseablePathReturnsFalse) {
     PointI xy;
@@ -517,7 +516,7 @@ TEST(TileNameCodec, AddExtRoundTrip) {
     EXPECT_EQ(codec.addExt(withExt, u".png"), QStringLiteral("dir.with.dots/z1/0/x0/0/y0.png"));
 }
 
-// --- Test/u_RegularExpressions_Test.pas TestTileFileNameTMS / TestTileFileNameSAS (T-0040) -----------
+// --- Test/u_RegularExpressions_Test.pas TestTileFileNameTMS / TestTileFileNameSAS -----------
 // Legacy checks the TRegExpr capture groups of two literal names (backslash separators there, '/'
 // in the port). Not covered by the fixture-driven cases above (no z10 / 603|604 / 680|342 tile), so
 // added: parse of the legacy name (prefix + .jpg ext, groups 2..4 -> zoom/x/y) and generation of its tail.

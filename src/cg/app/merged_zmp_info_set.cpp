@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// NEW (T-0239, T-0291, app-cli.md 1.6.1); no legacy counterpart: legacy reads one maps directory
-// (u_ZmpInfoSet.pas:126-185). See merged_zmp_info_set.h.
+// NEW; no legacy counterpart: legacy reads one maps directory (u_ZmpInfoSet.pas:126-185). See
+// merged_zmp_info_set.h.
 #include "cg/app/merged_zmp_info_set.h"
 
 #include <QDir>

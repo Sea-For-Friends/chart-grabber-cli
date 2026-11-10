@@ -8,7 +8,7 @@
 // u_ProjectionSetListStaticSimple.pas
 //
 // The 24-level pyramid (one IProjection per zoom, 0..23) for one projection type, plus the four
-// legacy predefined sets and the settings-dialog list. Immutable snapshot, no locks (§8.1).
+// legacy predefined sets and the settings-dialog list. Immutable snapshot, no locks.
 
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"
@@ -89,10 +89,10 @@ private:
     ProjectionSetPtr geographic_;
 };
 
-// u_ProjectionSetListStaticSimple.pas:45-58 -- three entries, legacy order (Q-4 ruling
-// 2026-09-18: ESRI 53004 is reachable by code/config but was never in the selectable list).
-// Captions are tr()-wrapped at the `ui` call site (geo has no tr(), core.md keeps user strings in
-// ui); `caption` here is the untranslated legacy source string, gettext_NoOp's argument.
+// u_ProjectionSetListStaticSimple.pas:45-58 -- three entries, legacy order (ESRI 53004 is
+// reachable by code/config but was never in the selectable list). Captions are tr()-wrapped at
+// the `ui` call site (geo has no tr(); user strings live in ui); `caption` here is the
+// untranslated legacy source string, gettext_NoOp's argument.
 struct ProjectionSetListEntry {
     ProjectionSetPtr set;
     QString caption;

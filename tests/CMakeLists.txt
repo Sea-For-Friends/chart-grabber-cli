@@ -6,37 +6,37 @@ function(cg_add_test name)
 endfunction()
 add_subdirectory(core)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/net/CMakeLists.txt")
-  add_subdirectory(net)  # T-0010A / T-0012A
+  add_subdirectory(net)
 endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/script/CMakeLists.txt")
-  add_subdirectory(script)  # T-0013
+  add_subdirectory(script)
 endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/geo/CMakeLists.txt")
-  add_subdirectory(geo)  # T-0016
+  add_subdirectory(geo)
 endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/storage/CMakeLists.txt")
-  add_subdirectory(storage)  # T-0021A
+  add_subdirectory(storage)
 endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maptype/CMakeLists.txt")
-  add_subdirectory(maptype)  # T-0044
+  add_subdirectory(maptype)
 endif()
-# --- vector (T-0047) ---
+# --- vector ---
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vector/CMakeLists.txt")
-  add_subdirectory(vector)  # T-0047
+  add_subdirectory(vector)
 endif()
-# --- marks (T-0062, T-0063, T-0064) ---
+# --- marks ---
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/marks/CMakeLists.txt")
-  add_subdirectory(marks)  # T-0062, T-0063, T-0064
+  add_subdirectory(marks)
 endif()
-# --- bitmap (T-0155) ---
+# --- bitmap ---
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bitmap/CMakeLists.txt")
-  add_subdirectory(bitmap)  # T-0155
+  add_subdirectory(bitmap)
 endif()
-# --- region (T-0157) ---
+# --- region ---
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/region/CMakeLists.txt")
-  add_subdirectory(region)  # T-0157
+  add_subdirectory(region)
 endif()
-# --- app (T-0184) ---
+# --- app ---
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/app/CMakeLists.txt")
-  add_subdirectory(app)  # T-0184
+  add_subdirectory(app)
 endif()

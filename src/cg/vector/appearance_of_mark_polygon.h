@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/Vector/u_AppearanceOfMarkPolygon.pas
 //
-// FEAT-GEO-037 (enabler). Hashes are given by the factory, nothing is computed here.
+// Hashes are given by the factory, nothing is computed here.
 
 #include "cg/vector/appearance.h"
 #include "cg/vector/appearance_of_vector_item.h"
@@ -20,7 +20,7 @@ public:
                             Color32 lineColor, int lineWidth, Color32 fillColor);
 
     [[nodiscard]] core::HashValue hash() const noexcept override;        // GetHashCommon
-    [[nodiscard]] bool isEqual(const IAppearance* value) const override; // hash only (L-126)
+    [[nodiscard]] bool isEqual(const IAppearance* value) const override; // hash only
 
     [[nodiscard]] core::HashValue hashBorder() const noexcept override;
     [[nodiscard]] Color32 lineColor() const override;

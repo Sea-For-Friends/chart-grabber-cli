@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: the bootstrap in Src/u_GlobalState.pas (three TPathConfig.Create('', VProgramPath, nil)
-// plus the cache root) and the portable-vs-XDG decision of ADR-0011.
+// plus the cache root) and the portable-vs-XDG layout choice.
 //
 // Legacy is unconditionally portable: every root is the executable's own directory. The port keeps
 // that as a first-class, auto-detected mode (an existing Windows install directory copied onto
@@ -17,20 +17,19 @@
 
 namespace cg::core {
 
-// FEAT-UI-004
 struct AppPaths {
     QString applicationDir; // read-only install dir: QCoreApplication::applicationDirPath()
     QString configDir;      // where chart-grabber.conf and MainFormState.ini live
     QString dataDir;        // Logs, TrackLog, MarksIcons, UserData, Marks.db3, ...
-    QString cacheDir;       // tile caches; equals dataDir in both modes (ADR-0011)
+    QString cacheDir;       // tile caches; equals dataDir in both modes
     bool portable = false;
-    bool legacyIni = false; // T-0311 (a): configDir is an old SAS.Planet dir whose SASPlanet.ini is read
+    bool legacyIni = false; // configDir is an old SAS.Planet dir whose SASPlanet.ini is read
 
-    // Decides portable vs. XDG (ADR-0011). Creates configDir/dataDir/cacheDir if missing.
+    // Decides portable vs. XDG. Creates configDir/dataDir/cacheDir if missing.
     // applicationDirOverride: test-only seam for the portable-marker detection (chart-grabber.conf /
     // portable.txt next to the exe), which otherwise always reads the real
     // QCoreApplication::applicationDirPath(); empty (the default) keeps production behavior.
-    // roamingDataDirOverride: test-only seam for the T-0360 one-time move out of the roaming data folder
+    // roamingDataDirOverride: test-only seam for the one-time move out of the roaming data folder
     // (empty = Qt's AppDataLocation, which differs from the local one only on Windows).
     [[nodiscard]] static Result<AppPaths> detect(const QStringList& arguments,
                                                  const QString& applicationDirOverride = QString(),
@@ -38,8 +37,8 @@ struct AppPaths {
 
     [[nodiscard]] QString mainConfigFilePath() const; // configDir + "/chart-grabber.conf"
 
-    // T-0382: the value of the last "--datadir=DIR" / "--datadir DIR" in the arguments, exactly as detect()
-    // reads it (the single place that parses it; cli/main.cpp calls it before QGuiApplication). present
+    // The value of the last "--datadir=DIR" / "--datadir DIR" in the arguments, exactly as detect() reads
+    // it (the single place that parses it; cli/main.cpp calls it before QGuiApplication). present
     // (optional) tells whether the flag was there at all; the value is empty for "--datadir=" and for a
     // trailing "--datadir".
     [[nodiscard]] static QString explicitDataDirArgument(const QStringList& arguments,

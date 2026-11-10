@@ -1,4 +1,4 @@
-; T-0015D golden: Visicom.zmp - 'shl'.
+; Golden: Visicom.zmp - 'shl'.
 ; ResultURL := GetURLBase+'/'+IntToStr(GetZ-1)+'/'+IntToStr(GetX)+'/'+
 ;   IntToStr((1 shl (GetZ-1)) - (GetY+1))+'.png'
 ; P3: (1 shl 13)=8192; 8192-5679=2513.  P4: (1 shl 17)=131072; 131072-87655=43417.

@@ -59,7 +59,7 @@ bool MarkCategorySmlDbInternal::isEqual(const vector::ICategory* category) const
            other->beforeScale() == beforeScale_;
 }
 
-// TMarkCategorySmlDbInternal.IsSame (:148-158): the id only, dbId is not compared (L-193).
+// TMarkCategorySmlDbInternal.IsSame (:148-158): the id only, dbId is not compared.
 bool MarkCategorySmlDbInternal::isSame(const vector::ICategory* category) const {
     const auto* other = dynamic_cast<const IMarkCategorySMLInternal*>(category);
     return other != nullptr && other->id() == id_;

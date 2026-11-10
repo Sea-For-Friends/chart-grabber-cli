@@ -2,8 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-003 (Format/FormatEx/RoundEx surface, T-0014C1). docs/specs/script.md:611-627,
-// :1088-1131 (F20/F21/F25, the "Format subset to implement" table).
 #include "cg/core/delphi_format.h"
 
 #include <gtest/gtest.h>
@@ -42,13 +40,12 @@ INSTANTIATE_TEST_SUITE_P(
         DelphiFormatCase{"Unsigned", "%u", {qint64{-1}}, false, "4294967295"},
         DelphiFormatCase{"Hex", "%x", {qint64{255}}, false, "FF"},
         DelphiFormatCase{"Str", "%s", {QByteArray(QByteArrayLiteral("hi"))}, false, "hi"},
-        // T-0014C1 rework (finding 3): %e's precision is the *total* significant digit count,
-        // default 15 - Delphi docs' own worked example, `Format('%e',[12345.6789])` =
-        // `1.23456789000000E+004` (15 sig digits: "123456789000000", exponent sign + >=3 digits).
-        // The old expectation ("1.23E+04") encoded 2-fractional-digit-default/2-digit-exponent,
-        // which was the bug.
+        // %e's precision is the *total* significant digit count, default 15 - Delphi docs' own
+        // worked example, `Format('%e',[12345.6789])` = `1.23456789000000E+004` (15 sig digits:
+        // "123456789000000", exponent sign + >=3 digits). The old expectation ("1.23E+04")
+        // encoded 2-fractional-digit-default/2-digit-exponent, which was the bug.
         DelphiFormatCase{"Scientific", "%e", {12345.6789L}, false, "1.23456789000000E+004"},
-        // finding 3: an explicit precision on %e is *total* significant digits, and ties round
+        // An explicit precision on %e is *total* significant digits, and ties round
         // half-away-from-zero via the shared digit-string helper (not `ad/pow`, which loses ties).
         // 12345 is an exact double; rounding it to 4 significant digits cuts exactly at "12345"'s
         // trailing '5' - a genuine tie - so half-away rounds "1234" up to "1235".
@@ -63,30 +60,30 @@ INSTANTIATE_TEST_SUITE_P(
         DelphiFormatCase{"Precision", "%.3f", {1.0L / 3.0L}, false, "0.333"},
         DelphiFormatCase{"StarWidthThenImplicitValue", "%*d", {qint64{5}, qint64{3}}, false, "    3"},
         DelphiFormatCase{"LiteralPercent", "100%%", {}, false, "100%"},
-        // finding 7: one tie row per suite is enough (the negative-sign variant added nothing a
-        // sign-flip doesn't already cover).
+        // One tie row per suite is enough (the negative-sign variant added nothing a sign-flip
+        // doesn't already cover).
         DelphiFormatCase{"RoundingTieIsHalfAwayFromZero", "%.2f", {1.125L}, false, "1.13"},
         DelphiFormatCase{"UnsupportedSpecifierIsARuntimeError", "%p", {qint64{1}}, true, ""},
-        // finding 2: an explicit `%<n>:` index moves the implicit argument counter to index+1,
-        // it does not just borrow an argument - documented Delphi:
+        // An explicit `%<n>:` index moves the implicit argument counter to index+1, it does
+        // not just borrow an argument - documented Delphi:
         // `Format('%d %d %d %0:d %d',[1,2,3,4]) = '1 2 3 1 2'`.
         DelphiFormatCase{"ExplicitIndexMovesTheImplicitCounter",
                          "%d %d %d %0:d %d",
                          {qint64{1}, qint64{2}, qint64{3}, qint64{4}},
                          false,
                          "1 2 3 1 2"},
-        // finding 5: %g ties round half-away-from-zero, not glibc's round-half-to-even. 0.125 at
-        // 2 significant digits is an exact tie ("12|5" cut); glibc's `%.1Le` gives "1.2e-01"
+        // %g ties round half-away-from-zero, not glibc's round-half-to-even. 0.125 at 2
+        // significant digits is an exact tie ("12|5" cut); glibc's `%.1Le` gives "1.2e-01"
         // (half-to-even), half-away gives "0.13".
         DelphiFormatCase{"GeneralTieIsHalfAwayFromZero", "%.2g", {0.125L}, false, "0.13"},
-        // finding 4: NaN/Inf on the float specifiers print the string, they do not raise.
+        // NaN/Inf on the float specifiers print the string, they do not raise.
         DelphiFormatCase{"FloatSpecifierPrintsInfAsString",
                          "%f",
                          {std::numeric_limits<long double>::infinity()},
                          false,
                          "INF"},
-        // finding 6: Delphi's Format is argument-type-strict - %f wants a real, not an integer
-        // (the port used to widen Int through Value::toReal()).
+        // Delphi's Format is argument-type-strict - %f wants a real, not an integer (the port used
+        // to widen Int through Value::toReal()).
         DelphiFormatCase{"FloatSpecifierRejectsIntegerArgument", "%f", {qint64{5}}, true, ""}),
     [](const ::testing::TestParamInfo<DelphiFormatCase>& paramInfo) { return paramInfo.param.name; });
 
@@ -97,8 +94,8 @@ TEST(DelphiFormat, FormatExUsesTheSuppliedDecimalSeparator) {
 }
 
 TEST(DelphiFormat, FormatExThousandsSeparatorIsTheNulByte) {
-    // F21: a fresh, default-initialised TFormatSettings has ThousandSeparator == #0 - reproduced,
-    // not fixed up (spec docs/specs/script.md:1094-1095).
+    // A fresh, default-initialised TFormatSettings has ThousandSeparator == #0 - reproduced, not
+    // fixed up.
     auto r = delphiFormat("%n", std::array<FormatArg, 1>{1234.0L}, '.', '\0');
     ASSERT_TRUE(r.has_value());
     EXPECT_EQ(*r, QByteArray("1"
@@ -122,7 +119,7 @@ TEST_P(RoundEx_Cases, MatchesF25) {
 
 INSTANTIATE_TEST_SUITE_P(
     Goldens, RoundEx_Cases,
-    // finding 7: one Inf row and one tie row per suite is enough.
+    // One Inf row and one tie row per suite is enough.
     ::testing::Values(
         RoundExCase{"NaNIsDash", std::numeric_limits<double>::quiet_NaN(), 3, "-"},
         RoundExCase{"PosInf", std::numeric_limits<double>::infinity(), 3, "INF"},
@@ -130,10 +127,10 @@ INSTANTIATE_TEST_SUITE_P(
         RoundExCase{"TieIsHalfAwayFromZero", 1.125, 2, "1.13"},
         RoundExCase{"PrecisionClampedHighTo18", 1.0, 25, "1.000000000000000000"},
         RoundExCase{"PrecisionClampedLowTo0", 1.0, -5, "1"},
-        // finding 1 (major): FloatToStrF first rounds to 15 *significant* digits, then lays out
-        // exactly `Precision` decimals, zero-filling past the 15th - it does not print the exact
-        // binary expansion to `Precision` decimals. This is the review's own corpus-shape vector
-        // (Mercator metres, `RoundEx(GetLMetr,10)`, 13 corpus uses):
+        // FloatToStrF first rounds to 15 *significant* digits, then lays out exactly `Precision`
+        // decimals, zero-filling past the 15th - it does not print the exact binary expansion to
+        // `Precision` decimals. This is a corpus-shape vector (Mercator metres,
+        // `RoundEx(GetLMetr,10)`, 13 corpus uses):
         // exact double value: 2226389.8158654714934527873992919921875
         // 15 sig digits (7 int + 8 frac), half-away-from-zero: 2226389.81586547
         // Digits->10 requested->8 available: zero-fill 2 more: 2226389.8158654700

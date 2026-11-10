@@ -149,11 +149,12 @@ SqliteStorageMbtilesBase::SqliteStorageMbtilesBase(QString exportPath, QString e
         name_ = QStringLiteral("Unnamed map");
     if (description_.isEmpty())
         description_ = QStringLiteral("Created by chart-grabber-cli ") +
-                       QLatin1String(core::versionString()); // D row A, T-0311
+                       QLatin1String(core::versionString()); // The port writes its own name (a deviation from
+                                                             // legacy)
     imgType_ = isLayer ? QStringLiteral("overlay") : QStringLiteral("baselayer");
     scheme_ = useXYZScheme_ ? QStringLiteral("xyz") : QStringLiteral("tms");
     // FSQLiteAvailable (:224, :374-376) is not ported: unreachable in legacy (system libsqlite3 is a build
-    // dependency); no register row.
+    // dependency).
 }
 
 // Legacy has no destructor close: the handle is released WITHOUT committing.
@@ -187,8 +188,7 @@ core::Result<void> SqliteStorageMbtilesBase::readMetadata() { // :253-304
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
     auto stmt = db_->prepare("SELECT name, value FROM metadata");
     if (!stmt)
         return std::unexpected(stmt.error());
@@ -245,12 +245,11 @@ SqliteStorageMbtilesBase::writeMetadata(const std::vector<std::pair<QString, QSt
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
     if (auto r = db_->exec("BEGIN TRANSACTION"); !r)
         return std::unexpected(r.error());
     for (const auto& [key, val] : rows) {
-        // WriteMetaKeyVal (:248-251): spliced between single quotes without escaping (LC-2).
+        // WriteMetaKeyVal (:248-251): spliced between single quotes without escaping.
         const QString text =
             sql.arg(QLatin1Char('\'') + key + QLatin1Char('\''), QLatin1Char('\'') + val + QLatin1Char('\''));
         if (auto r = db_->exec(text.toUtf8()); !r)
@@ -349,7 +348,8 @@ core::Result<void> SqliteStorageMbtilesClassic::open(const geo::LonLatRect& lonL
         {QStringLiteral("attribution"), attribution_},
         {QStringLiteral("minzoom"), QString::number(minZoom)},
         {QStringLiteral("maxzoom"), QString::number(maxZoom)},
-        {QStringLiteral("center"), centerStr(lonLatRect, minZoom)}, // the NEW rect, LC-3 (:474 vs :465)
+        {QStringLiteral("center"), centerStr(lonLatRect, minZoom)}, // the NEW rect, a legacy defect (:474 vs
+                                                                    // :465)
         {QStringLiteral("scheme"), scheme_},
     };
     if (auto r = writeMetadata(metadata); !r)
@@ -359,8 +359,7 @@ core::Result<void> SqliteStorageMbtilesClassic::open(const geo::LonLatRect& lonL
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
     auto stmt = db_->prepare(replaceTiles_ ? kInsertTilesSqlReplace : kInsertTilesSqlIgnore);
     if (!stmt)
         return std::unexpected(stmt.error());
@@ -394,8 +393,7 @@ core::Result<void> SqliteStorageMbtilesClassic::add(geo::PointI tile, quint8 zoo
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
 
     const geo::PointI t = tileXY(tile, zoom);
 
@@ -406,7 +404,7 @@ core::Result<void> SqliteStorageMbtilesClassic::add(geo::PointI tile, quint8 zoo
     if (auto r = insertStmt_->bindInt(3, t.y()); !r)
         return r;
     // legacy BindBlob(AData.Buffer, AData.Size): the buffer of a zero-size tile is nil, which
-    // sqlite3_bind_blob stores as NULL (u_BinaryData.pas:61-63; T-0179)
+    // sqlite3_bind_blob stores as NULL (u_BinaryData.pas:61-63)
     if (auto r = data.isEmpty() ? insertStmt_->bindNull(4) : insertStmt_->bindBlob(4, data); !r)
         return r;
 
@@ -453,7 +451,8 @@ core::Result<void> SqliteStorageMbtilesTileMill::open(const geo::LonLatRect& lon
         {QStringLiteral("scheme"), scheme_},
         {QStringLiteral("minzoom"), QString::number(minZoom)},
         {QStringLiteral("maxzoom"), QString::number(maxZoom)},
-        {QStringLiteral("center"), centerStr(lonLatRect, minZoom)}, // the NEW rect, LC-3 (:671 vs :666)
+        {QStringLiteral("center"), centerStr(lonLatRect, minZoom)}, // the NEW rect, a legacy defect (:671 vs
+                                                                    // :666)
         {QStringLiteral("template"), QString()},
     };
     if (auto r = writeMetadata(metadata); !r)
@@ -463,8 +462,7 @@ core::Result<void> SqliteStorageMbtilesTileMill::open(const geo::LonLatRect& lon
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
 
     // map FIRST, then images; the second is not prepared when the first fails (:687-689)
     auto mapStmt = db_->prepare(replaceTiles_ ? kInsertMapSqlReplace : kInsertMapSqlIgnore);
@@ -496,8 +494,7 @@ core::Result<void> SqliteStorageMbtilesTileMill::add(geo::PointI tile, quint8 zo
         return core::fail(
             ErrorCode::IoError,
             QStringLiteral(
-                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243);
-                                                 // no register row
+                "MBTiles storage is not open")); // unreachable in legacy (u_ExportTaskToMBTiles.pas:221-243)
 
     const QString tileId = QString::fromLatin1(md5Buffer(data));
 
@@ -505,7 +502,7 @@ core::Result<void> SqliteStorageMbtilesTileMill::add(geo::PointI tile, quint8 zo
     if (auto r = insertImagesStmt_->bindText(1, tileId); !r)
         return r;
     // legacy BindBlob(AData.Buffer, AData.Size): the buffer of a zero-size tile is nil, which
-    // sqlite3_bind_blob stores as NULL (u_BinaryData.pas:61-63; T-0179)
+    // sqlite3_bind_blob stores as NULL (u_BinaryData.pas:61-63)
     if (auto r = data.isEmpty() ? insertImagesStmt_->bindNull(2) : insertImagesStmt_->bindBlob(2, data); !r)
         return r;
     if (auto step = insertImagesStmt_->step(); !step)

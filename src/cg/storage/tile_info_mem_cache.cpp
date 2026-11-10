@@ -18,9 +18,9 @@ QString versionKey(const MapVersionInfoPtr& v) {
 TileInfoMemCache::TileInfoMemCache(int capacity, std::chrono::milliseconds ttl, ClearStrategy strategy,
                                    Clock clock)
     : capacity_(capacity), ttl_(ttl), clearStrategy_(strategy), clock_(std::move(clock)) {
-    // L-12 (reliability audit 2026-09-28): no up-front reserve -- legacy's TList grows lazily
-    // (u_TileInfoBasicMemCache.pas:165-166); reserving the full ZMP MemCacheCapacity here could
-    // bad_alloc on a huge, unvalidated value that legacy never allocates for.
+    // No up-front reserve -- legacy's TList grows lazily (u_TileInfoBasicMemCache.pas:165-166);
+    // reserving the full ZMP MemCacheCapacity here could bad_alloc on a huge, unvalidated value
+    // that legacy never allocates for.
 }
 
 void TileInfoMemCache::notifyLocked(const Entry& e) {
@@ -78,8 +78,8 @@ void TileInfoMemCache::add(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr&
         idx = oldestIdx;
         makeItCleanLocked(entries_[idx]); // evict: notifies for the OLD tile, then clears it
     } else {
-        return; // capacity <= 0 -- nothing to add into; legacy raises, the port no-ops (approved
-                // deviation D-22, docs/parity/deviations.md)
+        return; // capacity <= 0 -- nothing to add into; legacy raises, the port no-ops (deviation
+                // from legacy)
     }
 
     Entry& e = entries_[idx];

@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: u_MarkDbByImpl.pas (TMarkDbByImpl) with a fake IMarkSystemImpl, and the MarkOrIdList
-// wrapper of decision C3 (docs/specs/marks.md section 2 preamble).
+// Covers u_MarkDbByImpl.pas (TMarkDbByImpl) with a fake IMarkSystemImpl, and the MarkOrIdList
+// wrapper.
 #include "cg/core/notifier.h"
 #include "cg/marks/mark_db_by_impl.h"
 #include "cg/marks/mark_id.h"

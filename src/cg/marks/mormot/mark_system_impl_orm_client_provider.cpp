@@ -49,14 +49,13 @@ MarkSystemImplORMClientProvider::MarkSystemImplORMClientProvider(const QString& 
                                                                  const IMarkSystemImplConfigORM& config)
     : db_(buildSqlite3Client(basePath, config)) {
     // The FUserID := 0 / FInitializeTableOptions := [itoNoIndex4TID] of :162-163 are the member
-    // initialiser and the fixed arguments of createMissingTablesSqlite3.
-    // Not ported: ctMongoDB -> BuildMongoDBClient, ctZDBC / ctODBC -> BuildDBMSClient (:473-478);
-    // spec §10 U-3 / DV-4.
-    transaction_ = std::make_unique<MarkSystemORMTransaction>(db_, mutex_); // :482 (B-13)
+    // initialiser and the fixed arguments of createMissingTablesSqlite3. Not ported:
+    // ctMongoDB -> BuildMongoDBClient, ctZDBC / ctODBC -> BuildDBMSClient (:473-478).
+    transaction_ = std::make_unique<MarkSystemORMTransaction>(db_, mutex_); // :482
     initUserId(config.userName(), config.isReadOnly());
 }
 
-// :197-221 (B-1)
+// :197-221
 QString MarkSystemImplORMClientProvider::sqlite3DatabaseFileName(const QString& basePath,
                                                                  const QString& fileName) {
     QString name;
@@ -72,8 +71,8 @@ QString MarkSystemImplORMClientProvider::sqlite3DatabaseFileName(const QString& 
             path = basePath;
         } else if (QDir::isRelativePath(path)) {
             // RelativeToAbsolutePath (u_FileSystemFunc.pas:38-45): PathCombine(ExtractFilePath(base), rel).
-            // ExtractFilePath keeps everything up to the last delimiter, so a base path without a
-            // trailing delimiter loses its last component (legacy defect, see the handoff).
+            // ExtractFilePath keeps everything up to the last delimiter, so a base path without a trailing
+            // delimiter loses its last component (legacy defect).
             const QString baseDir = basePath.left(basePath.lastIndexOf(QLatin1Char('/')) + 1);
             path = QDir::cleanPath(baseDir + path);
         }
@@ -87,7 +86,7 @@ QString MarkSystemImplORMClientProvider::sqlite3DatabaseFileName(const QString& 
     return path + name;
 }
 
-// :195-239 (B-2...B-12); the Mongo / DBMS builders are not ported.
+// :195-239; the Mongo / DBMS builders are not ported.
 SqliteDb MarkSystemImplORMClientProvider::buildSqlite3Client(const QString& basePath,
                                                              const IMarkSystemImplConfigORM& config) {
     const QString fileName = sqlite3DatabaseFileName(basePath, config.fileName());
@@ -101,36 +100,36 @@ SqliteDb MarkSystemImplORMClientProvider::buildSqlite3Client(const QString& base
 
     // TRestClientDB.Create -> TSqlDatabase.Create (db/mormot.db.raw.sqlite3.pas:7536-7583). The
     // library opens with SQLITE_OPEN_READWRITE or SQLITE_OPEN_CREATE whatever the configuration says
-    // (:6806-6807, :7567-7569), so a read-only configuration also opens read-write (B-3).
+    // (:6806-6807, :7567-7569), so a read-only configuration also opens read-write.
     auto opened = SqliteDb::open(fileName, SqliteDb::OpenMode::ReadWriteCreate);
     if (!opened) {
         raise(opened.error().what());
     }
     SqliteDb db = std::move(*opened);
-    // B-4, B-5, B-7: ExecuteNoException / unchecked in legacy (:7689-7693, :7676-7679, :7582); only
-    // B-6 gates.
-    std::ignore = db.exec("PRAGMA page_size=4096"); // B-4: sent on every open
+    // The other statements run through ExecuteNoException / unchecked in legacy (:7689-7693,
+    // :7676-7679, :7582); only the sqlite_master count (mustExec below) gates.
+    std::ignore = db.exec("PRAGMA page_size=4096"); // Sent on every open
     std::ignore = db.exec("PRAGMA cache_size=10000");
-    mustExec(db, "select count(*) from sqlite_master"); // B-6
+    mustExec(db, "select count(*) from sqlite_master");
     std::ignore = db.createCollation("SYSTEMNOCASE", &systemNoCaseCompare);
-    std::ignore = db.exec("PRAGMA journal_mode=WAL;"); // B-8: WALMode := True, result ignored (:234)
+    std::ignore = db.exec("PRAGMA journal_mode=WAL;"); // WALMode := True, result ignored (:234)
     if (config.isReadOnly()) {
         return db; // :235-237
     }
     // CreateAllMissing (:181-193): CreateMissingTables(0, [itoNoIndex4TID]) then the SAS indexes.
-    if (const auto created = createMissingTablesSqlite3(db); !created) { // B-9...B-11
+    if (const auto created = createMissingTablesSqlite3(db); !created) {
         raise(created.error().what());
     }
-    createMissingIndexesSqlite3(db); // B-12
+    createMissingIndexesSqlite3(db);
     return db;
 }
 
-// :486-519 (B-14)
+// :486-519
 void MarkSystemImplORMClientProvider::initUserId(const QString& userName, bool isReadOnly) {
     const QString name = userName.isEmpty() ? QString(kDefUserName) : userName;
 
     const std::lock_guard lock(mutex_);
-    // S-01. A failing SELECT is "not found" (ExecuteList returns nil, callers test Assigned).
+    // A failing SELECT is "not found" (ExecuteList returns nil, callers test Assigned).
     qint64 id = 0;
     if (auto stmt = db_.prepare("SELECT RowID FROM User WHERE uName=? LIMIT 1")) {
         if (stmt->bindText(1, name)) {
@@ -147,7 +146,7 @@ void MarkSystemImplORMClientProvider::initUserId(const QString& userName, bool i
         }
         TransactionRec rec = transaction_->start(isReadOnly);
         try {
-            // S-02; a failed INSERT leaves the ID 0 and CheckID raises.
+            // A failed INSERT leaves the ID 0 and CheckID raises.
             qint64 inserted = 0;
             if (auto stmt = db_.prepare("INSERT INTO User (uName) VALUES (?)")) {
                 if (stmt->bindText(1, name) && stmt->step()) {

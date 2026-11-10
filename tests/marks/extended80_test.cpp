@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests of the Delphi Extended (x87 80-bit) codec used by t_GeometryPointSML.pas. All byte vectors are
-// literals produced by an independent script (struct, not this code); see docs/handoffs/T-0109.md.
+// literals produced by an independent script (struct, not this code)
 #include "cg/marks/sml/extended80.h"
 
 #include <QByteArray>

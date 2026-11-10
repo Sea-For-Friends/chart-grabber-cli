@@ -4,8 +4,6 @@
 
 #pragma once
 // Ports: Src/Vector/u_VectorDataItemBase.pas
-//
-// FEAT-GEO-037.
 
 #include "cg/vector/html_to_hint_text_converter.h"
 #include "cg/vector/vector_data_item_simple.h"

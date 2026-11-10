@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_MarkTemplateConfigBase.pas (TMarkTemplateConfigBase, T-0098)
+// Ports: u_MarkTemplateConfigBase.pas (TMarkTemplateConfigBase)
 //
 // The legacy base class of the three template configs holds the name generator and the appearance factory
 // and adds the generator under the 'Name' sub-item with all four child flags False (:67). C++ cannot
@@ -27,7 +27,7 @@ namespace cg::marks {
 // Ports the format-string element that every template config creates (u_MarkPointTemplateConfig.pas:80-87
 // and its line and poly twins): TStringConfigDataElementWithDefByStringRec(language manager, store,
 // 'FormatString', store default, resource string). A nil language manager is refused (legacy: access
-// violation, D-95).
+// violation).
 [[nodiscard]] std::shared_ptr<core::IStringConfigDataElement>
 makeTemplateFormatString(const std::shared_ptr<core::ILanguageManager>& languageManager,
                          const QString& resString);
@@ -40,8 +40,8 @@ public:
 
 protected:
     // u_MarkTemplateConfigBase.pas:57-68. A nil appearance factory is refused (legacy: access violation in
-    // the derived constructor's CreatePointAppearance call, u_MarkPointTemplateConfig.pas:91 and the twins,
-    // D-95); a nil format string by MarkNameGenerator.
+    // the derived constructor's CreatePointAppearance call, u_MarkPointTemplateConfig.pas:91 and the
+    // twins); a nil format string by MarkNameGenerator.
     MarkTemplateConfigBase(vector::AppearanceOfMarkFactoryPtr appearanceOfMarkFactory,
                            std::shared_ptr<core::IStringConfigDataElement> formatString)
         : appearanceOfMarkFactory_(std::move(appearanceOfMarkFactory)),

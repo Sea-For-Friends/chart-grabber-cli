@@ -63,13 +63,13 @@ OrmCategoryRow* OrmCategoryCache::find(qint64 id) {
     return i >= 0 ? &rows()[static_cast<size_t>(i)] : nullptr;
 }
 
-// TOrmCategoryCache.Find by name (:203-221): first row in id order whose name is AnsiSameText.
-// Deviation DV-5 (spec §2.9.11). Legacy AnsiSameText = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE),
-// a linguistic comparison; the port is QString::compare(Qt::CaseInsensitive): simple per-code-point case
-// folding, locale-independent. Legacy equal / port different: expansions (Straße = Strasse, æ = ae,
-// ligatures, digraphs), precomposed vs combining sequences, ignorable characters (soft hyphen, ZWJ); under
-// a tr/az user locale the I/i/ı/İ pairs come out the opposite way. (Windows facts: documented NLS
-// behaviour, not verified on this machine.)
+// TOrmCategoryCache.Find by name (:203-221): first row in id order whose name is AnsiSameText. A deviation
+// from legacy: legacy AnsiSameText = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE), a linguistic
+// comparison; the port is QString::compare(Qt::CaseInsensitive): simple per-code-point case folding,
+// locale-independent. Legacy equal / port different: expansions (Straße = Strasse, æ = ae, ligatures,
+// digraphs), precomposed vs combining sequences, ignorable characters (soft hyphen, ZWJ); under a tr/az user
+// locale the I/i/ı/İ pairs come out the opposite way. (Windows facts: documented NLS behaviour, not verified
+// on this machine.)
 OrmCategoryRow* OrmCategoryCache::find(const QString& name) {
     ormLogEnter("OrmCategoryCache::find");
     for (OrmCategoryRow& row : rows()) {

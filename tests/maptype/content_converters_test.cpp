@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of ContentConverters (T-0120, FEAT-NET-013): the converter matrix of
-// Src/ContentType/u_ContentTypeManagerSimple.pas:297-303 (Fixed, Synonyms, FixedWithSynonyms, Bitmaps) and
-// u_ContentConverterBitmap.pas:75-78. Expectations are literals from the Pascal and from docs/specs/bitmap.md
-// 2.6; pixels of a conversion are compared with an independent decode of the same bytes.
+// Tests of ContentConverters: the converter matrix of Src/ContentType/u_ContentTypeManagerSimple.pas:297-303
+// (Fixed, Synonyms, FixedWithSynonyms, Bitmaps) and u_ContentConverterBitmap.pas:75-78. Expectations are
+// literals from the Pascal; pixels of a conversion are compared with an independent decode of the same bytes.
 #include "cg/bitmap/bitmap_codec_error.h"
 #include "cg/maptype/content_converters.h"
 
@@ -58,7 +57,7 @@ QByteArray convertOrFail(const char* source, const char* target, const QByteArra
     return out.value_or(QByteArray());
 }
 
-// The 14 keys of the bitmap type list and their canonical types (docs/specs/bitmap.md 2.6).
+// The 14 keys of the bitmap type list and their canonical types.
 struct KeyRow {
     const char* key;
     const char* canonical;
@@ -82,7 +81,7 @@ constexpr std::array<KeyRow, 14> kBitmapKeys{{
 
 } // namespace
 
-// Proof 1: the pairs that re-encode (ConverterMatrixUpdateBitmaps :539-575; Convert = Save(Load) :75-78).
+// The pairs that re-encode (ConverterMatrixUpdateBitmaps :539-575; Convert = Save(Load) :75-78).
 TEST(ContentConverters, BitmapPairsReEncode) {
     const auto factory = maptype::test::testBitmapFactory();
     const auto solid = maptype::test::testBitmap(16, 16, 0xFF3366CC);
@@ -116,7 +115,7 @@ TEST(ContentConverters, BitmapPairsReEncode) {
     EXPECT_EQ(pixelsOf(bmpDecoded), pixelsOf(picture));
 }
 
-// Proof 2: a synonym pair is a copy (UpdateSynonyms :390-424), bytes pass through untouched.
+// A synonym pair is a copy (UpdateSynonyms :390-424), bytes pass through untouched.
 TEST(ContentConverters, SynonymPairsAreSimpleCopies) {
     struct Pair {
         const char* source;
@@ -143,7 +142,7 @@ TEST(ContentConverters, SynonymPairsAreSimpleCopies) {
     EXPECT_FALSE(reEncode->isSimpleCopy());
 }
 
-// Proof 3: ConverterMatrixUpdateFixed :313-323, :365-387 (entries 2-4 are T-0178).
+// ConverterMatrixUpdateFixed :313-323, :365-387 (entries 2-4 are the kml/kmz ones).
 TEST(ContentConverters, FixedCopiesAreDirectional) {
     const QByteArray body("\x01\x02\x03", 3);
     const std::pair<const char*, const char*> copies[] = {
@@ -163,8 +162,8 @@ TEST(ContentConverters, FixedCopiesAreDirectional) {
               nullptr);
 }
 
-// Proof 4: existence over the 14 x 14 bitmap keys (:539-575): every ordered pair except those INTO an icon
-// from a non-icon (no saver); a copy exactly when the canonical types are equal (:390-424).
+// Existence over the 14 x 14 bitmap keys (:539-575): every ordered pair except those INTO an icon from a
+// non-icon (no saver); a copy exactly when the canonical types are equal (:390-424).
 TEST(ContentConverters, BitmapKeyMatrixExistenceAndCopies) {
     int checked = 0;
     for (const KeyRow& s : kBitmapKeys) {
@@ -185,8 +184,7 @@ TEST(ContentConverters, BitmapKeyMatrixExistenceAndCopies) {
     EXPECT_EQ(checked, 196);
 }
 
-// Proof 5: GIF and TIFF savers exist and refuse (bitmap.md 8.2; handoff T-0162): the converter exists,
-// convert throws the codec text.
+// GIF and TIFF savers exist and refuse: the converter exists, convert throws the codec text.
 TEST(ContentConverters, GifAndTiffTargetsExistAndThrow) {
     const QByteArray png = pngOf(maptype::test::testBitmap(16, 16, 0xFF3366CC));
     const std::pair<const char*, const char*> targets[] = {
@@ -206,7 +204,7 @@ TEST(ContentConverters, GifAndTiffTargetsExistAndThrow) {
     }
 }
 
-// Proof 6: GetConverter / matrix Get (:93-106): nil for an absent key, keys matched case-insensitively.
+// GetConverter / matrix Get (:93-106): nil for an absent key, keys matched case-insensitively.
 TEST(ContentConverters, LookupRules) {
     EXPECT_EQ(converters().converter("image/unknown", "image/png"), nullptr);
     EXPECT_EQ(converters().converter("image/png", "image/unknown"), nullptr);
@@ -225,8 +223,8 @@ TEST(ContentConverters, LookupRules) {
     EXPECT_EQ(converters().converter("application/json", "image/png"), nullptr);
 }
 
-// Proof 11: one immutable set shared by four workers. The barrier makes all four start every round together;
-// the test pins equal output, TSan (20 repeats) checks the sharing.
+// One immutable set shared by four workers. The barrier makes all four start every round together; the test
+// pins equal output, TSan (20 repeats) checks the sharing.
 TEST(ContentConverters, SharedBetweenThreads) {
     const QByteArray jpeg = jpegOf(maptype::test::testBitmap(16, 16, 0xFF3366CC));
     const QByteArray first = convertOrFail("image/jpeg", "image/png", jpeg);

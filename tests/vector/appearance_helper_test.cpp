@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_AppearanceHelper.pas / i_AppearanceHelper.pas (T-0142, spec vector.md §2.14). Expected values are
-// literals taken from u_AppearanceHelper.pas and Bitmap32/c_Color32.pas, not read from the port.
+// Ports u_AppearanceHelper.pas / i_AppearanceHelper.pas. Expected values are literals taken from
+// u_AppearanceHelper.pas and Bitmap32/c_Color32.pas, not read from the port.
 #include "cg/vector/appearance_helper.h"
 #include "cg/vector/appearance_of_mark_line.h"
 #include "cg/vector/appearance_of_mark_point.h"
@@ -23,7 +23,7 @@ using cg::vector::test::FakeMarkPictureList;
 
 namespace {
 
-// ---- fakes: params with independent flags (the real Import*Params tie two flags together, L-130) ----
+// ---- fakes: params with independent flags (the real Import*Params tie two flags together) ----
 struct CaptionFacet final : IAppearancePointCaption {
     cg::core::HashValue hashCaption() const noexcept override { return 0; }
     Color32 textColor() const override { return 0xFF010101U; }
@@ -276,7 +276,7 @@ TEST(AppearanceHelperColor, EveryGpxNameMapsToItsLegacyColor) {
         const char* name;
         Color32 color;
     };
-    // The odd mappings (yellow, magenta, darkyellow) are legacy (LV-6).
+    // The odd mappings (yellow, magenta, darkyellow) are legacy.
     const Row rows[] = {
         {"red", 0xFFFF0000U},         // clRed32 :146
         {"blue", 0xFF0000FFU},        // clBlue32 c_Color32.pas:45

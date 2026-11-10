@@ -277,7 +277,7 @@ server of section 3 is stopped:
 ```
 $ chart-grabber-cli probe --maps=my-sources --filter=quadkey --at=-1.29,50.76 --probe-zoom=12
                                   GUID                   name                                                                                                    result
-{8C4F9A63-1E05-4B7D-B2A8-47D3F60E9C03}  Demo quadkey (script)  unknown error: curl error #7 (Could not connect to server) on GET http://127.0.0.1:8765/031313132223.png
+{8C4F9A63-1E05-4B7D-B2A8-47D3F60E9C03}  Demo quadkey (script)  unknown error: curl error #7 (Couldn't connect to server) on GET http://127.0.0.1:8765/031313132223.png
 $ echo $?
 4
 ```
@@ -864,7 +864,7 @@ functions in a Pascal script, so a script moved from `GetUrlScript.txt` keeps it
 | `pascal.regExprReplaceMatchSubStr(s, re, repl)` | `s` with every match replaced; `$1` in `repl` is group 1 |
 | `pascal.random(n)`, `pascal.randomRange(a, b)` | a random integer from 0 up to `n`, or from the smaller of `a` and `b` up to the larger one. The upper bound is not included: `pascal.random(3)` gives 0, 1 or 2. `Math.random()` uses the same generator |
 
-**`log(text)`** takes one text. The command line program does not show it, so `log` has no visible effect there.
+**`log(text)`** takes one text. The command line program prints it on stderr as a line `cg.maptype: script: <text>`.
 
 A call that runs longer than 5 seconds is stopped and that tile fails with `script time limit exceeded`; time spent
 inside `http` is not counted. A script that throws fails that tile with the error text. A script with a syntax error,

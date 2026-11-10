@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_CoordConverterSimpleByProjectionSet.pas (the script's `Converter`); docs/specs/maptype.md 2.12.4.
-// Expected numbers come from the Web Mercator formulas evaluated independently (Python, R = 6378137).
+// Ports u_CoordConverterSimpleByProjectionSet.pas (the script's `Converter`). Expected numbers come from
+// the Web Mercator formulas evaluated independently (Python, R = 6378137).
 #include "cg/maptype/coord_converter_simple_by_projection_set.h"
 
 #include <gtest/gtest.h>

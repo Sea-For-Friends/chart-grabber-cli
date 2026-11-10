@@ -11,9 +11,8 @@
 
 namespace cg::core {
 
-// FEAT-NET-001
 // <0, 0, >0 (legacy returns -1, 0, 1). Digit runs accumulate in a 32-bit signed integer that
-// wraps on overflow, as legacy does (L-118).
+// wraps on overflow, as legacy does.
 [[nodiscard]] int compareStringOrdinal(QStringView s1, QStringView s2);
 
 } // namespace cg::core

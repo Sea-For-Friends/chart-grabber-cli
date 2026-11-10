@@ -5,10 +5,10 @@
 #pragma once
 // Ports: i_GlobalCacheConfig.pas, u_GlobalCacheConfig.pas
 //
-// docs/specs/storage.md §2.10.4's "Path composition" (:846-867). The `[PathToCache]` per-cache-
-// type roots plus `[VIEW] DefCache`. Each PathConfig is chained off the caller-supplied global
-// cache root (ports `ACacheGlobalPath`, itself `TPathConfig.Create('PrimaryPath', './',
-// <data dir>)` -- built one level up, u_GlobalState.pas:482, out of this ticket's scope).
+// The path composition: the `[PathToCache]` per-cache-type roots plus `[VIEW] DefCache`. Each
+// PathConfig is chained off the caller-supplied global cache root (ports `ACacheGlobalPath`,
+// itself `TPathConfig.Create('PrimaryPath', './', <data dir>)` -- built one level up,
+// u_GlobalState.pas:482).
 
 #include "cg/core/config_element_complex.h"
 #include "cg/core/path_config.h"
@@ -20,7 +20,6 @@
 
 namespace cg::storage {
 
-// FEAT-STO-036.
 class GlobalCacheConfig final : public core::ConfigElementComplex {
 public:
     explicit GlobalCacheConfig(core::PathConfigPtr cacheGlobalPath);
@@ -40,10 +39,9 @@ public:
     // GmAux, Mobac, Tms, Dbms, Sqlite, Ram, Bdb, BdbVersioned, SqliteMbTiles, SqliteOsmAnd,
     // SqliteLocus, SqliteRMaps.
     //
-    // NOTE the whitelist is NOT "every id except Ge/GeTerrain/GeoCacher/SqliteOruxMaps" --
-    // docs/specs/storage.md :864-865 undercounts it: GmBing and OsmAnd (ids 42, 44) are ALSO
-    // rejected by legacy even though they are ordinary, Linux-supported folder types. Legacy wins
-    // (protocol rule 5); see docs/handoffs/T-0021D.md.
+    // NOTE the whitelist is NOT "every id except Ge/GeTerrain/GeoCacher/SqliteOruxMaps": GmBing
+    // and OsmAnd (ids 42, 44) are ALSO rejected by legacy even though they are ordinary,
+    // Linux-supported folder types. Legacy wins.
     void setDefCache(CacheTypeId id);
 
 protected:
@@ -51,8 +49,8 @@ protected:
     void doWriteConfig(const core::IConfigWriterPtr& dst) const override;
 
 private:
-    void setDefCacheLocked(CacheTypeId id); // the "...Locked()" split (core.md 2.16): doReadConfig
-                                            // calls this while already inside the write lock.
+    void setDefCacheLocked(CacheTypeId id); // the "...Locked()" split: doReadConfig calls this
+                                            // while already inside the write lock.
 
     core::PathConfigPtr cacheGlobalPath_;
     std::map<CacheTypeId, core::PathConfigPtr> pathByType_;

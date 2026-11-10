@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports i_TileRequestResult.pas, u_TileRequestResult.pas (no FEAT id: prerequisite of the download
+// Ports i_TileRequestResult.pas, u_TileRequestResult.pas (a prerequisite of the download
 // subsystem).
 #include "cg/maptype/tile_request_result.h"
 

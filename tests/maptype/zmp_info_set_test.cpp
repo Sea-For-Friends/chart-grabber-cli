@@ -2,12 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-001 (contributes; held open).
 // Ports u_ZmpFileNamesIteratorFactory.pas (+ the three Src/Basic iterators), u_ZmpInfoSet.pas,
-// i_ZmpInfoSet.pas; docs/specs/maptype.md 2.3, 2.4, 4, 7.2, 7.4, 8.2 (LD-11). Fixtures: the 514-ZMP stock
-// corpus tests/fixtures/zmp/sas.maps with Maps.ini (written by legacy), index.csv, projection_expected.csv
-// and corpus_aggregates.csv (tools/gen_zmp_corpus_aggregates.py); the hand-made duplicate/, hidden/, broken/
-// and zipped/ folders (their READMEs name the source).
+// i_ZmpInfoSet.pas. Fixtures: the 514-ZMP stock corpus tests/fixtures/zmp/sas.maps with Maps.ini (written by
+// legacy), index.csv, projection_expected.csv and corpus_aggregates.csv
+// (tools/gen_zmp_corpus_aggregates.py); the hand-made duplicate/, hidden/, broken/ and zipped/ folders
+// (their READMEs name the source).
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"
 #include "cg/geo/projection_set.h"
@@ -71,7 +70,7 @@ std::vector<QStringList> csvRows(const QString& path) {
     return rows;
 }
 
-// --- zmpFileNames: the walk rules of spec 2.3 ---------------------------------------------------------
+// --- zmpFileNames: the walk rules ---------------------------------------------------------
 
 TEST(ZmpFileNames, WalkRules) {
     QTemporaryDir tmp;
@@ -104,7 +103,7 @@ TEST(ZmpFileNames, WalkRules) {
     EXPECT_EQ(got, want);
 }
 
-// --- the corpus proof, spec 7.2 --------------------------------------------------------------------
+// --- the corpus proof --------------------------------------------------------------------
 
 TEST(ZmpInfoSetCorpus, EveryStockZmpLoadsAndMatchesTheOracles) {
     CG_SKIP_IF_NO_CORPUS();
@@ -257,7 +256,7 @@ TEST(ZmpInfoSetCorpus, EveryStockZmpLoadsAndMatchesTheOracles) {
     EXPECT_EQ(infos, 361);
 }
 
-// --- spec 7.4 fixtures ----------------------------------------------------------------------------------
+// --- small ZMP fixtures ----------------------------------------------------------------------------------
 
 TEST(ZmpInfoSet, DuplicateGuidKeepsTheFirstAndNamesTheSecondByFullPath) {
     CG_SKIP_IF_NO_FIXTURE(zmpDir() + u"/duplicate"_s);
@@ -267,7 +266,7 @@ TEST(ZmpInfoSet, DuplicateGuidKeepsTheFirstAndNamesTheSecondByFullPath) {
     const auto set = env.loadAll(root, errors);
     ASSERT_EQ(set->guids().size(), 1u);
     EXPECT_EQ(set->zmpByGuid(set->guids()[0])->fileName(), u"a.zmp"_s);
-    // LD-11: the first is relative, the second is the full path
+    // The first is relative, the second is the full path
     EXPECT_EQ(errors,
               QStringList{u"Files a.zmp and %1 have the same GUID"_s.arg(QDir(root).filePath(u"b.zmp"_s))});
 }

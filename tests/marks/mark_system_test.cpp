@@ -2,9 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-GEO-034
-// Ports u_MarkSystem.pas (TMarkSystem, :118-319); ticket T-0137, spec docs/specs/marks.md §2.6 (MarkSystem
-// paragraph, Rulings A.1-A.2) and §2.10. No legacy test exists. Features: FEAT-GEO-034.
+// Ports u_MarkSystem.pas (TMarkSystem, :118-319). No legacy test exists.
 //
 // Every test runs the real chain on a Marks.db3 that the test creates in a QTemporaryDir: the factory list
 // with its SQLite3 factory, MarkSystemImplChangeable (built on its task's thread) and the two facades, all
@@ -64,7 +62,7 @@ const QString kLineName = QString::fromUtf8("Линия");
 const QString kPolyName = QString::fromUtf8("Полигон");
 const QString kHiddenName = QString::fromUtf8("Скрытая");
 const QString kDesc = QString::fromUtf8("Описание");
-// A GUID that no backend is registered under: the factory miss of spec Ruling A.3.
+// A GUID that no backend is registered under: a factory miss.
 const QUuid kUnknownGuid = QUuid::fromString(QStringLiteral("{01234567-89ab-4cde-8f01-23456789abcd}"));
 
 // The composition root around one MarkSystem on `dir`: the config names one item, `guid`, and the two
@@ -432,9 +430,9 @@ TEST(MarkSystem, CategoryTreeToMarkTreeKeepsTheFoldersAndHidesHiddenMarksOnReque
     EXPECT_EQ(h.errorCount(), 0);
 }
 
-// While the static is null (a config naming a GUID nobody registers, a factory miss, spec Ruling A.3), every
-// method answers its empty value. The build is started: it throws on the task's thread, the static stays null
-// before, during and after it, so no wait is needed; the destructor joins the build.
+// While the static is null (a config naming a GUID nobody registers, a factory miss), every method answers
+// its empty value. The build is started: it throws on the task's thread, the static stays null before, during
+// and after it, so no wait is needed; the destructor joins the build.
 TEST(MarkSystem, WhileNoBackendIsPublishedEveryMethodAnswersItsEmptyValue) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -463,10 +461,10 @@ TEST(MarkSystem, WhileNoBackendIsPublishedEveryMethodAnswersItsEmptyValue) {
     EXPECT_EQ(h.errorCount(), 0);
 }
 
-// D-57 widened (L-row of T-0137): destroying the system while its build is inside a notification of a facade
-// waits for the build. The test's slot on the category facade blocks the task's thread inside the facade's
-// notifier; another thread lets it go while this one destroys the system. Without the join the facades are
-// freed under the running notification (TSan, ASan).
+// A deviation from legacy for a legacy defect: destroying the system while its build is inside a
+// notification of a facade waits for the build. The test's slot on the category facade blocks the task's
+// thread inside the facade's notifier; another thread lets it go while this one destroys the system. Without
+// the join the facades are freed under the running notification (TSan, ASan).
 TEST(MarkSystem, DestroyingTheSystemWhileItsBuildNotifiesAFacadeWaitsForTheBuild) {
     for (int round = 0; round < 50; ++round) {
         QTemporaryDir dir;

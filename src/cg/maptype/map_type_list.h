@@ -55,7 +55,6 @@ public:
     [[nodiscard]] virtual std::unique_ptr<IMapTypeListBuilder> build() const = 0;
 };
 
-// FEAT-NET-030 (contributes; held open)
 class MapTypeListBuilderFactory final : public IMapTypeListBuilderFactory {
 public:
     [[nodiscard]] std::unique_ptr<IMapTypeListBuilder> build() const override;

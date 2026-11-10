@@ -85,8 +85,8 @@ SqliteRegionHandler::SqliteRegionHandler(std::shared_ptr<SqliteRegionSchema> sch
         }
     }
 
-    // Deviation D-6 already covers SetBusyTryCount(3): SqliteDb::open sets sqlite3_busy_timeout
-    // unconditionally, so nothing more is needed here.
+    // A deviation from legacy already covers SetBusyTryCount(3): SqliteDb::open sets
+    // sqlite3_busy_timeout unconditionally, so nothing more is needed here.
 }
 
 SqliteRegionHandler::~SqliteRegionHandler() = default;
@@ -113,7 +113,7 @@ core::Result<void> SqliteRegionHandler::discoverColumns() {
     // either way. But DeclareSql ends with an UNCONDITIONAL `CheckResult(sqlite3_finalize(...))`
     // (:605), which raises into Create's `except` on a step error that survives to finalize (BUSY
     // past the timeout, IOERR, CORRUPT, ...) regardless of ARaiseOnOpenError -- so, unlike the
-    // prepare failure above, this one must fail the open (T-0022B2 review finding 3).
+    // prepare failure above, this one must fail the open.
     auto stepResult = stmt->step();
     if (!stepResult) {
         return core::fail(stepResult.error().code(), stepResult.error().what());

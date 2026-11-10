@@ -16,14 +16,13 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-030 (contributes; held open)
 class MapTypeHotKeyListStatic final {
 public:
     // A map is listed when its GUI config is enabled and its hot key is not 0. The first such map
     // in set order keeps a key that several maps share (TIDInterfaceList.Add does not replace). A
-    // null set gives an empty list (legacy: access violation; see deviations.md). A null map or a
-    // null GUI config inside the set throws std::logic_error (legacy: access violation; a set built
-    // with allowNil may hold a null map).
+    // null set gives an empty list (legacy: access violation). A null map or a null GUI config
+    // inside the set throws std::logic_error (legacy: access violation; a set built with allowNil
+    // may hold a null map).
     explicit MapTypeHotKeyListStatic(const IMapTypeSetPtr& mapsSet);
 
     // Null when no listed map has the key. Key 0 is never listed.

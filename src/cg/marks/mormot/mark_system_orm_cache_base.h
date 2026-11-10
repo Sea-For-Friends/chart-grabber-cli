@@ -7,13 +7,12 @@
 // TIDDynArrayObject, TDynArrayByRecWithPointer) and the part of mORMot's TDynArray they use
 // (mormot.core.data.pas, "sorted by the first field, Int64 compare" mode).
 //
-// FEAT-GEO-034 (enabler; the feature is held open). The caches have no lock of their own: they are
-// reached only under the write lock of their database (docs/specs/marks.md §2.9.7, §3).
+// The caches have no lock of their own: they are reached only under the write lock of their
+// database.
 //
 // Line numbers below are those of u_MarkSystemORMCacheBase.pas unless a file is named.
 //
-// Rules shared by every class here (legacy-defects L-157, L-158 (instance sizes: legacy literals, handoff
-// T-0063 decision 3), docs/handoffs/T-0063.md):
+// Rules shared by every class here (two legacy defects; instance sizes are legacy literals):
 //  - rows are kept sorted by the id = the FIRST field of the row (here: the member `id`), compared as
 //    a signed 64-bit integer;
 //  - the legacy array has a length (capacity) and a separately remembered count; the port keeps
@@ -138,8 +137,9 @@ public:
     }
 
     // AddArray (:8458-8481): appends `source[start .. start+count)`; count < 0 or past the end means
-    // "to the end"; a start at or past the end appends nothing. Returns the number appended.
-    // D-66 (negative start): legacy would read before the array; here nothing is appended.
+    // "to the end"; a start at or past the end appends nothing. Returns the number appended. For a
+    // negative start (a deviation from legacy) legacy would read before the array; here nothing is
+    // appended.
     int addArray(const std::vector<T>& source, int start = 0, int count = -1) {
         const int len = static_cast<int>(source.size());
         if (start < 0 || start >= len) {

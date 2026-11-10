@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/app/merged_zmp_info_set (NEW, T-0239, T-0291, app-cli.md 1.6.1; no legacy counterpart).
-// No FEAT. Real ZmpInfoSet objects over temporary ZMP folders; expectations are the literals of the ticket.
+// Tests for src/cg/app/merged_zmp_info_set (NEW, no legacy counterpart). Real ZmpInfoSet objects over
+// temporary ZMP folders; the expected values are literals of the documented behaviour.
 #include "cg/app/merged_zmp_info_set.h"
 
 #include <QDir>

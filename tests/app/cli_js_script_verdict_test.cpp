@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0366 (TL ruling 2026-10-24: a port extension, no legacy behaviour to match): a *.source.json source whose
-// script does not load shows its reason in `sources` and `probe`; a getUrl that throws stays a failure of
-// its tile. NEW code, no FEAT id; the expected texts are literals of the QJSEngine messages and the line
-// number of the script text.
+// A port extension, no legacy behaviour to match: a *.source.json source whose script does not load shows its
+// reason in `sources` and `probe`; a getUrl that throws stays a failure of its tile. NEW code; the expected
+// texts are literals of the QJSEngine messages and the line number of the script text.
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>

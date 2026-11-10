@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-030 (prerequisite slice, held open). Ports MapType/u_MapTypeHotKeyListStatic.pas
-// and i_MapTypeHotKeyListStatic.pas; spec maptype.md section 2.11.5 (hot-key part). The stock
+// Ports MapType/u_MapTypeHotKeyListStatic.pas and i_MapTypeHotKeyListStatic.pas. The stock
 // DefHotKey values come from tests/fixtures/zmp/sas.maps/**/params.txt (the 514 stock ZMPs).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/language_manager.h"
@@ -123,8 +122,8 @@ TEST(MapTypeHotKeyListStatic, FirstEnabledMapWinsAndDisabledOrZeroKeyMapsAreNotL
     EXPECT_EQ(list.mapTypeByHotKey(78), nullptr);
 }
 
-// Legacy reads AMapsSet.Count on a nil set (access violation, spec maptype.md section 2.11.5 "a null
-// mapsSet is legal"); the port builds an empty list. Deviation row in docs/parity/deviations.md.
+// Legacy reads AMapsSet.Count on a nil set (access violation; a null mapsSet is legal here); the
+// port builds an empty list (a deviation from legacy).
 TEST(MapTypeHotKeyListStatic, NullSetIsAnEmptyList) {
     const MapTypeHotKeyListStatic list(nullptr);
     EXPECT_EQ(list.mapTypeByHotKey(77), nullptr);

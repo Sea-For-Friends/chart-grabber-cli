@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-013. docs/specs/net.md §7.3, §2.5 message table -- exact English strings, since
-// docs/parity texts, .mo translation keys and the tile-error log all key off them.
+// The message table -- exact English strings, since the .mo translation keys and the tile-error log
+// key off them.
 #include "cg/net/download_result_factory.h"
 
 #include <gtest/gtest.h>

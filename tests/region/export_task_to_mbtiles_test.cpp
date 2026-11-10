@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/export_task_to_mbtiles (Src/RegionProcess/Export/MBTiles/u_ExportTaskToMBTiles.pas
-// :101-290, direct-copy branch). T-0172 (E4 of docs/specs/region-export.md).
-// FEAT-REG-069 (Export to MBTiles) is CONTRIBUTED to, not closed: the recompose branch is absent.
+// :101-290, direct-copy branch). The recompose branch is absent.
 //
 // Rig: a scripted ITileStorage (real PNG / JPEG fixture bytes of different lengths, missing tiles, TNE
 // markers, hooks run at the start of the N-th tileInfoEx) in the Google 256x256 grid; the task writes
@@ -283,7 +282,7 @@ QString fileIn(const QTemporaryDir& d) {
 
 // ---- read-back --------------------------------------------------------------------------------------
 
-// Every tile of the grid of the given zooms, read through the landed cache connector.
+// Every tile of the grid of the given zooms, read through the cache connector.
 TileMap readBack(const QString& file, const std::vector<int>& zooms) {
     TileMap result;
     const core::ContentTypeInfo pngType{QByteArrayLiteral("image/png"), QByteArrayLiteral(".png"),
@@ -520,7 +519,7 @@ TEST(ExportTaskToMbtiles, AppendKeepsTheOldTilesAndTheReplaceFlagDecidesDuplicat
         if (tileMill) { // map_index is unique: REPLACE keeps the new id for (3,2,2); the old (3,3,3) stays
             const TileMap expected = {{{3, 2, 2}, png2()}, {{3, 3, 3}, jpg()}};
             EXPECT_EQ(readBack(first.path, {3}), expected);
-        } else { // the Classic tiles table has no unique key: the duplicate is kept (LC-1)
+        } else { // the Classic tiles table has no unique key: the duplicate is kept
             EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles"), 3);
             EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles WHERE zoom_level=3"), 3);
         }
@@ -869,7 +868,7 @@ TEST(ExportTaskToMbtiles, AWriterOpenErrorIsReturnedAtOnceAndTheExistingFileIsUn
     }
 }
 
-// ---- 8. storage error (finding b: the Result error is the port's legacy exception) ------------------
+// ---- 8. storage error (the Result error is the port's legacy exception) ------------------
 
 TEST(ExportTaskToMbtiles, AStorageErrorEndsTheLoopCloseRunsAndTheErrorIsReturned) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));

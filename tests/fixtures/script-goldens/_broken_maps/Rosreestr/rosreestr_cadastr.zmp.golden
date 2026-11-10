@@ -1,7 +1,7 @@
-; T-0015D golden: rosreestr_cadastr.zmp - RoundEx precision 10 on METRES, proving the
-; 15-significant-digit cap (spec F25/table row 18): the 8-digit-integer-part metre values
+; Golden: rosreestr_cadastr.zmp - RoundEx precision 10 on METRES, proving the
+; 15-significant-digit cap: the 8-digit-integer-part metre values
 ; leave only 15-8=7 real decimals, so Digits=10 pads 3 trailing zeros - the single most
-; likely RoundEx bug per the spec, and the reason this map is on the reviewer's re-derive
+; likely RoundEx bug, and the reason this map is on the re-derive
 ; list.
 ; ResultURL := GetURLBase+RoundEx(GetLMetr,10)+','+RoundEx(GetBMetr,10)+','+
 ;   RoundEx(GetRMetr,10)+','+RoundEx(GetTMetr,10)

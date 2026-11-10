@@ -195,16 +195,16 @@ core::Result<int> createMissingTablesSqlite3(SqliteDb& db) {
 
     for (std::size_t t = 0; t < kModel.size(); ++t) {
         const OrmTableDef& table = kModel[t];
-        if (!containsName(existingTables, table.name)) { // B-9
+        if (!containsName(existingTables, table.name)) {
             if (const auto created = execInTransaction(table.sqlCreate); !created) {
                 return std::unexpected(created.error());
             }
             tableCreated.set(t);
             continue;
         }
-        // B-10: the table exists -- add the model columns it lacks. A column added this way never
-        // gets an automatic index: the only unique field is MarkMeta.mMark, and SQLite refuses to
-        // add a UNIQUE column, which ends the whole call.
+        // The table exists -- add the model columns it lacks. A column added this way never gets
+        // an automatic index: the only unique field is MarkMeta.mMark, and SQLite refuses to add
+        // a UNIQUE column, which ends the whole call.
         const auto fieldsAtCreation = db.tableColumns(table.name);
         if (!fieldsAtCreation) {
             return rollBack(fieldsAtCreation.error());
@@ -221,9 +221,9 @@ core::Result<int> createMissingTablesSqlite3(SqliteDb& db) {
     if (!transactionActive) {
         return 0;
     }
-    // B-11: "initialize new tables AFTER creation of ALL tables". A failing index statement is
-    // ignored (CreateSqlMultiIndex returns false and InitializeTable does not look). user_version
-    // is not written: legacy passes 0.
+    // "initialize new tables AFTER creation of ALL tables". A failing index statement is ignored
+    // (CreateSqlMultiIndex returns false and InitializeTable does not look). user_version is not
+    // written: legacy passes 0.
     for (std::size_t t = 0; t < kModel.size(); ++t) {
         if (!tableCreated.test(t)) {
             continue;

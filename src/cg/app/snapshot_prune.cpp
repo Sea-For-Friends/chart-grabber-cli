@@ -31,12 +31,12 @@ core::Result<qint64> pruneOtherSnapshots(const maptype::IMapType& map,
     const std::shared_ptr<const geo::IGeometryLonLatPolygon> areaRef(std::shared_ptr<void>(), &area);
     const storage::MapVersionRequest all{nullptr, true};
 
-    // T-0351: the tiles whose save under the current version was skipped as byte-identical (this run)
+    // The tiles whose save under the current version was skipped as byte-identical (this run)
     const auto unchanged = tileStorage->takeSkippedSaves(current);
 
     qint64 deleted = 0;
     for (const quint8 zoom : zooms) {
-        // the same walk as fillReport (budget by the legacy count, T-0259)
+        // the same walk as fillReport (budget by the legacy count)
         const qint64 budget = legacyTileCount(projectionSet->zoom(zoom), area, app);
         if (budget == 0) {
             continue;
@@ -53,23 +53,23 @@ core::Result<qint64> pruneOtherSnapshots(const maptype::IMapType& map,
                 return std::unexpected(versions.error());
             }
             const auto recorded = unchanged.find(std::tuple<quint8, int, int>{zoom, tile.x(), tile.y()});
-            // T-0352: the list drops the rows of the empty version (GetListOfTileVersions passes
-            // storeEmptyVersion False), so a recorded tile whose only stored row is a pre-T-0246 one under
-            // the empty version has a null list: that row is a candidate too.
+            // The list drops the rows of the empty version (GetListOfTileVersions passes storeEmptyVersion
+            // False), so a recorded tile whose only stored row is an earlier one under the empty version
+            // has a null list: that row is a candidate too.
             if (!*versions && recorded == unchanged.end()) {
                 continue;
             }
-            // T-0351: the SQLite save skips a tile byte-identical to a stored one
-            // (SaveFlag::SkipIfSameAsPrev, u_TileStorageSQLiteHandler.pas:317-347, any version of x,y), so
-            // the current version may have no row although the new frame has the tile. For exactly the tiles
-            // the download recorded as skipped, the stored row identical to the refused data is the tile of
-            // the current snapshot: it is moved to the current version (read, delete the others, save: the
-            // save is skipped while an identical row exists). T-0352: the record holds size and CRC-32 of
-            // the refused data (the criterion of the skip); the candidates are the newest listed version
-            // (the list is newest first, GetOrderByVersion_DESC, listTileVersions) and the row of the empty
-            // version, and only the one whose size and CRC match is moved. A tile the new frame lacks (404,
-            // no TNE) is not in the record, and a recorded tile without a matching candidate is not the
-            // new frame's either: both go with their old frame.
+            // The SQLite save skips a tile byte-identical to a stored one (SaveFlag::SkipIfSameAsPrev,
+            // u_TileStorageSQLiteHandler.pas:317-347, any version of x,y), so the current version may have
+            // no row although the new frame has the tile. For exactly the tiles the download recorded as
+            // skipped, the stored row identical to the refused data is the tile of the current snapshot: it
+            // is moved to the current version (read, delete the others, save: the save is skipped while an
+            // identical row exists). The record holds size and CRC-32 of the refused data (the criterion of
+            // the skip); the candidates are the newest listed version (the list is newest first,
+            // GetOrderByVersion_DESC, listTileVersions) and the row of the empty version, and only the one
+            // whose size and CRC match is moved. A tile the new frame lacks (404, no TNE) is not in the
+            // record, and a recorded tile without a matching candidate is not the new frame's either: both
+            // go with their old frame.
             const bool hasCurrent = *versions && std::ranges::any_of(**versions, [&](const auto& v) {
                 return v && v->isSame(*current);
             });

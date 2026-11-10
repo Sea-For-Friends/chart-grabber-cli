@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports i_ZmpConfig.pas, u_ZmpConfig.pas; docs/specs/maptype.md §2.6.9.
+// Ports i_ZmpConfig.pas, u_ZmpConfig.pas.
 #include "cg/maptype/zmp_config.h"
 
 #include <QString>
@@ -85,7 +85,7 @@ TEST(ZmpConfig, ReadWithProviderAlwaysNotifiesEvenWithoutChange) {
 }
 
 TEST(ZmpConfig, NegativeIniValueWrapsIntoTheCardinalFields) {
-    // ReadInteger returns Integer; the Cardinal fields receive it unchanged (legacy L-123).
+    // ReadInteger returns Integer; the Cardinal fields receive it unchanged (legacy).
     ZmpConfig c;
     c.readConfig(iniFrom("[S]\r\nMaxConnectToServerCount=-1\r\nMemCacheTTL=-2\r\n")->subItem(u"S"));
     EXPECT_EQ(c.maxConnectToServerCount(), 0xFFFFFFFFU);

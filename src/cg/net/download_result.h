@@ -3,10 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_DownloadResult.pas (14 interfaces), u_DownloadResult.pas (19 classes). docs/specs/net.md
-// §2.4. FEAT-NET-013. Nineteen legacy classes, none carrying more than four extra fields and four
-// of them discarding the code they are constructed with, collapse into one closed enum plus one
-// struct per idioms.md §13.
+// Ports: i_DownloadResult.pas (14 interfaces), u_DownloadResult.pas (19 classes). Nineteen legacy
+// classes, none carrying more than four extra fields and four of them discarding the code they are
+// constructed with, collapse into one closed enum plus one struct.
 
 #include <QByteArray>
 #include <QString>
@@ -78,6 +77,9 @@ struct DownloadResult {
     QByteArray contentEncoding;   // BadContentEncoding only
     QByteArray data;              // Ok / BadContentEncoding only
     QString text;                 // ErrorText or ReasonText, already formatted
+    // Set only on the result of the request whose curl retry switched its host; empty otherwise.
+    QString userAgentSwitchHost;
+    QByteArray userAgentSwitchedTo;
 
     [[nodiscard]] bool isServerExists() const noexcept { return kindImpliesServerExists(kind); }
 

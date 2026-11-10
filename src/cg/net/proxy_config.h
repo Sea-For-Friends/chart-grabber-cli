@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_ProxyConfig.pas, u_ProxyConfig.pas:114-202,279-365. docs/specs/net.md §2.1.
-// FEAT-NET-008.
+// Ports: i_ProxyConfig.pas, u_ProxyConfig.pas:114-202,279-365.
 
 #include "cg/core/config_element.h"
 #include "cg/core/snapshot.h"
@@ -17,10 +16,10 @@
 
 namespace cg::net {
 
-// Legacy ordinals are persisted in the INI; do not renumber. i_ProxyConfig.pas:30-37
-// Underlying type is std::uint8_t (not the spec's literal "int") only to satisfy clang-tidy's
-// performance-enum-size; every read/write still goes through an explicit qint32 cast, so the INI
-// ordinal (a Delphi Integer) is unaffected -- see docs/handoffs/T-0011A.md.
+// Legacy ordinals are persisted in the INI; do not renumber. i_ProxyConfig.pas:30-37. The
+// underlying type is std::uint8_t (not int) only to satisfy clang-tidy's performance-enum-size;
+// every read/write still goes through an explicit qint32 cast, so the INI ordinal (a Delphi
+// Integer) is unaffected.
 enum class ProxyType : std::uint8_t {
     Http = 0,
     Https = 1,
@@ -70,9 +69,9 @@ public:
     void setPassword(QString v);
 
     // Normalises a user-typed address to host:port. u_ProxyConfig.pas:158-176. Takes `raw` by
-    // const-ref, not by value as the spec literally shows: the body never mutates or moves it
-    // (clang-tidy performance-unnecessary-value-param); purely a parameter-passing convention, no
-    // behavior change.
+    // const-ref, not by value: the body never mutates or moves it (clang-tidy
+    // performance-unnecessary-value-param); purely a parameter-passing convention, no behavior
+    // change.
     [[nodiscard]] static QByteArray normalizeAddress(const QByteArray& raw);
 
 protected:

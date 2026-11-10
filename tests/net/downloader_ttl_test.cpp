@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-009 -- docs/specs/net.md §2.10 (u_DownloaderHttpWithTTL.pas). The idle trim is
-// driven by ticking an application cg::core::Notifier by hand with an injected clock; no sleeps.
+// u_DownloaderHttpWithTTL.pas. The idle trim is driven by ticking an application cg::core::Notifier
+// by hand with an injected clock; no sleeps.
 #include "cg/core/garbage_collector_thread.h"
 #include "cg/core/notifier.h"
 #include "cg/net/downloader_ttl.h"
@@ -80,7 +80,7 @@ private:
     cg::core::Subscription sub_;
 };
 
-// Inner downloader whose request can be held open until released; otherwise it works for a moment.
+// Inner downloader whose request can be held open until released; otherwise it works at once.
 class GateState {
 public:
     std::mutex mutex;
@@ -186,9 +186,9 @@ TEST(TtlDownloaderTest, TickOnCollectorThreadTrimsBetweenRequests) {
     EXPECT_EQ(factory->builds.load(), kRequests);
 }
 
-// The tryLock skip (D-70, T-0048): a request in flight while the clock passes the TTL. The tick must
-// not block (the collector keeps ticking), the client survives that request, and the trim happens
-// on a later tick once the request has ended and the idle time is measured from its end.
+// The tryLock skip: a request in flight while the clock passes the TTL. The tick must not block (the
+// collector keeps ticking), the client survives that request, and the trim happens on a later tick
+// once the request has ended and the idle time is measured from its end.
 TEST(TtlDownloaderTest, TickSkipsWhileARequestIsInFlight) {
     cg::core::Notifier gc;
     FakeClock clock;

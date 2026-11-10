@@ -22,16 +22,15 @@ default/template shipped with the app or an empty state file, none contain user 
 (checked with `grep -riE "password|proxy|login|token|secret|apikey"` — no hits). Nothing was
 scrubbed; files are copied byte-for-byte.
 
-**Missing (important gap for the Tech Lead)**: `SASPlanet.ini` — the main user settings file
-(expected to hold window state, last-used map, download/proxy settings, and per docs/CHARTER
-risk table, proxy password) — **does not exist anywhere on this live install**. The install
-appears to have been run at least once (it did generate `Marks.db3`, `FormsState.ini`, and one
-cached tile — see `../marks/README.md` and `../cache/README.md`), but no `SASPlanet.ini` was
-ever written to the install directory or found elsewhere on the filesystem
-(`find / -iname "SASPlanet.ini"` returned nothing). No sample was available in the legacy repo's
-`Test/data` either. **This fixture folder cannot exercise the main settings-file format** —
-flag as an open question / follow-up ticket to obtain a real `SASPlanet.ini` (e.g. by running the
-legacy app once and letting it save settings) before the settings-parser module is implemented.
+**Missing (an important gap)**: `SASPlanet.ini` — the main user settings file (expected to hold
+window state, last-used map, download/proxy settings, and the proxy password) — **does not exist
+anywhere on this live install**. The install appears to have been run at least once (it did
+generate `Marks.db3`, `FormsState.ini`, and one cached tile — see `../marks/README.md` and
+`../cache/README.md`), but no `SASPlanet.ini` was ever written to the install directory or found
+elsewhere on the filesystem (`find / -iname "SASPlanet.ini"` returned nothing). No sample was
+available in the legacy repo's `Test/data` either. **This fixture folder cannot exercise the main
+settings-file format**; a real `SASPlanet.ini` is still needed (e.g. by running the legacy app
+once and letting it save settings).
 
 **What it exercises**: ini key/value parsing (UTF-8 BOM handling, empty file, `[SECTION]` headers,
 quoted string values, repeated keys with `_<lang>` suffix pattern), and default-template loading
@@ -39,23 +38,23 @@ for the DBMS and terrain-DEM subsystems.
 
 ---
 
-## `quirks.ini` (added by T-0002A — synthetic, deliberately)
+## `quirks.ini` (synthetic, deliberately)
 
-**Origin**: hand-written for T-0002A/T-0002, not a real user file. Written with a UTF-8 BOM and
-CRLF line endings, i.e. exactly what Delphi's `TMemIniFile` + `TEncoding.UTF8` produce on Windows.
+**Origin**: hand-written, not a real user file. Written with a UTF-8 BOM and CRLF line endings, i.e.
+exactly what Delphi's `TMemIniFile` + `TEncoding.UTF8` produce on Windows.
 
-**Purpose**: exercise the Delphi `TMemIniFile` parsing quirks Q1–Q24 enumerated in
-`docs/specs/core.md` §2.12.2 — whole-line trimming, `;`-only comments (`#` is a key!), section
-header shape, split-at-first-`=`, quotes kept verbatim, duplicate keys/sections, case-insensitive
-lookup, the integer/bool/float/date/binary conversion rules, and append-on-write placement.
-No real file in this repo happens to contain all of those constructs.
+**Purpose**: exercise the Delphi `TMemIniFile` parsing quirks — whole-line trimming, `;`-only
+comments (`#` is a key!), section header shape, split-at-first-`=`, quotes kept verbatim,
+duplicate keys/sections, case-insensitive lookup, the integer/bool/float/date/binary conversion
+rules, and append-on-write placement. No real file in this repo happens to contain all of those
+constructs.
 
-**Why a synthetic file is acceptable here**: the "fixtures are real" rule (agent-protocol §10) is
-about *format regression*, and the real-format regression for this module is the 514-file ZMP
-`params.txt` byte-identical round trip (`tests/core/zmp_roundtrip_test.cpp`, spec §7.19) plus the
-three real ini files above. `quirks.ini` only adds edge cases on top.
+**Why a synthetic file is acceptable here**: the "fixtures are real" rule is about *format
+regression*, and the real-format regression for this module is the 514-file ZMP `params.txt`
+byte-identical round trip plus the three real ini files above. `quirks.ini` only adds edge cases
+on top.
 
-**To be supplemented, not replaced**: when T-0004 delivers a real `SASPlanet.ini`, add it as an
-extra round-trip fixture; `quirks.ini` stays for the edge cases.
+**To be supplemented, not replaced**: when a real `SASPlanet.ini` is available, add it as an extra
+round-trip fixture; `quirks.ini` stays for the edge cases.
 
 **Used by**: `tests/core/ini_file_test.cpp` (30 cases), `tests/core/text_codec_test.cpp`.

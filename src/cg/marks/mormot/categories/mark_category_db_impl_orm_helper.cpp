@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMHelper.pas (docs/specs/marks.md §2.9.6, S-10
-// ... S-1C).
+// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMHelper.pas.
 #include "cg/marks/mormot/categories/mark_category_db_impl_orm_helper.h"
 
 #include "cg/marks/mormot/mark_system_orm_log.h"
@@ -18,7 +17,7 @@ namespace {
 
 using storage::sqlite::SqliteStmt;
 
-constexpr const char* kUpdateCategoryName = "UPDATE Category SET cName=? WHERE RowID=?"; // S-15
+constexpr const char* kUpdateCategoryName = "UPDATE Category SET cName=? WHERE RowID=?";
 
 } // namespace
 
@@ -35,10 +34,10 @@ bool MarkCategoryDbImplORMHelper::deleteCategorySql(qint64 categoryId) {
 
     checkId(categoryId);
 
-    // first delete view for all users (if exists): S-1C, the result is ignored (:131)
+    // first delete view for all users (if exists): the result is ignored (:131)
     runWrite(provider_, "DELETE FROM CategoryView WHERE cvCategory=?", {categoryId});
 
-    // then delete category: S-16 (:134)
+    // then delete category (:134)
     checkDeleteResult(runWrite(provider_, "DELETE FROM Category WHERE RowID=?", {categoryId}));
 
     // delete from cache
@@ -54,14 +53,14 @@ bool MarkCategoryDbImplORMHelper::insertCategorySql(OrmCategoryRec& rec) {
         return false;
     }
 
-    // insert category: S-14 (:161)
+    // insert category (:161)
     const qint64 categoryId = insertRow(provider_, "INSERT INTO Category (cName) VALUES (?)", {rec.name});
     checkId(categoryId);
     rec.categoryId = categoryId;
     // add to cache
     cache_.categoryCache.addOrUpdate(rec);
 
-    // insert view (only for a hidden category: LC-16, a visible one gets no row) S-19 (:179)
+    // insert view (only for a hidden category, a legacy defect: a visible one gets no row) (:179)
     if (!rec.visible) {
         const qint64 viewId = insertRow(
             provider_,
@@ -103,7 +102,7 @@ bool MarkCategoryDbImplORMHelper::updateCategorySql(const OrmCategoryRec& oldRec
             viewMinZoom = item->minZoom;
             viewMaxZoom = item->maxZoom;
         } else if (!cache_.categoryViewCache.isPrepared()) {
-            // init from db: S-17 (:268)
+            // init from db (:268)
             runStatement(provider_,
                          "SELECT RowID,cvUser,cvCategory,cvVisible,cvMinZoom,cvMaxZoom FROM CategoryView "
                          "WHERE cvCategory=? AND cvUser=? LIMIT 1",
@@ -117,7 +116,7 @@ bool MarkCategoryDbImplORMHelper::updateCategorySql(const OrmCategoryRec& oldRec
         }
         if (!isReadOnly_) {
             if (found && viewId > 0) {
-                // update existing: S-1A, the changed columns in the fixed order (:287)
+                // update existing: the changed columns in the fixed order (:287)
                 CsvFieldsBuilder fields;
                 std::vector<OrmArg> args;
                 if (newRec.visible != oldRec.visible) {
@@ -144,7 +143,7 @@ bool MarkCategoryDbImplORMHelper::updateCategorySql(const OrmCategoryRec& oldRec
                 args.emplace_back(viewId);
                 checkUpdateResult(runWrite(provider_, sql, args));
             } else {
-                // add new: S-19 with all five values of the new record (:296)
+                // add new: with all five values of the new record (:296)
                 viewId =
                     insertRow(provider_,
                               "INSERT INTO CategoryView (cvUser,cvCategory,cvVisible,cvMinZoom,cvMaxZoom) "
@@ -165,7 +164,7 @@ bool MarkCategoryDbImplORMHelper::updateCategorySql(const OrmCategoryRec& oldRec
     }
 
     if (newRec.name != oldRec.name) {
-        // update name: S-15 (:318)
+        // update name (:318)
         checkUpdateResult(runWrite(provider_, kUpdateCategoryName, {newRec.name, newRec.categoryId}));
         // update cache
         cache_.categoryCache.addOrUpdate(newRec);
@@ -182,12 +181,12 @@ bool MarkCategoryDbImplORMHelper::updateCategorySql(const OrmCategoryRec& oldRec
                 OrmCategoryRow& category = categories[static_cast<size_t>(i)];
                 const QString oldName = category.name;
                 if (oldName.startsWith(searchName, Qt::CaseInsensitive)) {
-                    // StringReplace without rfReplaceAll: the first case-insensitive occurrence (DV-5)
+                    // StringReplace without rfReplaceAll: the first case-insensitive occurrence
                     QString replaced = oldName;
                     replaced.replace(replaced.indexOf(searchName, 0, Qt::CaseInsensitive), searchName.size(),
                                      updateName);
                     category.name = replaced;
-                    // update db: S-15 for the row (:336)
+                    // update db: the row (:336)
                     checkUpdateResult(runWrite(provider_, kUpdateCategoryName, {category.name, category.id}));
                 }
             }
@@ -226,11 +225,10 @@ bool MarkCategoryDbImplORMHelper::readCategorySql(OrmCategoryRec& rec, qint64 id
             rowName = row.columnText(1);
         };
         if (id > 0) {
-            // S-10 (:381)
             runStatement(provider_, "SELECT RowID,cName FROM Category WHERE RowID=?", {id}, onRow);
         } else if (!name.isEmpty()) {
-            // S-11 (:384): cName is declared SYSTEMNOCASE, so this equality is NOT the AnsiSameText of the
-            // cache look-up above (L-187)
+            // :384: cName is declared SYSTEMNOCASE, so this equality is NOT the AnsiSameText of the cache
+            // look-up above (a legacy defect, reproduced)
             runStatement(provider_, "SELECT RowID,cName FROM Category WHERE cName=? LIMIT 1", {name}, onRow);
         }
         if (result) {
@@ -256,7 +254,7 @@ bool MarkCategoryDbImplORMHelper::readCategorySql(OrmCategoryRec& rec, qint64 id
         return result;
     }
     if (!cache_.categoryViewCache.isPrepared()) {
-        // view not in cache -> get it from db: S-17 (:415)
+        // view not in cache -> get it from db (:415)
         qint64 viewId = 0;
         bool visible = false;
         int minZoom = 0;
@@ -287,7 +285,7 @@ bool MarkCategoryDbImplORMHelper::readCategorySql(OrmCategoryRec& rec, qint64 id
 
 // :434-457
 int MarkCategoryDbImplORMHelper::countCategorySql(const QString& name) {
-    // S-12: bypasses the cache, cName compares through SYSTEMNOCASE (:446)
+    // Bypasses the cache, cName compares through SYSTEMNOCASE (:446)
     int count = 0;
     const bool done = runStatement(provider_, "SELECT RowID FROM Category WHERE cName=?", {name},
                                    [&](const SqliteStmt&) { ++count; });
@@ -297,7 +295,6 @@ int MarkCategoryDbImplORMHelper::countCategorySql(const QString& name) {
 // :459-486
 int MarkCategoryDbImplORMHelper::fillPrepareCategoryCache() {
     if (!cache_.categoryCache.isPrepared()) {
-        // S-13 (:467)
         std::vector<OrmCategoryRow> rows;
         const bool done =
             runStatement(provider_, "SELECT RowID,cName FROM Category", {}, [&](const SqliteStmt& row) {
@@ -314,7 +311,6 @@ int MarkCategoryDbImplORMHelper::fillPrepareCategoryCache() {
 // :488-521
 int MarkCategoryDbImplORMHelper::fillPrepareCategoryViewCache() {
     if (!cache_.categoryViewCache.isPrepared()) {
-        // S-18 (:496)
         std::vector<OrmCategoryViewRow> rows;
         const bool done = runStatement(
             provider_,
@@ -338,7 +334,7 @@ int MarkCategoryDbImplORMHelper::fillPrepareCategoryViewCache() {
 // :523-591
 void MarkCategoryDbImplORMHelper::setAllCategoriesVisibleSql(bool visible) {
     if (!isReadOnly_) {
-        // update db: S-1B (:542); zero rows is a success
+        // update db (:542); zero rows is a success
         checkUpdateResult(runWrite(provider_, "UPDATE CategoryView SET cvVisible=? WHERE cvUser=?",
                                    {qint64{visible ? 1 : 0}, userId_}));
     }
@@ -366,7 +362,7 @@ void MarkCategoryDbImplORMHelper::setAllCategoriesVisibleSql(bool visible) {
                     rec.categoryId = categoryId;
                     rec.visible = visible;
 
-                    // add to db: S-19 (:577), with the zoom defaults of the empty record
+                    // add to db (:577), with the zoom defaults of the empty record
                     if (!isReadOnly_) {
                         const qint64 viewId = insertRow(
                             provider_,

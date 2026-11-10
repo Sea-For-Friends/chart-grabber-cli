@@ -2,11 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit). Tests of pruneOtherSnapshots (docs/specs/weather-sources.md 9, T-0246); no FEAT
-// tag (Features none). Inherits Src/RegionProcess/Delete/u_ThreadDeleteTiles.pas ProcessRegion: stop checked
-// before each tile (:121-123), DeleteTile with the found version, the `true` answers counted (:127-129). Rig:
-// tile_estimate_rig.h (scripted storage; the current version is the map's base version "base-ver"; the area
-// is the z6 rectangle of 80 tiles and its z3 form of 2 tiles).
+// New code (no legacy unit). Tests of pruneOtherSnapshots. Inherits Src/RegionProcess/Delete/
+// u_ThreadDeleteTiles.pas ProcessRegion: stop checked before each tile (:121-123), DeleteTile with the found
+// version, the `true` answers counted (:127-129). Rig: tile_estimate_rig.h (scripted storage; the current
+// version is the map's base version "base-ver"; the area is the z6 rectangle of 80 tiles and its z3 form of 2
+// tiles).
 #include "cg/app/snapshot_prune.h"
 #include "cg/core/hash.h"
 
@@ -31,7 +31,7 @@ protected:
         return pruneOtherSnapshots(*map_, *area, zooms, app(), stop);
     }
 
-    // T-0352: the record of a refused save of "bytes" (size and CRC-32, as the facade stores it)
+    // The record of a refused save of "bytes" (size and CRC-32, as the facade stores it)
     static storage::ITileStorage::SkippedSave bytes() { return {5, core::crc32(0, "bytes", 5)}; }
 
     storage::MapVersionFactory factory_;
@@ -124,11 +124,11 @@ TEST_F(SnapshotPruneTest, StopEndsTheWalkWithCancelledBeforeTheNextTile) {
     EXPECT_EQ(deletions(*storage_), (std::vector<Deletion>{{3, 1, 3, u"/a"_s}}));
 }
 
-// T-0351: the download recorded the tile as skipped (byte-identical to a stored version) and the current
-// version has no row: the newest stored version (the list is newest first) is read, every stored version is
-// deleted and the tile is saved under the current version. The moved tile is not counted as removed. A tile
-// that has the current version keeps the old behaviour (all others deleted, no save), a tile the new frame
-// lacks (not recorded: 404) is deleted with its old frames and not saved.
+// The download recorded the tile as skipped (byte-identical to a stored version) and the current version
+// has no row: the newest stored version (the list is newest first) is read, every stored version is deleted
+// and the tile is saved under the current version. The moved tile is not counted as removed. A tile that
+// has the current version keeps the old behaviour (all others deleted, no save), a tile the new frame lacks
+// (not recorded: 404) is deleted with its old frames and not saved.
 TEST_F(SnapshotPruneTest, ASkippedTileMovesItsNewestVersionToTheCurrentOneAndTheOlderOnesGo) {
     storage::TileInfo info;
     info.type = storage::TileInfoType::Exists;
@@ -214,9 +214,9 @@ TEST_F(SnapshotPruneTest, AFailedSaveRestoresTheTileUnderItsOwnVersion) {
     EXPECT_EQ(storage_->saves.size(), 2U);
 }
 
-// T-0352: the list drops the rows of the empty version, so a recorded tile whose only stored row is a
-// pre-T-0246 one under the empty version has a null list: that row is read (null version), deleted and saved
-// under the current version; it is no loss (not counted). A tile with a null list that was not recorded stays
+// The list drops the rows of the empty version, so a recorded tile whose only stored row is an earlier one
+// under the empty version has a null list: that row is read (null version), deleted and saved under the
+// current version; it is no loss (not counted). A tile with a null list that was not recorded stays
 // untouched.
 TEST_F(SnapshotPruneTest, ARecordedTileWithOnlyAnEmptyVersionRowMovesToTheCurrentVersion) {
     storage::TileInfo info;
@@ -248,9 +248,9 @@ TEST_F(SnapshotPruneTest, AVanishedEmptyVersionRowIsNotTouched) {
     EXPECT_TRUE(storage_->saves.empty());
 }
 
-// T-0352: a recorded tile whose candidates (the newest listed version and the empty-version row) both differ
-// in size or CRC from the refused data is not the new frame's: it goes with its old frame like a 404, nothing
-// is saved, the empty-version row stays. Both candidates were read, the newest first.
+// A recorded tile whose candidates (the newest listed version and the empty-version row) both differ in size
+// or CRC from the refused data is not the new frame's: it goes with its old frame like a 404, nothing is
+// saved, the empty-version row stays. Both candidates were read, the newest first.
 TEST_F(SnapshotPruneTest, ARecordedTileNoCandidateMatchesIsDeletedLikeA404) {
     storage::TileInfo info;
     info.type = storage::TileInfoType::Exists;

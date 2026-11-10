@@ -66,7 +66,7 @@ bool isPointOnLine(const IGeometryProjectedLine& line, DoublePoint point, double
     // TProjectedCalc.IsPointOnLine dispatches Supports(Single)/Supports(Multi) to two hand
     // copies of this exact formula (u_ProjectedCalc.pas:433-476/498-513); IGeometryProjectedLine
     // has no third concrete implementer, so calling the already-verified virtual directly
-    // (geometry_projected.cpp, C1) is behaviourally identical.
+    // (geometry_projected.cpp) is behaviourally identical.
     return line.isPointOnPath(point, dist);
 }
 

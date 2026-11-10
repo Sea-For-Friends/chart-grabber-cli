@@ -2,13 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-020, FEAT-STO-021 (RMaps / OsmAnd / Locus flavour). Ports
-// Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionRMaps.pas; see
-// docs/specs/storage.md §2.17.2. No legacy DUnit exists for this unit (ticket's own Tests
-// section) -- this is the ticket's minimal list: each flavour's `info` row against the spec, a
-// tile written at z=10 landing at the flavour's own inverted (or not) z, Locus's swapped min/max
-// plus kept `zooms`, read-back and delete, and an unsupported format id being rejected. One
-// process per case (ctest), each on its own QTemporaryDir -- no shared state.
+// Ports Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionRMaps.pas (the
+// RMaps / OsmAnd / Locus flavours). No legacy DUnit exists for this unit; this is a minimal
+// list: each flavour's `info` row against the values legacy writes, a tile written at z=10
+// landing at the flavour's own inverted (or not) z, Locus's swapped min/max plus kept `zooms`,
+// read-back and delete, and an unsupported format id being rejected. One process per case
+// (ctest), each on its own QTemporaryDir -- no shared state.
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"
@@ -62,9 +61,9 @@ QString tempPath(const QTemporaryDir& dir, const QString& baseName = QStringLite
 }
 
 // Reads the `info` table's one row directly (bypassing RmapsConnection entirely), keyed by column
-// name (lowercase, matching legacy's own LowerCase(VName) -- storage.md §2.17.2's schema already
-// declares every column in lowercase, so this is a no-op in practice but kept for parity with
-// FetchMetadata's own lowering).
+// name (lowercase, matching legacy's own LowerCase(VName) -- the schema already declares every
+// column in lowercase, so this is a no-op in practice but kept for parity with FetchMetadata's
+// own lowering).
 QHash<QString, QString> readInfoRow(const QString& path) {
     QHash<QString, QString> result;
     auto db = SqliteDb::open(path, SqliteDb::OpenMode::ReadWrite);
@@ -348,10 +347,10 @@ TEST(RmapsConnection, RejectsUnsupportedFormat) {
     ASSERT_FALSE(opened.has_value());
 }
 
-// --- a foreign RMaps file (§7.5 item 5) --------------------------------------------------------
+// --- a foreign RMaps file --------------------------------------------------------
 
 TEST(RmapsConnection, ForeignRMapsFile) {
     GTEST_SKIP() << "needs tests/fixtures/cache/foreign/sample.rmaps, a .rmaps file written by a "
-                    "native RMaps app (not by SAS.Planet) -- docs/specs/storage.md §7.5 item 5, "
+                    "native RMaps app (not by SAS.Planet) -- see "
                     "tests/fixtures/cache/README.md";
 }

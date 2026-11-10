@@ -34,7 +34,7 @@ namespace {
 constexpr QLatin1String kMapDataInternalUrl("sas://MapData/");
 } // namespace
 
-// u_MapType.pas:298-484. Step numbers are those of docs/specs/maptype.md 2.11.6.
+// u_MapType.pas:298-484. The steps below are numbered in legacy order.
 MapType::MapType(std::shared_ptr<core::ILanguageManager> languageManager, std::shared_ptr<const IZmpInfo> zmp,
                  storage::MapVersionFactoryPtr simpleVersionFactory,
                  std::shared_ptr<storage::GlobalCacheConfig> globalCacheConfig,
@@ -84,8 +84,8 @@ MapType::MapType(std::shared_ptr<core::ILanguageManager> languageManager, std::s
         contentType_ = contentTypes_->infoByExt(storageConfig_->tileFileExt());
     }
     if (contentType_ == nullptr) {
-        // Unreachable by D-74 (ZmpInfo rejected it with the same registry and rule); legacy goes on with nil
-        // and crashes on first use (:592, L-175).
+        // Unreachable, a deviation from legacy (ZmpInfo rejected it with the same registry and rule); legacy
+        // goes on with nil and crashes on first use (:592, a legacy defect).
         throw std::logic_error("MapType: content type not in the registry");
     }
 
@@ -105,13 +105,13 @@ MapType::MapType(std::shared_ptr<core::ILanguageManager> languageManager, std::s
         std::move(globalCacheConfig), projectionSet_, std::move(tileStorageTypeList), versionFactory_,
         storageConfig_, cacheTileInfo_, contentType_);
 
-    // :410-441 -- bitmap branch: TODO(T-0148) (caches, loaders). Vector branch: the url prefix only.
+    // :410-441 -- bitmap branch: TODO: caches, loaders. Vector branch: the url prefix only.
     if (contentType_->kind == core::ContentKind::Vector) {
         mapDataUrlPrefix_ = kMapDataInternalUrl + zmp_->guid().toString(QUuid::WithBraces).toUpper() + u'/';
-        // TODO(T-0148): vector cache, KML loader, FVectorDataFactory, FVectorItemSubsetBuilderFactory.
+        // TODO: vector cache, KML loader, FVectorDataFactory, FVectorItemSubsetBuilderFactory.
     }
 
-    // :443-473. Not passed (the landed subsystem takes none of them): ADownloaderThreadConfig,
+    // :443-473. Not passed (the subsystem takes none of them): ADownloaderThreadConfig,
     // AProjectionSetFactory, AInvisibleBrowser, the resamplers, the bitmap factory, the download result
     // factory; the ZMP-derived arguments are read from the ZMP inside the subsystem.
     tileDownloadSubsystem_ = std::make_shared<TileDownloadSubsystem>(
@@ -143,7 +143,7 @@ void MapType::saveConfig(const core::IConfigWriterPtr& localConfig) const {
     abilitiesConfig_->writeConfig(localConfig);
 }
 
-// :285-296. cacheBitmap / cacheVector: TODO(T-0148).
+// :285-296. TODO: cacheBitmap / cacheVector.
 void MapType::clearMemCache() {
     if (cacheTileInfo_) {
         cacheTileInfo_->clear();
@@ -203,7 +203,7 @@ void MapType::nextVersion(const geo::LocalCoordConverterPtr& view, int step) {
     const auto list =
         storage_->listVersions(mapTile, mapProjection->zoom(), storage::MapVersionRequest{nullptr, true});
     // Legacy indexes an empty list (-1 + step) and reads outside it; here an empty list or a failed call
-    // leaves the version unchanged (D row of T-0140).
+    // leaves the version unchanged (a deviation from legacy).
     if (!list || !*list || (*list)->empty()) {
         return;
     }
@@ -286,7 +286,7 @@ std::shared_ptr<net::TileDownloaderConfig> MapType::tileDownloaderConfig() const
 std::shared_ptr<TileDownloadRequestBuilderConfig> MapType::tileDownloadRequestBuilderConfig() const {
     return tileDownloadRequestBuilderConfig_;
 }
-// Both null until T-0148 (a KML map has no bitmap cache and vice versa, :410-441).
+// Both null until the bitmap half is ported (a KML map has no bitmap cache and vice versa, :410-441).
 std::shared_ptr<ITileObjCacheBitmap> MapType::cacheBitmap() const {
     return nullptr;
 }
@@ -297,7 +297,7 @@ std::shared_ptr<storage::TileInfoMemCache> MapType::cacheTileInfo() const {
     return cacheTileInfo_;
 }
 
-// TODO(T-0148): tile loading, u_MapType.pas:507-553, 684-789, 837-1184. nullptr = "no tile" (legacy nil).
+// TODO: tile loading, u_MapType.pas:507-553, 684-789, 837-1184. nullptr = "no tile" (legacy nil).
 BitmapPtr MapType::loadTile(geo::PointI, quint8, const MapVersionRequestPtr&, bool,
                             const std::shared_ptr<ITileObjCacheBitmap>&) const {
     return nullptr;

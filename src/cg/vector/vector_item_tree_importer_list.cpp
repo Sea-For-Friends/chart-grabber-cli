@@ -37,7 +37,7 @@ int VectorItemTreeImporterListStatic::count() const {
 
 VectorItemTreeImporterListItemPtr VectorItemTreeImporterListStatic::item(int index) const {
     // Legacy GetItem (:149-154) has no range check; out of range (EListError from the RTL list) and
-    // the nil list (access violation) are answered with null here. D row of T-0141.
+    // the nil list (access violation) are answered with null here (a deviation from legacy).
     if (index < 0 || index >= count()) {
         return nullptr;
     }

@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_TileFileNameGM2.pas -- the GlobalMapper Aux folder cache (CacheType id 41), default
-// root folder `cache_gmt_aux`. FEAT-STO-006.
+// Ports: u_TileFileNameGM2.pas -- the GlobalMapper Aux folder cache (CacheType id 41), default root
+// folder `cache_gmt_aux`.
 
 #include "cg/storage/tile_name_codec.h"
 

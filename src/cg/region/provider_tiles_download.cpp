@@ -78,7 +78,7 @@ DownloadSessionRun ProviderTilesDownload::startBySls(const QString& fileName, bo
 std::vector<DownloadSessionRun> ProviderTilesDownload::startProcess(const PolygonPtr& polygon,
                                                                     const TilesDownloadParams& params) {
     // unreachable in legacy (fr_TilesDownload.pas:531-534 validates the zooms, the map comes from the
-    // selector :472-475, the polygon from the region); no register row
+    // selector :472-475, the polygon from the region)
     if (!params.mapType || !polygon || params.zoomArray.empty()) {
         throw std::invalid_argument("ProviderTilesDownload::startProcess: no map, polygon or zoom");
     }

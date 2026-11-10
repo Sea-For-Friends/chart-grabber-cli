@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-016 -- docs/specs/net.md §2.17, §7.14.
 #include "cg/core/content_type.h"
 #include "cg/net/curl_downloader.h"
 #include "cg/net/download_request.h"
@@ -42,8 +41,8 @@ using cg::net::test::HttpTestServer;
 
 namespace {
 
-// docs/specs/net.md §7.0: no test may reach the real network; only the ProxyAuth test below (a
-// real CurlDownloader) needs the guard -- set unconditionally, matching curl_downloader_test.cpp.
+// No test may reach the real network; only the ProxyAuth test below (a real CurlDownloader) needs
+// the guard -- set unconditionally, matching curl_downloader_test.cpp.
 struct ForceNoExternalNetwork {
     ForceNoExternalNetwork() { qputenv("CG_NET_NO_EXTERNAL_NETWORK", "1"); }
 };
@@ -69,7 +68,7 @@ std::shared_ptr<InetSettings> makeInet() {
     return std::make_shared<InetSettings>();
 }
 
-// T-0010B rework finding 4/5's double, reused here for the proxy-retry test (see
+// The double of the 407-retry tests, reused here for the proxy-retry test (see
 // curl_downloader_test.cpp's identical copy for the rationale).
 class FakeProxyResolver final : public IProxyResolver {
 public:

@@ -3,12 +3,12 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing. NEW code, no legacy unit: the `*.source.json` source definition
-// (docs/specs/map-source-json.md sections 1-4) presented to ZmpInfo as the container of a ZMP. Read-only.
+// Ports: nothing. NEW code, no legacy unit: the `*.source.json` source definition presented to ZmpInfo as
+// the container of a ZMP. Read-only.
 //
-// Children: "params.txt" (an ini with a [PARAMS] section carrying the section 3 key mapping) and
-// "EmptyTiles" (the decoded `emptyTiles` samples); binary("GetUrlScript.js") is the script text, which
-// TileDownloadSubsystem hands to the JavaScript factory (T-0225).
+// Children: "params.txt" (an ini with a [PARAMS] section carrying the key mapping) and "EmptyTiles"
+// (the decoded `emptyTiles` samples); binary("GetUrlScript.js") is the script text, which
+// TileDownloadSubsystem hands to the JavaScript factory.
 
 #include "cg/core/config_provider.h"
 #include "cg/core/result.h"
@@ -22,10 +22,10 @@ namespace cg::maptype {
 
 class SourceJsonContainer final : public core::IConfigProvider {
 public:
-    // True for a file name ending `.source.json` (ASCII case-insensitive), spec section 2.
+    // True for a file name ending `.source.json` (ASCII case-insensitive).
     [[nodiscard]] static bool isSourceJsonName(const QString& name);
 
-    // Reads and parses the file; the error text names the key (spec section 2).
+    // Reads and parses the file; the error text names the key.
     [[nodiscard]] static core::Result<std::shared_ptr<const SourceJsonContainer>>
     load(const QString& filePath);
 

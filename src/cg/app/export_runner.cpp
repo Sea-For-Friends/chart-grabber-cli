@@ -36,7 +36,7 @@ struct Tr {
 
 constexpr auto kPollStep = std::chrono::seconds(1);
 
-// C-13: the .part file and the side files SQLite may have left.
+// The .part file and the side files SQLite may have left.
 void removePartFiles(const QString& part) {
     for (const char* suffix : {"", "-journal", "-wal", "-shm"}) {
         QFile::remove(part + QLatin1String(suffix));
@@ -51,7 +51,7 @@ ExportResult failed(const QString& part, ExportOutcome outcome, const QString& e
     return r;
 }
 
-// C-10: the number of rows of `tiles`, 0 for none.
+// The number of rows of `tiles`, 0 for none.
 core::Result<qint64> countTiles(const QString& part) {
     auto db = storage::sqlite::SqliteDb::open(part, storage::sqlite::SqliteDb::OpenMode::ReadOnly);
     if (!db) {
@@ -86,23 +86,23 @@ core::Result<qint64> countTiles(const QString& part) {
 ExportResult exportSource(const ResolvedSource& source, const Job& job,
                           const std::shared_ptr<const geo::IGeometryLonLatPolygon>& area, AppContext& app,
                           Console& console, const std::stop_token& termination) {
-    // 1. the parameters of the frame's controls (app-cli.md 3.10)
+    // 1. the parameters of the frame's controls
     region::ExportMbtilesParams params;
     (source.asOverlay ? params.overlay : params.map) = source.map;
     const QString part = source.outFile + QLatin1String(".part");
-    params.path = QFileInfo(part).absoluteFilePath(); // T-0172: the task wants an absolute path
+    params.path = QFileInfo(part).absoluteFilePath(); // The task wants an absolute path
     params.zooms = source.zooms;
     params.name = source.name;
     if (source.snapshot && source.snapshot->time.isValid() &&
         (source.asOverlay || job.name.trimmed().isEmpty())) {
-        // T-0327: the frame time in the default name, so that repeated exports differ; --name wins unchanged.
-        // T-0330: also for an overlay; --name names the base only (resolveJob), so it never stops an overlay.
+        // The frame time in the default name, so that repeated exports differ; --name wins unchanged. Also
+        // for an overlay; --name names the base only (resolveJob), so it never stops an overlay.
         params.name += QStringLiteral(" ") + snapshotTimeText(*source.snapshot);
     }
     params.description = job.description;
     if (params.description.isEmpty() && source.snapshot) {
-        // T-0249 (Q-W4): the default description of a snapshot export; legacy leaves it empty
-        // (fr_ExportMBTiles.pas:336-338). S-11: the apostrophe is removed from a derived text.
+        // The default description of a snapshot export; legacy leaves it empty
+        // (fr_ExportMBTiles.pas:336-338). The apostrophe is removed from a derived text.
         params.description =
             sourceName(*source.map) + QStringLiteral(", snapshot ") + snapshotTimeText(*source.snapshot);
         if (params.description.contains(u'\'')) {
@@ -113,16 +113,16 @@ ExportResult exportSource(const ResolvedSource& source, const Job& job,
     }
     params.attribution = source.attribution;
     if (job.attribution.trimmed().isEmpty()) {
-        // T-0249 (Q-W3): {year} of the default attribution (--attribution stays verbatim); the snapshot's
-        // UTC year, else the current one. The apostrophe was removed by resolveJob (S-11).
+        // {year} of the default attribution (--attribution stays verbatim); the snapshot's UTC year, else
+        // the current one. The apostrophe was removed by resolveJob.
         const bool known = source.snapshot && source.snapshot->time.isValid();
         params.attribution =
             withYear(params.attribution,
                      (known ? source.snapshot->time.toUTC() : QDateTime::currentDateTimeUtc()).date().year());
     }
-    params.forceDropTarget = true; // C-12
+    params.forceDropTarget = true;
     params.replaceExistingTiles = true;
-    params.useXYZScheme = false; // C-4
+    params.useXYZScheme = false;
     params.makeTileMillCompatibility = false;
 
     // 2. a stale file of an earlier run
@@ -183,9 +183,8 @@ ExportResult exportSource(const ResolvedSource& source, const Job& job,
         worker.join();
         task.reset(); // flips finished()
         // the task refreshes the ratio every 100 tiles only (u_ExportTaskToMBTiles.pas:266): a finished task
-        // is 100 % (T-0267); a cancel or an error keeps the ratio reached
-        console.progress(
-            progressText(result ? 100 : reachedPercent())); // endProgress prints it if dropped (T-0266)
+        // is 100 %; a cancel or an error keeps the ratio reached
+        console.progress(progressText(result ? 100 : reachedPercent())); // endProgress prints it if dropped
     }
     console.endProgress();
 
@@ -207,9 +206,9 @@ ExportResult exportSource(const ResolvedSource& source, const Job& job,
                           .arg(source.name));
     }
 
-    // app-cli.md 1.5: --overwrite must replace the old file and never lose it on a failure. POSIX rename(2)
-    // does that atomically; on Windows replaceFile is MoveFileExW(REPLACE_EXISTING): it replaces, but is not
-    // atomic across a crash (T-0335).
+    // --overwrite must replace the old file and never lose it on a failure. POSIX rename(2) does that
+    // atomically; on Windows replaceFile is MoveFileExW(REPLACE_EXISTING): it replaces, but is not atomic
+    // across a crash.
     if (!job.overwrite && QFileInfo::exists(source.outFile)) {
         return failed(part, ExportOutcome::Failed,
                       QCoreApplication::translate("cg::app", "the file %1 exists").arg(source.outFile));

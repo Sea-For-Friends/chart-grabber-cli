@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-008; docs/specs/net.md §2.1, test plan §7.7
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/net/proxy_config.h"
@@ -77,7 +76,7 @@ TEST(ProxyConfig, ReadWriteRoundTripAllKeys) {
     EXPECT_EQ(outSection->readString(u"Login", QString()), QStringLiteral("bob"));
     EXPECT_EQ(outSection->readString(u"Password", QString()), QStringLiteral("secret"));
     EXPECT_EQ(outSection->readInt(u"ProxyType", -1), 4);
-    EXPECT_EQ(outFile->keyNames(u"Proxy").size(), 7); // exactly the seven §2.1 keys
+    EXPECT_EQ(outFile->keyNames(u"Proxy").size(), 7); // exactly the seven keys
 }
 
 TEST(ProxyConfig, NormalizeStripsSchemePrefix) {
@@ -93,8 +92,7 @@ TEST(ProxyConfig, NormalizeTrims) {
 }
 
 TEST(ProxyConfig, HostWrittenRaw) {
-    // setHost() never normalises, and neither does doWriteConfig() -- the read/write asymmetry
-    // (spec §2.1: "read through normalizeAddress, written raw").
+    // setHost() never normalises, and neither does doWriteConfig() -- the read/write asymmetry.
     ProxyConfig config;
     config.setHost("http=http://10.0.0.1:3128");
 

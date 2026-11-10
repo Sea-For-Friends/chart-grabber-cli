@@ -27,7 +27,6 @@ namespace cg::core {
 
 class GarbageCollectorThread final {
 public:
-    // FEAT-STO-026.
     GarbageCollectorThread(Notifier& notifier, std::chrono::milliseconds sleepTime);
     ~GarbageCollectorThread(); // Terminate + WaitFor: a tick in progress runs to its end
 

@@ -5,12 +5,10 @@
 #pragma once
 // Ports: nothing.
 //
-// docs/specs/geo.md §2.5.3/§8.2 clamping notes log to a `logGeo` category (core.md §2.7's
-// pattern: one QLoggingCategory per module). cg::core::log.h does not declare one yet (it lists
-// logCore/logConfig/logStorage/logNet/logRender/logMarks/logRegion/logGps/logUi only) and this
-// ticket's module lock forbids adding it there (docs/conventions/agent-protocol.md "Parallel
-// development rule"). Declared locally here instead; trivial to move into cg::core::log.h later
-// (open question recorded in docs/backlog/T-0016).
+// The projection clamping notes log to a `logGeo` category (one QLoggingCategory per module).
+// cg::core::log.h does not declare one yet (it lists
+// logCore/logConfig/logStorage/logNet/logRender/logMarks/logRegion/logGps/logUi only). Declared
+// locally here instead; trivial to move into cg::core::log.h later.
 
 #include <QLoggingCategory>
 

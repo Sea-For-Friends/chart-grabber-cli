@@ -5,20 +5,19 @@
 #pragma once
 // Ports: nothing.
 //
-// docs/specs/geo.md names an injected `core::HashFunction` parameter on DatumFactory,
-// ProjectionTypeFactory, ProjectionSetFactory and LocalCoordConverterFactory (e.g. §2.3.3
-// "explicit DatumFactory(core::HashFunction hash = {})", and the ad-hoc-type construction formula
-// "hash(1, d, 0), d, epsg = 0" for a fresh MercatorSphereProjectionType in §2.4). No such type
-// exists in cg::core, and per the T-0016 review/ruling it never will (core.md §1.2 deleted
-// IHashFunction deliberately, and there is exactly one implementation to inject): this is geo's
+// The geo factories (DatumFactory, ProjectionTypeFactory, ProjectionSetFactory and
+// LocalCoordConverterFactory) could take an injected hash function (e.g. for the ad-hoc-type
+// construction formula "hash(1, d, 0), d, epsg = 0" of a fresh MercatorSphereProjectionType). A
+// `core::HashFunction` type does not exist in cg::core, and none will: core leaves out
+// IHashFunction deliberately, and there is exactly one implementation to inject. This is geo's
 // own helper, not a stand-in for a type cg::core will later provide.
 //
 // This header supplies the minimal callable geo's own factories need, built on
 // core::hashOf/core::hashUpdate. It reproduces the legacy CalcHashByX/UpdateHashByX chaining
-// (u_HashFunctionByImpl.pas) that every "Hash seed: ..." note in the spec describes: the first
-// argument starts a fresh hash (CalcHashByX), every later argument folds into it (UpdateHashByX).
-// Per docs/specs/geo.md §2.3.3, the concrete values never need to match the Windows build --
-// only "equal inputs hash equal, unequal inputs (almost certainly) hash unequal" is required.
+// (u_HashFunctionByImpl.pas): the first argument starts a fresh hash (CalcHashByX), every later
+// argument folds into it (UpdateHashByX). The concrete values never need to match the Windows
+// build -- only "equal inputs hash equal, unequal inputs (almost certainly) hash unequal" is
+// required.
 
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"

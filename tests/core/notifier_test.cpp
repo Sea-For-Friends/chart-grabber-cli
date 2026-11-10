@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT (core idiom); docs/specs/core.md 2.4, test plan 7.3
 #include "cg/core/notifier.h"
 
 #include <gtest/gtest.h>
@@ -130,14 +129,14 @@ TEST(Notifier, ConcurrentSubscribeAndNotify) {
             notifyThreadRunning.store(true, std::memory_order_release);
         }
     });
-    // Test-side race (T-0026): under heavy CPU contention (limited cores, background load),
-    // OS scheduling of a freshly-created thread can be delayed long enough that the main thread
-    // finishes all 2000 subscribe/destroy iterations and sets `stop` before notifyThread ever
-    // gets to run notify() once, leaving `calls` at 0 -- reproduced at ~49% (244/500) under ASan
-    // with `taskset -c 0,1` plus 18 busy-loop processes; never under plain runs or under TSan
-    // (TSan's slowdown gives the new thread enough relative time to start). Waiting here for
-    // proof that notify() has actually fired at least once removes the assumption deterministically,
-    // with no change to Notifier itself.
+    // Test-side race: under heavy CPU contention (limited cores, background load), OS scheduling of
+    // a freshly-created thread can be delayed long enough that the main thread finishes all 2000
+    // subscribe/destroy iterations and sets `stop` before notifyThread ever gets to run notify()
+    // once, leaving `calls` at 0 -- reproduced at ~49% (244/500) under ASan with `taskset -c 0,1`
+    // plus 18 busy-loop processes; never under plain runs or under TSan (TSan's slowdown gives the
+    // new thread enough relative time to start). Waiting here for proof that notify() has actually
+    // fired at least once removes the assumption deterministically, with no change to Notifier
+    // itself.
     while (!notifyThreadRunning.load(std::memory_order_acquire)) {
         std::this_thread::yield();
     }

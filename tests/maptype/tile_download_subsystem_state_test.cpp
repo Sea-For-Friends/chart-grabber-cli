@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_TileDownloadSubsystemState.pas; docs/specs/maptype.md 2.13.1 (the priority table), 3.1 (threads).
-// Expected texts are the gettext_NoOp literals of the Pascal unit (:88, :92) and the sources' own reasons.
+// Ports u_TileDownloadSubsystemState.pas. Expected texts are the gettext_NoOp literals of the Pascal unit
+// (:88, :92) and the sources' own reasons.
 #include "cg/maptype/map_abilities_config.h"
 #include "cg/maptype/tile_download_subsystem_state.h"
 #include "cg/maptype/tile_downloader_state.h"

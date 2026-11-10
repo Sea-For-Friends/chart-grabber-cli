@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/BitmapTileSaveLoad/u_BitmapTileLibJpeg.pas:39-77 (TLibJpegTileLoader, TLibJpegTileSaver)
 // with the parts of Includes/LibJpeg/LibJpegRead.pas, LibJpegWrite.pas, LibJpegErrorHandler.pas and
-// LibJpegInOutDataManager.pas they drive (docs/specs/bitmap.md §2.4).
-// Feature: FEAT-RND-042 (codec half; the callers are the converters and the codec registry)
+// LibJpegInOutDataManager.pas they drive. The codec half; the callers are the converters and the
+// codec registry.
 //
 // No state between calls: one object may be used from several threads.
 
@@ -20,7 +20,6 @@
 
 namespace cg::bitmap {
 
-// FEAT-RND-042
 class LibJpegTileLoader final : public IBitmapTileLoader { // TLibJpegTileLoader
 public:
     explicit LibJpegTileLoader(std::shared_ptr<const IBitmap32StaticFactory> staticFactory);
@@ -32,7 +31,6 @@ private:
     std::shared_ptr<const IBitmap32StaticFactory> staticFactory_; // FBitmap32StaticFactory
 };
 
-// FEAT-RND-042
 class LibJpegTileSaver final : public IBitmapTileSaver { // TLibJpegTileSaver
 public:
     explicit LibJpegTileSaver(quint8 quality);

@@ -4,23 +4,22 @@
 
 #pragma once
 // Ports: Src/TileStorage/SQLite/u_TileStorageSQLiteHolder.pas (:102-305), the `GetFileNameEvent`
-// half of Src/TileStorage/SQLite/u_TileStorageSQLiteErrorLogger.pas that T-0022A left out (§2.16.4
-// -- SqliteErrorLog itself, the fixed-filename half, landed with T-0022A), and the log-kind
-// constants of Src/TileStorage/SQLite/c_TileStorageSQLite.pas.
+// half of Src/TileStorage/SQLite/u_TileStorageSQLiteErrorLogger.pas (SqliteErrorLog itself is the
+// fixed-filename half, in sqlite_error_log.h), and the log-kind constants of
+// Src/TileStorage/SQLite/c_TileStorageSQLite.pas.
 //
-// docs/specs/storage.md §2.16.1 "Schema and pragmas, with the three override files" and §2.16.4
-// "Error logging". One instance per SqliteRegionTileStorage (i.e. per map/cache root, NOT per
-// region file): it reads the three override files once, and every SqliteRegionHandler opened
-// under that root shares it (ports ITileStorageSQLiteHolder, held by every
-// TTileStorageSQLiteHandler via its constructor argument).
+// One instance per SqliteRegionTileStorage (i.e. per map/cache root, NOT per region file): it
+// reads the three override files once, and every SqliteRegionHandler opened under that root
+// shares it (ports ITileStorageSQLiteHolder, held by every TTileStorageSQLiteHandler via its
+// constructor argument).
 //
 // Simplifications vs legacy (all verified, not guesses):
 // - No IContentTypeManager / IContentTypeInfoBasic: this module's TileInfo::contentType is a plain
 //   canonical-MIME QByteArray (tile_info.h), not a registry-validated pointer. GetContentTypeToDB
 //   reduces to a same-text-as-main check (contentTypeToDb below): the port has no per-tile
 //   IContentTypeInfoBasic to compare identity against. GetContentTypeInfo DOES have a registry to
-//   go through -- core::ContentTypeRegistry (T-0022B2 review finding 4) -- so contentTypeFromDb
-//   below looks the DB value up there, exactly as legacy's FContentTypeManager.GetInfo does.
+//   go through -- core::ContentTypeRegistry -- so contentTypeFromDb below looks the DB value up
+//   there, exactly as legacy's FContentTypeManager.GetInfo does.
 // - `LogError`'s ARaiseError parameter is dropped: grep across every `.LogError(` call in
 //   Src/TileStorage/SQLite/*.pas shows no call site ever passes True (u_TileStorageSQLiteHandler.
 //   pas:394,396,422,465,810,847,1036,1070,1197,1224 all use the False default), so the
@@ -40,7 +39,6 @@ namespace cg::storage::sqlite {
 
 class SqliteErrorLog;
 
-// FEAT-STO-018.
 class SqliteRegionSchema final {
 public:
     // Ports the six LogError kinds actually used (c_TileStorageSQLite.pas: c_Log_Init/Delete/
@@ -52,7 +50,7 @@ public:
     // `storagePath` MUST already end with '/' (this module's convention, e.g.
     // file_system_tile_storage.cpp's storagePath_). `mainContentType` is the storage's own fixed
     // canonical MIME type. `logging` ports ALogging -- when true, LogError also appends to
-    // `<storagePath>sqlite.log` (§2.16.4).
+    // `<storagePath>sqlite.log`.
     SqliteRegionSchema(const QString& storagePath, QByteArray mainContentType,
                        MapVersionFactoryPtr mapVersionFactory, bool logging);
     ~SqliteRegionSchema();
@@ -62,10 +60,10 @@ public:
 
     // The three override files' statements, one entry per line, split and read once at
     // construction (InternalLoadParams, u_TileStorageSQLiteHolder.pas:186-226). Each is run
-    // verbatim, in order, by SqliteRegionHandler's constructor (§2.16.1's table): sessionSql() on
-    // every connection right after open, newTableSql() only when `t` is missing, establishedSql()
-    // on every connection after the structure check. newTableSql() is never empty (a built-in
-    // default exists); establishedSql() legitimately is (no `e.sql` and no built-in default).
+    // verbatim, in order, by SqliteRegionHandler's constructor: sessionSql() on every connection
+    // right after open, newTableSql() only when `t` is missing, establishedSql() on every
+    // connection after the structure check. newTableSql() is never empty (a built-in default
+    // exists); establishedSql() legitimately is (no `e.sql` and no built-in default).
     [[nodiscard]] const QList<QByteArray>& sessionSql() const noexcept { return sessionSql_; }
     [[nodiscard]] const QList<QByteArray>& newTableSql() const noexcept { return newTableSql_; }
     [[nodiscard]] const QList<QByteArray>& establishedSql() const noexcept { return establishedSql_; }
@@ -78,9 +76,9 @@ public:
 
     // Ports GetContentTypeInfo (:181-189): an empty `contentTypeFromDb` (column `c` was NULL)
     // means the storage's main content type. Otherwise the DB value is looked up in
-    // core::ContentTypeRegistry::standard() (T-0022B2 review finding 4): the canonical MIME for a
-    // registered type, or an empty/null QByteArray for an unregistered one -- legacy's
-    // `FContentTypeManager.GetInfo(c)` returns nil for an unknown type, not `c` itself.
+    // core::ContentTypeRegistry::standard(): the canonical MIME for a registered type, or an
+    // empty/null QByteArray for an unregistered one -- legacy's `FContentTypeManager.GetInfo(c)`
+    // returns nil for an unknown type, not `c` itself.
     [[nodiscard]] QByteArray contentTypeFromDb(QByteArrayView contentTypeFromDb) const;
 
     // Ports GetVersionInfo (:191-194): FMapVersionFactory.CreateByStoreString.
@@ -88,9 +86,9 @@ public:
 
     // Ports LogError (:264-296) minus ARaiseError (see header comment). Always logs via
     // qCWarning(core::logStorage); when `logging` was true at construction, also appends one line
-    // to `<storagePath>sqlite.log` in the exact §2.16.4 format
-    // ("yyyy-mm-dd hh:nn:ss.zzzz\t(kind)\t<message>\r\n") through SqliteErrorLog. Deviation D-26
-    // (already landed): that file is UTF-8, not legacy's UTF-16LE.
+    // to `<storagePath>sqlite.log` in the exact legacy format ("yyyy-mm-dd
+    // hh:nn:ss.zzzz\t(kind)\t<message>\r\n") through SqliteErrorLog. A deviation from legacy:
+    // that file is UTF-8, not legacy's UTF-16LE.
     void logError(LogKind kind, const QString& message) const;
 
 private:

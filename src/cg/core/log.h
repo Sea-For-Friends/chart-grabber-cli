@@ -35,13 +35,12 @@ class Log {
 public:
     // Installs the Qt message handler. Call once from main() before any logging.
     // `logDir` empty -> stderr only; `logDir` set -> also appends to <logDir>/debug.txt.
-    // FEAT-UI-185
     static Result<void> install(const QString& logDir, bool truncateOnStart = true);
-    // Flushes and closes the file, restores the previous handler. Contract (T-0103): from then on
-    // new messages go to that previous handler (Qt's default if none); a message already inside
-    // our handler on another thread completes normally (its state lives to process exit), on stderr only once
-    // the file is closed. install() and shutdown() may race with logging threads; the app calls install() as
-    // the first statement of main() and shutdown() last, after every thread is joined.
+    // Flushes and closes the file, restores the previous handler. Contract: from then on new messages go to
+    // that previous handler (Qt's default if none); a message already inside our handler on another thread
+    // completes normally (its state lives to process exit), on stderr only once the file is closed. install()
+    // and shutdown() may race with logging threads; the app calls install() as the first statement of main()
+    // and shutdown() last, after every thread is joined.
     static void shutdown();
 
     // Ports Src/Debug/DebugLog.inc: below this level nothing is written at all.

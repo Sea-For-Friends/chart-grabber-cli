@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018. Ports the pure-text parts of Src/TileStorage/SQLite/u_TileStorageSQLiteFunc.pas
-// (:69-164) and the SQL-builder slice of Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas
-// (:252-347); see docs/specs/storage.md §2.16.3 "The statements".
+// Ports the pure-text parts of Src/TileStorage/SQLite/u_TileStorageSQLiteFunc.pas (:69-164) and the
+// SQL-builder slice of Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas (:252-347).
 #include "cg/storage/sqlite/sqlite_region_sql.h"
 
 #include <QByteArray>
@@ -17,7 +16,7 @@ using cg::storage::sqlite::versionFieldIsEqual;
 
 namespace {
 
-// The version-predicate matrix of §2.16.3: both column modes crossed with a requested version that
+// The version-predicate matrix: both column modes crossed with a requested version that
 // (a) is absent, (b) parses as an integer, (c) does not parse because of a leading 'x'/'X'/'$'
 // (LocalTryStrToInt64's own exclusion, not a digit-grammar failure), or (d) does not parse because
 // it simply is not numeric. Ports VersionFieldIsEqual (u_TileStorageSQLiteFunc.pas:124-161) together

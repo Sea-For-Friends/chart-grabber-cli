@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037 (mark hint text). Ports u_HtmlToHintTextConverterStuped.pas;
-// docs/specs/vector.md §2.2.2, §7.2, §8.1 LV-12. Expected values are worked out by hand from the
-// legacy statements (no legacy DUnit exists).
+// The mark hint text. Ports u_HtmlToHintTextConverterStuped.pas. Expected values are worked out
+// by hand from the legacy statements (no legacy DUnit exists).
 #include "cg/vector/html_to_hint_text_converter_stuped.h"
 
 #include <gtest/gtest.h>
@@ -44,7 +43,7 @@ TEST(StupedHtmlToTextConverter, EveryEntityOfTheLegacyListInItsOrder) {
     }
 }
 
-// LV-12 (L-124): "&#171" has no ';' in legacy, so the ';' of "&#171;" stays.
+// "&#171" has no ';' in legacy, so the ';' of "&#171;" stays.
 TEST(StupedHtmlToTextConverter, LaquoNumericEntityLeavesTheSemicolon) {
     EXPECT_EQ(stupedHtmlToTextConverter(q(u"&#171;")), q(u"«;"));
     EXPECT_EQ(stupedHtmlToTextConverter(q(u"&#171")), q(u"«"));

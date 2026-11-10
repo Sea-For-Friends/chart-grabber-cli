@@ -58,7 +58,7 @@ QStringList zmpFileNames(const QString& rootFolder) {
                 folders.push_back({prefix + name, folder.depth + 1});
             }
             // AFilesOnly = False (:76): files and directories alike; mask '*.zmp' (:65). NEW: also
-            // the files of a `*.source.json` source (map-source-json.md section 2).
+            // the files of a `*.source.json` source.
             if (isZmpName(name) || (entry.isFile() && SourceJsonContainer::isSourceJsonName(name))) {
                 result.append(prefix + name);
             }

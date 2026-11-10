@@ -6,7 +6,7 @@
 // New code (no legacy unit).
 // Ports: nothing.
 //
-// The module's QLoggingCategory (core.md §2.7: one category per module). Declared locally like
+// The module's QLoggingCategory (one category per module). Declared locally like
 // cg::region::logRegion; cg::core::log.h has no logApp.
 
 #include <QLoggingCategory>

@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/core/platform/termination_signal and terminal (new code; inherits
-// frm_ProgressDownload.pas FormClose :586-595, where closing the window cancels).
-// Qt defines `signals` as a keyword macro; the test names a variable `signals` (T-0335: QFile is used below).
+// Tests for src/cg/core/platform/termination_signal and terminal (new code; inherits frm_ProgressDownload.pas
+// FormClose :586-595, where closing the window cancels). Qt defines `signals` as a keyword macro; the test
+// names a variable `signals` (QFile is used below).
 #define QT_NO_KEYWORDS
 #include "cg/core/platform/terminal.h"
 #include "cg/core/platform/termination_signal.h"
@@ -79,9 +79,8 @@ TEST(TerminationSignalTest, AfterDestructionANewObjectStartsWithoutASignal) {
     EXPECT_EQ(second.exitCode(), 0);
 }
 
-// T-0335: the Windows console events (the handler itself needs a console; its mapping is pinned here). The
-// event numbers are the winbase.h values: CTRL_C 0, CTRL_BREAK 1, CTRL_CLOSE 2, CTRL_LOGOFF 5,
-// CTRL_SHUTDOWN 6.
+// The Windows console events (the handler itself needs a console; its mapping is pinned here). The event
+// numbers are the winbase.h values: CTRL_C 0, CTRL_BREAK 1, CTRL_CLOSE 2, CTRL_LOGOFF 5, CTRL_SHUTDOWN 6.
 TEST(TerminationSignalTest, ConsoleEventsMapToSigintAndSigterm) {
     using cg::core::platform::signalForConsoleEvent;
     EXPECT_EQ(signalForConsoleEvent(0), SIGINT);
@@ -92,8 +91,8 @@ TEST(TerminationSignalTest, ConsoleEventsMapToSigintAndSigterm) {
     EXPECT_EQ(signalForConsoleEvent(99), 0);
 }
 
-// std::signal returns the handler it replaces, on both systems (T-0335: this replaced a sigaction-based
-// version that could not compile on Windows); the object restores what it found.
+// std::signal returns the handler it replaces, on both systems (this replaced a sigaction-based version
+// that could not compile on Windows); the object restores what it found.
 TEST(TerminationSignalTest, DestructorRestoresTheOldHandlers) {
     const auto before = std::signal(SIGINT, SIG_DFL);
     std::signal(SIGINT, before);
@@ -139,9 +138,8 @@ TEST(TerminationSignalDeathTest, SigintThenSigtermEndsTheProcessWithCode143) {
         ::testing::ExitedWithCode(143), "");
 }
 
-// T-0262 (G-8): `timeout -s INT` delivers the signal twice within microseconds (child, then process group); a
-// download so interrupted exited 130 at once, without the session-saved lines. Fails on the code before
-// T-0262.
+// `timeout -s INT` delivers the signal twice within microseconds (child, then process group); a download so
+// interrupted exited 130 at once, without the session-saved lines. Fails on the earlier code.
 TEST(TerminationSignalTest, TheSameSignalDeliveredTwiceAtOnceIsOneInterrupt) {
     TerminationSignal signals;
     ::raise(SIGINT);
@@ -158,8 +156,8 @@ TEST(TerminalTest, TmpfileIsNotATerminal) {
     std::fclose(file);
 }
 
-// T-0335: a stream made ready for output writes "\n" as one byte (Windows text mode would write CR LF). A
-// file opened in text mode, not tmpfile (which is binary there), so the test can fail.
+// A stream made ready for output writes "\n" as one byte (Windows text mode would write CR LF). A file
+// opened in text mode, not tmpfile (which is binary there), so the test can fail.
 TEST(TerminalTest, PreparedOutputStreamWritesLineFeedsUnchanged) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -174,7 +172,7 @@ TEST(TerminalTest, PreparedOutputStreamWritesLineFeedsUnchanged) {
     EXPECT_EQ(written.readAll(), QByteArrayLiteral("a\nb\n"));
 }
 
-// ---- T-0332: --stop-on-stdin (new code; the contract of the ticket) ----
+// ---- --stop-on-stdin (new code) ----
 
 namespace {
 
@@ -274,7 +272,7 @@ TEST(StdinStopTest, AStopLineAfterAVeryLongLineStillCounts) {
 }
 
 TEST(StdinStopTest, NotAPipeIsRefusedAndNothingStops) {
-    // a regular file: a valid descriptor that is not a pipe (T-0335: portable, unlike /dev/null or NUL)
+    // a regular file: a valid descriptor that is not a pipe (portable, unlike /dev/null or NUL)
     std::FILE* regular = std::tmpfile();
     ASSERT_NE(regular, nullptr);
     const int regularFd = ::fileno(regular);

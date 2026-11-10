@@ -5,7 +5,6 @@
 // Ports: Src/BitmapTileSaveLoad/u_BitmapTileLibJpeg.pas:106-292 and the parts of Includes/LibJpeg/
 // LibJpegRead.pas (:134-175, :203-290), LibJpegWrite.pas (:172-207, :225-334), LibJpegErrorHandler.pas
 // (:17-40) and LibJpegInOutDataManager.pas (:80-113) they drive.
-// Feature: FEAT-RND-042
 //
 // libjpeg reports every error through error_exit, which must not return. Legacy raises a Delphi
 // exception through the library frames; the port does a longjmp to the call that owns the libjpeg
@@ -128,7 +127,8 @@ struct Decompressor {
         src.pub.init_source = initSource;
         src.pub.fill_input_buffer = fillInputBuffer;
         src.pub.skip_input_data = skipInputData;
-        // Legacy leaves this callback nil (LibJpegRead.pas:212, 224-229): the L row / the D row of T-0176.
+        // Legacy leaves this callback nil (LibJpegRead.pas:212, 224-229); the port installs libjpeg's default
+        // resync (a deviation from legacy).
         src.pub.resync_to_restart = jpeg_resync_to_restart;
         src.pub.term_source = termSource;
         src.data = reinterpret_cast<const JOCTET*>(input.constData());
@@ -235,7 +235,7 @@ bool compress(Compressor& c, const core::Color32* pixels, int width, int height,
 LibJpegTileLoader::LibJpegTileLoader(std::shared_ptr<const IBitmap32StaticFactory> staticFactory)
     : staticFactory_(std::move(staticFactory)) {
     // unreachable in legacy (u_BitmapTileLibJpeg.pas:110 asserts, the registry passes the factory it
-    // owns); no register row
+    // owns)
     if (!staticFactory_) {
         throw std::invalid_argument("LibJpegTileLoader: null factory");
     }
@@ -265,13 +265,13 @@ Bitmap32StaticPtr LibJpegTileLoader::load(const QByteArray& data) const {
 LibJpegTileSaver::LibJpegTileSaver(quint8 quality) : quality_(quality) {}
 
 QByteArray LibJpegTileSaver::save(const Bitmap32StaticPtr& bitmap) const {
-    // D row of T-0160: legacy dereferences nil (access violation, no handler); the converter
-    // u_ContentConverterBitmap.pas:77 passes the loader's nil for an oversize image.
+    // A deviation from legacy: legacy dereferences nil (access violation, no handler); the
+    // converter u_ContentConverterBitmap.pas:77 passes the loader's nil for an oversize image.
     if (!bitmap) {
         throw BitmapCodecError("Jpeg compression error!");
     }
     const QPoint size = bitmap->size();
-    // unreachable in legacy (Bitmap32/u_Bitmap32BufferFactorySimple.pas:141-147); no register row
+    // unreachable in legacy (Bitmap32/u_Bitmap32BufferFactorySimple.pas:141-147)
     if (size.x() <= 0 || size.y() <= 0 || size.x() >= 65536 || size.y() >= 65536) {
         throw BitmapCodecError("Set output resolution first!"); // LibJpegWrite.pas:182-189
     }

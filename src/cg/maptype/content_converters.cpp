@@ -29,13 +29,13 @@ ContentConverterPtr ContentConverters::converter(QByteArrayView sourceType, QByt
 
 void ContentConverters::updateFixed(const core::ContentTypeRegistry& types) {
     const auto copy = [&](QByteArrayView source, QByteArrayView target) {
-        // unreachable in legacy (all keys are in the standard registry); no register row
+        // unreachable in legacy (all keys are in the standard registry)
         if (types.infoByType(source) != nullptr && types.infoByType(target) != nullptr) {
             matrix_.add(source, target, std::make_shared<const ContentConverterSimpleCopy>());
         }
     };
     copy("application/vnd.google-earth.kml+xml", "application/vnd.sas.wikimapia.kml+xml"); // :313-323
-    // TODO(T-0178): kml -> wikimapia kmz, kmz -> kml, kml -> kmz (u_ContentTypeManagerSimple.pas:325-362)
+    // TODO: kml -> wikimapia kmz, kmz -> kml, kml -> kmz (u_ContentTypeManagerSimple.pas:325-362)
     copy("application/json", "application/geo+json"); // :365-375
     copy("application/geo+json", "application/json"); // :377-387
 }

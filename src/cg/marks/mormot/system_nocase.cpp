@@ -73,7 +73,7 @@ constexpr bool isEightBit(qint64 value) noexcept {
     return (value & 0xffffff00LL) == 0;
 }
 
-// table[value] for a value that passed isEightBit(). Deviation D-69: see the header.
+// table[value] for a value that passed isEightBit(). Deviation: see the header.
 constexpr qint64 toUpper(qint64 value) noexcept {
     return kNormToUpper[static_cast<quint8>(value)];
 }

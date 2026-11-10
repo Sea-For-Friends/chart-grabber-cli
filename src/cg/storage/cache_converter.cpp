@@ -120,13 +120,13 @@ core::Result<void> convertCache(ITileStorage& from, ITileStorage& to, const Cach
             return core::fail(core::ErrorCode::Cancelled, QStringLiteral("convertCache cancelled"));
         }
 
-        // Version-filter comparison (u_ThreadCacheConverter.pas:162-170): `Assigned(VersionInfo)
-        // and SameText(...)`. Legacy only matches when the scanned entry itself carries a
-        // version; an unversioned entry (every entry a plain file-system enumerator yields,
-        // u_EnumTileInfoByFileIterator.pas:113) takes the `else` branch and is SKIPPED, not
-        // treated as a match -- reproduced here rather than the port's earlier reading of a null
-        // MapVersionInfoPtr as "nothing to filter against" (legacy-defects.md L-1/L-2: this is
-        // the data-loss combination with removeSource on a plain file cache).
+        // Version-filter comparison (u_ThreadCacheConverter.pas:162-170):
+        // `Assigned(VersionInfo) and SameText(...)`. Legacy only matches when the scanned entry
+        // itself carries a version; an unversioned entry (every entry a plain file-system
+        // enumerator yields, u_EnumTileInfoByFileIterator.pas:113) takes the `else` branch and
+        // is SKIPPED, not treated as a match -- reproduced here rather than the port's earlier
+        // reading of a null MapVersionInfoPtr as "nothing to filter against" (two legacy
+        // defects: this is the data-loss combination with removeSource on a plain file cache).
         const bool versionMatches =
             !checkSourceVersion ||
             (tileInfo.version && versionStoreStringSameText(*tileInfo.version, *options.sourceVersionFilter));
@@ -157,8 +157,8 @@ core::Result<void> convertCache(ITileStorage& from, ITileStorage& to, const Cach
 
         // u_ThreadCacheConverter.pas:174-178: removeSource deletes the scanned source entry
         // unconditionally (not just when it was actually copied) -- it runs after a
-        // version-filter skip too. Verified against the legacy source; kept as a quirk ("legacy
-        // wins", T-0027 dispatch) even though it differs from the ticket's own paraphrase.
+        // version-filter skip too. Verified against the legacy source; kept as a quirk (legacy
+        // wins).
         if (options.removeSource &&
             (tileInfo.type == TileInfoType::Exists || tileInfo.type == TileInfoType::TneExists)) {
             core::Result<bool> deleted = from.deleteTile(xy, zoom, tileInfo.version);

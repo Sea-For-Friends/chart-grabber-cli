@@ -5,12 +5,11 @@
 #pragma once
 // Ports: t_GeoTypes.pas, u_GeoFunc.pas (arithmetic half)
 //
-// The value vocabulary of the whole geo/render/region stack. Legacy used one type,
-// TDoublePoint, for lon/lat, relative, map-pixel and tile coordinates alike; a caller that
-// mixed them up got silent nonsense. The port keeps TDoublePoint for everything *projected*
-// (a plain QPointF) but gives geographic coordinates their own type, because that is exactly
-// the split the IGeometryLonLat / IGeometryProjected hierarchies already make (docs/specs/geo.md
-// §2.1).
+// The value vocabulary of the whole geo/render/region stack. Legacy used one type, TDoublePoint,
+// for lon/lat, relative, map-pixel and tile coordinates alike; a caller that mixed them up got
+// silent nonsense. The port keeps TDoublePoint for everything *projected* (a plain QPointF) but
+// gives geographic coordinates their own type, because that is exactly the split the
+// IGeometryLonLat / IGeometryProjected hierarchies already make.
 
 #include <QPoint>
 #include <QPointF>

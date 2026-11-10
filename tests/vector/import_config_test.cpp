@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_ImportConfig.pas; docs/specs/vector.md §2.8, §7.2, §8.1 (LV-1 = L-130).
+// Ports u_ImportConfig.pas.
 #include "cg/vector/appearance_of_mark_line.h"
 #include "cg/vector/appearance_of_mark_point.h"
 #include "cg/vector/appearance_of_mark_polygon.h"
@@ -53,7 +53,7 @@ TEST(ImportParams, PointParamsFacetsAreTheAppearance) {
     EXPECT_EQ(p.iconAppearance()->markerSize(), 32);
 }
 
-// LV-1 (L-130): the colour argument is lost, the width argument is stored twice.
+// The colour argument is lost, the width argument is stored twice.
 TEST(ImportParams, LineParamsReproduceLv1) {
     struct Row {
         bool colorArg, widthArg, color, width;

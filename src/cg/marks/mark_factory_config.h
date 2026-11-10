@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkFactoryConfig.pas, u_MarkFactoryConfig.pas (MarkFactoryConfig, T-0098)
+// Ports: i_MarkFactoryConfig.pas, u_MarkFactoryConfig.pas (MarkFactoryConfig)
 //
-// The four interfaces derive from core::ConfigElementComplex (T-0098): their implementations are
+// The four interfaces derive from core::ConfigElementComplex: their implementations are
 // TConfigDataElementComplexBase descendants (the factory config and the template configs aggregate
 // children), as IMarkNameGenerator does.
 
@@ -62,7 +62,7 @@ public:
     // Nil arguments are refused (legacy: a nil appearance factory is an access violation in the template
     // config constructors, u_MarkPointTemplateConfig.pas:91; a nil language manager: access violation in the
     // string element constructor, u_StringConfigDataElementWithDefBase.pas:91, unreachable:
-    // u_GlobalConfig.pas:340 passes a created one; D-95).
+    // u_GlobalConfig.pas:340 passes a created one).
     MarkFactoryConfig(vector::AppearanceOfMarkFactoryPtr appearanceOfMarkFactory,
                       const std::shared_ptr<core::ILanguageManager>& languageManager);
     ~MarkFactoryConfig() override;

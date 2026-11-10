@@ -11,7 +11,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-006. u_TileFileNameGM2.pas:54,60-66 GetTileFileName. (!) Y first, X last.
+// u_TileFileNameGM2.pas:54,60-66 GetTileFileName. (!) Y first, X last.
 QString Gm2TileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     return QStringLiteral("z%1/%2_%3").arg(int(zoom)).arg(xy.y()).arg(xy.x());
 }

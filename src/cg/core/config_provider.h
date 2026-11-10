@@ -8,7 +8,7 @@
 // The read-only settings tree every domain composes: sections of an ini file, folders of maps,
 // Qt resources and layered defaults all answer the same five-method contract. Typed reads are
 // non-virtual helpers over value()/binary() so the thirteen legacy providers do not each
-// reimplement ReadInteger/ReadBool/ReadFloat/... themselves (idioms.md 7).
+// reimplement ReadInteger/ReadBool/ReadFloat/... themselves.
 
 #include "cg/core/result.h"
 
@@ -30,7 +30,6 @@ namespace cg::core {
 class IConfigProvider;
 using IConfigProviderPtr = std::shared_ptr<const IConfigProvider>;
 
-// FEAT-UI-199
 class IConfigProvider {
 public:
     virtual ~IConfigProvider() = default;

@@ -2,14 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-001, FEAT-STO-026. Ports u_TileStorageTypeBase.pas (GetStorageAbilitiesByConfig
+// Ports u_TileStorageTypeBase.pas (GetStorageAbilitiesByConfig
 // + BuildStorage's StorageConfig.ini lookup), u_TileStorageTypeFileSystemSimple.pas,
-// u_TileStorageTypeInRAM.pas; docs/specs/storage.md §2.12 (:919-951), §2.13 (intro), §2.14 (intro).
+// u_TileStorageTypeInRAM.pas.
 //
-// Test-count ruling (T-0021F3b, "port, don't multiply"): each type reports legacy's fixed
-// abilities (two thin TESTs, the per-field table lives with tileStorageTypeAbilities() itself in
-// tile_storage_abilities_test.cpp) and one "builds a working storage" case per type -- the
-// filesystem one is also the ticket's own read-only-StorageConfig.ini case.
+// Each type reports legacy's fixed abilities (two thin TESTs, the per-field table lives with
+// tileStorageTypeAbilities() itself in tile_storage_abilities_test.cpp) and one
+// "builds a working storage" case per type -- the filesystem one is also the
+// read-only-StorageConfig.ini case.
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"
@@ -182,7 +182,7 @@ TEST(RamTileStorageType, AdvertisesLegacyAbilities) {
     const auto abilities = type.abilities();
 
     EXPECT_TRUE(abilities.base.allowRead);
-    EXPECT_FALSE(abilities.base.allowScan); // CTileStorageReadWrite - [tsatScan] (legacy defect L-31:
+    EXPECT_FALSE(abilities.base.allowScan); // CTileStorageReadWrite - [tsatScan] (legacy defect:
                                             // RamTileStorage::scanTiles itself always works)
     EXPECT_TRUE(abilities.base.allowAdd);
     EXPECT_TRUE(abilities.base.allowDelete);
@@ -192,8 +192,7 @@ TEST(RamTileStorageType, AdvertisesLegacyAbilities) {
     EXPECT_EQ(abilities.storageClass, StorageClass::InMemory);
 }
 
-// Ticket's own acceptance case: a filesystem type with a read-only StorageConfig.ini builds a
-// storage that refuses a save.
+// A filesystem type with a read-only StorageConfig.ini builds a storage that refuses a save.
 TEST(FileSystemTileStorageType, BuildsAStorageThatRefusesSaveUnderReadOnlyStorageConfigIni) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -221,10 +220,10 @@ TEST(FileSystemTileStorageType, BuildsAStorageThatRefusesSaveUnderReadOnlyStorag
 
 // "Builds a working storage" case for the RAM type: build() forwards a real mem cache through to
 // RamTileStorage (u_TileStorageTypeInRAM.pas:98-107) and the result actually saves/loads a tile.
-// Also covers the rework's blocker finding: two storages built by the same type with the SAME
-// caller-supplied notifier deliver their save notification to one subscriber registered on that
-// notifier (u_TileStorageOfMapType.pas:214,285,327 -- subscribers survive a backend swap because
-// the facade passes one notifier into every build()).
+// Also covers the case where two storages built by the same type with the SAME caller-supplied
+// notifier deliver their save notification to one subscriber registered on that notifier
+// (u_TileStorageOfMapType.pas:214,285,327 -- subscribers survive a backend swap because the
+// facade passes one notifier into every build()).
 TEST(RamTileStorageType, BuildsAWorkingStorage) {
     RamTileStorageType type(std::make_shared<MapVersionFactory>(), nullptr);
     auto memCache =

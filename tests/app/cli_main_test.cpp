@@ -2,12 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/app/cli_main (new code; docs/specs/app-cli.md 1.1, 1.7, 1.10, 1.11). T-0193.
-// No FEAT tag: FEAT-NET-002 / -003 are proven in cli_end_to_end_test.cpp.
+// Tests for src/cg/app/cli_main (new code). The downloads themselves are proven in
+// cli_end_to_end_test.cpp.
 //
-// New code, so the expectations are the literals of the spec and the ticket (T-0193 proofs 3, 4, 5), not
-// Pascal results. The usage paths, `sources` and the exit codes that need no network. No server: the ZMPs
-// point at a port nobody listens on, and none of these commands sends a request.
+// New code, so the expected values are the documented CLI outputs, not Pascal results. The usage paths,
+// `sources` and the exit codes that need no network. No server: the ZMPs point at a port nobody listens
+// on, and none of these commands sends a request.
 #include "cg/app/app_context.h"
 #include "cg/app/job.h"
 #include "cg/app/job_area.h"
@@ -80,7 +80,7 @@ protected:
     static inline std::unique_ptr<QTemporaryDir> root_;
 };
 
-// Proof 4: no arguments -> exit 2, the usage line on stderr, nothing on stdout.
+// No arguments -> exit 2, the usage line on stderr, nothing on stdout.
 TEST_F(CliMainTest, NoArgumentsIsUsageErrorOnStderrOnly) {
     const Captured c = runCapture({});
     EXPECT_EQ(c.rc, 2);
@@ -90,7 +90,7 @@ TEST_F(CliMainTest, NoArgumentsIsUsageErrorOnStderrOnly) {
         << qPrintable(c.err);
 }
 
-// Proof 5 (code 2): every parse failure is exit 2 with `error:` on stderr and nothing on stdout.
+// Exit code 2: every parse failure is exit 2 with `error:` on stderr and nothing on stdout.
 TEST_F(CliMainTest, UsageErrorsAreExitTwo) {
     const std::vector<QStringList> cases = {
         {u"--bogus"_s},
@@ -106,7 +106,7 @@ TEST_F(CliMainTest, UsageErrorsAreExitTwo) {
     }
 }
 
-// Proof 4: --help / -h -> stdout, exit 0, no error.
+// --help / -h -> stdout, exit 0, no error.
 TEST_F(CliMainTest, HelpGoesToStdoutWithExitZero) {
     for (const QString& flag : {u"--help"_s, u"-h"_s}) {
         const Captured c = runCapture({flag});
@@ -125,8 +125,8 @@ TEST_F(CliMainTest, VersionPrintsProgramNameAndApplicationVersion) {
     EXPECT_EQ(c.err, QString());
 }
 
-// Proof 3: `sources` lists every map sorted by name (the ZMP folders were written in another order) with
-// the verdict `ok`, or the reason of refusal for the WebP map. Stdout only; exit 0.
+// `sources` lists every map sorted by name (the ZMP folders were written in another order) with the
+// verdict `ok`, or the reason of refusal for the WebP map. Stdout only; exit 0.
 TEST_F(CliMainTest, SourcesListsEveryMapSortedByNameWithItsVerdict) {
     const Captured c = runCapture(QStringList{u"sources"_s} + common());
     EXPECT_EQ(c.rc, 0);
@@ -187,7 +187,7 @@ TEST_F(CliMainTest, SourcesFilterMatchesNameFileNameAndGuid) {
     }
 }
 
-// Proof 5 (code 3): S-1, the maps directory is empty or missing.
+// Exit code 3: the maps directory is empty or missing.
 TEST_F(CliMainTest, NoMapsAtAllIsExitThree) {
     QTemporaryDir empty;
     ASSERT_TRUE(empty.isValid());
@@ -200,8 +200,8 @@ TEST_F(CliMainTest, NoMapsAtAllIsExitThree) {
     }
 }
 
-// Proof 5 (code 3): S-2 (unknown source) and S-6 (WebP without --allow-webp); with --allow-webp the same job
-// passes the checks and `estimate` ends with exit 0.
+// Exit code 3: an unknown source and WebP without --allow-webp; with --allow-webp the same job passes the
+// checks and `estimate` ends with exit 0.
 TEST_F(CliMainTest, RefusedJobsAreExitThreeAndAllowWebpLiftsTheWebpRefusal) {
     const Captured unknown = runCapture(estimateArgs(u"nosuch"_s));
     EXPECT_EQ(unknown.rc, 3);
@@ -216,7 +216,7 @@ TEST_F(CliMainTest, RefusedJobsAreExitThreeAndAllowWebpLiftsTheWebpRefusal) {
     EXPECT_EQ(allowed.rc, 0) << qPrintable(allowed.err);
 }
 
-// Proof 5 (code 130): a termination that has already arrived ends the command with 130 and no table.
+// Exit code 130: a termination that has already arrived ends the command with 130 and no table.
 TEST_F(CliMainTest, TerminationBeforeTheEstimateIsExit130) {
     std::stop_source stop;
     stop.request_stop();
@@ -225,7 +225,7 @@ TEST_F(CliMainTest, TerminationBeforeTheEstimateIsExit130) {
     EXPECT_FALSE(c.out.contains(u"total"_s)) << qPrintable(c.out);
 }
 
-// ---- T-0332: --stop-on-stdin ----
+// ---- --stop-on-stdin ----
 
 // stdin that is not a pipe: exit 2, one error line and the usage line, nothing runs
 TEST_F(CliMainTest, StopOnStdinWithStdinNotAPipeIsExitTwoWithTheUsageLine) {
@@ -264,10 +264,10 @@ TEST_F(CliMainTest, StopOnStdinAbsentNeverStartsTheReaderAndPresentStartsItOnce)
     EXPECT_EQ(calls, 1);
 }
 
-// ---- T-0202: --format=tsv ----
+// ---- --format=tsv ----
 
-// Proof 2: one `source` record per map, 9 fields after the type, no header, the table's order; the verdict
-// is the text table's verdict column. Expected values are literals of the rig (cli_test_util.h).
+// One `source` record per map, 9 fields after the type, no header, the table's order; the verdict is the
+// text table's verdict column. Expected values are literals of the rig (cli_test_util.h).
 TEST_F(CliMainTest, SourcesTsvHasOneRecordPerMapInTheTablesOrderAndNoHeader) {
     const Captured tsv = runCapture(QStringList{u"sources"_s, u"--format=tsv"_s} + common());
     EXPECT_EQ(tsv.rc, 0);
@@ -305,12 +305,12 @@ TEST_F(CliMainTest, SourcesTsvHasOneRecordPerMapInTheTablesOrderAndNoHeader) {
         EXPECT_EQ(f[7], expected[i].verdict);
         EXPECT_EQ(f[8], folders[i]);
         EXPECT_EQ(f[9], QString());  // no parent submenu in the rig's ZMPs
-        EXPECT_EQ(f[10], u"user"_s); // always user (T-0291)
+        EXPECT_EQ(f[10], u"user"_s); // always user
         EXPECT_TRUE(textRows[i + 1].simplified().endsWith(f[7])) << qPrintable(textRows[i + 1]);
     }
 }
 
-// Proof 3: `estimate --format=tsv`: per zoom one record whose numbers are the ZoomEstimate values of
+// `estimate --format=tsv`: per zoom one record whose numbers are the ZoomEstimate values of
 // estimateTiles for the same job; no name line, no total row.
 TEST_F(CliMainTest, EstimateTsvCarriesTheEstimateTilesValuesPerZoom) {
     const Captured c = runCapture(estimateArgs(u"Template Map"_s) + QStringList{u"--format"_s, u"tsv"_s});
@@ -356,7 +356,7 @@ TEST_F(CliMainTest, EstimateTsvCarriesTheEstimateTilesValuesPerZoom) {
     EXPECT_FALSE(c.out.contains(u"Template Map"_s)); // no name line
 }
 
-// Proof 1 at the program level: a bad value is exit 2 on stderr; --help is not affected by --format.
+// At the program level: a bad value is exit 2 on stderr; --help is not affected by --format.
 TEST_F(CliMainTest, FormatTsvIsAcceptedByEveryCommandAndUsageErrorsStayOnStderr) {
     const Captured bad = runCapture(QStringList{u"sources"_s, u"--format=xml"_s} + common());
     EXPECT_EQ(bad.rc, 2);
@@ -367,7 +367,7 @@ TEST_F(CliMainTest, FormatTsvIsAcceptedByEveryCommandAndUsageErrorsStayOnStderr)
     EXPECT_TRUE(help.out.contains(u"--format=FORMAT"_s));
 }
 
-// T-0220, T-0291 (app-cli.md 1.6.1, 1.6.2). No FEAT; the D rows of the tickets.
+// The --maps folders and the terms-of-use warning (deviations from legacy).
 class CliMapsFolders : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -425,8 +425,8 @@ TEST_F(CliMapsFolders, SourcesWarnsOncePerGreySourceAndKeepsTheVerdictOk) {
     }
 }
 
-// T-0285 (app-cli.md 1.10.1): `source` field 14 navigationWarning is 1 / 0; the text table and the earlier
-// fields do not change; `sources` prints no notice.
+// `source` field 14 navigationWarning is 1 / 0; the text table and the earlier fields do not change;
+// `sources` prints no notice.
 TEST_F(CliMapsFolders, SourcesTsvField14CarriesTheNavigationFlagAndTheTextTableIsUnchanged) {
     const auto write = [&](const QString& dir, const QByteArray& extra) {
         writeZmp(dir, {.folder = u"a.zmp"_s,
@@ -480,7 +480,7 @@ TEST_F(CliMapsFolders, SourcesFilterThatHidesTheGreySourceHidesItsWarning) {
 static const QString kNoMapsLine = u"error: no map sources given: pass --maps DIR, a folder of map-source "
                                    "definitions (repeat --maps for more folders)"_s;
 
-// T-0291: every command except -h / --version is refused without --maps, before anything is created.
+// Every command except -h / --version is refused without --maps, before anything is created.
 TEST_F(CliMapsFolders, CommandsWithoutMapsAreRefusedWithExitThreeAndCreateNothing) {
     const QString data = root_.filePath(u"d"_s);
     const QString jobFile = root_.filePath(u"job.ini"_s);
@@ -513,7 +513,7 @@ TEST_F(CliMapsFolders, CommandsWithoutMapsAreRefusedWithExitThreeAndCreateNothin
     EXPECT_EQ(usage.rc, 2);
 }
 
-// T-0291: a --maps path that is a file is refused, and so are all folders empty (S-1 names both).
+// A --maps path that is a file is refused, and so are all folders empty (the "no maps" error names both).
 TEST_F(CliMapsFolders, AFileAsFolderAndEmptyFoldersAreExitThree) {
     ASSERT_TRUE(QDir().mkpath(folderA()));
     ASSERT_TRUE(QDir().mkpath(folderB()));
@@ -565,7 +565,7 @@ TEST_F(CliMapsFolders, SourcesOverTwoFoldersHasNoOriginColumnNoNoticeAndUserInFi
     }
 }
 
-// A grey source in the SECOND folder still gets its terms-of-use warning, once (app-cli.md 1.6.2).
+// A grey source in the SECOND folder still gets its terms-of-use warning, once.
 TEST_F(CliMapsFolders, GreySourceOfTheSecondFolderWarnsOnce) {
     writeZmp(folderA(), {.folder = u"p.zmp"_s,
                          .guid = "{AB0000E2-0000-0000-0000-0000000000E2}",

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: prerequisite of FEAT-NET-001 (zip ZMP container, maptype spec 2.2, LD-1, D-48; T-0061)
+// The zip ZMP container (with a legacy defect and a deviation from legacy).
 #include "cg/core/archive_reader_zip.h"
 #include "cg/core/config_provider_folder.h"
 #include "cg/core/config_provider_zip.h"
@@ -147,8 +147,8 @@ cg::core::Result<std::shared_ptr<ConfigProviderZip>> openBytes(QTemporaryDir& di
 
 } // namespace
 
-// The ticket's proof at provider level: every member of the zipped fixture, read through the zip
-// provider, equals the same member of the original folder.
+// The proof at provider level: every member of the zipped fixture, read through the zip provider,
+// equals the same member of the original folder.
 class ZippedZmp : public testing::TestWithParam<const char*> {};
 
 TEST_P(ZippedZmp, EveryMemberEqualsTheFolderProvider) {
@@ -158,7 +158,7 @@ TEST_P(ZippedZmp, EveryMemberEqualsTheFolderProvider) {
     ASSERT_TRUE(zip && folder);
 
     QStringList zipNames = zip->valueNames();
-    EXPECT_TRUE(zipNames.removeOne(QStringLiteral("EmptyTiles"))) << "L-155: the directory entry is listed";
+    EXPECT_TRUE(zipNames.removeOne(QStringLiteral("EmptyTiles"))) << "the directory entry is listed";
     EXPECT_EQ(sorted(zipNames),
               sorted(folder->valueNames())); // .ini is the only filtered extension: none here
     for (const QString& name : folder->valueNames()) {
@@ -167,8 +167,8 @@ TEST_P(ZippedZmp, EveryMemberEqualsTheFolderProvider) {
     }
     EXPECT_EQ(sorted(zip->subItemNames()), sorted(folder->subItemNames()));
 
-    // T-0273 (L-155): the EmptyTiles/ sub-folder is found through subItem() like the folder's, and its
-    // members equal the folder's; the files are still readable by their full path.
+    // The EmptyTiles/ sub-folder is found through subItem() like the folder's, and its members equal
+    // the folder's; the files are still readable by their full path.
     const IConfigProviderPtr zipEmpty = zip->subItem(u"EmptyTiles");
     const IConfigProviderPtr folderEmpty = folder->subItem(u"EmptyTiles");
     ASSERT_TRUE(zipEmpty && folderEmpty);
@@ -202,7 +202,7 @@ TEST_P(ZippedZmp, FileNameSemantics) {
     const IConfigProviderPtr zip = openZip(path);
     ASSERT_TRUE(zip);
     EXPECT_EQ(zip->value(u"::FileName").toString(), path);
-    // A sub-provider's "::FileName" is <file>/<folder> (T-0273: subItem() finds the folder, L-155).
+    // A sub-provider's "::FileName" is <file>/<folder> (subItem() finds the folder).
     const IConfigProviderPtr sub = zip->subItem(u"EmptyTiles");
     ASSERT_NE(sub, nullptr);
     EXPECT_EQ(sub->value(u"::FileName").toString(), path + QStringLiteral("/EmptyTiles"));
@@ -224,7 +224,7 @@ TEST(ZippedZmpLookup, MissingMembers) {
     EXPECT_FALSE(zip->value(u"nope.bmp").isValid());   // not a text extension: the caller's default
 }
 
-// LD-1 / L-154: the folder provider answers "absent" for a missing text member, the zip one "".
+// The folder provider answers "absent" for a missing text member, the zip one "".
 TEST(ZippedZmpLookup, MissingTextMemberReadsAsEmptyString) {
     CG_SKIP_IF_NO_CORPUS();
     const IConfigProviderPtr zip = openZip(zippedZmp("Gps_tiles_deflated.zmp"));
@@ -239,7 +239,7 @@ TEST(ZippedZmpLookup, MissingTextMemberReadsAsEmptyString) {
     }
 }
 
-// D-48 for the zip provider: exact name first, then case-insensitive.
+// A deviation from legacy for the zip provider: exact name first, then case-insensitive.
 TEST(ZippedZmpLookup, CaseRule) {
     CG_SKIP_IF_NO_CORPUS();
     const IConfigProviderPtr zip = openZip(zippedZmp("Gps_tiles_stored.zmp"));
@@ -267,10 +267,10 @@ TEST(ZippedZmpLookup, BackslashSeparatorsAndSubfolderListing) {
                                                       {QStringLiteral("top.txt"), "t"}}));
     ASSERT_TRUE(reader.has_value());
     const auto zip = std::make_shared<ConfigProviderZip>(QStringLiteral("x"), *reader);
-    // L-155: the directory entry is listed by its name, .ini members are not filtered.
+    // The directory entry is listed by its name, .ini members are not filtered.
     EXPECT_EQ(zip->valueNames(), (QStringList{QStringLiteral("Sub"), QStringLiteral("top.txt")}));
     EXPECT_EQ(zip->subItemNames(), QStringList{QStringLiteral("top.txt")});
-    // T-0273 (L-155): the directory entry "Sub\" is found as the folder, with its members.
+    // The directory entry "Sub\" is found as the folder, with its members.
     ASSERT_NE(zip->subItem(u"Sub"), nullptr);
     EXPECT_EQ(zip->subItem(u"Sub")->valueNames(),
               (QStringList{QStringLiteral("b.INI"), QStringLiteral("c.bin")}));
@@ -285,8 +285,9 @@ TEST(ZippedZmpLookup, BackslashSeparatorsAndSubfolderListing) {
     EXPECT_EQ(sub.subItem(u"b.ini")->subItem(u"S")->value(u"k").toString(), QStringLiteral("v"));
 }
 
-// T-0273 (L-155, D row): a zipped sub-folder is found with its directory entry, without it, or by its
-// directory entry alone; the files inside are read through the sub-provider and by their full path.
+// A deviation from legacy for a legacy defect: a zipped sub-folder is found with its directory entry,
+// without it, or by its directory entry alone; the files inside are read through the sub-provider and
+// by their full path.
 TEST(ZippedZmpLookup, SubFolderIsFoundWithDirectoryEntry) {
     QTemporaryDir dir;
     auto zip = openBytes(dir, makeStoredZip({{QStringLiteral("EmptyTiles/"), {}},
@@ -364,7 +365,7 @@ TEST(ZippedZmpCorrupt, UnreadableArchivesAreRefused) {
     EXPECT_FALSE(openBytes(dir, good.left(good.size() / 2)).has_value()); // no central directory
 }
 
-// End record cut: libarchive falls back to the local headers (7-Zip would refuse), D-62.
+// End record cut: libarchive falls back to the local headers (7-Zip would refuse).
 TEST(ZippedZmpCorrupt, CutEndRecordStillOpens) {
     CG_SKIP_IF_NO_CORPUS();
     QTemporaryDir dir;
@@ -375,7 +376,7 @@ TEST(ZippedZmpCorrupt, CutEndRecordStillOpens) {
 }
 
 // A damaged member reads as absent, is logged, and is kept in status() (sticky, shared with the
-// sub-providers) so that the ZMP set loader can drop the ZMP as legacy does (D-63).
+// sub-providers) so that the ZMP set loader can drop the ZMP as legacy does.
 TEST(ZippedZmpCorrupt, DamagedMemberIsEmptyAndStatusCarriesTheError) {
     CG_SKIP_IF_NO_CORPUS();
     QByteArray damaged = readFile(zippedZmp("Gps_tiles_deflated.zmp"));
@@ -416,7 +417,7 @@ TEST(ZippedZmpCorrupt, EncryptedMemberReadsAsEmptyAndFailsStatus) {
     EXPECT_EQ((*zip)->binary(u"ok.bin"), QByteArray("fine"));
 }
 
-// The per-member size cap (a port invention, D-65), pinned with a small limit.
+// The per-member size cap (a port invention), pinned with a small limit.
 TEST(ZippedZmpCorrupt, MemberOverTheSizeCapIsRefused) {
     const QByteArray bytes =
         makeStoredZip({{QStringLiteral("small.bin"), "ab"}, {QStringLiteral("big.bin"), "abcd"}});

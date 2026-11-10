@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-011 (load-date semantics feeding TNE/tile-info); docs/specs/storage.md
-// §2.1, §2.4.3
+// Load-date semantics feeding TNE/tile-info.
 #include "cg/storage/tile_date.h"
 
 #include <QDate>
@@ -106,19 +105,17 @@ TEST(TileDate, FromPosixSecondsRoundTripsWithToPosixSeconds) {
 }
 
 TEST(TileDate, DefaultConstructedTileDateIsInvalid) {
-    // §2.4.3's "no load date" is represented by an invalid TileDate. Deliberately NOT asserting
+    // The "no load date" is represented by an invalid TileDate. Deliberately NOT asserting
     // `invalid < valid` here: QDateTime::operator< orders invalid before valid only from Qt 6.8's
-    // three-way comparison, while this project's floor is Qt 6.5 (CMakeLists.txt:31) -- see
-    // predicates.cpp's tileOlderThan, which checks isValid() explicitly instead of relying on
-    // that ordering (T-0021A review finding 3).
+    // three-way comparison, while the project supports older Qt -- see predicates.cpp's
+    // tileOlderThan, which checks isValid() explicitly instead of relying on that ordering.
     const TileDate invalid;
     EXPECT_FALSE(invalid.isValid());
 }
 
 TEST(TileDate, ToDelphiDateTimeOfInvalidTileDateIsZero) {
     // Intended, not accidental: legacy's TTileInfoBasicNotExists reports LoadDate = 0 and
-    // BerkeleyDB writes that raw value. See tile_date.cpp's toDelphiDateTime comment and T-0021A
-    // review finding 6.
+    // BerkeleyDB writes that raw value. See tile_date.cpp's toDelphiDateTime comment.
     const TileDate invalid;
     EXPECT_DOUBLE_EQ(toDelphiDateTime(invalid), 0.0);
 }

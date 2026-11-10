@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-185; docs/specs/core.md 2.7-2.8, test plan 7.18
 #include "cg/core/log.h"
 #include "cg/core/log_ring_buffer.h"
 #include "cg/core/platform/terminal.h"
@@ -102,10 +101,9 @@ TEST_F(LogTest, MinimumLevelFiltersMessages) {
     EXPECT_TRUE(contents.contains(QStringLiteral("important")));
 }
 
-// Finding 1 (T-0002A rework): minimumLevel() is read by handler() on arbitrary threads while
-// setMinimumLevel() is written from another; under TSan this is a data race unless minimumLevel
-// is std::atomic (spec §3 "Log (statics): thread-safe"; §2.7 "callable from any thread"). This
-// test hammers both sides concurrently with real logging calls so TSan (and the CI asan/tsan
+// minimumLevel() is read by handler() on arbitrary threads while setMinimumLevel() is written
+// from another; under TSan this is a data race unless minimumLevel is std::atomic. This test
+// hammers both sides concurrently with real logging calls so TSan (and the CI asan/tsan
 // presets) can catch a regression back to a plain field.
 TEST_F(LogTest, MinimumLevelIsAtomicUnderConcurrentAccess) {
     ASSERT_TRUE(Log::install(QString()).has_value());
@@ -146,7 +144,7 @@ TEST_F(LogTest, RingBufferReceivesLines) {
 }
 
 #ifndef O_BINARY
-#define O_BINARY 0 // T-0335: the Windows flag; the capture file must not turn "\n" into "\r\n"
+#define O_BINARY 0 // The Windows flag; the capture file must not turn "\n" into "\r\n"
 #endif
 
 namespace {
@@ -202,9 +200,8 @@ QString longPayload(int thread, int round, int message) {
 
 } // namespace
 
-// T-0335: after install stderr is binary, so one fwrite of a line stays one line ("\n", not CR LF) on Windows
-// (always true on POSIX). stderr starts in text mode there, so removing the call in Log::install fails this
-// test.
+// After install stderr is binary, so one fwrite of a line stays one line ("\n", not CR LF) on Windows (always
+// true on POSIX). stderr starts in text mode there, so removing the call in Log::install fails this test.
 TEST_F(LogTest, InstallMakesStderrBinary) {
     ASSERT_TRUE(tempDir.isValid());
     ASSERT_TRUE(Log::install(tempDir.path()).has_value());
@@ -212,8 +209,8 @@ TEST_F(LogTest, InstallMakesStderrBinary) {
     Log::shutdown();
 }
 
-// CORE-LOG-1: N threads log through qCDebug/qCWarning at the same time; every stderr line is whole
-// (one write under the mutex), the count is exact and each message arrives exactly once.
+// N threads log through qCDebug/qCWarning at the same time; every stderr line is whole (one write
+// under the mutex), the count is exact and each message arrives exactly once.
 TEST_F(LogTest, ConcurrentLinesAreWholeOnStderr) {
     ASSERT_TRUE(tempDir.isValid());
     constexpr int kThreads = 4;
@@ -344,8 +341,8 @@ TEST(LogRingBuffer, SinceReturnsOnlyNewLinesAndEvictsAtCapacity) {
     EXPECT_TRUE(ring.since(afterClear, 10).isEmpty());
 }
 
-// T-0173: more than maxRows lines between two polls: the newest are returned, the older are skipped for
-// ever (:105-116, :125); a smaller poll afterwards sees only what is newer.
+// More than maxRows lines between two polls: the newest are returned, the older are skipped for ever
+// (:105-116, :125); a smaller poll afterwards sees only what is newer.
 TEST(LogRingBuffer, SinceSkipsOlderUnreadLinesBeyondMaxRows) {
     LogRingBuffer ring(10);
     for (const char* text : {"a", "b", "c", "d", "e"}) {
@@ -359,7 +356,7 @@ TEST(LogRingBuffer, SinceSkipsOlderUnreadLinesBeyondMaxRows) {
     EXPECT_EQ(ring.since(lastId, 2), (QStringList{QStringLiteral("f")}));
 }
 
-// T-0156: level filter of LogRingBuffer::append(line, level) (u_LogForTaskThread.pas:135-150).
+// Level filter of LogRingBuffer::append(line, level) (u_LogForTaskThread.pas:135-150).
 TEST(LogRingBuffer, LevelBelowMinimumIsDroppedAndConsumesNoId) {
     LogRingBuffer ring(10, 5);
     ring.append(QStringLiteral("low"), 4);

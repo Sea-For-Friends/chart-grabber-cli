@@ -5,17 +5,15 @@
 #pragma once
 // Ports: i_TileStorageType.pas, i_TileStorageTypeConfig.pas, u_TileStorageTypeBase.pas
 //
-// docs/specs/storage.md §2.12 (:919-951). ITileStorageType is the "backend factory" every
-// concrete `u_TileStorageType*.pas` subclass implements; i_TileStorageTypeConfig collapses into
-// ITileStorageType::basePath(), its only member. No concrete backend lands in this ticket (Scope
-// out); applyStorageConfigIni() ports the one piece of TTileStorageTypeBase.BuildStorage that is
-// not itself abstract dispatch, so the eight backend tickets that will implement build() do not
-// each re-open StorageConfig.ini themselves.
+// ITileStorageType is the "backend factory" every concrete `u_TileStorageType*.pas` subclass
+// implements; i_TileStorageTypeConfig collapses into ITileStorageType::basePath(), its only
+// member. applyStorageConfigIni() ports the one piece of TTileStorageTypeBase.BuildStorage that
+// is not itself abstract dispatch, so the backends that implement build() do not each re-open
+// StorageConfig.ini themselves.
 //
-// TileInfoMemCache (the spec's build() parameter) is storage.md §2.9, landed in T-0021E1
-// (src/cg/storage/tile_info_mem_cache.h). Forward-declared here as an opaque type passed only by
-// shared_ptr -- ITileStorageType::build() only stores/forwards the shared_ptr, so no include is
-// needed.
+// TileInfoMemCache (a build() parameter) is src/cg/storage/tile_info_mem_cache.h.
+// Forward-declared here as an opaque type passed only by shared_ptr -- ITileStorageType::build()
+// only stores/forwards the shared_ptr, so no include is needed.
 
 #include "cg/core/config_provider.h"
 #include "cg/core/content_type.h"
@@ -32,9 +30,9 @@
 
 namespace cg::storage {
 
-class TileInfoMemCache; // storage.md §2.9, landed in T-0021E1 (see header comment)
+class TileInfoMemCache; // see the header comment
 
-// FEAT-STO-001. Ports ITileStorageType + ITileStorageTypeConfig (collapsed).
+// Ports ITileStorageType + ITileStorageTypeConfig (collapsed).
 class ITileStorageType {
 public:
     virtual ~ITileStorageType() = default;

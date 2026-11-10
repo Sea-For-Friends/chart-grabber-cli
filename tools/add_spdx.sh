@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# T-0322: SPDX licence header on the sources (src/, cli/, tests/**/*.cpp and *.h; never third_party/, never tests/fixtures/).
+# SPDX licence header on the sources (src/, cli/, tests/**/*.cpp and *.h; never third_party/, never tests/fixtures/).
 # Usage: tools/add_spdx.sh [--check] [paths...]
 #   no paths  the whole source scope above (find, sorted); paths given: exactly those files (absolute or relative)
 #   default   inserts the header above the first line of each file that has none

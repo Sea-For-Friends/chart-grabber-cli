@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/region_process_task_abstract (Src/RegionProcess/u_RegionProcessTaskAbstract.pas).
-// No FEAT tag: shared base unit (T-0169).
+// A shared base unit.
 #include "cg/geo/datum.h"
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/geometry_projected.h"

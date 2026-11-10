@@ -22,16 +22,14 @@
 
 namespace cg::storage {
 
-// NOTE: legacy's TTileInfoType is (titUnknown=0, titNotExists=1, titExists=2, titTneExists=3).
-// The numeric values are NOT persisted by any cache format (verified by grep across Src/), so the
-// port reorders them, which kills the `>= titExists` shortcut that would silently include TNE.
-// If you find a format that persists the integer, stop and file an open question.
-// Unknown is also legacy's nil answer (`Result := nil` of GetTileInfo): "nothing is known", the value of a
-// default-constructed TileInfo. A caller ports `Assigned(info)` as `type != Unknown`.
-// FEAT-STO-011
+// NOTE: legacy's TTileInfoType is (titUnknown=0, titNotExists=1, titExists=2, titTneExists=3). The numeric
+// values are NOT persisted by any cache format (verified by grep across Src/), so the port reorders them,
+// which kills the `>= titExists` shortcut that would silently include TNE. A format that persists the
+// integer would need the legacy values back. Unknown is also legacy's nil answer (`Result := nil` of
+// GetTileInfo): "nothing is known", the value of a default-constructed TileInfo. A caller ports
+// `Assigned(info)` as `type != Unknown`.
 enum class TileInfoType : std::uint8_t { Unknown = 0, NotExists = 1, TneExists = 2, Exists = 3 };
 
-// FEAT-STO-011
 struct TileInfo {
     TileInfoType type = TileInfoType::Unknown;
     TileDate loadDate;         // invalid unless type is Exists or TneExists
@@ -52,10 +50,8 @@ enum class LoadMode : std::uint8_t { WithData, WithoutData, AsIs };
 // Ports IEnumTileInfo. A pull enumerator, not a range: the filesystem implementation walks a
 // QDirIterator lazily over caches with millions of files.
 //
-// Deviation: storage.md §1.4's forward-declaration contract names the tile coordinate type
-// `geo::TilePoint`; geo slice A (T-0016) landed it as `geo::PointI` (a plain QPoint, identical
-// {x, y} layout and half-open-rect semantics) instead. Used here as the closest 1:1 match to what
-// actually shipped; flagged in the ticket's Open questions for the Architect to correct §1.4.
+// Deviation: the tile coordinate type is `geo::PointI` (a plain QPoint, identical {x, y} layout
+// and half-open-rect semantics) rather than a separate tile point type.
 class IEnumTileInfo {
 public:
     virtual ~IEnumTileInfo() = default;
@@ -65,7 +61,7 @@ public:
     // Why next() returned false: a value = the scan reached its end (or is still running); an
     // error = the scan failed, with the legacy message text. Sticky: once it holds an error,
     // next() keeps returning false and status() keeps returning that error. The default suits an
-    // enumerator that cannot fail. Ports the exception legacy raises out of Next (D-45).
+    // enumerator that cannot fail. Ports the exception legacy raises out of Next.
     [[nodiscard]] virtual core::Result<void> status() const { return {}; }
 };
 using EnumTileInfoPtr = std::unique_ptr<IEnumTileInfo>;

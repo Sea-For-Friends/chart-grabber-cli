@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-REG-011 (overwrite, by size, by date), FEAT-REG-012 (retry TNE, by date), FEAT-REG-013 (start
-// paused), FEAT-REG-018 (progress, pause, resume), FEAT-REG-020 (version for download): contribute only.
-// Ports: Src/RegionProcess/Download/u_ThreadDownloadTiles.pas (:153-575).
+// Covers: overwrite, by size, by date; retry of missing tiles, by date; start paused; progress, pause,
+// resume; the version for download. Ports: Src/RegionProcess/Download/u_ThreadDownloadTiles.pas (:153-575).
 //
 // Rig: a scripted ITileDownloadSubsystem (records every getRequestTask, answers per call index), a scripted
 // ITileStorage, a scripted IDownloadTaskProvider over real tile iterators and a real Google projection set,
@@ -448,10 +447,13 @@ public:
         real_->noteDownloadAnswer(connectionError);
         record(connectionError ? "answer 1" : "answer 0");
     }
-    void noteFrameAnswer(cg::region::FrameAnswer answer) override { // T-0356: kept apart from events_
+    void noteFrameAnswer(cg::region::FrameAnswer answer) override { // Kept apart from events_
         real_->noteFrameAnswer(answer);
         const std::lock_guard lock(hub_.mutex);
         notServed_.push_back(static_cast<int>(answer));
+    }
+    void noteRefusal(bool refused, quint32 statusCode) override { // Not recorded in events_
+        real_->noteRefusal(refused, statusCode);
     }
     std::vector<int> notServedCalls() const {
         const std::lock_guard lock(hub_.mutex);
@@ -685,7 +687,7 @@ TileInfo infoOf(TileInfoType type, double delphiDays) {
 
 } // namespace
 
-// === Proof 1: the decision table of :320-353 ===
+// === The decision table of :320-353 ===
 
 namespace {
 
@@ -904,8 +906,8 @@ TEST(ThreadDownloadTiles, DecisionTableOfProcessTask) {
         if (c.requests) {
             EXPECT_EQ(calls[0].tile, PointI(1, 2));
             EXPECT_EQ(calls[0].zoom, 3);
-            EXPECT_EQ(calls[0].version, rig.versionForDownload); // FEAT-REG-020
-            EXPECT_EQ(calls[0].checkSize, c.checkSize);          // only handed over, plays no part above
+            EXPECT_EQ(calls[0].version, rig.versionForDownload);
+            EXPECT_EQ(calls[0].checkSize, c.checkSize); // only handed over, plays no part above
         }
         // The tile is counted as processed in every row (skipped or downloaded).
         EXPECT_EQ(rig.real->processed(), 1);
@@ -940,7 +942,7 @@ TEST(ThreadDownloadTiles, TableLinesAreLevelZero) {
     }
 }
 
-// === Proof 2: the 12 rows of :500-575 ===
+// === The 12 rows of :500-575 ===
 
 namespace {
 
@@ -985,20 +987,20 @@ std::vector<Row> rows() {
         // 7: DataNotExists
         {"DataNotExists", finishWith(withKind(ResultKind::DataNotExists)), u"Tile is not found!"_s, 1, false,
          false, 0, 0, 0, 0},
-        // 8: NoConnectToServer prints the download result's OWN text and never moves on (LR-7); the config is
-        // go-next = true in the runner, so a swap with row 9 would move on
+        // 8: NoConnectToServer prints the download result's OWN text and never moves on (a legacy defect,
+        // reproduced); the config is go-next = true in the runner, so a swap with row 9 would move on
         {"NoConnectToServer",
          finishWith(withKind(ResultKind::NoConnectToServer, {}, {}, u"Connection refused"_s)),
          u"Connection refused"_s + kWait0, 10, true, false, 1, 7, 1, 7},
         // 10: Canceled kind with a download result
         {"CanceledWithDownloadResult", finishWith(withKind(ResultKind::Canceled)),
          u"Error: Unknown download result!"_s, 10, true, false, 1, 7, 1, 7},
-        // 11: no download result, Canceled: false, no log (LR-5 is its neighbour)
+        // 11: no download result, Canceled: false, no log
         {"CanceledWithoutDownloadResult", finishWith([](const ITileRequestPtr& r) -> ITileRequestResultPtr {
              return std::make_shared<cg::maptype::TileRequestResultCanceledBeforBuildDownloadRequest>(r);
          }),
          QString(), 0, true, false, 1, 7, 1, 7},
-        // 12: no download result, not Canceled: true; D-row of T-0271 (L-269): one log line, level 10
+        // 12: no download result, not Canceled: true; a deviation from legacy: one log line, level 10
         {"PlainResultWithoutDownloadResult",
          finishWith([](const ITileRequestPtr& r) -> ITileRequestResultPtr {
              return std::make_shared<cg::maptype::TileRequestResult>(r);
@@ -1011,7 +1013,8 @@ std::vector<Row> rows() {
                  r, u"script failed: Город"_s);
          }),
          u"Error: script failed: Город"_s, 10, false, false, 0, 0, 0, 0},
-        // 12: a NULL result (a subsystem that is disabled finishes with null), L-269 line as above
+        // 12: a NULL result (a subsystem that is disabled finishes with null), the legacy-defect line as
+        // above
         {"NullResult", finishWith([](const ITileRequestPtr&) -> ITileRequestResultPtr { return nullptr; }),
          u"Error: Unknown download result!"_s, 10, false, false, 0, 0, 0, 0},
         // the catch of :395-399 (exception from getRequestTask) and the null task (:389-392)
@@ -1163,8 +1166,8 @@ TEST(ThreadDownloadTiles, OtherErrorKindsFollowTheGoNextSetting) {
     }
 }
 
-// Row 8 is not row 9 (LR-7): NoConnectToServer repeats even when go-next is on (rows() runs with it on); with
-// it off it repeats too.
+// Row 8 is not row 9: NoConnectToServer repeats even when go-next is on (rows() runs with it on); with it off
+// it repeats too.
 TEST(ThreadDownloadTiles, NoConnectToServerNeverMovesOnWhateverTheSetting) {
     for (bool goNext : {false, true}) {
         SCOPED_TRACE(goNext);
@@ -1260,7 +1263,7 @@ TEST(ThreadDownloadTiles, DefaultWaitsTextLevelAndCancelCutsTheWait) {
     }
 }
 
-// === Proof 3: pause ===
+// === Pause ===
 
 TEST(ThreadDownloadTiles, StartPausedMakesNoRequestBeforeResume) {
     Options o;
@@ -1333,7 +1336,7 @@ TEST(ThreadDownloadTiles, PauseInTheMiddleFinishesTheCurrentRequestAndStopsTheCl
                            kOk, processing(3, 2, 3), kDownloading, kOk, kCompleted}));
 }
 
-// === Proof 4: cancel ===
+// === Cancel ===
 
 TEST(ThreadDownloadTiles, CancelWhileWaitingForAResultEndsTheWorker) {
     Rig rig;
@@ -1398,7 +1401,7 @@ TEST(ThreadDownloadTiles, CancelDuringGetTasksListEndsBeforeTheTotal) {
     EXPECT_TRUE(rig.lines().isEmpty());
 }
 
-// === Proof 5: the constructor exits ===
+// === The constructor exits ===
 
 TEST(ThreadDownloadTiles, UseDownloadOffLogsFinishesAndMakesNoRequest) {
     const QString line = u"Download of map Test Map disabled by map params"_s;
@@ -1454,7 +1457,7 @@ TEST(ThreadDownloadTiles, AppClosingBeforeConstructionTerminatesTheWorker) {
     EXPECT_TRUE(rig.lines().isEmpty());
 }
 
-// === Proof 7: order ===
+// === Order ===
 
 TEST(ThreadDownloadTiles, TilesInIteratorOrderZoomAfterZoom) {
     Rig rig;
@@ -1491,11 +1494,10 @@ TEST(ThreadDownloadTiles, TilesInIteratorOrderZoomAfterZoom) {
     EXPECT_EQ(rig.provider->workerIndex(), 2);
 }
 
-// === Proof 8: exceptions ===
+// === Exceptions ===
 
-// Finding b of the ticket: a Result error of tileInfoEx is a legacy exception raised OUTSIDE the inner try
-// (:318): the outer handler logs "<type>: <message>" at level 10 and the worker finishes with the area
-// undone.
+// A Result error of tileInfoEx is a legacy exception raised OUTSIDE the inner try (:318): the outer
+// handler logs "<type>: <message>" at level 10 and the worker finishes with the area undone.
 TEST(ThreadDownloadTiles, StorageErrorEndsTheWorkerWithTheTypeAndMessage) {
     const QString line = u"std::runtime_error: disk gone"_s;
     for (int minLevel : {10, 11}) {
@@ -1539,7 +1541,7 @@ TEST(ThreadDownloadTiles, ThrowingTaskProviderEndsTheWorkerWithTheTypeAndMessage
     }
 }
 
-// === Proof 9: destruction ===
+// === Destruction ===
 
 // After cancel the destructor returns; a late finish from the queue (the notifier kept by the subsystem)
 // finds the notifier disabled and does nothing; the stop tokens no longer reach the destroyed object.
@@ -1600,7 +1602,7 @@ TEST(ThreadDownloadTiles, AppClosingRacingWithTheDestructor) {
     EXPECT_TRUE(rig.real->finished());
 }
 
-// === T-0271: the streak of connection errors ===
+// === The streak of connection errors ===
 
 // Connection error kinds: UnknownError, LoadError (5xx, 403, 429), NoConnectToServer. Every other result that
 // carries a download result resets the streak. goNext is on, so every failed tile is skipped (the same tile
@@ -1654,7 +1656,7 @@ TEST(ThreadDownloadTiles, SkippedTileLeavesTheStreakAlone) {
     EXPECT_EQ(rig.real->processed(), 2);
 }
 
-// === T-0356: the class "the frame is not served yet" ===
+// === The class "the frame is not served yet" ===
 
 Maker withStatus(ResultKind kind, quint32 status) {
     return [=](const ITileRequestPtr& request) -> ITileRequestResultPtr {
@@ -1704,6 +1706,73 @@ TEST(ThreadDownloadTiles, NotServedClassIsDataNotExistsBannedAndHttp5xx) {
               expected);
 }
 
+// LoadError with HTTP 401 / 403 / 451 logs "Server refused: HTTP <code>" in place of the first line; wait,
+// level, skip / retry and the connection streak stay as in row 9. The default timing of the rig is 1 ms, so
+// the wait line says 0 seconds.
+TEST(ThreadDownloadTiles, RefusalStatusesLogServerRefused) {
+    for (const quint32 code : {401u, 403u, 451u}) {
+        SCOPED_TRACE(code);
+        const QString line = u"Server refused: HTTP "_s + QString::number(code) + kWait0;
+        for (const bool goNext : {true, false}) {
+            SCOPED_TRACE(goNext);
+            Options o;
+            o.goNext = goNext;
+            Rig rig(o);
+            rig.subsystem->script = [code](int i) {
+                return finishWith(i == 0 ? withStatus(ResultKind::LoadError, code) : okBytes(7));
+            };
+            ASSERT_TRUE(rig.runToEnd());
+            if (goNext) {
+                EXPECT_EQ(rig.lines(), (QStringList{kProcessingTile, kDownloading, line, kCompleted}));
+                EXPECT_EQ(rig.subsystem->calls().size(), 1u);
+                EXPECT_EQ(rig.real->processed(), 1);
+            } else {
+                EXPECT_EQ(rig.lines(), (QStringList{kProcessingTile, kDownloading, line, kProcessingTile,
+                                                    kDownloading, kOk, kCompleted}));
+                EXPECT_EQ(rig.subsystem->calls().size(), 2u);
+            }
+            EXPECT_FALSE(rig.lines().join(u'\n').contains(u"Error connecting to server"_s));
+        }
+    }
+}
+
+TEST(ThreadDownloadTiles, RefusalCountsAndTheConnectionStreakAfterA403) {
+    Rig rig;
+    rig.subsystem->script = [](int) { return finishWith(withStatus(ResultKind::LoadError, 403)); };
+    ASSERT_TRUE(rig.runToEnd());
+    const cg::region::RefusalCounts counts = rig.real->refusalCounts();
+    EXPECT_EQ(counts.streak, 1);
+    EXPECT_EQ(counts.refused, 1);
+    EXPECT_EQ(counts.notRefused, 0);
+    EXPECT_EQ(counts.lastStatus, 403u);
+    EXPECT_EQ(rig.real->connectionErrorStreak(), 1); // Unchanged (a deviation from legacy)
+}
+
+TEST(ThreadDownloadTiles, NonRefusalLoadErrorsStillLogErrorConnecting) {
+    for (const quint32 code : {0u, 404u, 407u, 429u, 500u}) {
+        SCOPED_TRACE(code);
+        Rig rig;
+        rig.subsystem->script = [code](int) { return finishWith(withStatus(ResultKind::LoadError, code)); };
+        ASSERT_TRUE(rig.runToEnd());
+        EXPECT_EQ(rig.lines().at(2), u"Error connecting to server"_s + kWait0);
+        EXPECT_FALSE(rig.lines().join(u'\n').contains(u"Server refused"_s));
+        EXPECT_EQ(rig.real->refusalCounts().refused, 0);
+        EXPECT_EQ(rig.real->refusalCounts().notRefused, 1);
+    }
+}
+
+// The ban check wins whatever the status: a Banned result with 403 is the ban line, not a refusal.
+TEST(ThreadDownloadTiles, BannedWith403StaysBanned) {
+    Rig rig;
+    rig.subsystem->script = [](int i) {
+        return finishWith(i == 0 ? withStatus(ResultKind::Banned, 403) : okBytes(7));
+    };
+    ASSERT_TRUE(rig.runToEnd());
+    EXPECT_EQ(rig.lines().at(2), u"Most likely you've been banned by the server!"_s + kWait0);
+    EXPECT_FALSE(rig.lines().join(u'\n').contains(u"Server refused"_s));
+    EXPECT_EQ(rig.real->refusalCounts().refused, 0);
+}
+
 // A tile skipped because it is stored in this frame says "served" (Other); one skipped because a
 // TNE row of this frame holds it says "not served" (Missing); the counts of the real progress info follow.
 TEST(ThreadDownloadTiles, SkippedTilesSayServedWhenStoredAndNotServedWhenTne) {
@@ -1722,12 +1791,12 @@ TEST(ThreadDownloadTiles, SkippedTilesSayServedWhenStoredAndNotServedWhenTne) {
     EXPECT_EQ(answers.unavailableRun, 0);
 }
 
-// === Proof 10: LR-5 / LR-6 ===
+// === The legacy defects of the finish path ===
 
-// LR-6: the application is closing but cancel was not requested. The waiting tile is counted as processed
-// with a null result (the result slot was cleared before the request, :383, so the earlier tile's result is
-// not reused); the next tile's request is made with a disabled notifier, so it never finishes; only cancel
-// ends it.
+// The application is closing but cancel was not requested. The waiting tile is counted as processed with a
+// null result (the result slot was cleared before the request, :383, so the earlier tile's result is not
+// reused); the next tile's request is made with a disabled notifier, so it never finishes; only cancel ends
+// it.
 TEST(ThreadDownloadTiles, AppClosingWithoutCancelCountsTheWaitingTileAndStallsTheNext) {
     Rig rig;
     rig.provider->parts = {{3, RectI{0, 3, 3, 4}}}; // (0,3) (1,3) (2,3)
@@ -1760,7 +1829,7 @@ TEST(ThreadDownloadTiles, AppClosingWithoutCancelCountsTheWaitingTileAndStallsTh
                            u"Error: Unknown download result!"_s, processing(3, 2, 3), kDownloading}));
 }
 
-// === Proof 11: results delivered from the queue's threads ===
+// === Results delivered from the queue's threads ===
 
 // The result slot is written by a foreign thread and read by the worker: 40 tiles, each finished from its own
 // thread. Proves the counters and that TSan is quiet about the slot.
@@ -1777,4 +1846,34 @@ TEST(ThreadDownloadTiles, ResultsDeliveredFromOtherThreads) {
     EXPECT_EQ(rig.downloadInfo->size(), 200u);
     EXPECT_EQ(rig.subsystem->calls().size(), 40u);
     EXPECT_EQ(rig.lines().last(), kCompleted);
+}
+
+// === The log line of the 403 User-Agent switch (a deviation from legacy). ===
+
+Maker okWithSwitch(QString host, QByteArray agent) {
+    return [=](const ITileRequestPtr& request) -> ITileRequestResultPtr {
+        cg::net::DownloadResult r = dl(ResultKind::Ok, QByteArray(5, 'x'), "image/png");
+        r.userAgentSwitchHost = host;
+        r.userAgentSwitchedTo = agent;
+        return std::make_shared<cg::maptype::TileRequestResultOk>(requestOf(request), std::move(r));
+    };
+}
+
+TEST(ThreadDownloadTiles, UserAgentSwitchIsLoggedBeforeTheResult) {
+    Rig rig;
+    rig.provider->parts = {{3, RectI{0, 0, 2, 1}}};
+    rig.provider->total = 2;
+    rig.subsystem->script = [](int i) {
+        return finishWith(i == 0 ? okWithSwitch(u"example.org"_s, "curl/9.9.9") : okBytes(5));
+    };
+    ASSERT_TRUE(rig.runToEnd());
+    const QString line =
+        u"Server refused the default User-Agent (HTTP 403); using curl/9.9.9 for example.org "
+        u"until the end of the run"_s;
+    const QStringList lines = rig.lines();
+    const qsizetype at = lines.indexOf(line);
+    ASSERT_GE(at, 0) << lines.join(u"|"_s).toStdString();
+    ASSERT_LT(at + 1, lines.size());
+    EXPECT_EQ(lines[at + 1], kOk);   // before this tile's result line
+    EXPECT_EQ(lines.count(line), 1); // the second Ok result carries no fields: no second line
 }

@@ -19,12 +19,12 @@
 namespace cg::storage {
 
 // A naive local wall clock. timeSpec() is always Qt::LocalTime; never call toUTC() on it except
-// through the helpers below. An invalid TileDate (default-constructed) is how §2.4.3's
+// through the helpers below. An invalid TileDate (default-constructed) is how a
 // "NotExists" / unset load date is represented, and callers that need "infinitely old" semantics
 // (predicates.cpp's tileOlderThan) must check isValid() explicitly -- QDateTime's own ordering of
 // invalid vs. valid values is not something to rely on: it depends on the Qt version (invalid
-// sorts first only from Qt 6.8's three-way comparison; this project's floor is Qt 6.5, where an
-// invalid QDateTime instead compares via a raw epoch-ms readout, per T-0021A review finding 3).
+// sorts first only from Qt 6.8's three-way comparison; on older Qt an invalid QDateTime instead
+// compares via a raw epoch-ms readout).
 using TileDate = QDateTime;
 
 [[nodiscard]] TileDate tileDateNow(); // ports SysUtils.Now

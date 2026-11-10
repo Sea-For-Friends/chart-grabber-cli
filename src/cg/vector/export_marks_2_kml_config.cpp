@@ -6,7 +6,7 @@
 
 #include <utility>
 
-// Ports u_ExportMarks2KMLConfig.pas (V10): defaults :108-117, CreateStatic :119-133, DoReadConfig :135-160,
+// Ports u_ExportMarks2KMLConfig.pas: defaults :108-117, CreateStatic :119-133, DoReadConfig :135-160,
 // DoWriteConfig :162-173, getters :175-238, GetStatic :215-218, setters :240-316, static class :318-366.
 
 namespace cg::vector {
@@ -171,8 +171,8 @@ void ExportMarks2KmlConfig::doReadConfig(const core::IConfigProviderPtr& src) {
     setChanged();
 }
 
-// :162-173: the six keys in this order, always written; the enums as their integers.
-// A nil writer is ignored: unreachable in legacy (`u_GlobalState.pas:1277`); no register row.
+// :162-173: the six keys in this order, always written; the enums as their integers. A nil writer
+// is ignored: unreachable in legacy (`u_GlobalState.pas:1277`).
 void ExportMarks2KmlConfig::doWriteConfig(const core::IConfigWriterPtr& dst) const {
     if (!dst) {
         return;

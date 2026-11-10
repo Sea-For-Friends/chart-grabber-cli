@@ -19,24 +19,23 @@ namespace cg::storage {
 namespace {
 
 // Legacy TTarWriter.CreateEmpty defaults (Includes/LibTar.pas:776-793): every permission bit set,
-// uid/gid 0, empty uname/gname. Reproduced verbatim for every tar entry this backend writes
-// (ticket: "per-entry metadata legacy writes ... mode, uid/gid/uname").
+// uid/gid 0, empty uname/gname. Reproduced verbatim for every tar entry this backend writes.
 constexpr __LA_MODE_T kLegacyTarPerm = 0777;
 
-// F4 (review, major): libarchive's zip writer always writes "made by" = Unix; an entry with no
-// perm set therefore extracts as external attributes 0100000 (mode 000, unreadable -- verified
-// with `zipinfo -v` / `unzip -d`). Legacy's minizip writes "made by" = NTFS with zero attributes
-// (`libminizip.pas:112`), so an unzip tool applies its own default permissions instead -- libarchive
-// has no "made-by NTFS" option, so the port sets an explicit regular-file/rw-r--r-- permission
-// instead, the closest it can get to legacy's actual *extracted* result (a readable file).
+// libarchive's zip writer always writes "made by" = Unix; an entry with no perm set therefore
+// extracts as external attributes 0100000 (mode 000, unreadable -- verified with `zipinfo -v` /
+// `unzip -d`). Legacy's minizip writes "made by" = NTFS with zero attributes (`libminizip.pas:112`),
+// so an unzip tool applies its own default permissions instead -- libarchive has no "made-by NTFS"
+// option, so the port sets an explicit regular-file/rw-r--r-- permission instead, the closest it can
+// get to legacy's actual *extracted* result (a readable file).
 constexpr __LA_MODE_T kZipEntryPerm = 0644;
 
-// F9 (review, minor): legacy clamps a pre-1970 tar mtime to a fixed constant instead of writing the
-// real (negative) value: `WriteTarHeader` (Includes/LibTar.pas:539-542) is
-// `NullDate := EncodeDate(1970, 1, 1); IF DirRec.DateTime >= NullDate THEN
-// Octal(Trunc((DirRec.DateTime - NullDate) * 86400.0), ...) ELSE Octal(Trunc(NullDate * 86400.0), ...)`
-// -- i.e. `Trunc(NullDate * 86400.0)` = 2209161600 (year 2040), not 0 or the actual date. Zip's
-// `DateTimeToUnix` has no equivalent clamp, so this reproduces for tar only.
+// Legacy clamps a pre-1970 tar mtime to a fixed constant instead of writing the real (negative) value:
+// `WriteTarHeader` (Includes/LibTar.pas:539-542) is `NullDate := EncodeDate(1970, 1, 1); IF
+// DirRec.DateTime >= NullDate THEN Octal(Trunc((DirRec.DateTime - NullDate) * 86400.0), ...) ELSE
+// Octal(Trunc(NullDate * 86400.0), ...)` -- i.e. `Trunc(NullDate * 86400.0)` = 2209161600 (year 2040),
+// not 0 or the actual date. Zip's `DateTimeToUnix` has no equivalent clamp, so this reproduces for tar
+// only.
 constexpr qint64 kLegacyTarPre1970ClampSecs = 2209161600;
 
 [[nodiscard]] QString extLower(const QString& name) {
@@ -60,7 +59,7 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     } else {
         rc = archive_write_set_format_zip(a);
         if (rc == ARCHIVE_OK) {
-            // ticket's factory takes one `zipLevel` int, not legacy's separate method+level pair
+            // The factory takes one `zipLevel` int, not legacy's separate method+level pair
             // (u_ArchiveReadWriteSequentialZip.pas:156-178): 0 -> store (legacy's own default when
             // the Cache Manager's zip config panel is not used), 1-9 -> deflate at that level.
             const QByteArray opts = zipLevel <= 0 ? QByteArrayLiteral("zip:compression=store")
@@ -76,7 +75,7 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
         archive_write_free(a);
         return core::fail(core::ErrorCode::IoError, QStringLiteral("libarchive: %1").arg(msg));
     }
-    // T-0335: the narrow libarchive name is read as the ANSI code page on Windows: there the wide name keeps
+    // The narrow libarchive name is read as the ANSI code page on Windows: there the wide name keeps
     // non-ASCII names (both calls exist on every system; kWindowsHost picks one at run time).
     const int opened = core::platform::kWindowsHost
                            ? archive_write_open_filename_w(a, file.toStdWString().c_str())
@@ -95,9 +94,9 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     if (a == nullptr) {
         return core::fail(core::ErrorCode::IoError, QStringLiteral("archive_read_new failed"));
     }
-    // openForScan carries no Container -- storage.md §2.19's own signature has none, legacy's
-    // caller already knows which reader class to build from the archive type it remembers, but
-    // this backend's scan path auto-detects instead (libarchive's usual idiom).
+    // openForScan carries no Container -- legacy's caller already knows which reader class to
+    // build from the archive type it remembers, but this backend's scan path auto-detects
+    // instead (libarchive's usual idiom).
     archive_read_support_filter_all(a);
     archive_read_support_format_all(a);
     const int opened = core::platform::kWindowsHost
@@ -112,10 +111,10 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     return a;
 }
 
-// F8 (review): wraps a freshly opened reader in a shared_ptr whose deleter does what the old
-// destructor-only cleanup did (archive_read_close then archive_read_free). Shared, not unique, so
-// a live ArchiveTileEnumerator can hold its own reference and keep the reader alive past this
-// storage's destructor.
+// Wraps a freshly opened reader in a shared_ptr whose deleter does what the old destructor-only
+// cleanup did (archive_read_close then archive_read_free). Shared, not unique, so a live
+// ArchiveTileEnumerator can hold its own reference and keep the reader alive past this storage's
+// destructor.
 [[nodiscard]] std::shared_ptr<archive> shareReader(archive* a) {
     return std::shared_ptr<archive>(a, [](archive* p) {
         archive_read_close(p);
@@ -132,7 +131,7 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     archive_entry_set_filetype(e, AE_IFREG);
     archive_entry_set_size(e, data.size());
     if (container == ArchiveTileStorage::Container::Tar && mtimeSecs < 0) {
-        mtimeSecs = kLegacyTarPre1970ClampSecs; // F9
+        mtimeSecs = kLegacyTarPre1970ClampSecs;
     }
     if constexpr (sizeof(time_t) < sizeof(qint64)) {
         // 32-bit time_t (Debian 12 armhf): archive_entry_set_mtime takes a time_t, and a larger value (the
@@ -149,7 +148,7 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
         archive_entry_set_uname(e, "");
         archive_entry_set_gname(e, "");
     } else {
-        // F4: no uid/gid/uname/gname (still matches legacy's zero-filled mz_zip_file,
+        // No uid/gid/uname/gname (still matches legacy's zero-filled mz_zip_file,
         // u_ArchiveReadWriteSequentialZip.pas:211), but DO set a permission -- see kZipEntryPerm.
         archive_entry_set_perm(e, kZipEntryPerm);
     }
@@ -171,7 +170,7 @@ openWriterArchive(const QString& file, ArchiveTileStorage::Container container, 
     return {};
 }
 
-// FEAT-STO-027. Ports TEnumTileInfoArchive (u_TileStorageArchive.pas:336-413).
+// Ports TEnumTileInfoArchive (u_TileStorageArchive.pas:336-413).
 class ArchiveTileEnumerator final : public IEnumTileInfo {
 public:
     ArchiveTileEnumerator(std::shared_ptr<archive> reader, bool ignoreTne, ITileNameCodecPtr codec)
@@ -197,11 +196,11 @@ public:
             }
 
             QString name = QString::fromUtf8(archive_entry_pathname(entry));
-            // F1 (review, major): a legacy-written tar uses PathDelim = '\' in entry names
-            // (u_TileFileNameOsmAnd.pas:67 and every folder-name generator; TTarWriter.AddStream
-            // never calls ConvertFilename). Legacy's own reader accepts both separators by
-            // rewriting '/' to PathDelim before parsing (u_ArchiveReadWriteSequentialTar.pas:
-            // 219-221); this port's codec regexes are '/'-only, so normalize the other way instead.
+            // A legacy-written tar uses PathDelim = '\' in entry names (u_TileFileNameOsmAnd.pas:67
+            // and every folder-name generator; TTarWriter.AddStream never calls ConvertFilename).
+            // Legacy's own reader accepts both separators by rewriting '/' to PathDelim before
+            // parsing (u_ArchiveReadWriteSequentialTar.pas:219-221); this port's codec regexes are
+            // '/'-only, so normalize the other way instead.
             name.replace(QLatin1Char('\\'), QLatin1Char('/'));
             geo::PointI xy;
             quint8 z = 0;
@@ -210,15 +209,16 @@ public:
             }
 
             const QString ext = extLower(name);
-            // F3 (review, major): legacy treats the naive-local load date as UTC on both write and
-            // read, for tar mtime (`Includes/LibTar.pas` WriteTarHeader/FindNext) and zip dates
+            // Legacy treats the naive-local load date as UTC on both write and read, for tar mtime
+            // (`Includes/LibTar.pas` WriteTarHeader/FindNext) and zip dates
             // (`u_ArchiveReadWriteSequentialZip.pas` Add/Next, Delphi's default AInputIsUTC=True) --
             // i.e. toLegacyUnixSeconds/fromLegacyUnixSeconds (tile_date.h), not the POSIX pair.
             qint64 mtimeSecs = archive_entry_mtime(entry);
             if constexpr (sizeof(time_t) < sizeof(qint64)) {
                 // 32-bit time_t (the linux-armhf bundle): libarchive 3.6.2 wraps the legacy pre-1970 tar
-                // sentinel 2209161600 (Includes/LibTar.pas:539-542, F9 above; year 2040, beyond int32) to
-                // -2085805696 (1903). Map it back, so a legacy tar reads as on a 64-bit platform (D-170).
+                // sentinel 2209161600 (Includes/LibTar.pas:539-542, see above; year 2040, beyond int32)
+                // to -2085805696 (1903). Map it back, so a legacy tar reads as on a 64-bit platform (a
+                // deviation from legacy).
                 if (mtimeSecs == static_cast<qint64>(static_cast<time_t>(kLegacyTarPre1970ClampSecs))) {
                     mtimeSecs = kLegacyTarPre1970ClampSecs;
                 }
@@ -238,8 +238,9 @@ public:
 
             const la_int64_t size = archive_entry_size(entry);
             if (size <= 0) {
-                // u_TileStorageArchive.pas:400-407: `if ATileInfo.FData <> nil then ... else
-                // Assert(False, 'Tile data is empty!')` -- release build: silently skip (L-45).
+                // u_TileStorageArchive.pas:400-407:
+                // `if ATileInfo.FData <> nil then ... else Assert(False, 'Tile data is empty!')` --
+                // release build: silently skip.
                 continue;
             }
             QByteArray data;
@@ -264,7 +265,7 @@ public:
     }
 
 private:
-    std::shared_ptr<archive> reader_; // shared with ArchiveTileStorage::reader_ (F8, see header)
+    std::shared_ptr<archive> reader_; // shared with ArchiveTileStorage::reader_ (see header)
     bool ignoreTne_;
     ITileNameCodecPtr codec_;
 };
@@ -291,8 +292,8 @@ ArchiveTileStorage::~ArchiveTileStorage() {
         archive_write_close(writer_);
         archive_write_free(writer_);
     }
-    // reader_ is a shared_ptr (F8): its deleter (shareReader()) runs archive_read_close/free once
-    // the last owner -- this storage or a still-draining scan enumerator -- releases it.
+    // reader_ is a shared_ptr: its deleter (shareReader()) runs archive_read_close/free once the
+    // last owner -- this storage or a still-draining scan enumerator -- releases it.
 }
 
 core::Result<std::shared_ptr<ArchiveTileStorage>>
@@ -342,7 +343,7 @@ ArchiveTileStorage::openForScan(QString file, ITileNameCodecPtr codec, geo::Proj
     auto storage = std::make_shared<ArchiveTileStorage>(
         typeAbilities, typeAbilities.base, std::move(mapVersionFactory), std::move(projectionSet),
         std::move(tileNotifier), std::move(file), core::ContentTypeInfo{}, std::move(codec));
-    storage->reader_ = shareReader(*opened); // F8
+    storage->reader_ = shareReader(*opened);
     return storage;
 }
 
@@ -389,7 +390,7 @@ core::Result<bool> ArchiveTileStorage::deleteTile(geo::PointI, quint8, const Map
 core::Result<bool> ArchiveTileStorage::saveTile(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr&,
                                                 TileDate loadDate, QByteArrayView contentType,
                                                 const QByteArray& data, bool /*overwrite*/) {
-    Q_ASSERT(writer_ != nullptr); // spec §3.5 exclusivity -- construction-guaranteed
+    Q_ASSERT(writer_ != nullptr); // exclusive by construction
     if (writer_ == nullptr) {
         return false; // u_TileStorageArchive.pas:270-273: Assert(False); Exit -- Result stays False
     }
@@ -398,25 +399,25 @@ core::Result<bool> ArchiveTileStorage::saveTile(geo::PointI xy, quint8 zoom, con
     // `Assigned(AContentType) and Assigned(AData)` (u_TileStorageArchive.pas:276).
     const bool wantsTne = contentType.isEmpty() || data.isNull();
 
-    // F2 (review, Tech Lead ruling 2026-09-28): entry names use `codec_->tilePath`'s '/' separator
-    // for BOTH containers, not legacy's `\` (`u_TileFileNameOsmAnd.pas:67` and every generator;
-    // `TTarWriter.AddStream` never calls `ConvertFilename`). Deliberate deviation, not a bug: a `\`
-    // entry name extracts on every Linux tool as a flat file literally named e.g. `13\1234\678.jpg`
-    // -- the path separator is a platform property, and legacy's own `\` result is unusable on this
-    // platform. See docs/parity/deviations.md D-34 (tar) for the read-compatibility matrix (port
-    // reads both, after F1; legacy reads both, `u_ArchiveReadWriteSequentialTar.pas:219-221`).
+    // Entry names use `codec_->tilePath`'s '/' separator for BOTH containers, not legacy's `\`
+    // (`u_TileFileNameOsmAnd.pas:67` and every generator; `TTarWriter.AddStream` never calls
+    // `ConvertFilename`). Deliberate deviation, not a bug: a `\` entry name extracts on every Linux
+    // tool as a flat file literally named e.g. `13\1234\678.jpg` -- the path separator is a
+    // platform property, and legacy's own `\` result is unusable on this platform. Reading a tar,
+    // the port accepts both separators, as legacy does
+    // (`u_ArchiveReadWriteSequentialTar.pas:219-221`).
     QString entryName;
     QByteArray entryData;
     if (!wantsTne) {
         // supportsMixedContentTypes == true for this backend (matches legacy's constructor call,
         // u_TileStorageTypeArchive.pas:99): the entry extension comes from THIS call's own content
         // type, not the storage's fixed mainContentType_ -- ports `AContentType.GetDefaultExt`,
-        // the argument that wins after legacy's second `AddExt` call (`u_TileStorageArchive.pas:
-        // 278-279`). That second call is not a bug: legacy's `AddExt` is `ChangeFileExt`-style (it
-        // replaces the trailing extension, not append-only), and no codec's base name contains a
-        // dot before it runs, so legacy also lands on a single extension (`…/678.jpg.tile`, not
-        // `…/678.jpg.jpg.tile`) -- see D-7 in storage.md §8 (corrected 2026-09-28, review F5). The
-        // port's one `addExt` call already produces that same string.
+        // the argument that wins after legacy's second `AddExt` call
+        // (`u_TileStorageArchive.pas:278-279`). That second call is not a bug: legacy's `AddExt`
+        // is `ChangeFileExt`-style (it replaces the trailing extension, not append-only), and no
+        // codec's base name contains a dot before it runs, so legacy also lands on a single
+        // extension (`…/678.jpg.tile`, not `…/678.jpg.jpg.tile`). The port's one `addExt` call
+        // already produces that same string.
         const core::ContentTypeInfo* info = core::ContentTypeRegistry::standard().infoByType(contentType);
         if (info == nullptr) {
             return core::fail(core::ErrorCode::Unsupported,
@@ -426,12 +427,12 @@ core::Result<bool> ArchiveTileStorage::saveTile(geo::PointI xy, quint8 zoom, con
         entryData = data;
     } else {
         entryName = codec_->addExt(codec_->tilePath(xy, zoom), QStringLiteral(".tne"));
-        // entryData stays a null/empty QByteArray -- a zero-byte entry (ticket Scope).
+        // entryData stays a null/empty QByteArray -- a zero-byte entry.
     }
 
-    std::lock_guard<std::mutex> lock(writeMutex_); // spec §3.5: a single std::mutex serialises saveTile
+    std::lock_guard<std::mutex> lock(writeMutex_); // A single std::mutex serialises saveTile
     core::Result<void> written =
-        writeEntry(writer_, writerContainer_, entryName, entryData, toLegacyUnixSeconds(loadDate)); // F3
+        writeEntry(writer_, writerContainer_, entryName, entryData, toLegacyUnixSeconds(loadDate));
     if (!written.has_value()) {
         return std::unexpected(written.error());
     }
@@ -452,7 +453,7 @@ core::Result<TileRectInfoPtr> ArchiveTileStorage::tileRectInfo(geo::RectI, quint
 
 core::Result<EnumTileInfoPtr> ArchiveTileStorage::scanTiles(bool ignoreTne,
                                                             bool /*ignoreMultiVersionTiles*/) {
-    Q_ASSERT(reader_ != nullptr); // spec §3.5 exclusivity -- construction-guaranteed
+    Q_ASSERT(reader_ != nullptr); // exclusive by construction
     if (reader_ == nullptr) {
         // Legacy raises here (u_TileStorageArchive.pas:296-311, `AllowScan` false); this instance
         // can only be write-mode by construction (openForWrite), so this is unreachable from any

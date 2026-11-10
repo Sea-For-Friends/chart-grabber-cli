@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_AppearanceOfMarkFactory.pas:167-249 (hash recipes).
-// Expected values are assembled from byte buffers and the raw CityHash64WithSeed primitive,
-// independently of the factory (docs/specs/vector.md §2.3.4).
+// Ports u_AppearanceOfMarkFactory.pas:167-249 (hash recipes). Expected values are assembled
+// from byte buffers and the raw CityHash64WithSeed primitive, independently of the factory.
 #include "cg/vector/appearance_of_mark_factory.h"
 #include "cg/vector/appearance_of_mark_line.h"
 #include "cg/vector/appearance_of_mark_point.h"

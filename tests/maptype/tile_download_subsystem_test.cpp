@@ -2,14 +2,13 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-032. Ports i_TileDownloadSubsystem.pas, u_TileDownloadSubsystem.pas and the maptype side
-// of u_TileDownloaderSimple.pas:152-274 (docs/specs/maptype.md 2.13.6, 3.1 R1-R4; the R-10 proof lists). Two
-// rigs. JobRig drives detail::runTileDownloadJob through a real net::DownloadQueue with scripted builder,
-// saver and downloader: one row per arm of the job's switch and of the save callable. SubsystemRig builds the
-// whole TileDownloadSubsystem from a ZMP and talks to the local HTTP fixture server of the net tests.
-// Expected values are literals from the Pascal (texts u_TileDownloaderSimple.pas:195, :205, :251;
-// u_TileRequestResult.pas:258; u_TileDownloadSubsystemState.pas:88, :92;
-// u_TileDownloadResultSaverStuped.pas:134, :283).
+// Ports i_TileDownloadSubsystem.pas, u_TileDownloadSubsystem.pas and the maptype side of
+// u_TileDownloaderSimple.pas:152-274. Two rigs. JobRig drives detail::runTileDownloadJob through a real
+// net::DownloadQueue with scripted builder, saver and downloader: one row per arm of the job's switch and of
+// the save callable. SubsystemRig builds the whole TileDownloadSubsystem from a ZMP and talks to the local
+// HTTP fixture server of the net tests. Expected values are literals from the Pascal (texts
+// u_TileDownloaderSimple.pas:195, :205, :251; u_TileRequestResult.pas:258;
+// u_TileDownloadSubsystemState.pas:88, :92; u_TileDownloadResultSaverStuped.pas:134, :283).
 #include "cg/core/content_type.h"
 #include "cg/core/notifier.h"
 #include "cg/maptype/tile_download_subsystem.h"
@@ -64,7 +63,7 @@ using cg::net::test::HttpTestServer;
 
 namespace {
 
-// docs/specs/net.md 7.0: no test may reach the real network (read once, on the first CurlDownloader call).
+// No test may reach the real network (read once, on the first CurlDownloader call).
 struct ForceNoExternalNetwork {
     ForceNoExternalNetwork() { qputenv("CG_NET_NO_EXTERNAL_NETWORK", "1"); }
 };
@@ -107,7 +106,7 @@ struct Finish {
                     threads.push_back(std::this_thread::get_id());
                     hook = inside;
                     // Under the lock: a waiter that returns and destroys this Finish cannot overtake the
-                    // broadcast (pthread_cond_destroy raced with pthread_cond_broadcast, T-0350).
+                    // broadcast (pthread_cond_destroy raced with pthread_cond_broadcast).
                     cv.notify_all();
                 }
                 if (hook) {
@@ -473,7 +472,7 @@ TEST(TileDownloadJob, EveryArmClassifiesAndFinishesTheTaskOnce) {
 }
 
 // The queue's stop is the other half of the hard token: destroying the queue while a transfer is in flight
-// aborts it, and the job still finishes its task (R1: the job holds neither the queue nor anything that owns
+// aborts it, and the job still finishes its task (the job holds neither the queue nor anything that owns
 // it).
 TEST(TileDownloadJob, DestroyingTheQueueDuringATransferAbortsItAndFinishesTheTaskOnce) {
     JobRig rig;
@@ -567,9 +566,9 @@ TEST(TileDownloadJob, TwoSlotsRunTwoJobsAtOnceEachWithItsOwnLastResponse) {
     EXPECT_EQ(heads, (std::set<QByteArray>{"H1", "H2"}));
 }
 
-// Rule 6: anything else that escapes the body finishes the task with null and is rethrown to the worker loop
-// (D-87: logged, the worker goes on). Here the saver's error result cannot be built (a request without a tile
-// source), and the next task of the same slot still runs.
+// Anything else that escapes the body finishes the task with null and is rethrown to the worker loop (a
+// deviation from legacy: logged, the worker goes on). Here the saver's error result cannot be built (a
+// request without a tile source), and the next task of the same slot still runs.
 TEST(TileDownloadJob, ExceptionOutsideTheBuilderAndSaverFinishesWithNullAndTheWorkerGoesOn) {
     JobRig rig;
     std::atomic<int> calls{0};
@@ -635,9 +634,9 @@ public:
 
 } // namespace
 
-// A checker that throws inside the transport (T-0116: the exception becomes a load error result): the job's
-// save callable gets that result, the task ends in DownloadError carrying the message, and the slot serves
-// the next task.
+// A checker that throws inside the transport (the exception becomes a load error result): the job's save
+// callable gets that result, the task ends in DownloadError carrying the message, and the slot serves the
+// next task.
 TEST(TileDownloadJob, ThrowingCheckerEndsInDownloadErrorAndTheSlotServesTheNextTask) {
     HttpTestServer server;
     ASSERT_TRUE(server.start());
@@ -805,7 +804,7 @@ public:
         return load(u"t.zmp"_s, root.filePath(u"maps"_s));
     }
 
-    // T-0225: a throw-away *.source.json source with a JavaScript `script`; its `url` is the fixture server's
+    // A throw-away *.source.json source with a JavaScript `script`; its `url` is the fixture server's
     // template.
     IZmpInfoPtr tempSourceJson(const QByteArray& code) {
         QJsonObject o;
@@ -1126,9 +1125,8 @@ TEST(TileDownloadSubsystem, GetRequestOnADownloadDisabledMapStillReturnsTheUrl) 
                   nullptr); // the checker rides on every request the factory's builders make
         ASSERT_NE(tileRequestFromSource(request->source), nullptr);
         EXPECT_EQ(tileRequestFromSource(request->source)->tile(), (geo::PointI{3, 7}));
-        // A config change swaps the provider's pair (R4: only its own lock); the next call still works. That
-        // the new pair is made with the new options is pinned by
-        // ConfigChangeRebuildsTheProvidersDownloader....
+        // A config change swaps the provider's pair (only its own lock); the next call still works. That the
+        // new pair is made with the new options is pinned by ConfigChangeRebuildsTheProvidersDownloader....
         rig.downloaderConfig->setAllowUseCookie(true);
         EXPECT_EQ(rig.subsystem->getRequest(geo::PointI{4, 8}, 5, nullptr)->url,
                   rig.server.url("/5/4/8.png"));
@@ -1160,9 +1158,9 @@ TEST(TileDownloadSubsystem, AppClosingCancelsGetRequestBuilds) {
     EXPECT_FALSE(closed.subsystem->getRequest(geo::PointI{3, 7}, 5, nullptr).has_value());
 }
 
-// A script that does not compile: the first call that compiles still gets a template-only builder (LD-18), so
-// the first tile downloads from the template; the state is then disabled with the compiler's text, and from
-// then on download() finishes with null at once and getRequestTask answers null.
+// A script that does not compile: the first call that compiles still gets a template-only builder, so the
+// first tile downloads from the template; the state is then disabled with the compiler's text, and from then
+// on download() finishes with null at once and getRequestTask answers null.
 TEST(TileDownloadSubsystem, CompileErrorDisablesTheSubsystemAfterTheFirstTile) {
     const QByteArray broken = "var A: string;\nbegin\n  A := 'unterminated1\n  A := 'unterminated2\nend.";
     SubsystemRig rig;
@@ -1248,7 +1246,7 @@ TEST(TileDownloadSubsystem, GetRequestTaskChecksTheTileGridAndPicksTheRequestKin
                  std::out_of_range);
 }
 
-// R1 under the sanitizers: the subsystem is destroyed while a transfer is in flight. The fake transport holds
+// Under the sanitizers: the subsystem is destroyed while a transfer is in flight. The fake transport holds
 // the transfer until its stop token fires, so the stop can only come from the destructor: the queue's stop
 // reaches the job's hard token, the transfer ends Canceled, the job classifies it CanceledAfterDownload
 // (u_TileDownloaderSimple.pas:222-225, unsaved), the task is finished exactly once, nothing is stored, and
@@ -1326,9 +1324,8 @@ TEST(TileDownloadSubsystem, EachSlotKeepsItsOwnLastResponseHeadForItsScript) {
 namespace {
 
 // One instance per build(), with its own cookie jar when the options allow cookies (the observable difference
-// of a shared downloader, FEAT-NET-009). Every request is logged with the id of the instance, the jar it
-// presented and, for a request to the nested URL, the cookie that instance then stores (Set-Cookie of the
-// answer).
+// of a shared downloader). Every request is logged with the id of the instance, the jar it presented and, for
+// a request to the nested URL, the cookie that instance then stores (Set-Cookie of the answer).
 class JarDownloader final : public net::IDownloader {
 public:
     struct Entry {
@@ -1388,10 +1385,10 @@ const char* const kNestedScript = "var h, d: AnsiString; begin "
 
 } // namespace
 
-// u_TileDownloaderList.pas:143-168 through the subsystem's own slot-state factory (D-111 removed by T-0143):
-// ONE downloader per slot serves the script's nested HTTP and the tile transfer. One slot, a script with a
-// nested request, then the transfer: the counting factory built ONE downloader (it was two while the builder
-// had its own), and the nested and the tile request were served by the same instance.
+// u_TileDownloaderList.pas:143-168 through the subsystem's own slot-state factory: ONE downloader per slot
+// serves the script's nested HTTP and the tile transfer. One slot, a script with a nested request, then the
+// transfer: the counting factory built ONE downloader (it was two while the builder had its own), and the
+// nested and the tile request were served by the same instance.
 TEST(TileDownloadSubsystem, TheSlotsBuilderAndTransferShareOneDownloader) {
     SubsystemRig rig;
     ASSERT_TRUE(rig.serverStarted());
@@ -1489,9 +1486,9 @@ TEST(TileDownloadSubsystem, ConfigChangeRebuildsTheProvidersDownloaderWithTheNew
 }
 
 // Region downloads push many tasks at once: they all finish once, in one burst through the 256-place queue.
-// Three connections: the workers save at once and read the wall clock together
-// (QDateTime::currentDateTime() in storage::tileDateNow()); the glibc time-zone report that this raised under
-// ThreadSanitizer is suppressed in tools/tsan_suppressions.txt (T-0195).
+// Three connections: the workers save at once and read the wall clock together (QDateTime::currentDateTime()
+// in storage::tileDateNow()); the glibc time-zone report that this raised under ThreadSanitizer is suppressed
+// in tools/tsan_suppressions.txt.
 TEST(TileDownloadSubsystem, ManyTasksAtOnceAllFinishExactlyOnce) {
     SubsystemRig rig;
     ASSERT_TRUE(rig.serverStarted());
@@ -1516,9 +1513,8 @@ TEST(TileDownloadSubsystem, ManyTasksAtOnceAllFinishExactlyOnce) {
     EXPECT_EQ(*rig.file(u"z5/7/4.png"_s), kPng + "4");
 }
 
-// T-0225 selection (spec map-source-json.md section 7): a source whose container offers GetUrlScript.js gets
-// the JavaScript factory, through the whole subsystem; its URL comes from getUrl, its errors are those of
-// getUrl.
+// Factory selection: a source whose container offers GetUrlScript.js gets the JavaScript factory, through
+// the whole subsystem; its URL comes from getUrl, its errors are those of getUrl.
 TEST(TileDownloadSubsystem, JavaScriptSourceDownloadsATileThroughTheJsFactory) {
     cg::maptype::test::ensureGuiApp();
     SubsystemRig rig;

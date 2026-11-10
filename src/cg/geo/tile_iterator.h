@@ -4,9 +4,7 @@
 
 #pragma once
 // Ports: i_TileIterator.pas, u_TileIteratorByRect.pas, u_TileIteratorSpiralByRect.pas,
-// u_TileIteratorByPolygon.pas (docs/specs/geo.md §4.2).
-//
-// FEAT-GEO-015
+// u_TileIteratorByPolygon.pas.
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/geometry_projected.h"
@@ -23,8 +21,8 @@ namespace cg::geo {
 
 // Ports the ITileIteratorByRows / ITileIteratorByCols marker interfaces (i_TileIterator.pas:43,47):
 // legacy declares ITileIteratorByRows on TTileIteratorByRect and declares nothing on
-// TTileIteratorByPolygon, which is actually column-major -- a labelling bug (docs/specs/geo.md
-// §4.2, §10 D-4). ScanOrder fixes the label without changing any iteration order.
+// TTileIteratorByPolygon, which is actually column-major -- a labelling bug. ScanOrder fixes the
+// label without changing any iteration order.
 enum class ScanOrder : std::uint8_t { Rows, Cols, Spiral };
 
 class ITileIterator {
@@ -39,11 +37,11 @@ public:
 };
 using TileIteratorPtr = std::unique_ptr<ITileIterator>;
 
-// FEAT-GEO-015. u_TileIteratorByRect.pas:47-158. Row-major: X sweeps [rect.left, rect.right),
-// wrapping to the next Y; the wrap always resets to rect.left, never to a caller-supplied start X
-// -- "from here, row-major, N tiles", not "this sub-rectangle" (docs/specs/geo.md §4.2.1). A
-// non-(-1) tilesToProcess overwrites tilesTotal(), but only when the rect is non-empty (legacy
-// leaves an empty rect's total at 0 regardless of tilesToProcess).
+// u_TileIteratorByRect.pas:47-158. Row-major: X sweeps [rect.left, rect.right), wrapping to the
+// next Y; the wrap always resets to rect.left, never to a caller-supplied start X --
+// "from here, row-major, N tiles", not "this sub-rectangle". A non-(-1) tilesToProcess overwrites
+// tilesTotal(), but only when the rect is non-empty (legacy leaves an empty rect's total at 0
+// regardless of tilesToProcess).
 class TileIteratorByRect final : public ITileIterator {
 public:
     explicit TileIteratorByRect(TileRect rect, qint64 tilesToProcess = -1,
@@ -64,12 +62,12 @@ private:
     bool eoi_ = false;
 };
 
-// FEAT-GEO-015. u_TileIteratorSpiralByRect.pas. Clockwise from the centre, ring by ring; ring R
-// holds 8*R tiles (R>0) or 1 (R==0), split into eight R-tile segments whose per-segment delta
-// formulas are load-bearing (docs/specs/geo.md §4.2.2). No tilesToProcess/startPoint support in
-// legacy; tilesTotal() is the plain rect area (inherited shape), never consulted by next().
-// Complexity is O(maxRing^2) generated for O(area) yielded on a non-square rect; accepted, this is
-// legacy behavior and the rects involved are viewport-sized.
+// u_TileIteratorSpiralByRect.pas. Clockwise from the centre, ring by ring; ring R holds 8*R tiles
+// (R>0) or 1 (R==0), split into eight R-tile segments whose per-segment delta formulas are
+// load-bearing. No tilesToProcess/startPoint support in legacy; tilesTotal() is the plain rect
+// area (inherited shape), never consulted by next(). Complexity is O(maxRing^2) generated for
+// O(area) yielded on a non-square rect; accepted, this is legacy behavior and the rects involved
+// are viewport-sized.
 class TileIteratorSpiralByRect final : public ITileIterator {
 public:
     explicit TileIteratorSpiralByRect(const TileRect& rect); // centre = rect centre
@@ -96,12 +94,11 @@ private:
     bool eoi_ = false;
 };
 
-// FEAT-GEO-015. u_TileIteratorByPolygon.pas. Column-major: X outer, Y inner, top-to-bottom within
-// a column, clipped against a projected polygon (docs/specs/geo.md §4.2.3). Each candidate tile is
-// converted to its pixel rect and tested with isRectIntersectPolygon; the three-tier dispatch
-// (single polygon direct / MRU-cached part / linear scan setting the MRU) is kept exactly as
-// legacy, including the deliberate avoidance of polygon->isRectIntersectPolygon() for the whole
-// shape.
+// u_TileIteratorByPolygon.pas. Column-major: X outer, Y inner, top-to-bottom within a column,
+// clipped against a projected polygon. Each candidate tile is converted to its pixel rect and
+// tested with isRectIntersectPolygon; the three-tier dispatch (single polygon direct / MRU-cached
+// part / linear scan setting the MRU) is kept exactly as legacy, including the deliberate
+// avoidance of polygon->isRectIntersectPolygon() for the whole shape.
 class TileIteratorByPolygon final : public ITileIterator {
 public:
     TileIteratorByPolygon(ProjectionPtr projection,

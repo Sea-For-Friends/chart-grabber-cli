@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/app/job (new code; inherits Src/CmdLineArgProcessor/u_CmdLineArgProcessorAPI.pas:67-134,
-// u_CmdLineArgProcessorHelpers.pas:124-143). No FEAT tag (T-0185: Features none).
+// u_CmdLineArgProcessorHelpers.pas:124-143).
 #include "cg/app/job.h"
 
 #include <QDir>
@@ -77,7 +77,7 @@ struct GermanDefaultLocale {
 
 } // namespace
 
-// ---- proof 1: every flag sets its field ----
+// ---- Every flag sets its field ----
 
 TEST(JobFlags, JobAndDownloadAndCommonFlagsSetTheirFields) {
     TempDir tmp;
@@ -212,7 +212,7 @@ TEST(JobFlags, SourcesProbeAndResume) {
     EXPECT_EQ(resume.threads, 2);
 }
 
-// ---- proof 2: the job file ----
+// ---- The job file ----
 
 TEST(JobFile, EveryKeySetsTheSameFieldAsItsFlag) {
     TempDir tmp;
@@ -295,7 +295,7 @@ TEST(JobFile, PolygonAndRouteKeysAndRelativePath) {
     EXPECT_EQ(b.corridorNm, 2.5);
 }
 
-// T-0357: the job file may have any name: .conf (the documented one) and .ini (older versions) both load.
+// The job file may have any name: .conf (the documented one) and .ini (older versions) both load.
 TEST(JobFile, ConfAndIniExtensionsBothLoad) {
     TempDir tmp;
     for (const char* name : {"job.conf", "job.ini", "job"}) {
@@ -330,8 +330,7 @@ TEST(JobFile, FlagBeatsFileForTheSameKey) {
     // Keys not overridden stay from the file.
     EXPECT_EQ(job.proxy, QStringLiteral("http://file:1"));
     EXPECT_EQ(job.autosaveMin, 8);
-    // An area flag replaces the area of the file (flags override the file; the ticket's order
-    // file-then-flags).
+    // An area flag replaces the area of the file (flags override the file: file first, then flags).
     const QString poly = tmp.write(QStringLiteral("p.ini"), "[Job]\nSource=s\nPolygon=a.hlg\n");
     const Job area = mustParse({"estimate", "--job", poly, "--bbox=1,2,3,4"});
     EXPECT_EQ(area.areaKind, AreaKind::BBox);
@@ -340,7 +339,7 @@ TEST(JobFile, FlagBeatsFileForTheSameKey) {
     EXPECT_EQ(mustParse({"download", "--threads=9", "--job", file}).threads, 9);
 }
 
-// ---- proof 3: zoom lists ----
+// ---- Zoom lists ----
 
 TEST(JobZooms, BothFormsAndNormalisation) {
     const std::vector<std::pair<QString, Zooms>> good = {
@@ -382,7 +381,7 @@ TEST(JobZooms, BadFormsAreUsageErrorsNamingTheOption) {
     expectUsageError({"estimate", "--job", file}, "--zooms");
 }
 
-// T-0283: --time (the forms themselves are tested in snapshot_test.cpp, parseSnapshotTime).
+// --time (the forms themselves are tested in snapshot_test.cpp, parseSnapshotTime).
 TEST(JobTime, FlagFormsAndUsageErrors) {
     const QStringList base = {"download", "--source=s", "--bbox=1,2,3,4", "--zooms=3"};
     EXPECT_FALSE(mustParse(base).time.has_value()); // absent = latest
@@ -401,7 +400,7 @@ TEST(JobTime, FlagFormsAndUsageErrors) {
     expectUsageError({"download", "--job", file}, "--time");
 }
 
-// ---- proof 4: usage errors ----
+// ---- Usage errors ----
 
 TEST(JobErrors, CommandLine) {
     expectUsageError({}, "command");
@@ -410,7 +409,7 @@ TEST(JobErrors, CommandLine) {
     expectUsageError({"sources", "extra"}, "extra");
     const auto flagClash = parse({"estimate", "--source=s", "--bbox=1,2,3,4", "--polygon=a.hlg"});
     ASSERT_FALSE(flagClash.has_value());
-    EXPECT_EQ(flagClash.error().exitCode, 3); // spec 1.7 S-3: a refusal, not a usage error
+    EXPECT_EQ(flagClash.error().exitCode, 3); // A refusal, not a usage error
     EXPECT_TRUE(flagClash.error().message.contains(QStringLiteral("--polygon")));
     expectUsageError({"estimate", "--source=s", "--route=r.gpx"}, "--corridor-nm");
     expectUsageError({"estimate", "--source=s", "--bbox=1,2,3,4", "--corridor-nm=2"}, "--corridor-nm");
@@ -479,7 +478,7 @@ TEST(JobErrors, JobFile) {
     {
         const auto clash = parse({"estimate", "--job", twoAreas});
         ASSERT_FALSE(clash.has_value());
-        EXPECT_EQ(clash.error().exitCode, 3); // spec 1.7 S-3: a refusal, not a usage error
+        EXPECT_EQ(clash.error().exitCode, 3); // A refusal, not a usage error
         EXPECT_TRUE(clash.error().message.contains(QStringLiteral("--polygon")))
             << clash.error().message.toStdString();
     }
@@ -494,7 +493,7 @@ TEST(JobErrors, JobFile) {
     EXPECT_EQ(mustParse({"estimate", "--job", noArea, "--bbox=1,2,3,4"}).areaKind, AreaKind::BBox);
 }
 
-// ---- proof 5: help / version / verbosity ----
+// ---- Help / version / verbosity ----
 
 TEST(JobCommands, HelpVersionVerbosity) {
     EXPECT_EQ(mustParse({"--help"}).command, Command::Help);
@@ -511,7 +510,7 @@ TEST(JobCommands, HelpVersionVerbosity) {
     EXPECT_FALSE(mustParse({"sources", "--no-progress"}).progress);
 }
 
-// T-0332: opt-in switch, off by default
+// Opt-in switch, off by default
 TEST(JobCommands, StopOnStdinIsAnOptInSwitch) {
     EXPECT_FALSE(mustParse({"sources"}).stopOnStdin);
     EXPECT_TRUE(mustParse({"sources", "--stop-on-stdin"}).stopOnStdin);
@@ -526,7 +525,7 @@ TEST(JobCommands, EveryCommandWord) {
     EXPECT_EQ(mustParse({"export", "--source=s", "--bbox=1,2,3,4", "--out=o"}).command, Command::Export);
 }
 
-// ---- proof 6: dates ----
+// ---- Dates ----
 
 TEST(JobDates, ValidAndInvalid) {
     const QStringList base = {"download", "--source=s", "--bbox=1,2,3,4"};
@@ -605,7 +604,7 @@ TEST(JobHelp, ListsEveryOptionAndTheNotes) {
     EXPECT_LT(text.indexOf("--threads=N"), text.indexOf("--maps=DIR"));
 }
 
-// ---- T-0202 proof 1: --format and --progress ----
+// ---- --format and --progress ----
 
 using namespace Qt::StringLiterals;
 
@@ -654,8 +653,7 @@ TEST(JobFormatAndProgress, HelpListsBothOptions) {
     EXPECT_TRUE(help.contains(u"--progress=MODE"_s)) << help.toStdString();
 }
 
-// T-0291 (app-cli.md 1.6.1, 1.6.3): --maps is repeatable and required in `create`, --user-maps is gone. No
-// FEAT.
+// --maps is repeatable and required in `create`, --user-maps is gone.
 TEST(JobMaps, RepeatedFlagKeepsEveryFolderInTheOrderGiven) {
     const TempDir tmp;
     CurrentDir cwd(tmp.root());
@@ -702,9 +700,9 @@ TEST(JobMaps, HelpDescribesMapsAndSaysSourcesAreNotBuiltIn) {
     EXPECT_FALSE(help.contains(u"user-maps"_s));
 }
 
-// T-0360 item 2: a backslash in a job-file path (Windows) must not leave a mixed-slash path: the same form
-// as a flag path (forward slashes, T-0335). On Linux a backslash is a file name character, so the check is
-// about what the platform calls a separator.
+// A backslash in a job-file path (Windows) must not leave a mixed-slash path: the same form as a flag path
+// (forward slashes). On Linux a backslash is a file name character, so the check is about what the
+// platform calls a separator.
 TEST(JobFile, OutPathOfTheFileUsesForwardSlashes) {
     TempDir tmp;
     const QString file =

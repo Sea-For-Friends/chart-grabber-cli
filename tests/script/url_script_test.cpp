@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-003, FEAT-NET-019. docs/specs/script.md 2.13, 5.1, 7, 8.2, 11.8 - the §11.8
-// list minus `.NestedHttpRequestUsesTheFakeHost`/`.GlobalStoreSharedBetweenTwoUrlScriptsOfTheSameMap`,
-// which need interface method dispatch (T-0015B) and move to T-0015E per the ticket.
+// UrlScript cases, minus
+// `.NestedHttpRequestUsesTheFakeHost`/`.GlobalStoreSharedBetweenTwoUrlScriptsOfTheSameMap`, which need
+// interface method dispatch and are in corpus_run_test.cpp.
 #include "cg/script/url_script.h"
 
 #include <gtest/gtest.h>
@@ -39,10 +39,10 @@ std::unique_ptr<UrlScript> mustCreate(const QByteArray& source, IScriptHost& hos
     return std::move(*created);
 }
 
-// For the cancellation-while-waiting-for-the-lock scenario (finding 1, T-0015C rework): a
-// WriteLn call blocks (inside buildRequest's lock) until the test releases it, giving a
-// deterministic window in which a second, concurrent buildRequest call is guaranteed to still be
-// waiting on the mutex. No sleeps.
+// For the cancellation-while-waiting-for-the-lock scenario: a WriteLn call blocks (inside
+// buildRequest's lock) until the test releases it, giving a deterministic window in which a
+// second, concurrent buildRequest call is guaranteed to still be waiting on the mutex. No
+// sleeps.
 class BlockingWriteLnHost : public FakeScriptHost {
 public:
     void writeLn(const QByteArray& text) override {
@@ -74,7 +74,7 @@ private:
 
 } // namespace
 
-// --- create() / isTemplateOnly() (spec 2.13, ticket §Scope "create") ------------------------------
+// --- create() / isTemplateOnly() ------------------------------
 
 TEST(UrlScript, EmptySourceIsTemplateOnly) {
     FakeScriptHost host;
@@ -84,9 +84,9 @@ TEST(UrlScript, EmptySourceIsTemplateOnly) {
 }
 
 TEST(UrlScript, WhitespaceOnlySourceIsACompileError) {
-    // spec 1.3: legacy's download path tests only `FScriptText = ''`, so a whitespace-only,
-    // non-empty script still reaches the compiler and fails (no `end.`), disabling the map - it
-    // does not fall back to isTemplateOnly().
+    // Legacy's download path tests only `FScriptText = ''`, so a whitespace-only, non-empty
+    // script still reaches the compiler and fails (no `end.`), disabling the map - it does not
+    // fall back to isTemplateOnly().
     FakeScriptHost host;
     auto created = makeUrlScript(QByteArrayLiteral("   \n\t  \r\n  "), host);
     ASSERT_FALSE(created.has_value());
@@ -96,9 +96,9 @@ TEST(UrlScript, WhitespaceOnlySourceIsACompileError) {
 TEST(UrlScript, CompileErrorMessageShapeCarriesEveryDiagnostic) {
     // u_ResStrings.pas:109 + u_PascalScriptCompiler.pas:84-90: 'Compilation error in script '#13#10'%0:s'
     // with every message followed by #13#10, so the text is the 27 bytes, 20 0D 0A, then each
-    // "[Line N, Column M] ..." followed by 0D 0A. Two independent, guaranteed-separate lexer
-    // diagnostics (spec L5: an unterminated string is a diagnostic and the lexer resynchronises at
-    // the next line) prove every one of them reaches create()'s error, not just the first.
+    // "[Line N, Column M] ..." followed by 0D 0A. Two independent, guaranteed-separate lexer diagnostics
+    // (an unterminated string is a diagnostic and the lexer resynchronises at the next line) prove every
+    // one of them reaches create()'s error, not just the first.
     FakeScriptHost host;
     auto created = makeUrlScript(
         QByteArrayLiteral("var A: string;\nbegin\n  A := 'unterminated1\n  A := 'unterminated2\nend."), host);
@@ -114,9 +114,9 @@ TEST(UrlScript, CompileErrorMessageShapeCarriesEveryDiagnostic) {
 
 TEST(UrlScript, CompileErrorTextKeepsANonAsciiDiagnosticAsItsUtf8Bytes) {
     // A byte >= 0x80 outside a string or comment is an "illegal character" diagnostic whose
-    // argument is that byte as a Latin-1 code point (lexer.cpp default branch). 0xC0 is U+00C0,
-    // i.e. UTF-8 C3 80 in the outward text. The source has no other error, so the parser adds
-    // nothing: exactly one diagnostic line, then the legacy CR LF terminator.
+    // argument is that byte as a Latin-1 code point (the default branch of lexer.cpp). 0xC0 is
+    // U+00C0, i.e. UTF-8 C3 80 in the outward text. The source has no other error, so the
+    // parser adds nothing: exactly one diagnostic line, then the legacy CR LF terminator.
     FakeScriptHost host;
     auto created = makeUrlScript(QByteArrayLiteral("begin \xC0 end."), host);
     ASSERT_FALSE(created.has_value());
@@ -125,7 +125,7 @@ TEST(UrlScript, CompileErrorTextKeepsANonAsciiDiagnosticAsItsUtf8Bytes) {
                                 "[Line 1, Column 7] illegal character '\xC3\x80'\r\n"));
 }
 
-// --- read-back policy (TechLead ruling, T-0015A landing) -------------------------------------------
+// --- read-back policy -------------------------------------------
 
 TEST(UrlScript, PostDataSwitchesToPost) {
     FakeScriptHost host;
@@ -205,11 +205,12 @@ TEST(UrlScript, ScriptBufferUnchangedAfterRuntimeError) {
 }
 
 TEST(UrlScript, GetUrlBaseMutationDoesNotLeakToNextCall) {
-    // spec 2.7 tail (`GetURLBase[8] := chr(ord('a') + random(3))`, corpus-proven): each run must
-    // see the CALLER's original GetURLBase, never a previous run's mutated copy. `random()` is
-    // avoided here (its seed state would itself differ between the two calls) in favour of a
-    // deterministic self-referential mutation that still detects a leak: if run 2 started from
-    // run 1's mutated base, its own increment would land one byte further than run 1's.
+    // The base is copied per run (`GetURLBase[8] := chr(ord('a') + random(3))`, corpus-proven):
+    // each run must see the CALLER's original GetURLBase, never a previous run's mutated copy.
+    // `random()` is avoided here (its seed state would itself differ between the two calls) in
+    // favour of a deterministic self-referential mutation that still detects a leak: if run 2
+    // started from run 1's mutated base, its own increment would land one byte further than run
+    // 1's.
     FakeScriptHost host;
     auto script =
         mustCreate(QByteArrayLiteral(
@@ -227,8 +228,8 @@ TEST(UrlScript, GetUrlBaseMutationDoesNotLeakToNextCall) {
 }
 
 TEST(UrlScript, VersionIsInputOnly) {
-    // spec 5.1 row 14: `Version` is bound in but has no read-back slot; a script can only observe
-    // it, never mutate what the caller sees.
+    // `Version` is bound in but has no read-back slot; a script can only observe it, never mutate
+    // what the caller sees.
     FakeScriptHost host;
     auto script = mustCreate(QByteArrayLiteral("begin ResultURL := Version; end."), host);
     ASSERT_TRUE(script);
@@ -240,8 +241,8 @@ TEST(UrlScript, VersionIsInputOnly) {
 }
 
 TEST(UrlScript, DownloaderNullWhenNotEnabled) {
-    // spec 5.1 row 4: `Downloader` is nil unless the map enables it - maptype's job to set, not
-    // UrlScript's; a caller-supplied null downloader must reach the script as `Assigned = False`.
+    // `Downloader` is nil unless the map enables it - maptype's job to set, not UrlScript's; a
+    // caller-supplied null downloader must reach the script as `Assigned = False`.
     FakeScriptHost host;
     auto script =
         mustCreate(QByteArrayLiteral(
@@ -294,8 +295,8 @@ TEST(UrlScript, VmReusableAfterRuntimeError) {
 TEST(UrlScript, ConcurrentCallsAreSerialised) {
     // 8 threads hammering one UrlScript: buildRequest's mutex must serialise every run, so
     // ScriptBuffer's read-modify-write (append one byte) never loses an update. Deterministic (no
-    // sleeps): correctness is checked purely by the final length after every thread has joined -
-    // TSan-clean per the ticket.
+    // sleeps): correctness is checked purely by the final length after every thread has
+    // joined - TSan-clean.
     FakeScriptHost host;
     auto script = mustCreate(QByteArrayLiteral("begin ScriptBuffer := ScriptBuffer + 'a'; end."), host);
     ASSERT_TRUE(script);
@@ -320,11 +321,11 @@ TEST(UrlScript, ConcurrentCallsAreSerialised) {
 }
 
 TEST(UrlScript, CancellationSkipsTheScript) {
-    // Finding 1 (T-0015C rework, Tech Lead ruling): legacy checks the cancel notifier before
-    // taking the lock (u_TileDownloadRequestBuilderPascalScript.pas:220) and again right after
-    // acquiring it (:223) - the second check matters because the wait for the lock can be long
-    // (another slot's script may be blocked in a nested HTTP request). Either hit must skip the
-    // script entirely: no request, no error, ScriptBuffer untouched.
+    // Legacy checks the cancel notifier before taking the lock
+    // (u_TileDownloadRequestBuilderPascalScript.pas:220) and again right after acquiring it
+    // (:223) - the second check matters because the wait for the lock can be long (another
+    // slot's script may be blocked in a nested HTTP request). Either hit must skip the script
+    // entirely: no request, no error, ScriptBuffer untouched.
 
     // --- cancelled before the call: caught by the pre-lock check -----------------------------
     {
@@ -380,7 +381,7 @@ TEST(UrlScript, CancellationSkipsTheScript) {
     }
 }
 
-// --- T-0082 (P-6, spec 8.1 C-11): one CompiledScript shared by several UrlScript objects -----------
+// --- one CompiledScript shared by several UrlScript objects -----------
 
 namespace {
 
@@ -445,11 +446,11 @@ TEST(UrlScript, TwoObjectsOverOneCompiledScriptKeepIndependentRunState) {
 }
 
 TEST(UrlScript, TwoObjectsOverOneCompiledScriptRunConcurrently) {
-    // Thread-safety claim (handoff T-0082): the compiled program is read-only, and each object
-    // serialises only its own runs. Both runs must be inside the host at the same time; the
-    // probe waits up to 2 s for that, so a serialising regression fails rather than hangs.
-    // The program touches the shared data on every run: a const, an array, string operations and
-    // a regular-expression builtin. Each thread checks its own result against the same expected URL.
+    // Thread-safety claim: the compiled program is read-only, and each object serialises only its
+    // own runs. Both runs must be inside the host at the same time; the probe waits up to 2 s for
+    // that, so a serialising regression fails rather than hangs. The program touches the shared data
+    // on every run: a const, an array, string operations and a regular-expression builtin. Each
+    // thread checks its own result against the same expected URL.
     OverlapProbeHost host;
     auto compiled = CompiledScript::compile(
         QByteArrayLiteral("const Base = 'ab';\n"

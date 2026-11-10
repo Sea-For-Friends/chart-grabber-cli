@@ -36,7 +36,7 @@ public:
 using ITileDownloadRequestBuilderPtr = std::shared_ptr<ITileDownloadRequestBuilder>;
 
 // u_TileDownloadRequestBuilder.pas:37-54. FCS is a recursive critical section (:67, SyncBigRecursive).
-// NOLINTNEXTLINE(readability-identifier-naming): abstract class with logic (spec 2.12.4)
+// NOLINTNEXTLINE(readability-identifier-naming): abstract class with logic
 class TileDownloadRequestBuilder : public ITileDownloadRequestBuilder {
 protected:
     explicit TileDownloadRequestBuilder(std::shared_ptr<TileDownloadRequestBuilderConfig> config);

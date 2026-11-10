@@ -5,8 +5,8 @@
 #pragma once
 // Ports: i_ZmpConfig.pas, u_ZmpConfig.pas
 //
-// The defaults every ZMP is loaded with (spec maptype.md §2.6.9), persisted in the main INI
-// section [ZmpDefaultParams]. ZmpInfo reads it once at construction.
+// The defaults every ZMP is loaded with, persisted in the main INI section [ZmpDefaultParams].
+// ZmpInfo reads it once at construction.
 
 #include "cg/core/config_element.h"
 
@@ -14,7 +14,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class ZmpConfig final : public core::ConfigElement {
 public:
     ZmpConfig();

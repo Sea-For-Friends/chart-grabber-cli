@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/core/content_type_func (Src/ContentType/u_ContentTypeFunc.pas :49-100). T-0183.
-// FEAT-REG-069 (Export to MBTiles) is contributed to by this unit (the direct-copy predicate uses it).
+// Tests for src/cg/core/content_type_func (Src/ContentType/u_ContentTypeFunc.pas :49-100). The MBTiles
+// export's direct-copy predicate uses it.
 //
 // Expectations are literals from the Pascal: IsBmp image/bmp, IsGif image/gif, IsWebp image/webp,
 // IsJpeg image/jpg | image/jpeg | image/pjpeg, IsPng image/png, each compared with SameTextA (equality

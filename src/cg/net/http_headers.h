@@ -13,21 +13,21 @@
 // Only the first matching line is ever acted on. `upName` must already be UPPER-CASE ASCII;
 // matching is 7-bit-ASCII case-insensitive and a PREFIX match with no delimiter required, so
 // "CONTENT-TYPE" also matches a "Content-Type-Options: ..." line -- legacy behavior, not a bug,
-// and the 48-script ZMP corpus depends on it (docs/specs/net.md §2.11).
+// and the 48-script ZMP corpus depends on it.
 
 #include <QByteArray>
 #include <QByteArrayView>
 
 namespace cg::net {
 
-// T-0028: getHeaderValueUp/replaceHeaderValueUp/deleteHeaderValueUp are thin forwards to
+// getHeaderValueUp/replaceHeaderValueUp/deleteHeaderValueUp are thin forwards to
 // cg::core::header_text (moved there so cg::script, which the module DAG forbids from linking
 // net, can share the one implementation via core). Kept here, under these names, because net's
 // own downloader/proxy code (curl_downloader.cpp, proxy_resolver.cpp) calls them unqualified.
 
 // Returns "" both for "absent" and for "present but empty" -- indistinguishable, and the
-// Content-Length gate (docs/specs/net.md §2.12.1) relies on that. Trailing whitespace is not
-// trimmed; leading whitespace/colons are skipped.
+// Content-Length gate relies on that. Trailing whitespace is not trimmed; leading
+// whitespace/colons are skipped.
 [[nodiscard]] QByteArray getHeaderValueUp(QByteArrayView headers, QByteArrayView upName);
 
 // Replaces the value text in place, preserving the name, separator and the line's CRLF. Rejects

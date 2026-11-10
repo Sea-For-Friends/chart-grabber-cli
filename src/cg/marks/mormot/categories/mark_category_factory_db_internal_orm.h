@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/MarksDB/mORMot/Categories/i_MarkCategoryFactoryDbInternalORM.pas (48 lines, interface
 // IMarkCategoryFactoryDbInternalORM) and Src/MarksDB/mORMot/Categories/u_MarkCategoryFactoryDbInternalORM.pas
-// (99 lines, class MarkCategoryFactoryDbInternalORM). Spec: docs/specs/marks.md §2.9.6.
+// (99 lines, class MarkCategoryFactoryDbInternalORM).
 //
 // The factory stores the dbId of its database and stamps it on every category it creates.
 

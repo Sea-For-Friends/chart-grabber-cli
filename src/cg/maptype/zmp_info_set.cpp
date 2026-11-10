@@ -27,14 +27,14 @@ bool isHiddenZmp(const QString& name) {
     return !fileName.isEmpty() && fileName.front() == QLatin1Char('.');
 }
 
-// The legacy names use '\' (PathDelim), the sort compares them as such (spec 2.4.1, DV-2); the
-// port's names use '/', so the key restores '\' to keep the order unchanged.
+// The legacy names use '\' (PathDelim), the sort compares them as such; the port's names use '/',
+// so the key restores '\' to keep the order unchanged.
 QString sortKey(QString name) {
     return name.replace(QLatin1Char('/'), QLatin1Char('\\'));
 }
 
 // The zip provider answers "absent" for a member it could not extract; legacy raised, and the
-// handler above dropped the ZMP (D-63, Tech Lead ruling T-0072).
+// handler above dropped the ZMP.
 void throwIfDamaged(const core::ConfigProviderZip& zip) {
     if (const auto status = zip.status(); !status) {
         throw std::runtime_error(status.error().what().toUtf8().toStdString());
@@ -70,7 +70,7 @@ ZmpInfoSet::ZmpInfoSet(const ZmpConfig& zmpConfig, const core::ILanguageManager&
         try {
             core::IConfigProviderPtr container;
             std::shared_ptr<core::ConfigProviderZip> zip;
-            if (SourceJsonContainer::isSourceJsonName(name)) { // NEW: map-source-json.md section 2
+            if (SourceJsonContainer::isSourceJsonName(name)) { // NEW: the *.source.json map sources
                 auto loaded = SourceJsonContainer::load(fullFileName);
                 if (!loaded) {
                     throw std::runtime_error(QStringLiteral("There is an error %1 in map %2")
@@ -99,7 +99,7 @@ ZmpInfoSet::ZmpInfoSet(const ZmpConfig& zmpConfig, const core::ILanguageManager&
                         *zip); // a damaged member reads as absent: report the archive error, not "Not found"
                 }
                 if (e.kind() == ZmpError::Kind::UnknownContentType) {
-                    throw; // port-only (D-74): the text already names the map, reported unchanged
+                    throw; // port-only: the text already names the map, reported unchanged
                 }
                 throw std::runtime_error(QStringLiteral("There is an error %1 in map %2")
                                              .arg(e.message(), name)
@@ -135,9 +135,8 @@ ZmpInfoSet::ZmpInfoSet(const ZmpConfig& zmpConfig, const core::ILanguageManager&
         guids_.push_back(zmp->guid());
         ++zmpCount;
     }
-    // :190-213 -- the 32 reserved proxy slots belong to the offline-map proxies (spec 2.14).
-    // Not ported in this ticket (out of scope, no proxy ticket number yet): they are appended here,
-    // their pnum continues at zmpCount.
+    // :190-213 -- the 32 reserved proxy slots belong to the offline-map proxies. Not ported: they
+    // are appended here, their pnum continues at zmpCount.
 }
 
 IZmpInfoPtr ZmpInfoSet::zmpByGuid(const QUuid& guid) const {

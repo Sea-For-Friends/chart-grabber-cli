@@ -31,7 +31,7 @@ TransactionRec MarkSystemORMTransaction::start(bool isReadOnly) {
         return rec;
     }
     // A refused BEGIN: legacy leaves the client's flag set (orm/mormot.orm.client.pas:660-670), so every
-    // later Start joins and nothing is ever committed. Not reproduced (D-79): the flag stays clear.
+    // later Start joins and nothing is ever committed. Not reproduced: the flag stays clear.
     // TransactionBegin: BEGIN TRANSACTION; (db/mormot.db.raw.sqlite3.pas:6761-6777)
     if (!db_.exec("BEGIN TRANSACTION;")) {
         throw MarkSystemORMError("MarkSystemORM: Start transaction is failed!");

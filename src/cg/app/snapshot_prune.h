@@ -4,7 +4,7 @@
 
 #pragma once
 // New code. Inherits: Src/RegionProcess/Delete/u_ThreadDeleteTiles.pas ProcessRegion (per-tile lookup, then
-// DeleteTile with the found version). Ports: nothing. docs/specs/weather-sources.md 9 (T-0246).
+// DeleteTile with the found version). Ports: nothing.
 //
 // Removes, for every tile of the area at the given zooms, every stored version except the map's current one.
 

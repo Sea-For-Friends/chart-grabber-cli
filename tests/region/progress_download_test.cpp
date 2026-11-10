@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/progress_download (Src/RegionProcess/Download/frm_ProgressDownload.pas :166-167,
-// 251-261, 316-321, 395-437, 451-577, 586-595; the headless half). T-0182, proofs 1-7.
-// FEAT-REG-016 (autosave) and FEAT-REG-017 (save session): contribute only (docs/parity/held-open.md).
+// 251-261, 316-321, 395-437, 451-577, 586-595; the headless half).
 //
 // Rig: a real RegionProcessProgressInfoDownload over a real DownloadSession; the progress object's clock
 // (days) is `Rig::days`, the file-name clock (legacy Now) is `Rig::wall`, and the injected sleep advances
@@ -109,7 +108,7 @@ void touch(const QString& path) {
 } // namespace
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 1: the interval (:529-540). Whole minutes, Delphi Round (ties to even), compared with `<`.
+// The interval (:529-540). Whole minutes, Delphi Round (ties to even), compared with `<`.
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadAutosave, IntervalZeroNeverSaves) {
@@ -159,7 +158,7 @@ TEST(ProgressDownloadAutosave, TiesGoToEven) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 2: names (:474-527)
+// Names (:474-527)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadAutosave, FileNames) {
@@ -202,7 +201,7 @@ TEST(ProgressDownloadAutosave, TenCollisionsDoNotSaveAndTheNextCallSavesAtOnce) 
     EXPECT_EQ(r.sleeps.size(), 10u);
     EXPECT_TRUE(r.pd->sessionFileName().isEmpty());
     EXPECT_EQ(r.files().size(), 10);
-    EXPECT_TRUE(r.memo.isEmpty()); // finding a: a silent Exit
+    EXPECT_TRUE(r.memo.isEmpty()); // A silent Exit
 
     // the progress clock did not move (0 min < interval 5): only "not initialized" can save now
     r.pd->checkSessionAutosave();
@@ -211,7 +210,7 @@ TEST(ProgressDownloadAutosave, TenCollisionsDoNotSaveAndTheNextCallSavesAtOnce) 
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 3: rotation and close (:554-563, :586-595)
+// Rotation and close (:554-563, :586-595)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadAutosave, RotationKeepsNewestAndOneBackupThenCloseDropsTheBackup) {
@@ -234,7 +233,7 @@ TEST(ProgressDownloadAutosave, RotationKeepsNewestAndOneBackupThenCloseDropsTheB
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 4: LR-4, DoSaveSession (:451-470)
+// DoSaveSession (:451-470)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadSaveSession, KeepsForeignKeysAndSectionsAndWritesTheStateKeys) {
@@ -281,7 +280,7 @@ TEST(ProgressDownloadSaveSession, EmptyTargetDoesNothingAndAnUnwritableOneThrows
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 5: the exception path (:486-488, :566-576), finding b
+// The exception path (:486-488, :566-576)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadAutosave, DirectoryUnderARegularFileLogsOnceThenReusesThePrefix) {
@@ -316,7 +315,7 @@ TEST(ProgressDownloadAutosave, DirectoryUnderARegularFileLogsOnceThenReusesThePr
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 6: the texts (:316-321, :395-429)
+// The texts (:316-321, :395-429)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadTexts, PercentText) {
@@ -352,7 +351,7 @@ TEST(ProgressDownloadTexts, RemainingTime) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 7: the destructor (:251-261)
+// The destructor (:251-261)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(ProgressDownloadLifetime, DestructorCancelsTheNotifier) {

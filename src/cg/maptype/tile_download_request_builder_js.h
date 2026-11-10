@@ -3,11 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing for the engine (NEW code, ADR-0014); the flow of buildRequest and the host objects mirror
+// Ports: nothing for the engine (NEW code); the flow of buildRequest and the host objects mirror
 // u_TileDownloadRequestBuilderPascalScript.pas (BuildRequest :217-283, SetVar :328-379) and the script's
 // Downloader, u_SimpleHttpDownloader.pas:81-124. The QJSEngine is created on the calling thread, never shared
-// and rebuilt when the slot's thread changes (ADR-0014 point 3); ctx.state lives in this class, not in the
-// engine.
+// and rebuilt when the slot's thread changes; ctx.state lives in this class, not in the engine.
 //
 // One instance per (source, download slot). The base class lock is held for the whole buildRequest.
 // Line citations in the .cpp without a file name are u_TileDownloadRequestBuilderPascalScript.pas.
@@ -57,13 +56,12 @@ public:
                  const std::shared_ptr<net::LastResponseInfo>& lastResponseInfo,
                  const std::stop_token& cancel) override;
 
-    // The factory's one-time check (ADR-0014 point 6): runs the top-level code in a fresh engine and looks
-    // for the function getUrl. Empty text = fine, else the message the source is disabled with.
+    // The factory's one-time check: runs the top-level code in a fresh engine and looks for the function
+    // getUrl. Empty text = fine, else the message the source is disabled with.
     [[nodiscard]] QString checkScript();
 
 protected:
-    // spec 5.4: pascal.random, pascal.randomRange and Math.random all draw here; a test subclass overrides
-    // it.
+    // pascal.random, pascal.randomRange and Math.random all draw here; a test subclass overrides it.
     [[nodiscard]] qint32 random(qint32 upperExclusive) override;
 
 private:

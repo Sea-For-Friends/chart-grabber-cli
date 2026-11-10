@@ -663,8 +663,9 @@ The exit code is 4.
 
 ### HTTP 403 without a Referer or User-Agent
 
-Some servers refuse a request that has no `Referer` or a browser's `User-Agent`. `probe` shows the status. `download`
-only counts the tile as `missing`:
+Some servers refuse a request that has no `Referer` or a browser's `User-Agent`. The program retries a 403 once with curl's `User-Agent` by itself, so a server that only refuses a browser's `User-Agent` needs no `headers` line; a server that wants a `Referer` or a particular `User-Agent` still needs one. `probe` shows the status. `download`
+prints `warning: the server refused 3 of 120 requested tiles: HTTP 403` when some tiles are refused, and ends with
+exit 4 and `error: the server refused all 48 requested tiles: HTTP 403` when every tile is refused and none was already stored:
 
 ```
 $ chart-grabber-cli probe --maps=broken/forbidden --at=-1.29,50.76 --probe-zoom=12

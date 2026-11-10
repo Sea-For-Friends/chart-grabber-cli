@@ -3,11 +3,11 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/Basic/u_NetworkStrFunc.pas:69-403; Src/PascalScript/u_PascalScriptUtils.pas:88-119.
-// FEAT-NET-011 (this file backs the raw ResponseHead/RequestHead contract that content-type
-// detection and the ZMP script header functions both sit on top of). T-0028: the line-scan engine
-// (IdemPChar/GetHeaderValueUp/ReplaceHeaderValueUp/DeleteHeaderValueUp and the script-facing
-// wrappers) moved to cg::core::header_text; this file keeps thin forwards under the names net's
-// own code calls unqualified (curl_downloader.cpp, proxy_resolver.cpp), plus the net-only helpers
+// This file backs the raw ResponseHead/RequestHead contract that content-type detection and the
+// ZMP script header functions both sit on top of. The line-scan engine (IdemPChar/
+// GetHeaderValueUp/ReplaceHeaderValueUp/DeleteHeaderValueUp and the script-facing wrappers) moved
+// to cg::core::header_text; this file keeps thin forwards under the names net's own code calls
+// unqualified (curl_downloader.cpp, proxy_resolver.cpp), plus the net-only helpers
 // (addHeaderValue, parseStatusLine, urlEncode/urlDecode).
 #include "cg/net/http_headers.h"
 

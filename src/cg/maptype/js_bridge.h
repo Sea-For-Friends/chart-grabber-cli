@@ -3,11 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (NEW code, ADR-0014 point 4). The one QObject a JavaScript builder hands to its fixed
-// prelude as a function argument (never a global): the prelude builds the frozen host objects of spec §5.2 /
-// §5.4 over its Q_INVOKABLE methods. Every method returns a list [ok, value]; the prelude throws the text of
-// a failed one, so no C++ exception and no engine type crosses this class. Used on the thread of its engine
-// only.
+// Ports: nothing (NEW code). The one QObject a JavaScript builder hands to its fixed prelude as a function
+// argument (never a global): the prelude builds the frozen host objects over its Q_INVOKABLE methods. Every
+// method returns a list [ok, value]; the prelude throws the text of a failed one, so no C++ exception and no
+// engine type crosses this class. Used on the thread of its engine only.
 
 #include "cg/maptype/js_script_watchdog.h"
 #include "cg/maptype/js_shared_store.h"
@@ -45,7 +44,7 @@ public:
              std::shared_ptr<JsScriptWatchdog::Entry> clock);
     ~JsBridge() override;
 
-    // template() and http exist inside getUrl only (spec §5.2).
+    // template() and http exist inside getUrl only.
     void setInGetUrl(bool inGetUrl) { inGetUrl_ = inGetUrl; }
     // Defensive: whether an interrupted script runs the finally of shared.locked depends on the Qt version;
     // the builder calls this after every run.

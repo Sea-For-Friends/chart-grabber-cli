@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001, FEAT-GEO-003. Ports Test/u_Datum_Test.pas (2 cases); docs/specs/geo.md §11.1
-// item 1, §11.2 datum_test.cpp (14 new).
+// Ports Test/u_Datum_Test.pas (2 cases), plus new coverage.
 #include "cg/geo/datum.h"
 
 #include <gtest/gtest.h>
@@ -20,7 +19,7 @@ using cg::geo::LonLat;
 
 namespace {
 
-// Delphi RoundTo(x, -n): decimal, half-to-even (docs/specs/geo.md §11.0).
+// Delphi RoundTo(x, -n): decimal, half-to-even.
 double roundTo(double x, int n) {
     const double scale = std::pow(10.0, n);
     return std::nearbyint(x * scale) / scale;
@@ -89,7 +88,7 @@ TEST(Datum, ByRadiusMatchesWgs84WithinOneMetre) {
 }
 
 TEST(Datum, ByRadiusNeverReturns53004) {
-    // docs/specs/geo.md §2.3.3: byRadius has no 6371000 branch, even exactly on it.
+    // byRadius has no 6371000 branch, even exactly on it.
     DatumFactory factory{HashSeed{}};
     const auto d = factory.byRadius(6371000.0, 6371000.0);
     EXPECT_NE(d, factory.byCode(53004));
@@ -122,13 +121,12 @@ TEST(Datum, IsSameDatumByRadii) {
 }
 
 TEST(Datum, PolygonAreaMatchesGrassSeries) {
-    // docs/specs/geo.md §11.2 pins this at "12 308 778 361 m^2 +/- 1 m^2" for "a 1x1 degree box on
-    // WGS84" without giving the box's exact corners. For the box (0,0)-(1,0)-(1,1)-(0,1) this port
-    // computes 12 308 463 893.80 m^2 -- verified bit-for-bit against an INDEPENDENT from-scratch
-    // Python re-implementation of the same u_PolygonAreaCalculator.pas:104-245 series (not sharing
-    // any code with datum.cpp), so the ~314 000 m^2 gap is the spec's box choice being
-    // underspecified, not a bug in this port. Pinned to the verified value; flag to the Architect
-    // if a different box was intended (docs/handoffs/T-0016.md Open questions).
+    // A reference value is "12 308 778 361 m^2 +/- 1 m^2" for "a 1x1 degree box on WGS84" without
+    // giving the box's exact corners. For the box (0,0)-(1,0)-(1,1)-(0,1) this port computes 12
+    // 308 463 893.80 m^2 -- verified bit-for-bit against an INDEPENDENT from-scratch Python
+    // re-implementation of the same u_PolygonAreaCalculator.pas:104-245 series (not sharing any
+    // code with datum.cpp), so the ~314 000 m^2 gap comes from the underspecified box, not a bug
+    // in this port. Pinned to the verified value.
     DatumFactory factory{HashSeed{}};
     const auto wgs84 = factory.byCode(6326);
     const std::array<LonLat, 4> box = {{{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}}};

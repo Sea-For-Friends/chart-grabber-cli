@@ -65,10 +65,9 @@ TEST(ConsoleTest, ResultGoesToOutOnlyAndMessagesToErrWithPrefixes) {
     EXPECT_EQ(err.text(), QByteArray("warning: W1\nerror: E1\n"));
 }
 
-// T-0335: the streams are text-mode files (what stdout/stderr are on Windows): the Console must make them
-// binary, so
-// "\n" stays one byte (the machine-readable output is a contract). tmpfile() is binary on Windows and could
-// not fail here.
+// The streams are text-mode files (what stdout/stderr are on Windows): the Console must make them binary,
+// so "\n" stays one byte (the machine-readable output is a contract). tmpfile() is binary on Windows and
+// could not fail here.
 TEST(ConsoleTest, LineFeedsReachTextModeFilesUnchanged) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -136,7 +135,7 @@ TEST(ConsoleTest, ProgressOffPrintsNothing) {
     EXPECT_EQ(err.text(), QByteArray());
 }
 
-// T-0217 item 4: -q is "errors and results only" (app-cli.md 1.2): no progress line, on a terminal or not.
+// -q is "errors and results only": no progress line, on a terminal or not.
 TEST(ConsoleTest, QuietPrintsNoProgressLine) {
     Stream out;
     Stream err;
@@ -162,7 +161,7 @@ TEST(ConsoleTest, NonTerminalProgressPrintsFirstThenOnePer30Seconds) {
     now = 1000 + 30000 + 29999;
     console.progress(QStringLiteral("P4"));
     EXPECT_EQ(err.text(), QByteArray("P1\nP3\n"));
-    console.endProgress(); // not a terminal: no newline; the dropped P4 is the last text of the run (T-0266)
+    console.endProgress(); // not a terminal: no newline; the dropped P4 is the last text of the run
     EXPECT_EQ(err.text(), QByteArray("P1\nP3\nP4\n"));
 }
 
@@ -243,7 +242,7 @@ TEST(ConsoleTest, TerminalProgressOffStaysSilentEvenIfForced) {
     EXPECT_EQ(err.text(), QByteArray());
 }
 
-// T-0203: with the records on, progress() never prints (terminal or not); a record is one whole line on err.
+// With the records on, progress() never prints (terminal or not); a record is one whole line on err.
 TEST(ConsoleTest, ProgressRecordsSwitchTheHumanProgressLineOff) {
     for (const bool terminal : {true, false}) {
         Stream out;
@@ -270,7 +269,7 @@ TEST(ConsoleTest, ProgressRecordEndsAShowingProgressLineFirstAndIgnoresVerbosity
         console.progressRecord(QStringLiteral("phase\tfill\t{G}"));
         EXPECT_EQ(err.text(), QByteArray("\rabc\nphase\tfill\t{G}\n"));
     }
-    { // -q hides the human line (T-0217) but not a record
+    { // -q hides the human line but not a record
         Stream out;
         Stream err;
         Console console(-1, true, out.get(), err.get(), {}, true);
@@ -280,7 +279,7 @@ TEST(ConsoleTest, ProgressRecordEndsAShowingProgressLineFirstAndIgnoresVerbosity
     }
 }
 
-// T-0203 proof 4: two threads, records and warnings into one FILE*: every line is whole.
+// Two threads, records and warnings into one FILE*: every line is whole.
 TEST(ConsoleTest, RecordsAndWarningsFromTwoThreadsNeverInterleaveInsideALine) {
     Stream out;
     Stream err;
@@ -323,7 +322,7 @@ TEST(ConsoleTest, RecordsAndWarningsFromTwoThreadsNeverInterleaveInsideALine) {
     EXPECT_EQ(nWarnings, kCount);
 }
 
-// T-0266: a non-terminal run that ends inside the 30 s window still shows the last text it was given.
+// A non-terminal run that ends inside the 30 s window still shows the last text it was given.
 TEST(ConsoleTest, NonTerminalEndProgressPrintsTheDroppedLastLine) {
     Stream out;
     Stream err;
@@ -339,7 +338,7 @@ TEST(ConsoleTest, NonTerminalEndProgressPrintsTheDroppedLastLine) {
     EXPECT_EQ(err.text(), QByteArray("A\nC\n"));
 }
 
-// T-0266: nothing is printed twice; a second endProgress after the final line adds nothing.
+// Nothing is printed twice; a second endProgress after the final line adds nothing.
 TEST(ConsoleTest, NonTerminalEndProgressPrintsNothingWhenLastLineWasPrinted) {
     Stream out;
     Stream err;
@@ -364,7 +363,7 @@ TEST(ConsoleTest, NonTerminalEndProgressPrintsNothingWhenLastLineWasPrinted) {
     EXPECT_EQ(err2.text(), QByteArray("A\nC\n"));
 }
 
-// T-0266: -q (verbosity -1) and --progress=lines (records) print no progress text, so no final line either.
+// -q (verbosity -1) and --progress=lines (records) print no progress text, so no final line either.
 TEST(ConsoleTest, NonTerminalFinalLineRespectsQuietAndRecords) {
     Stream outQuiet;
     Stream errQuiet;
@@ -384,7 +383,7 @@ TEST(ConsoleTest, NonTerminalFinalLineRespectsQuietAndRecords) {
     EXPECT_EQ(errRecords.text(), QByteArray());
 }
 
-// T-0266: a terminal keeps its rewrite-in-place behaviour; the final endProgress only ends the line.
+// A terminal keeps its rewrite-in-place behaviour; the final endProgress only ends the line.
 TEST(ConsoleTest, TerminalEndProgressUnchanged) {
     Stream out;
     Stream err;
@@ -395,7 +394,7 @@ TEST(ConsoleTest, TerminalEndProgressUnchanged) {
     EXPECT_EQ(err.text(), QByteArray("\rA\rB\n"));
 }
 
-// T-0267: endProgress never repeats the text printed last, even when the throttle stored it as pending.
+// endProgress never repeats the text printed last, even when the throttle stored it as pending.
 TEST(ConsoleTest, NonTerminalEndProgressDoesNotRepeatThePrintedLine) {
     Stream out;
     Stream err;

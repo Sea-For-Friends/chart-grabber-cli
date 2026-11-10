@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: i_MapTypeSetChangeable.pas (the interface only; the two classes of
-//        u_MapTypeSetChangeable.pas join this header with the active-maps ticket)
+//        u_MapTypeSetChangeable.pas are not ported yet)
 
 #include "cg/core/changeable.h"
 #include "cg/maptype/map_type_set.h"

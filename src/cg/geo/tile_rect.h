@@ -6,7 +6,7 @@
 // Ports: i_TileRect.pas (whole)
 //
 // A tile-space rectangle bound to the IProjection it was computed against. A value type, not an
-// interface: `ITileRect` has one implementation and no polymorphic user (docs/specs/geo.md §4.1).
+// interface: `ITileRect` has one implementation and no polymorphic user.
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/projection.h"

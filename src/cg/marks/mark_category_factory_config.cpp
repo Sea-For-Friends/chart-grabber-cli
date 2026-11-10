@@ -6,8 +6,8 @@
 
 #include <utility>
 
-// Ports u_MarkCategoryFactoryConfig.pas (T-0091). The legacy child is added with Add(item, strategy) = all
-// four flags on (u_ConfigDataElementComplexBase.pas:266-272), as maptype/map_type_gui_config.cpp does.
+// Ports u_MarkCategoryFactoryConfig.pas. The legacy child is added with Add(item, strategy) = all four
+// flags on (u_ConfigDataElementComplexBase.pas:266-272), as maptype/map_type_gui_config.cpp does.
 
 using namespace Qt::StringLiterals;
 

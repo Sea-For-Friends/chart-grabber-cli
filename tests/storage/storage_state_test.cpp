@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-001. Ports i_StorageState.pas, i_StorageStateInternal.pas,
-// u_StorageStateInternal.pas, u_StorageStateStatic.pas; docs/specs/storage.md §2.7 (:503-530)
+// Ports i_StorageState.pas, i_StorageStateInternal.pas, u_StorageStateInternal.pas,
+// u_StorageStateStatic.pas
 #include "cg/storage/storage_state.h"
 
 #include <gtest/gtest.h>

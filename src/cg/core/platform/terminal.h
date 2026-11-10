@@ -14,8 +14,8 @@ namespace cg::core::platform {
 // isatty(fileno(stream)) == 1
 [[nodiscard]] bool isTerminal(std::FILE* stream);
 
-// T-0335: Windows only (a no-op elsewhere): `stream` becomes binary (no "\n" -> "\r\n"), and a console gets
-// the UTF-8 output code page. Called once per stream by Console.
+// Windows only (a no-op elsewhere): `stream` becomes binary (no "\n" -> "\r\n"), and a console gets the
+// UTF-8 output code page. Called once per stream by Console.
 void prepareOutputStream(std::FILE* stream);
 
 // True when "\n" written to `stream` reaches the file as one byte: always on POSIX; on Windows only in binary

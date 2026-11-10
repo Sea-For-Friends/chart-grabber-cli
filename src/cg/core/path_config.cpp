@@ -69,7 +69,7 @@ void PathConfig::setBasePathConfig(PathConfigPtr value) {
 void PathConfig::doReadConfig(const IConfigProviderPtr& src) {
     // Ports u_PathConfig's DoReadConfig -- the observable effect of setPath(src->readString(
     // storeIdent_, path())), but calling the private ...Locked() helpers directly: we are already
-    // inside the write lock ConfigElement::readConfig() took (core.md 2.16 "...Locked() rule").
+    // inside the write lock ConfigElement::readConfig() took.
     const QString value = (src && !storeIdent_.isEmpty()) ? src->readString(storeIdent_, path_) : path_;
     setPathLocked(value);
     updateFullPathLocked();
@@ -94,9 +94,9 @@ void PathConfig::setPathLocked(const QString& value) {
         relative_ = false;
         baseChanged_.reset();
         subscribedBaseRaw_ = nullptr;
-        // T-0335: on Windows such a path is the normal native form: no warning
+        // On Windows such a path is the normal native form: no warning
         if (!platform::kWindowsHost &&
-            !windowsPathWarned_) { // finding 5a: once per instance, not once per setPath() call
+            !windowsPathWarned_) { // Once per instance, not once per setPath() call
             qCWarning(logConfig) << "PathConfig: Windows path kept verbatim, will not exist on Linux:"
                                  << normalized;
             windowsPathWarned_ = true;
@@ -111,7 +111,7 @@ void PathConfig::setPathLocked(const QString& value) {
 
 QString PathConfig::computeFullPathLocked() const {
     if (!relative_) {
-        // core.md 2.18 rule 1: an absolute path is kept verbatim, delimiter included (u_PathConfig.pas:262).
+        // An absolute path is kept verbatim, delimiter included (u_PathConfig.pas:262).
         return path_;
     }
     const QString rel = path_.isEmpty() ? QStringLiteral(".") : path_;
@@ -136,7 +136,7 @@ void PathConfig::subscribeToBaseLocked() {
     // The subscription to the base's changed() exists only while this path is relative (rule 5).
     const bool wantSubscribed = relative_ && base_ != nullptr;
     if (wantSubscribed && baseChanged_.isActive() && subscribedBaseRaw_ == base_.get()) {
-        return; // finding 5b: already subscribed to this exact base; don't tear down and rebuild
+        return; // Already subscribed to this exact base; don't tear down and rebuild
     }
     if (!wantSubscribed) {
         baseChanged_.reset();

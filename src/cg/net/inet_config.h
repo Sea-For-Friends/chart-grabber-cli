@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: i_InetConfig.pas, u_InetConfig.pas:94-176,263-343, u_InetConfigStatic.pas,
-// c_InetConfig.pas:26-28. docs/specs/net.md §2.2. FEAT-NET-007.
+// c_InetConfig.pas:26-28.
 
 #include "cg/core/config_element_complex.h"
 #include "cg/core/snapshot.h"
@@ -17,8 +17,8 @@
 
 namespace cg::net {
 
-// The legacy default UA, verbatim from c_InetConfig.pas:26-28. Map servers key off it
-// (ADR-0004 open question 3, answered: ship the same string).
+// The legacy default UA, verbatim from c_InetConfig.pas:26-28. Map servers key off it, so the port
+// ships the same string.
 inline constexpr char kDefaultUserAgent[] =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0";
 
@@ -28,7 +28,7 @@ struct InetSettings { // ports IInetConfigStatic
     quint32 timeoutMs = 40000; // used for BOTH total and connect timeout
     quint32 sleepOnResetConnectionMs = 30000;
     qint32 downloadTryCount = 2;
-    bool ignoreTlsErrors = false; // NEW, ADR-0004 ruling Open-1 [D-2]
+    bool ignoreTlsErrors = false; // NEW (a deviation from legacy)
 };
 
 class InetConfig final : public cg::core::ConfigElementComplex {

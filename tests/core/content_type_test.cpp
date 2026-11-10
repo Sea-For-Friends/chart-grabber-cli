@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: (content-type registry, not independently claimed -- see core.md 6); docs/specs/core.md
-// 2.21, test plan 7.15
+// Covers: the content-type registry (not claimed as a feature of its own).
 #include "cg/core/content_type.h"
 
 #include <gtest/gtest.h>
@@ -142,8 +141,7 @@ TEST(ContentType, WikimapiaTypesAreNotRegisteredByExtension) {
 
 TEST(ContentType, KnownExtensionsAreTheExpectedFifteen) {
     const ContentTypeRegistry& r = ContentTypeRegistry::standard();
-    // Byte-wise sorted (std::sort over QByteArray, spec core.md 2.21.1's own example line lists
-    // ".gif" before ".geojson", which is not actually lexicographic order -- see the handoff).
+    // Byte-wise sorted (std::sort over QByteArray; ".geojson" sorts before ".gif").
     const QList<QByteArray> expected = {".bmp",  ".geojson", ".gif",  ".gpx",  ".ico",
                                         ".jpeg", ".jpg",     ".json", ".kml",  ".kmz",
                                         ".png",  ".tif",     ".tiff", ".webp", ".wikitxt"};
@@ -161,7 +159,7 @@ TEST(ContentType, DuplicateRegistrationIsAnError) {
     EXPECT_FALSE(r.addByExt(".jpg", ContentTypeInfo{"image/jpg", ".jpg", ContentKind::Bitmap}).has_value());
 }
 
-// T-0115 (OQ-14): u_ContentTypeManagerSimple.pas ConverterMatrixUpdateSynonyms (:390-424) and the three
+// u_ContentTypeManagerSimple.pas ConverterMatrixUpdateSynonyms (:390-424) and the three
 // TContentConverterSimpleCopy entries of ConverterMatrixUpdateFixed (:305-388); everything else in the matrix
 // is a codec or an archive converter and is false here.
 TEST(ContentType, SimpleCopyConverterTable) {

@@ -11,7 +11,7 @@
 
 #include <utility>
 
-// Ports u_MarkLineTemplateConfig.pas (T-0098). The format text is SAS_STR_NewPath (u_ResStrings.pas,
+// Ports u_MarkLineTemplateConfig.pas. The format text is SAS_STR_NewPath (u_ResStrings.pas,
 // 'FormatString').
 
 using namespace Qt::StringLiterals;

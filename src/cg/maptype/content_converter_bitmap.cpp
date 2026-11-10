@@ -12,7 +12,7 @@ namespace cg::maptype {
 ContentConverterBitmap::ContentConverterBitmap(bitmap::BitmapTileLoaderPtr source,
                                                bitmap::BitmapTileSaverPtr target)
     : source_(std::move(source)), target_(std::move(target)) {
-    // unreachable in legacy (u_ContentTypeManagerSimple.pas:559-566); no register row
+    // unreachable in legacy (u_ContentTypeManagerSimple.pas:559-566)
     if (!source_) {
         throw std::runtime_error(
             "Can't load bitmap from source type"); // SAS_ERR_CantLoadBitmapFromSourceType :63-66

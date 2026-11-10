@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-030 (prerequisite slice, held open). Ports MapType/u_MapTypeListBuilderFactory.pas
-// (TMapTypeListStatic, TMapTypeListBuilder), i_MapTypeListStatic.pas, i_MapTypeListBuilder.pas;
-// spec maptype.md section 2.11.3. Legacy-defect LD-17 (nil item) is pinned here (deviation row).
+// Ports MapType/u_MapTypeListBuilderFactory.pas (TMapTypeListStatic, TMapTypeListBuilder),
+// i_MapTypeListStatic.pas, i_MapTypeListBuilder.pas. A legacy defect (nil item) is pinned here (a
+// deviation from legacy).
 #include "cg/core/hash.h"
 #include "cg/maptype/map_type_list.h"
 
@@ -162,8 +162,8 @@ TEST(MapTypeListStatic, IsEqualRules) {
     }
 }
 
-// LD-17 (spec maptype.md section 8.5): legacy dereferences a nil item in the hash loop (access
-// violation). The port throws std::logic_error before the builder changes; add(nullptr) is accepted.
+// Legacy dereferences a nil item in the hash loop (access violation). The port throws
+// std::logic_error before the builder changes; add(nullptr) is accepted.
 TEST(MapTypeListBuilder, NilItemIsAcceptedByAddButNotByMakeCopyOrMakeAndClear) {
     const auto a = fakeMap(guidN(1));
     auto builder = builderWith({a, nullptr});

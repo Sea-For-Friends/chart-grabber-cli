@@ -7,20 +7,20 @@
 // (:401-425) / GetSQL_DeleteTile (:854-881), GetTileRectInfo (:444-469) / GetSQL_TileRectInfo
 // (:882-943) / CallbackSelectTileRectInfo (:672-714).
 //
-// docs/specs/storage.md §2.16.3 "The statements". See sqlite_region_handler.h for the class-level
-// design notes (T-0022B2 ruling); this file only defines the three T-0022B4 member functions.
+// See sqlite_region_handler.h for the class-level design notes; this file defines the three write
+// member functions.
 //
 // Mechanism vs. legacy, resolved once here rather than per-statement below: legacy inlines every
 // value (x, y, d, s, the CRC, the version) as SQL text and binds only the tile body (the one value
 // that cannot safely become text). This port keeps that for every plain scalar (x, y, d, s, the
 // version literal, the content type) -- there is no behavioural difference, since the STORED byte
 // value is identical either way -- with two deliberate exceptions:
-//   - `h` (CRC-32) IS bound, as a signed 32-bit int (L-35): binding the bit-reinterpreted value is
+//   - `h` (CRC-32) IS bound, as a signed 32-bit int: binding the bit-reinterpreted value is
 //     simpler and less error-prone than formatting legacy's `IntToStrA(Integer(Cardinal))` text,
 //     and produces the exact same stored INTEGER.
 //   - `b` (the tile body) is always bound; it is arbitrary binary data that cannot be a SQL literal.
 // `c` (content type) is ALWAYS literal, never bound, in both the "NULL" and the mismatched-type
-// case (L-47) -- docs/specs/storage.md §2.16.3 suggests binding it in the common case, but
+// case (a legacy defect, reproduced) -- binding it in the common case would be possible, but
 // SqliteStmt has no bindNull(), and legacy's GetContentTypeToDB produces the literal text `NULL`
 // (four characters, not a bound SQL NULL) for that case too, so literal-always is both simpler and
 // a more faithful port than switching mechanism per case.
@@ -42,8 +42,8 @@ QByteArray versionForColumn(bool useVersionFieldInDb, const MapVersionInfoPtr& v
 
 } // namespace
 
-// `loadDate` is by value because sqlite_region_handler.h's saveTile signature is FINAL (T-0022B2
-// ruling); this .cpp definition must match it exactly.
+// `loadDate` is by value because sqlite_region_handler.h's saveTile signature is FINAL; this .cpp
+// definition must match it exactly.
 core::Result<bool>
 SqliteRegionHandler::saveTile(geo::PointI xy, const MapVersionInfoPtr& version,
                               TileDate loadDate, // NOLINT(performance-unnecessary-value-param)
@@ -64,7 +64,7 @@ SqliteRegionHandler::saveTile(geo::PointI xy, const MapVersionInfoPtr& version,
 
     if (columnInfo_.hasCrc) {
         cols += ",h";
-        vals += ",?"; // bound below, signed int32 (L-35)
+        vals += ",?"; // bound below, signed int32
     }
 
     // SkipIfSameAsPrev's WHERE fragment (GetCheckOtherVersionsBy*SQLText); TNE never gets one --
@@ -180,13 +180,12 @@ bool SqliteRegionHandler::tileRectInfo(geo::RectI destRect, const MapVersionInfo
             sql += " AND " + versionFieldIsEqual(columnInfo_.versionMode,
                                                  versionForColumn(useVersionFieldInDb_, version));
         } else {
-            // Legacy quirk, reproduced (not fixed -- see the T-0022B4 handoff, "Legacy defects
-            // noticed"): this ORDER BY sorts the WHOLE result set by `v`, not per tile, and the
-            // callback below overwrites `items[index]` unconditionally on every row. For a tile
-            // with more than one version row inside `destRect`, the entry this function leaves
-            // behind is therefore the row with the SMALLEST version among that tile's rows (it is
-            // processed last in the DESC traversal), not the largest -- the opposite of what
-            // "newest" and the DESC ordering suggest.
+            // Legacy quirk, reproduced (not fixed): this ORDER BY sorts the WHOLE result set by
+            // `v`, not per tile, and the callback below overwrites `items[index]` unconditionally
+            // on every row. For a tile with more than one version row inside `destRect`, the
+            // entry this function leaves behind is therefore the row with the SMALLEST version
+            // among that tile's rows (it is processed last in the DESC traversal), not the
+            // largest -- the opposite of what "newest" and the DESC ordering suggest.
             sql += " ORDER BY " + getOrderByVersionDesc(columnInfo_.versionMode);
         }
     }

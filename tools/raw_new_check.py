@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T-0090: RAW-NEW hygiene check (same rule as before, minus false positives from comments).
+"""RAW-NEW hygiene check (same rule as before, minus false positives from comments).
 
 Usage: raw_new_check.py FILE...   prints "FILE:LINE" for every offending line, exit 0; exit 2 on a usage/IO error
 (the caller treats a non-zero exit as a gate failure -- fail closed).

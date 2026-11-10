@@ -41,7 +41,7 @@ The file `NOTICE` in the zip lists the third-party libraries that come with it a
 
 ```
 $ chart-grabber-cli --version
-chart-grabber-cli 2026.11.1 (abbe831b4db3)
+chart-grabber-cli 2026.11.2 (f7fb7b49d2ae)
 ```
 
 A map source is a folder ending in `.zmp` (or a file ending in `.source.json`) that tells the program where a map's
@@ -551,6 +551,7 @@ $ chart-grabber-cli probe --maps="$MAPS" --filter=USGS --at=-77.04,38.89 --probe
 - The exit code is 0 when every probed source worked, 4 otherwise (4 in the first USGS example).
 - Sources that cannot be downloaded at all are skipped.
 - The test tile is stored in the cache like any downloaded tile.
+- `probe` makes the same retry after a 403 as a download does, so a source that works only with the curl `User-Agent` shows `ok`.
 
 ## 11. How to use the program from a script
 
@@ -883,7 +884,7 @@ lock of a run that was killed is taken over by the next run on the same computer
 | 1 | Internal error. |
 | 2 | Wrong command line: unknown option, bad value, unreadable job file. |
 | 3 | Job refused before any download: source, area, zoom or output file not usable, or, since 2026.11.1, another run of the same job holds its session lock. |
-| 4 | Download not completed: no progress until the stall timeout, the network or the server is gone (`--max-connection-errors`), tiles could not be saved, or `--strict` with missing tiles. The state is saved; the same command continues. |
+| 4 | Download not completed: no progress until the stall timeout, the network or the server is gone (`--max-connection-errors`), the server refused the tiles (HTTP 401, 403, 451), tiles could not be saved, or `--strict` with missing tiles. The state is saved and the same command continues, except after a refusal: it does not help until the source changes. |
 | 5 | The chart file could not be written, or the cache holds no tile for it. |
 | 130 / 143 | Stopped by Ctrl-C / by `kill` (143 also by `--stop-on-stdin`). The state is saved. |
 
@@ -1045,6 +1046,24 @@ the server's answer.
 
 **`error: no connection to the server for 60 tiles in a row: Error connecting to server`** (exit 4)
 The network or the server is gone. The state is saved; run the same command again when it is back (section 8).
+
+**`error: the server refused 60 tiles in a row: HTTP 403`** (exit 4)
+The server answered and turned the program away: HTTP 401 means it wants a key or a login, 403 that it forbids the
+request, 451 that it is blocked for legal reasons. This is not a network problem, and running the command again does
+not help until the source changes. A source can send its own `User-Agent` and `Referer` (see "HTTP 403 without a
+Referer or User-Agent" in `sources-tutorial.md`); `UserAgentString=` under `[Internet]` in `chart-grabber.conf` sets the
+`User-Agent` for every source. With `-v` each refused tile shows `Server refused: HTTP 403`. The state is saved.
+
+**`error: the server refused all 48 requested tiles: HTTP 403`** (exit 4)
+The run ended, but the server refused every tile it was asked for and none of the area was already stored. Same causes and remedies as above; no chart file
+is written.
+
+**`warning: the server refused 3 of 120 requested tiles: HTTP 403`**
+Some tiles were refused and the others came. The exit code is not changed (0, or 4 with `--strict` when tiles are
+missing). Some servers answer 403 for a tile that does not exist; if the tiles around the gap are fine, the gap
+is most likely such a tile.
+
+When a server answers 403, the program asks once more with the User-Agent of curl (`curl/` and the version of the curl library). If the server accepts that, the program keeps using it for that server until the end of the run, and `-v` shows `Server refused the default User-Agent (HTTP 403); using curl/8.23.0 for ows.digitalearth.africa until the end of the run`. A 403 is reported only when the server refuses that too. A source that sends its own `User-Agent`, or a `UserAgentString=` under `[Internet]` in `chart-grabber.conf`, is never switched.
 
 **`error: "Sentinel-2 Cloudless 2025 (EOX)": cannot write the cache folder …/cache_sqlite/Sentinel2_Cloudless_2025/`** (exit 3)
 The cache directory (`~/.local/share/chart-grabber`, or the one given with `--cache`) is not writable or is a file.

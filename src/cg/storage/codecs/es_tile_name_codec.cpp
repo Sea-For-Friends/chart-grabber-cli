@@ -41,14 +41,13 @@ QString esZoomStr(quint8 zoom) {
 
 } // namespace
 
-// FEAT-STO-004. u_TileFileNameES.pas:74-91 GetTileFileName.
+// u_TileFileNameES.pas:74-91 GetTileFileName.
 //
 // Deviation: legacy's GetTileFileName opens with an unconditional `inherited;` call, and the
 // ancestor TTileFileNameBase.GetTileFileName is `virtual; abstract;` with no body -- in Delphi,
 // calling `inherited` on a method the ancestor never implements raises EAbstractError, which
 // would make this call always throw before computing anything. Treated as dead/vestigial code
-// (the format could not function at all otherwise, and neither the spec's pseudocode nor the
-// survey mention it); not reproduced. Flagged in the ticket's Open questions.
+// (the format could not function at all otherwise); not reproduced.
 QString EsTileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     const QString zoomStr = esZoomStr(zoom);
     const QString fileName =

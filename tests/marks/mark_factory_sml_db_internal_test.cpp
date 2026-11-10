@@ -3,10 +3,9 @@
 // SAS.Planet development team; modified.
 
 // Ports u_MarkFactorySmlDbInternal.pas (424): CalcMultiGeometryCount, CreatePoint / CreateLine / CreatePoly,
-// CreateMark, CreateInternalMark (docs/specs/marks.md section 2.8.4). The main-info hashes are literals
-// computed from the Pascal recipe (CityHash64 of the UTF-16LE bytes, the description chained on the name
-// hash); the item hash chain is written with the legacy UpdateHashByHash helper. This ticket implements no
-// feature (Features: — in its header).
+// CreateMark, CreateInternalMark. The main-info hashes are literals computed from the Pascal recipe
+// (CityHash64 of the UTF-16LE bytes, the description chained on the name hash); the item hash chain is
+// written with the legacy UpdateHashByHash helper.
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"
 #include "cg/geo/geometry_lonlat.h"
@@ -185,7 +184,7 @@ TEST(MarkFactorySmlDbInternal, MainInfoHashIsTheLegacyRecipeLiteral) {
             ASSERT_NE(item, nullptr);
             EXPECT_EQ(item->mainInfo()->hash(), row.mainHash);
             // item hash: geometry, then main info hash, then appearance hash (:216-218); the appearance hash
-            // is read from the landed appearance object (vector module, not this recipe)
+            // is read from the appearance object (vector module, not this recipe)
             ASSERT_NE(item->appearance(), nullptr);
             EXPECT_EQ(item->hash(), t::hashChainU64(t::hashChainU64(item->geometry()->hash(), row.mainHash),
                                                     item->appearance()->hash()));

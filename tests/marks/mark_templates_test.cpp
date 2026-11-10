@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkTemplates.pas (docs/specs/marks.md section 2.3). Ticket T-0091 is a slice of the
-// marks module. Appearances come from the real vector::AppearanceOfMarkFactory; the name generator is a
-// local fake, so the names are independent of any format. Expected values are literals.
+// Ports u_MarkTemplates.pas. Appearances come from the real vector::AppearanceOfMarkFactory; the name
+// generator is a local fake, so the names are independent of any format. Expected values are literals.
 #include "cg/core/config_provider.h"
 #include "cg/core/config_writer.h"
 #include "cg/marks/mark_name_generator.h"
@@ -131,7 +130,7 @@ TEST(MarkTemplates, LineAndPolygonIsSameUseTheSameRule) {
 
 // u_MarkTemplates.pas:158-169, :188-197, :211-222 (Supports): the facets of the right kind are found; a
 // template built on an appearance without the facet keeps a nil facet. Assertions are disabled in the
-// shipped build (L-30, SASPlanet.dproj:92), so no error is raised.
+// shipped build (SASPlanet.dproj:92), so no error is raised.
 TEST(MarkTemplates, FacetsAreFoundForTheRightKindAndNilForAnother) {
     const auto generator = std::make_shared<FakeNameGenerator>();
     const std::shared_ptr<m::IMarkNameGenerator> gen = generator;
@@ -165,17 +164,17 @@ TEST(MarkTemplates, NewNameCallsTheGeneratorAndNilCategoryIsKept) {
     EXPECT_EQ(tmpl.category(), nullptr);
 }
 
-// D-95 (T-0091): IsSame(nil) dereferences ATemplate.Appearance (u_MarkTemplates.pas:143) before the nil test
-// at :147: an access violation outside any handler. The port answers false. Regression test.
+// IsSame(nil) dereferences ATemplate.Appearance (u_MarkTemplates.pas:143) before the nil test at :147: an
+// access violation outside any handler. The port answers false. Regression test.
 TEST(MarkTemplates, IsSameOfNullArgumentIsFalse) {
     const auto generator = std::make_shared<FakeNameGenerator>();
     const m::MarkTemplatePoint tmpl(generator, category(QStringLiteral("Trips")), pointApp(0xFF0000A1U));
     EXPECT_FALSE(tmpl.isSame(nullptr));
 }
 
-// D-95 (T-0091): the constructor arguments are asserted in legacy (u_MarkTemplates.pas:114-116, :164-165),
-// but assertions are off in the shipped build (L-30). A nil appearance or name generator would fail later
-// with an access violation (IsEqual :143 / GetNewName :135). The port refuses them at construction.
+// The constructor arguments are asserted in legacy (u_MarkTemplates.pas:114-116, :164-165), but assertions
+// are off in the shipped build. A nil appearance or name generator would fail later with an access
+// violation (IsEqual :143 / GetNewName :135). The port refuses them at construction.
 TEST(MarkTemplates, NilAppearanceOrNameGeneratorIsRejectedAtConstruction) {
     const auto generator = std::make_shared<FakeNameGenerator>();
     const std::shared_ptr<m::IMarkNameGenerator> gen = generator;

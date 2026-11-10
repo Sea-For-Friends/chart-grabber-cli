@@ -4,11 +4,10 @@
 
 #pragma once
 // Ports: t_CoordRepresentation.pas (enums), u_CoordRepresentation.pas (persisted-id mapping only --
-// the caption arrays are `ui`'s business, docs/specs/geo.md §6.1, except that their array order is
-// the settings-dialog combo index and therefore part of the saved-settings contract),
-// i_CoordRepresentationConfig.pas, u_CoordRepresentationConfig.pas (the value half only -- the
-// ConfigDataElement wrapper with locking/change-notification is `ui`'s, spec §6.1).
-// docs/specs/geo.md:1896-1968. FEAT-GEO-004.
+// the caption arrays are `ui`'s business, except that their array order is the settings-dialog
+// combo index and therefore part of the saved-settings contract), i_CoordRepresentationConfig.pas,
+// u_CoordRepresentationConfig.pas (the value half only -- the ConfigDataElement wrapper with
+// locking/change-notification is `ui`'s).
 
 #include "cg/core/config_provider.h"
 #include "cg/core/config_writer.h"
@@ -17,9 +16,9 @@
 
 namespace cg::geo {
 
-// Underlying type is std::uint8_t (clang-tidy performance-enum-size, see docs/handoffs/T-0011A.md
-// for the precedent) -- the legacy ordinals persisted in the INI are unaffected: every read/write
-// still goes through an explicit int cast (coordSysTypeToInt() & co.).
+// Underlying type is std::uint8_t (clang-tidy performance-enum-size) -- the legacy ordinals
+// persisted in the INI are unaffected: every read/write still goes through an explicit int cast
+// (coordSysTypeToInt() & co.).
 
 // t_CoordRepresentation.pas:27-36
 enum class GeogCoordShowFormat : std::uint8_t {
@@ -67,7 +66,7 @@ enum class CoordSysInfoType : std::uint8_t {
 
 // --- persistence: the ids on disk are NOT the ordinals -------------------------------------------
 // u_CoordRepresentation.pas:76-78,113-129. Unknown id -> the first enumerator, matching legacy's
-// IntegerToCoordSysType/IntegerToGeogCoordShowFormat fallback (spec §6.1 table).
+// IntegerToCoordSysType/IntegerToGeogCoordShowFormat fallback.
 [[nodiscard]] int coordSysTypeToInt(CoordSysType v) noexcept;
 [[nodiscard]] CoordSysType intToCoordSysType(int v) noexcept;
 
@@ -84,7 +83,7 @@ enum class CoordSysInfoType : std::uint8_t {
 // INI produces an invalid enum value and hits the `default:`/`else Assert(False)` branch
 // downstream). The port validates the range on read instead and falls back to the first enumerator,
 // like the other two mappings -- "the port validates all four ... a strict improvement with no
-// effect on any valid file" (spec §6.1, §10 D-7).
+// effect on any valid file".
 [[nodiscard]] int mgrsCoordShowFormatToInt(MgrsCoordShowFormat v) noexcept; // == ordinal
 [[nodiscard]] MgrsCoordShowFormat intToMgrsCoordShowFormat(int v) noexcept;
 [[nodiscard]] int coordSysInfoTypeToInt(CoordSysInfoType v) noexcept; // == ordinal
@@ -92,8 +91,8 @@ enum class CoordSysInfoType : std::uint8_t {
 
 // The value half of ICoordRepresentationConfig / ICoordRepresentationConfigStatic
 // (u_CoordRepresentationConfig.pas:34-97). The ConfigDataElement wrapper -- locking, change
-// notification, the Changeable/Static split -- is `ui`'s (spec §6.1); this struct is the plain
-// snapshot every consumer (coord_to_string, the settings dialog) actually needs.
+// notification, the Changeable/Static split -- is `ui`'s; this struct is the plain snapshot
+// every consumer (coord_to_string, the settings dialog) actually needs.
 struct CoordRepresentationSettings {
     bool isLatitudeFirst = true;
     GeogCoordShowFormat geogFormat = GeogCoordShowFormat::CharDegrMinSec;

@@ -2,13 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkDbImplORMCache.pas :1-647 + the view
-// cache :916-1047 (T-0076) and the second half :648-914, :1049-1155, :284-316 (T-0085); docs/specs/marks.md
-// §2.9.7. T-0085 adds: by-category index, mark cache (instance 152, item 29), geometry cache (inner array
-// 112 + 20 per row + bytes), the 30 % / 70 % split and the L-158 fix. Proof of ticket T-0076: per class add /
-// find / remove / reset, addOrIgnore keeps the first, size arithmetic with literal numbers (Win64 legacy
-// sizes: instance 96, view 152; item 16 image, 24 appearance, 25 view, 32 id index; strings 2 bytes per
-// UTF-16 unit).
+// Ports u_MarkDbImplORMCache.pas :1-647 + the view cache :916-1047 and the second half :648-914, :1049-1155,
+// :284-316: by-category index, mark cache (instance 152, item 29), geometry cache (inner array 112 + 20 per
+// row + bytes), the 30 % / 70 % split and the legacy-defect fix. Per class add / find / remove / reset,
+// addOrIgnore keeps the first, size arithmetic with literal numbers (Win64 legacy sizes: instance 96, view
+// 152; item 16 image, 24 appearance, 25 view, 32 id index; strings 2 bytes per UTF-16 unit).
 #include "cg/marks/mormot/marks/mark_db_impl_orm_cache.h"
 
 #include <QString>
@@ -239,7 +237,7 @@ TEST(OrmMarkViewCacheTest, CategoryZeroPreparesTheWholeTableAndReplacesTheConten
     EXPECT_FALSE(c.isPrepared());
 }
 
-// Reproduced legacy behaviour (L-157): the rows of one source are not de-duplicated among themselves.
+// Reproduced legacy behaviour: the rows of one source are not de-duplicated among themselves.
 TEST(OrmMarkViewCacheTest, SourceIdsAreNotDeduplicatedAmongThemselves) {
     OrmMarkViewCache c(kUnlimCacheSize);
     c.addPrepared(2, {{5, 1, 2, true}, {5, 2, 2, false}});
@@ -322,7 +320,7 @@ TEST(OrmMarkIdIndexTest, AddArrayTakesOnlyIdsNotCachedYet) {
     EXPECT_EQ(c.size(), 96 + 7 * 32);
 }
 
-// Reproduced legacy behaviour (L-157): the rows of one source are not de-duplicated among themselves.
+// Reproduced legacy behaviour: the rows of one source are not de-duplicated among themselves.
 TEST(OrmMarkIdIndexTest, AddArraySourceIdsAreNotDeduplicatedAmongThemselves) {
     OrmMarkIdIndex c(kUnlimCacheSize);
     OrmMarkRec rec;
@@ -346,7 +344,7 @@ TEST(OrmMarkIdIndexTest, AddArrayWindow) {
     EXPECT_EQ(idsOf(c), (std::vector<qint64>{20, 30, 40, 50}));
 }
 
-// Regression for D-66: legacy reads the source out of range for these windows.
+// Regression test for a deviation from legacy: legacy reads the source out of range for these windows.
 TEST(OrmMarkIdIndexTest, AddArrayWindowPastTheArrayDoesNotReadOutOfRange) {
     const std::vector<OrmMarkIdIndexRec> src = {{50, 0, 0, 0}, {40, 0, 0, 0}, {30, 0, 0, 0}};
     OrmMarkIdIndex c(kUnlimCacheSize);
@@ -380,7 +378,7 @@ TEST(OrmMarkIdIndexTest, MarkRecToIndexRecCopiesTheFourIds) {
     EXPECT_EQ(r.appearanceId, 4);
 }
 
-// ------------------------------------------------------------------ OrmMarkIdByCategoryIndex (T-0085)
+// ------------------------------------------------------------------ OrmMarkIdByCategoryIndex
 
 const std::vector<qint64>* noIds = nullptr;
 
@@ -433,7 +431,7 @@ TEST(OrmMarkIdByCategoryIndexTest, AddPreparedAgainReplacesTheArray) {
     EXPECT_EQ(n, 0);
 }
 
-// ------------------------------------------------------------------ OrmMarkCache (T-0085)
+// ------------------------------------------------------------------ OrmMarkCache
 
 OrmMarkRec markRec(qint64 id, const QString& name, const QString& desc) {
     OrmMarkRec r;
@@ -538,7 +536,7 @@ TEST(OrmMarkCacheTest, OverTheLimitTheNextAddEmptiesTheCache) {
     EXPECT_EQ(c.size(), 185);
 }
 
-// ------------------------------------------------------------------ OrmMarkGeometryCache (T-0085)
+// ------------------------------------------------------------------ OrmMarkGeometryCache
 // The legacy class has no Size / Count: the inner array's size is 112 + 20 per row + the bytes of the rows
 // that hold a geometry (TDynArrayByRecWithPointer.Size), seen here through the moment of the auto-reset.
 
@@ -612,7 +610,7 @@ TEST(OrmMarkGeometryCacheTest, AddPreparedKeepsTheCachedRowsAndMarksTheCategory)
     EXPECT_TRUE(c.isPrepared());
 }
 
-// L-158 fixed (deviation D-88). Legacy keeps the prepared state when the inner array
+// A legacy defect, fixed (a deviation from legacy). Legacy keeps the prepared state when the inner array
 // empties itself, so these expectations are the opposite of legacy (isCategoryPrepared / isPrepared stay
 // true).
 TEST(OrmMarkGeometryCacheTest, AutoResetAlsoClearsThePreparedState) {
@@ -653,7 +651,7 @@ TEST(OrmMarkGeometryCacheTest, ResetAlsoClearsTheWholeTableFlag) {
     EXPECT_FALSE(c.find(1, got));
 }
 
-// ------------------------------------------------------------------ OrmMarkDbCache (T-0085)
+// ------------------------------------------------------------------ OrmMarkDbCache
 
 TEST(OrmMarkDbCacheTest, InitSplitsThirtyAndSeventyAndDoneFreesAll) {
     OrmMarkDbCache db;

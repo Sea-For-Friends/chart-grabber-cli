@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // New code (no legacy unit). Inherits: u_ThreadDownloadTiles.pas:357-390, 500-575 (one request, result
-// classes). docs/specs/app-cli.md 3.13.
+// classes).
 #include "cg/app/probe.h"
 
 #include "cg/app/job_checks.h"
@@ -225,14 +225,14 @@ std::vector<ProbeRow> probeSources(const AppContext& app, const Job& job, const 
             reason = refusalForDownload(*map);
         }
         if (!reason) {
-            reason = refusalForSnapshot(*map); // S-14 as in `sources` (T-0244)
+            reason = refusalForSnapshot(*map); // The snapshot refusal, as in `sources`
         }
         if (reason) {
             row.status = ProbeStatus::Skipped;
             row.result = QStringLiteral("skipped: ") + reason->simplified();
         } else {
-            // T-0244 (weather-sources.md 3.5): a snapshot source resolves first; the store file is not
-            // written. Unreachable error: refusalForSnapshot above refused an invalid definition.
+            // A snapshot source resolves first; the store file is not written. Unreachable error:
+            // refusalForSnapshot above refused an invalid definition.
             const auto definition = snapshotDefinition(*map);
             std::optional<QString> failure;
             if (definition && definition->has_value()) {

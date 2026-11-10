@@ -4,14 +4,14 @@
 
 #pragma once
 // Ports: u_TileStorageInRAM.pas (Create, GetTileFileName, GetTileInfo, GetTileInfoEx,
-// GetTileRectInfo, DeleteTile, SaveTile, ScanTiles). `u_TileStorageTypeInRAM.pas` is T-0021F3b
-// (the storage TYPE that builds one of these), out of scope here.
+// GetTileRectInfo, DeleteTile, SaveTile, ScanTiles). `u_TileStorageTypeInRAM.pas` (the storage
+// TYPE that builds one of these) is ported in ram_tile_storage_type.h.
 //
-// docs/specs/storage.md §2.14 (:1092-1100). A `TileInfoMemCache` with an `ITileStorage` face and
-// no persistence: `storagePath` is always "", one content type, versions ARE honoured
-// (`VersionSupport::Stored`, T-0021F-storage) because the mem-cache keys on the version's store
-// string. There is no separate `fsMutex_`-style lock here -- `TileInfoMemCache` already guards
-// itself (tile_info_mem_cache.h), and legacy's `TTileStorageInRAM` takes no lock of its own either.
+// A `TileInfoMemCache` with an `ITileStorage` face and no persistence: `storagePath` is always "",
+// one content type, versions ARE honoured (`VersionSupport::Stored`) because the mem-cache keys on
+// the version's store string. There is no separate `fsMutex_`-style lock here -- `TileInfoMemCache`
+// already guards itself (tile_info_mem_cache.h), and legacy's `TTileStorageInRAM` takes no lock of
+// its own either.
 
 #include "cg/core/content_type.h"
 #include "cg/geo/geo_types.h"
@@ -42,7 +42,7 @@ public:
         : std::invalid_argument("Can't initialize in-memory tile storage. Check your config!") {}
 };
 
-// FEAT-STO-026. Ports TTileStorageInRAM.
+// Ports TTileStorageInRAM.
 class RamTileStorage final : public ITileStorage {
 public:
     // The first five parameters forward straight into TileStorageBase (with an always-empty
@@ -97,22 +97,21 @@ public:
     // content-type compatibility check (content_type_compat.h) only runs when BOTH `contentType`
     // and `data` are non-empty/non-null (legacy: `Assigned(AContentType) and Assigned(AData)`) --
     // narrower than FileSystemTileStorage's own gate, which checks whenever `contentType` alone is
-    // non-empty; each backend ports its own legacy order (protocol rule 5).
+    // non-empty; each backend ports its own legacy order.
     [[nodiscard]] core::Result<bool> saveTile(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr& version,
                                               TileDate loadDate, QByteArrayView contentType,
                                               const QByteArray& data, bool overwrite) override;
 
-    // FEAT-STO-032 default (u_TileStorageAbstract.pas): TTileStorageInRAM never overrides
+    // The default (u_TileStorageAbstract.pas): TTileStorageInRAM never overrides
     // GetListOfTileVersions, so this is always the empty list, same as FileSystemTileStorage.
     [[nodiscard]] core::Result<MapVersionList> listVersions(geo::PointI xy, quint8 zoom,
                                                             const MapVersionRequest& request) const override;
 
-    // Ports GetTileRectInfo (u_TileStorageInRAM.pas:205-276): gated on `state()->readAccess`, the
-    // 2048 cap and a degenerate rect after clamping both give a
-    // successful null result (legacy `Result := nil`; spec §2.6 note 6), and `stop_requested()` maps to
-    // `fail(Cancelled, ...)` (the project- wide `std::stop_token` idiom F2 already uses -- legacy's own
-    // `Result := nil; Exit` on cancellation is not reproduced literally, since that would make "cancelled"
-    // and "access denied" indistinguishable).
+    // Ports GetTileRectInfo (u_TileStorageInRAM.pas:205-276): gated on `state()->readAccess`, the 2048 cap
+    // and a degenerate rect after clamping both give a successful null result (legacy `Result := nil`),
+    // and `stop_requested()` maps to `fail(Cancelled, ...)` (the project-wide `std::stop_token` idiom --
+    // legacy's own `Result := nil; Exit` on cancellation is not reproduced literally, since that would
+    // make "cancelled" and "access denied" indistinguishable).
     [[nodiscard]] core::Result<TileRectInfoPtr> tileRectInfo(geo::RectI rect, quint8 zoom,
                                                              const MapVersionRequest& request,
                                                              std::stop_token stop) const override;

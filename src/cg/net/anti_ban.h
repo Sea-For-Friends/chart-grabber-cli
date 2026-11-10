@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_AntiBan.pas, u_AntiBanStuped.pas:70-180. docs/specs/net.md §2.14. FEAT-NET-012.
+// Ports: i_AntiBan.pas, u_AntiBanStuped.pas:70-180.
 
 #include "cg/net/download_request.h"
 #include "cg/net/download_result.h"
@@ -19,7 +19,7 @@
 
 namespace cg::net {
 
-// Ports IAntiBan. Exactly two hooks, no more (ADR-0004).
+// Ports IAntiBan. Exactly two hooks, no more.
 class IAntiBan {
 public:
     virtual ~IAntiBan() = default;
@@ -53,9 +53,9 @@ public:
                                                                   QByteArray& responseHead) override;
 
 private:
-    // Ports TAntiBanStuped.ProcessAntiBan (IInvisibleBrowser.NavigateAndWait, :141). Until
-    // ADR-0008 lands, a plain GET of the preload page through `fetcher_` (and therefore the same
-    // cookie jar), body discarded. [D-14]
+    // Ports TAntiBanStuped.ProcessAntiBan (IInvisibleBrowser.NavigateAndWait, :141). Until the
+    // embedded browser is ported, a plain GET of the preload page through `fetcher_` (and
+    // therefore the same cookie jar), body discarded (a deviation from legacy).
     void processAntiBan() const;
 
     bool enabled_ = false;

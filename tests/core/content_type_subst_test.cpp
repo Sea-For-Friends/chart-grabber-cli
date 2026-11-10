@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: (ContentTypeSubst, consumed by net FEAT-NET-011); docs/specs/core.md 2.22, test plan 7.16
+// Covers: ContentTypeSubst (consumed by net).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/content_type_subst.h"
 #include "cg/core/ini_file.h"

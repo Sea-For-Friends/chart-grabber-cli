@@ -21,7 +21,7 @@ namespace cg::marks {
 namespace {
 
 // CalcMultiGeometryCount (:121-133): the part count of a multi line or a multi polygon, else 0. The SQLite
-// twin gives 1 for a single geometry (L-168); this one gives 0.
+// twin gives 1 for a single geometry; this one gives 0.
 int smlMultiGeometryCount(const geo::GeometryLonLatPtr& geometry) {
     if (const auto* line = dynamic_cast<const geo::IGeometryLonLatMultiLine*>(geometry.get())) {
         return static_cast<int>(line->count());
@@ -106,7 +106,7 @@ MarkFactorySmlDbInternal::createInternalMark(const vector::VectorDataItemPtr& ma
     }
 
     // :258 Assert(Assigned(VCategory), ...) is not ported: a mark whose category is from another database and
-    // has no same-named category here is returned unchanged (the SML row in docs/parity/legacy-defects.md).
+    // has no same-named category here is returned unchanged (a legacy defect, reproduced).
     return mark;
 }
 

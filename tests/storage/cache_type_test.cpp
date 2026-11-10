@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-001, FEAT-STO-036. Ports c_CacheTypeCodes.pas, u_TileStorageTypeListSimple.pas;
-// docs/specs/storage.md §2.10.4 (:775-867)
+// Ports c_CacheTypeCodes.pas, u_TileStorageTypeListSimple.pas.
 #include "cg/geo/geo_types.h"
 #include "cg/storage/cache_type.h"
 #include "cg/storage/tile_name_codec.h"
@@ -73,7 +72,7 @@ TEST(CacheType, BdbAndBdbVersionedShareOneUuidVerbatim) {
     EXPECT_EQ(bdb->uuid, QUuid(QStringLiteral("{3DBF81CD-9356-40EB-9778-DE4D98E5BE61}")));
 }
 
-// T-0333: Bdb and BdbVersioned joined the list when the BerkeleyDB backend was removed (owner 2026-10-21).
+// Bdb and BdbVersioned joined the list when the BerkeleyDB backend was removed.
 TEST(CacheType, SupportedOnLinuxIsFalseOnlyForGeGeTerrainGeoCacherDbmsBdbBdbVersioned) {
     for (const CacheTypeDescriptor& d : cacheTypes()) {
         const bool expectedUnsupported = d.id == CacheTypeId::Ge || d.id == CacheTypeId::GeTerrain ||
@@ -105,15 +104,15 @@ TEST(CacheType, FourGmTilesRowsShareOnePathIdentAndDefaultFolder) {
 }
 
 TEST(CacheType, DbmsDefaultFolderKeepsLegacyBackslashVerbatim) {
-    // c_CacheTypeCodes.pas: c_File_Cache_Default_DBMS = 'SASGIS_DBMS\$' -- legacy wins over the
-    // spec table's forward slash (docs/specs/storage.md :798); see docs/handoffs/T-0021D.md.
+    // c_CacheTypeCodes.pas: c_File_Cache_Default_DBMS = 'SASGIS_DBMS\$' -- legacy wins: a
+    // backslash, not a forward slash
     const CacheTypeDescriptor* dbms = cacheTypeById(CacheTypeId::Dbms);
     ASSERT_NE(dbms, nullptr);
     EXPECT_STREQ(dbms->defaultFolder, "SASGIS_DBMS\\$");
 }
 
 TEST(CacheType, PathCompositionJoinsGlobalRootDefaultFolderAndMapSubfolder) {
-    // FEAT-STO-036: <global cache root>/<defaultFolder or override>/<map.NameInCache>.
+    // <global cache root>/<defaultFolder or override>/<map.NameInCache>.
     const CacheTypeDescriptor* sas = cacheTypeById(CacheTypeId::Sas);
     ASSERT_NE(sas, nullptr);
     const QString composed =
@@ -132,8 +131,8 @@ TEST(CacheType, CodecForCacheTypeCoversAllNineFolderIds) {
 }
 
 TEST(CacheType, CodecForCacheTypeGivesSqliteTheRegionCodecFormula) {
-    // Sqlite has the region codec (storage.md §2.10.2), spot-checked at Z = 0 (matches the
-    // cache_sqlite/map/z1/0/0/0.0.sqlitedb fixture's formula, T-0021C).
+    // Sqlite has the region codec, spot-checked at Z = 0 (matches the
+    // cache_sqlite/map/z1/0/0/0.0.sqlitedb fixture's formula).
     for (const CacheTypeId id : {CacheTypeId::Sqlite}) {
         const cg::storage::ITileNameCodecPtr codec = codecForCacheType(id);
         ASSERT_NE(codec, nullptr) << static_cast<int>(id);

@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-019, FEAT-STO-020, FEAT-NET-002 (Delphi text semantics; moved from
-// sqlite_file_detect_test, T-0045)
+// Delphi text semantics (moved here from sqlite_file_detect_test).
 #include "cg/core/delphi_text.h"
 
 #include <QString>

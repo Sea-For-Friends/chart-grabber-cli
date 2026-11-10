@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (marks prerequisites, T-0055).
 // Ports the DUnit suites u_GUIDSetStatic_Test (7), i_IGUIDInterfaceSet_Test (7, run by
 // u_GUIDSet_Test for TGUIDInterfaceSet) and i_IGUIDObjectSet_Test (7, run for TGUIDObjectSet);
 // same inputs, same expectations, same order of operations. The ID list has no DUnit: its table

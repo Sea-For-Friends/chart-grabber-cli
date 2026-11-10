@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_ExportMarks2KMLConfig.pas (T-0151, V10). INI goes through core/config_provider_ini.
+// Ports u_ExportMarks2KMLConfig.pas. INI goes through core/config_provider_ini.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/vector/export_marks_2_kml_config.h"

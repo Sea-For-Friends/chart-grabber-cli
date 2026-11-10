@@ -2,13 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (held open). Ports no legacy test (there is none): the update half of
-// u_MarkDbImplORMHelper.pas, UpdateMarkSQL :776-1010, UpdateMarkView :1176-1264, SetMarksInCategoryVisibleSQL
-// :1266-1347 and the geometry decoders :267-299 (docs/specs/marks.md §2.9.8 W-2, W-5, W-6; statements S-23
-// ... S-27, S-2E, S-2F, S-36 ... S-39), against a copy of tests/fixtures/marks/Marks.db3. Expected values are
-// literals read back with plain SQL on a second connection. Which columns of which table a statement sets is
-// read from triggers (AFTER UPDATE OF <column>) that write a log table; virtual tables (FTS, RTree) are
-// checked by content.
+// Ports no legacy test (there is none): the update half of u_MarkDbImplORMHelper.pas, UpdateMarkSQL
+// :776-1010, UpdateMarkView :1176-1264, SetMarksInCategoryVisibleSQL :1266-1347 and the geometry decoders
+// :267-299, against a copy of tests/fixtures/marks/Marks.db3. Expected values are literals read back with
+// plain SQL on a second connection. Which columns of which table a statement sets is read from triggers
+// (AFTER UPDATE OF <column>) that write a log table; virtual tables (FTS, RTree) are checked by content.
 #include "cg/geo/geometry_factory.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"
 #include "cg/marks/mormot/marks/mark_db_impl_orm_helper.h"
@@ -203,7 +201,7 @@ QString markRow(const QString& category, const QString& image, const QString& ap
 
 } // namespace
 
-// W-2: one test row per changed-field flag; each field alone writes exactly its columns, its index rows, its
+// One test row per changed-field flag; each field alone writes exactly its columns, its index rows, its
 // cache entries and nothing else.
 TEST(MarkDbImplORMHelperUpdate, EachChangedFieldAloneWritesExactlyItsStatementsAndCacheEntries) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -339,7 +337,7 @@ TEST(MarkDbImplORMHelperUpdate, NewGeometryWithoutMetaAndNoMetaRowTouchesNoMetaR
     EXPECT_EQ(env.count("MarkMeta"), 0);
 }
 
-// W-5: a MarkView row, once created, is never deleted by un-hiding.
+// A MarkView row, once created, is never deleted by un-hiding.
 TEST(MarkDbImplORMHelperUpdate, ViewRowStaysAfterUnHideAndIsUpdatedWhenHiddenAgain) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Env env;
@@ -381,7 +379,7 @@ TEST(MarkDbImplORMHelperUpdate, HiddenMarkChangingCategoryUpdatesItsViewRowCateg
     EXPECT_EQ(joined(env.rows("SELECT ID,mCategory FROM Mark")), QStringLiteral("1|9"));
 }
 
-// A cold cache: no mark / view cache entry, so the view row is read by S-36.
+// A cold cache: no mark / view cache entry, so the view row is read from the database.
 TEST(MarkDbImplORMHelperUpdate, ColdCacheReadsTheViewRowBySqlAndUpdatesIt) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Env env;
@@ -589,7 +587,7 @@ TEST(MarkDbImplORMHelperUpdate, FailedMarkUpdateRollsBackThePictureRowAndTheCach
     } catch (const MarkSystemORMError& e) {
         EXPECT_STREQ(e.what(), "MarkSystemORM: Update operation is failed!");
     }
-    EXPECT_EQ(joined(env.images()), QStringLiteral("1|i.png")); // S-21 rolled back
+    EXPECT_EQ(joined(env.images()), QStringLiteral("1|i.png")); // The add rolled back
     const auto* image =
         MarkDbImplORMHelperTestAccess::cache(helper).markImageCache->find(QStringLiteral("j.png"));
     ASSERT_NE(image, nullptr);
@@ -618,7 +616,8 @@ TEST(MarkDbImplORMHelperUpdate, FtsUpdateFailureThrowsAndRollsBack) {
     } catch (const MarkSystemORMError& e) {
         EXPECT_STREQ(e.what(), "MarkSystemORM: Update operation is failed!");
     }
-    EXPECT_EQ(joined(env.rows("SELECT mName FROM Mark")), QString::fromUtf8("Город")); // S-2E rolled back
+    EXPECT_EQ(joined(env.rows("SELECT mName FROM Mark")),
+              QString::fromUtf8("Город")); // The update rolled back
     const auto* cached = MarkDbImplORMHelperTestAccess::cache(helper).markCache->find(1);
     ASSERT_NE(cached, nullptr);
     EXPECT_EQ(cached->name, QStringLiteral("x")); // not undone
@@ -644,7 +643,7 @@ TEST(MarkDbImplORMHelperUpdate, RTreeUpdateFailureThrowsAndRollsBack) {
     EXPECT_EQ(cached, updated.geometry); // not undone
 }
 
-// ---- updateMarkView (W-5) ------------------------------------------------------------------------------
+// ---- updateMarkView ------------------------------------------------------------------------------
 
 namespace {
 // A hidden mark 1 (category 7, view row 1) written by another helper, so the helper under test starts cold.
@@ -685,11 +684,11 @@ TEST(MarkDbImplORMHelperUpdate, ViewWithoutRowAddsOneOnlyWhenHidingAndAnUpToDate
     ASSERT_TRUE(helper.insertMarkSql(visible, true));
     installLog(env);
     auto cold = env.helper();
-    EXPECT_FALSE(
-        cold.updateMarkView(1, 7, true, true)); // S-36 finds nothing, visible: marks are visible by default
+    EXPECT_FALSE(cold.updateMarkView(1, 7, true, true)); // The view read finds nothing, visible: marks are
+                                                         // visible by default
     EXPECT_EQ(env.count("MarkView"), 0);
     EXPECT_FALSE(helper.updateMarkView(1, 7, true, true)); // cached (id 0), visible: nothing either
-    EXPECT_TRUE(helper.updateMarkView(1, 7, false, true)); // hidden: S-2C
+    EXPECT_TRUE(helper.updateMarkView(1, 7, false, true)); // hidden: a view row is added
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|1|7|0"));
     EXPECT_EQ(logOf(env), QStringLiteral("MarkView.ins"));
     const auto* view = MarkDbImplORMHelperTestAccess::cache(helper).markViewCache->find(1);
@@ -705,9 +704,9 @@ TEST(MarkDbImplORMHelperUpdate, PreparedViewCacheSkipsTheSqlLookup) {
     seedHiddenMark(env); // the row exists in the database
     auto helper = env.helper();
     MarkDbImplORMHelperTestAccess::cache(helper).markViewCache->addPrepared(
-        7, {}); // category 7 "prepared", no rows
-    EXPECT_FALSE(
-        helper.updateMarkView(1, 7, true, true)); // treated as no row (S-36 skipped): visible, nothing
+        7, {});                                            // category 7 "prepared", no rows
+    EXPECT_FALSE(helper.updateMarkView(1, 7, true, true)); // treated as no row (the view read skipped):
+                                                           // visible, nothing
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|1|7|0"));
     // hiding adds a second row for the same mark and user: the unique index refuses it, CheckID throws
     try {
@@ -739,7 +738,7 @@ TEST(MarkDbImplORMHelperUpdate, ReadOnlyViewUpdateIsTrueWithoutSql) {
     Env env;
     seedHiddenMark(env);
     auto helper = env.helper(true);
-    EXPECT_TRUE(helper.updateMarkView(1, 7, true, true)); // S-36 reads, the cache takes the new state
+    EXPECT_TRUE(helper.updateMarkView(1, 7, true, true)); // The view read runs, the cache takes the new state
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|1|7|0"));
     const auto* view = MarkDbImplORMHelperTestAccess::cache(helper).markViewCache->find(1);
     ASSERT_NE(view, nullptr);
@@ -773,7 +772,7 @@ TEST(MarkDbImplORMHelperUpdate, VisibilityByIdListInTheCallersTransactionCommits
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|1|7|0;2|1|3|7|0"));
 }
 
-// ---- setMarksInCategoryVisibleSql (W-6) -----------------------------------------------------------------
+// ---- setMarksInCategoryVisibleSql -----------------------------------------------------------------
 
 namespace {
 // Marks 1 (visible), 2 (hidden), 3 (visible) in category 7; mark 4 (hidden) in category 9; a view row of
@@ -860,7 +859,7 @@ TEST(MarkDbImplORMHelperUpdate, FailedInsertStatementThrowsExecuteFailedAndTheUp
     } catch (const MarkSystemORMError& e) {
         EXPECT_STREQ(e.what(), "MarkSystemORM: Execute operation is failed!");
     }
-    // S-38 ran in its own autocommit before S-39 failed; nothing was inserted
+    // The UPDATE ran in its own autocommit before the INSERT failed; nothing was inserted
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|2|7|0;2|1|4|9|0;3|2|1|7|1"));
 }
 

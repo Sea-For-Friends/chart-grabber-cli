@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/app/machine_output (new code, T-0202; no FEAT). Expected lines are literals of the
-// record layouts of the ticket (cli-requirements.md section 2).
+// Tests for src/cg/app/machine_output (new code). Expected lines are literals of the record layouts.
 #include "cg/app/fill_report.h"
 #include "cg/app/machine_output.h"
 #include "cg/app/tile_estimate.h"
@@ -17,7 +16,7 @@
 using namespace cg::app;
 using namespace Qt::StringLiterals;
 
-// Proof 6: TAB, CR and LF inside a field become one space each; the line keeps exactly fields-count TABs.
+// TAB, CR and LF inside a field become one space each; the line keeps exactly fields-count TABs.
 TEST(MachineOutput, TabCrLfInsideAFieldBecomeSpacesAndNeverSplitIt) {
     const QString line = tsvLine(u"source", {u"a\tb"_s, u"c\r\nd"_s, u"Город\te"_s, QString(), u"z"_s});
     EXPECT_EQ(line, u"source\ta b\tc  d\tГород e\t\tz"_s);
@@ -61,8 +60,8 @@ TEST(MachineOutput, FillSessionAndWrittenRecordsKeepTheFieldOrder) {
               u"written\t{G}\t/x/a.mbtiles\t77\t4096\t"_s);
 }
 
-// T-0243 (weather-sources.md 5.4): the `snapshot` record and field 5 of `written`, as literals; a date-only
-// time is the date, an unknown time an empty field, a non-ASCII version stays as it is.
+// The `snapshot` record and field 5 of `written`, as literals; a date-only time is the date, an unknown
+// time an empty field, a non-ASCII version stays as it is.
 TEST(MachineOutput, SnapshotRecordAndWrittenFieldFiveKeepTheLayout) {
     Snapshot s;
     s.version = u"/v2/radar/7b6bac246650"_s;
@@ -84,7 +83,7 @@ TEST(MachineOutput, SnapshotRecordAndWrittenFieldFiveKeepTheLayout) {
               u"written\t{G}\t/x/a.mbtiles\t77\t4096\t2026-10-15T20:10:00Z"_s);
 }
 
-// T-0443 (weather-sources.md 5.4): the model run is field index 4 of `snapshot`, ISO UTC, empty without one.
+// The model run is field index 4 of `snapshot`, ISO UTC, empty without one.
 TEST(MachineOutput, SnapshotRecordCarriesTheModelRunAsFieldFive) {
     Snapshot s;
     s.version = u"V"_s;
@@ -100,7 +99,7 @@ TEST(MachineOutput, SnapshotRecordCarriesTheModelRunAsFieldFive) {
     EXPECT_EQ(without[4], QString());
 }
 
-// T-0203: the layouts of cli-requirements.md section 3, as literals.
+// The progress-record layouts, as literals.
 TEST(MachineOutput, PhaseAndProgressRecordsKeepTheFieldOrder) {
     EXPECT_EQ(phaseRecord(u"estimate", u"{G}"_s), u"phase\testimate\t{G}"_s);
     EXPECT_EQ(downloadProgressRecord(u"{G}"_s, 6, 7, 20, 3, 3072, 12),

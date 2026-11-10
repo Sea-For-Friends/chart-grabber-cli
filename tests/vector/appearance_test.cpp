@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_AppearanceOfMarkPoint/Line/Polygon.pas;
-// docs/specs/vector.md §2.3, §7.2, §8.1 (LV-2, LV-5).
+// Ports u_AppearanceOfMarkPoint/Line/Polygon.pas.
 #include "cg/vector/appearance_of_mark_line.h"
 #include "cg/vector/appearance_of_mark_point.h"
 #include "cg/vector/appearance_of_mark_polygon.h"
@@ -57,7 +56,7 @@ TEST(AppearanceOfMarkPolygon, StoresWhatItIsGivenAndKeepsThreeHashesApart) {
     EXPECT_EQ(g.fillColor(), 0x40000002U);
 }
 
-// LV-5 (L-126): isEqual is hash-only - no identity shortcut, no field compare, no type check.
+// isEqual is hash-only - no identity shortcut, no field compare, no type check.
 TEST(Appearance, IsEqualIsHashOnly) {
     const auto p = point(100, QStringLiteral("a"), nullptr);
     const auto p2 = AppearanceOfMarkPoint(100, 1, 2, 0, 0, 0, 0, QStringLiteral("b"), nullptr);
@@ -72,8 +71,8 @@ TEST(Appearance, IsEqualIsHashOnly) {
     EXPECT_FALSE(line.isEqual(&otherLine));
 }
 
-// Facet cross-casts (Supports(A, IAppearance...) of legacy). LV-2 (L-127): a facet has no isEqual,
-// and its hash is not the common hash.
+// Facet cross-casts (Supports(A, IAppearance...) of legacy). A facet has no isEqual, and its hash
+// is not the common hash.
 TEST(Appearance, FacetCrossCasts) {
     const std::shared_ptr<const IAppearance> point =
         std::make_shared<AppearanceOfMarkPoint>(100, 11, 22, 1, 2, 3, 4, QStringLiteral("n"), nullptr);

@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing for the engine (NEW code, ADR-0014); the flow mirrors
+// Ports: nothing for the engine (NEW code); the flow mirrors
 // u_TileDownloadRequestBuilderFactoryPascalScript.pas (compile once under the init lock, disable the state on
 // failure, "Request builder create error: ...").
 //
@@ -35,7 +35,7 @@ class TileDownloadRequestBuilderFactoryJs final : public ITileDownloadRequestBui
 public:
     static constexpr std::chrono::milliseconds kDefaultTimeLimit{5000}; // script::ExecBudget maxWall
 
-    // `timeLimit` is the script time per call (ADR-0014 point 5).
+    // `timeLimit` is the script time per call.
     TileDownloadRequestBuilderFactoryJs(QString sourceName, const QByteArray& scriptText,
                                         std::shared_ptr<TileDownloadRequestBuilderConfig> config,
                                         std::shared_ptr<net::TileDownloaderConfig> tileDownloaderConfig,

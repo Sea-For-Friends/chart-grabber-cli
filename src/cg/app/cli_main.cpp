@@ -3,7 +3,6 @@
 // SAS.Planet development team; modified.
 
 // New code (no legacy unit). Inherits: Src/u_GlobalState.pas:1280-1289, frm_ProgressDownload.pas:306-393.
-// docs/specs/app-cli.md 1.1, 1.7, 1.10, 1.11, 6.2.
 #include "cg/app/cli_main.h"
 
 #include "cg/app/app_context.h"
@@ -76,7 +75,7 @@ void printLines(Console& console, const QStringList& lines) {
     }
 }
 
-// app-cli.md 1.6.2: one line per grey source, always on stderr (Console::notice).
+// One line per grey source, always on stderr (Console::notice).
 void printTermsOfUseWarning(const maptype::IMapType& map, Console& console) {
     if (const std::optional<QString> url = termsOfUseUrl(map)) {
         console.notice(Tr::tr("warning: \"%1\": the provider's terms of use may not allow downloading tiles "
@@ -86,7 +85,7 @@ void printTermsOfUseWarning(const maptype::IMapType& map, Console& console) {
     }
 }
 
-// app-cli.md 1.6.5: one line per not-for-navigation source, always on stderr (Console::notice).
+// One line per not-for-navigation source, always on stderr (Console::notice).
 void printNavigationWarning(const maptype::IMapType& map, Console& console) {
     if (navigationWarning(map)) {
         console.notice(Tr::tr("warning: \"%1\": not for navigation. This source is not an official nautical "
@@ -95,13 +94,13 @@ void printNavigationWarning(const maptype::IMapType& map, Console& console) {
     }
 }
 
-// `sources` (app-cli.md 1.1): GUID, map / layer, name, content type, EPSG, cache type, verdict.
+// `sources`: GUID, map / layer, name, content type, EPSG, cache type, verdict.
 int runSources(const Job& job, const AppContext& app, Console& console) {
     Job verdictJob = job;
     verdictJob.zooms.clear(); // the verdict is about the map, not about a zoom list
 
     const std::vector<maptype::IMapTypePtr> found = matchingSources(app, job.filter);
-    for (const maptype::IMapTypePtr& map : found) { // app-cli.md 1.6.2
+    for (const maptype::IMapTypePtr& map : found) {
         printTermsOfUseWarning(*map, console);
     }
 
@@ -116,22 +115,22 @@ int runSources(const Job& job, const AppContext& app, Console& console) {
             reason = refusalForDownload(*map);
         }
         if (!reason) {
-            reason = refusalForSnapshot(*map); // S-14 (T-0243)
+            reason = refusalForSnapshot(*map);
         }
         if (tsv) {
-            // T-0244: an invalid definition (an error) counts as `snapshot`
+            // An invalid definition (an error) counts as `snapshot`
             const auto definition = snapshotDefinition(*map);
             const bool snapshot = !definition || definition->has_value();
             const core::IStringByLanguagePtr license = map->zmp()->license();
             // unreachable null: every ZmpInfo constructor sets it (zmp_info.cpp:190)
             const QString licenseText = withYear(
                 license != nullptr ? license->getString(app.languages().currentLanguageIndex()) : QString(),
-                QDateTime::currentDateTimeUtc().date().year()); // T-0249
+                QDateTime::currentDateTimeUtc().date().year());
             console.result(sourceRecord(*map, reason ? *reason : QStringLiteral("ok"),
-                                        u"user", // field 10: always user (T-0291)
+                                        u"user", // field 10: always user
                                         snapshot ? u"snapshot" : u"static", licenseText,
-                                        maxZoom(*map).value_or(std::nullopt), // T-0245: invalid = empty
-                                        navigationWarning(*map)));            // field 14 (T-0285)
+                                        maxZoom(*map).value_or(std::nullopt), // invalid = empty
+                                        navigationWarning(*map)));            // field 14
             continue;
         }
         const core::ContentTypeInfo* type = map->contentType();
@@ -147,8 +146,8 @@ int runSources(const Job& job, const AppContext& app, Console& console) {
     return kExitOk;
 }
 
-// `probe` (app-cli.md 1.1, 3.13): GUID, name, result per source; exit 4 when a probed source did not pass.
-// Skipped sources do not count.
+// `probe`: GUID, name, result per source; exit 4 when a probed source did not pass. Skipped sources do not
+// count.
 int runProbe(const Job& job, const AppContext& app, Console& console, const std::stop_token& termination) {
     const std::vector<ProbeRow> probed = probeSources(app, job, termination);
     QList<QStringList> rows;
@@ -210,13 +209,31 @@ int downloadExit(DownloadOutcome outcome) {
     return kExitInternal;
 }
 
-// `resume` (app-cli.md 1.1, 1.9, 6.2): every file is loaded and its map checked (S-4 ... S-9) before any run
-// starts; then the runs, then the fill report of the map, area and zooms each session names.
+// DEVIATION: no legacy counterpart. After the fill report of a completed download, every answer that is
+// a refusal (HTTP 401, 403, 451) is a failure (exit 4); some refusals only warn.
+int reportRefusals(const region::RefusalCounts& counts, Console& console) {
+    if (counts.refused > 0 && counts.notRefused == 0) {
+        console.error(Tr::tr("the server refused all %1 requested tiles: HTTP %2")
+                          .arg(counts.refused)
+                          .arg(counts.lastStatus));
+        return kExitDownloadFailed;
+    }
+    if (counts.refused > 0) {
+        console.warning(Tr::tr("the server refused %1 of %2 requested tiles: HTTP %3")
+                            .arg(counts.refused)
+                            .arg(counts.refused + counts.notRefused)
+                            .arg(counts.lastStatus));
+    }
+    return kExitOk;
+}
+
+// `resume`: every file is loaded and its map checked before any run starts; then the runs, then the fill
+// report of the map, area and zooms each session names.
 int runResume(const Job& job, AppContext& app, Console& console, const std::stop_token& termination) {
     // One report per map and zoom list (a split session is N files of one job); the sessions are kept for it.
     std::vector<region::DownloadSession> sessions;
     sessions.reserve(job.slsFiles.size());
-    std::map<QString, QString> versions;            // map GUID -> the version the sessions name (T-0244)
+    std::map<QString, QString> versions;            // map GUID -> the version the sessions name
     std::vector<maptype::IMapTypePtr> snapshotMaps; // snapshot maps in the order of their first file
     for (const QString& file : job.slsFiles) {
         try {
@@ -236,13 +253,13 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
                 reason = refusalForDownload(*session.mapType());
             }
             if (!reason) {
-                reason = refusalForSnapshot(*session.mapType()); // S-14 (T-0244)
+                reason = refusalForSnapshot(*session.mapType());
             }
             if (reason) {
                 console.error(QStringLiteral("%1: %2").arg(file, *reason));
                 return kExitRefused;
             }
-            // weather-sources.md 4.3: a snapshot map continues the frame the session names
+            // A snapshot map continues the frame the session names
             const auto definition = snapshotDefinition(*session.mapType());
             if (definition && definition->has_value()) {
                 const storage::MapVersionInfoPtr named = session.versionForDownload();
@@ -269,8 +286,8 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
         }
     }
 
-    // T-0244 (weather-sources.md 4.3): no resolve, no store file written; the time from the store file when
-    // its version equals, else from the version when that is a time, else unknown.
+    // No resolve, no store file written; the time from the store file when its version equals, else from
+    // the version when that is a time, else unknown.
     for (const maptype::IMapTypePtr& map : snapshotMaps) {
         const QString guid = guidText(*map);
         const QString& version = versions.at(guid);
@@ -294,8 +311,8 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
     for (const region::DownloadSession& session : sessions) {
         sourceNames.push_back(sourceName(*session.mapType()));
     }
-    std::set<QString> navigationWarned;                       // app-cli.md 1.6.5: once per source of the job
-    for (const region::DownloadSession& session : sessions) { // app-cli.md 1.6.2: per session file
+    std::set<QString> navigationWarned;                       // Once per source of the job
+    for (const region::DownloadSession& session : sessions) { // Per session file
         printTermsOfUseWarning(*session.mapType(), console);
         if (navigationWarned.insert(guidText(*session.mapType())).second) {
             printNavigationWarning(*session.mapType(), console);
@@ -305,15 +322,15 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
                           DownloadPolicy{.stallTimeoutSec = job.stallTimeoutSec,
                                          .saveRetries = job.saveRetries,
                                          .maxConnectionErrors = job.maxConnectionErrors});
-    // The fill report below shows what is still missing (the deviation of T-0226 (deviations.md): a resume
-    // leaves no tile out).
+    // The fill report below shows what is still missing (a deviation from legacy: a resume leaves no tile
+    // out).
     const DownloadOutcome outcome = runner.resume(job.slsFiles, sourceNames);
     int rc = downloadExit(outcome);
     if (outcome == DownloadOutcome::Interrupted || outcome == DownloadOutcome::Refused) {
         return rc;
     }
     // the zoom list is keyed as a QByteArray: a std::vector<quint8> key trips the GCC 14 -Wstringop-overread
-    // false positive (T-0265)
+    // false positive
     std::set<std::pair<QString, QByteArray>> reported;
     bool anyMissing = false;
     for (const region::DownloadSession& session : sessions) {
@@ -332,6 +349,12 @@ int runResume(const Job& job, AppContext& app, Console& console, const std::stop
             return code;
         }
     }
+    if (rc == kExitOk) { // Before --strict
+        rc = reportRefusals(runner.lastRefusals(), console);
+        if (rc != kExitOk) {
+            return rc;
+        }
+    }
     if (rc == kExitOk && job.strict && anyMissing) {
         console.error(Tr::tr("tiles are missing in the cache (--strict)"));
         rc = kExitDownloadFailed;
@@ -346,7 +369,7 @@ bool isSnapshotSource(const maptype::IMapType& map) {
     return definition && definition->has_value();
 }
 
-// T-0443: a freshly taken snapshot against the stored one (read before the save): the run is carried or
+// A freshly taken snapshot against the stored one (read before the save): the run is carried or
 // renewed, an unreadable run and a new run are said on stderr.
 void noteRun(Snapshot& taken, const QString& name, AppContext& app, const QString& guid, Console& console) {
     if (!taken.referenceBad.isEmpty()) {
@@ -388,7 +411,7 @@ int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::s
             continue;
         }
         SnapshotDefinition wanted = **definition;
-        wanted.time = job.time; // T-0283: only a wmts-default source has one (resolveJob refused the rest)
+        wanted.time = job.time; // Only a wmts-default source has one (resolveJob refused the rest)
         wanted.sourceName = sourceName(*source.map);
         auto taken = resolveSnapshot(wanted, *source.map, app, termination);
         if (!taken) {
@@ -405,7 +428,7 @@ int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::s
         }
         applySnapshot(*source.map, taken->version);
         noteRun(*taken, wanted.sourceName, app, guid, console);
-        source.map->tileStorage()->setRecordSkippedSaves(true); // T-0352: the prune reads the record
+        source.map->tileStorage()->setRecordSkippedSaves(true); // The prune reads the record
         if (const auto saved = saveSnapshot(app.snapshotDir(), guid, *taken, QDateTime::currentDateTimeUtc());
             !saved) {
             console.error(Tr::tr("cannot write %1: %2")
@@ -414,16 +437,16 @@ int fixSnapshots(const Job& job, AppContext& app, Console& console, const std::s
             return kExitDownloadFailed;
         }
         source.snapshot = *taken;
-        // T-0356: a newest frame younger than an hour may not be served yet
+        // A newest frame younger than an hour may not be served yet
         source.frameFallback = taken->newest && !taken->dateOnly && taken->time.isValid() &&
                                taken->time.secsTo(QDateTime::currentDateTimeUtc()) < kYoungFrameSeconds;
     }
     return kExitOk;
 }
 
-// T-0356: the download of the newest young frame stopped, none of its tiles is served. One step back: the
-// previous frame of the index, then the download again (with the legacy behaviour: no second step). When the
-// previous frame cannot be taken, the newest frame is downloaded again as it was before this feature.
+// The download of the newest young frame stopped, none of its tiles is served. One step back: the previous
+// frame of the index, then the download again (with the legacy behaviour: no second step). When the previous
+// frame cannot be taken, the newest frame is downloaded again as it was before this feature.
 DownloadOutcome downloadPreviousFrame(ResolvedSource& source, const Job& job, AppContext& app,
                                       Console& console, const std::stop_token& termination,
                                       DownloadRunner& runner,
@@ -487,7 +510,7 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
         return area.error().exitCode;
     }
 
-    // S-16 (T-0277, app-cli.md 1.7): refused before the first request (fixSnapshots fetches a snapshot).
+    // Refused before the first request (fixSnapshots fetches a snapshot).
     for (const ResolvedSource& source : *sources) {
         if (const auto reason = refusalForAreaSize(*source.map, **area, source.zooms)) {
             console.error(*reason);
@@ -495,13 +518,13 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
         }
     }
 
-    // T-0243 (weather-sources.md 3.5): the snapshot of every snapshot source is fixed before the first
-    // estimate. `estimate` takes none (the next download's frame is not known).
+    // The snapshot of every snapshot source is fixed before the first estimate. `estimate` takes none
+    // (the next download's frame is not known).
     if (const int code = fixSnapshots(job, app, console, termination, *sources); code != kExitOk) {
         return code;
     }
 
-    // The estimate of every source (S-13: no tile at the chosen zooms refuses the job).
+    // The estimate of every source (no tile at the chosen zooms refuses the job).
     for (const ResolvedSource& source : *sources) {
         const bool estimateOnly = job.command == Command::Estimate && isSnapshotSource(*source.map);
         if (job.progressMode == ProgressMode::Lines) {
@@ -544,11 +567,11 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
     }
 
     if (job.command == Command::Download || job.command == Command::Run) {
-        std::set<QString> warned; // app-cli.md 1.6.2: once per grey source of the job
+        std::set<QString> warned; // Once per grey source of the job
         for (const ResolvedSource& source : *sources) {
             if (warned.insert(guidText(*source.map)).second) {
                 printTermsOfUseWarning(*source.map, console);
-                printNavigationWarning(*source.map, console); // app-cli.md 1.6.5
+                printNavigationWarning(*source.map, console);
             }
         }
         DownloadRunner runner(app, console, job, termination,
@@ -558,14 +581,14 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
         bool anyMissing = false;
         for (ResolvedSource& source : *sources) {
             DownloadOutcome outcome = runner.run(source, *area);
-            if (outcome == DownloadOutcome::FrameNotServed) { // T-0356
+            if (outcome == DownloadOutcome::FrameNotServed) {
                 outcome = downloadPreviousFrame(source, job, app, console, termination, runner, *area);
             }
             if (outcome == DownloadOutcome::Interrupted) {
                 return kExitInterrupted;
             }
-            // T-0246 (weather-sources.md 9): older frames of the area go; T-0351: before the fill report,
-            // as the tiles moved to the new frame count as present in it
+            // Older frames of the area go; before the fill report, as the tiles moved to the new frame
+            // count as present in it
             if (outcome == DownloadOutcome::Completed && source.snapshot) {
                 const auto removed = pruneOtherSnapshots(*source.map, **area, source.zooms, app, termination);
                 if (!removed) {
@@ -580,7 +603,7 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
                                     .arg(sourceName(*source.map)));
                 }
             }
-            if (outcome == DownloadOutcome::Refused) { // T-0445: the job lock is held; nothing was touched
+            if (outcome == DownloadOutcome::Refused) { // The job lock is held; nothing was touched
                 return kExitRefused;
             }
             const int code =
@@ -591,6 +614,10 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
             }
             if (outcome != DownloadOutcome::Completed) {
                 return downloadExit(outcome); // stop at the first source that did not complete
+            }
+            if (const int refusedCode = reportRefusals(runner.lastRefusals(), console);
+                refusedCode != kExitOk) { // Before --strict; stops at this source
+                return refusedCode;
             }
         }
         if (job.strict && anyMissing) {
@@ -654,8 +681,8 @@ int runCli(const QStringList& arguments, const std::stop_token& termination, con
         console.result(QStringLiteral("chart-grabber-cli %1").arg(QCoreApplication::applicationVersion()));
         return kExitOk;
     }
-    // T-0332: before anything else, so that a stop line or EOF sent at once is not lost (the token is stopped
-    // and every stage below checks it); the sources / probe commands do not run a job and ignore the option.
+    // Before anything else, so that a stop line or EOF sent at once is not lost (the token is stopped and
+    // every stage below checks it); the sources / probe commands do not run a job and ignore the option.
     if (job->stopOnStdin && watchStdin && job->command != Command::Sources &&
         job->command != Command::Probe) {
         switch (watchStdin()) {

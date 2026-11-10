@@ -38,7 +38,7 @@ public:
                               std::vector<geo::TileIteratorPtr>& tasksList) = 0;
 };
 
-// TDownloadTaskProvider (u_DownloadTaskProvider.pas:40-75). FEAT-REG-014 (split into N parts)
+// TDownloadTaskProvider (u_DownloadTaskProvider.pas:40-75).
 class DownloadTaskProvider final : public IDownloadTaskProvider {
 public:
     DownloadTaskProvider(maptype::IMapTypePtr mapType, PolygonPtr polygon,

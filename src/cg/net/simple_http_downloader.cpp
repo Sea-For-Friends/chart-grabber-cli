@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: u_SimpleHttpDownloader.pas:127-170. docs/specs/net.md §2.17. FEAT-NET-016.
+// Ports: u_SimpleHttpDownloader.pas:127-170.
 #include "cg/net/simple_http_downloader.h"
 
 #include <utility>

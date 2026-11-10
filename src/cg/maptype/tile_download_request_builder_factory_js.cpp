@@ -48,7 +48,7 @@ TileDownloadRequestBuilderFactoryJs::buildRequestBuilder(const net::IDownloaderP
             if (!isScriptInitialized_.load(std::memory_order_relaxed) && state_->enabled()) { // :209, :212
                 watchdog_ = std::make_shared<JsScriptWatchdog>();
                 try {
-                    // ADR-0014 point 6: the script runs once in a throw-away engine with a store of its own.
+                    // The script runs once in a throw-away engine with a store of its own.
                     const QString failure =
                         newBuilder(downloader, std::make_shared<JsSharedStore>())->checkScript();
                     if (failure.isEmpty()) {

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_TileDownloaderStateInternal.pas, u_TileRequest.pas; docs/specs/maptype.md §2.13.1-2.
+// Ports u_TileDownloaderStateInternal.pas, u_TileRequest.pas.
 #include "cg/maptype/tile_downloader_state.h"
 #include "cg/maptype/tile_request.h"
 

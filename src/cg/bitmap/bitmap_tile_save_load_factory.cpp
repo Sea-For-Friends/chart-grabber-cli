@@ -33,8 +33,7 @@ constexpr quint32 kTiffJpeg = 0x8000;
 BitmapTileSaveLoadFactory::BitmapTileSaveLoadFactory(
     std::shared_ptr<const IBitmap32StaticFactory> staticFactory)
     : staticFactory_(std::move(staticFactory)) {
-    // unreachable in legacy (u_GlobalState.pas:568 passes the factory it just built; :147 asserts); no
-    // register row
+    // unreachable in legacy (u_GlobalState.pas:568 passes the factory it just built; :147 asserts)
     if (!staticFactory_) {
         throw std::invalid_argument("BitmapTileSaveLoadFactory: null factory");
     }
@@ -53,7 +52,8 @@ BitmapTileLoaderPtr BitmapTileSaveLoadFactory::createGifLoader() const {
 }
 
 BitmapTileSaverPtr BitmapTileSaveLoadFactory::createGifSaver() const {
-    // The GIF saver refuses on save (T-0162, D-135); the legacy converter argument is group O-3.
+    // The GIF saver refuses on save (a deviation from legacy); the legacy converter argument (palette output)
+    // is not ported.
     return std::make_shared<BitmapTileFreeImageSaverGif>();
 }
 
@@ -70,8 +70,8 @@ BitmapTileSaverPtr BitmapTileSaveLoadFactory::createPngSaver(ImageColorBitPerPix
     int bitsPerPixel = 0;
     switch (colorDepth) {
     case ImageColorBitPerPix::I8bpp:
-        // group O-3: the 8-bit palette saver (libimagequant) is not ported; its only caller is the export
-        // dialog (fr_ImageFormatSelect.pas:371). Register row: the D row of T-0163.
+        // The 8-bit palette saver (libimagequant) is not ported; its only caller is the export dialog
+        // (fr_ImageFormatSelect.pas:371). A refusal here is a deviation from legacy.
         throw BitmapCodecError("PNG 8 bpp saver is not ported");
     case ImageColorBitPerPix::I24bpp:
         bitsPerPixel = 24;
@@ -81,7 +81,7 @@ BitmapTileSaverPtr BitmapTileSaveLoadFactory::createPngSaver(ImageColorBitPerPix
         break;
     default:
         // unreachable in legacy (u_ContentTypeManagerSimple.pas:701, fr_ImageFormatSelect.pas:371-373 pass
-        // enum literals); no register row
+        // enum literals)
         throw BitmapCodecError("Unexpected ColorDepth value: \"" +
                                std::to_string(static_cast<int>(colorDepth)) + "\"");
     }
@@ -114,8 +114,7 @@ BitmapTileSaverPtr BitmapTileSaveLoadFactory::createTiffSaver(ImageColorBitPerPi
         bitsPerPixel = 32;
         break;
     default:
-        // unreachable in legacy (u_ContentTypeManagerSimple.pas:751 is the only caller and passes i32bpp); no
-        // register row
+        // unreachable in legacy (u_ContentTypeManagerSimple.pas:751 is the only caller and passes i32bpp)
         throw BitmapCodecError("Unexpected ColorDepth value: \"" +
                                std::to_string(static_cast<int>(colorDepth)) + "\"");
     }
@@ -135,7 +134,7 @@ BitmapTileSaverPtr BitmapTileSaveLoadFactory::createTiffSaver(ImageColorBitPerPi
         break;
     default:
         // unreachable in legacy (u_ContentTypeManagerSimple.pas:751 is the only caller and passes
-        // itcDeflate); no register row
+        // itcDeflate)
         throw BitmapCodecError("Unexpected CompressionType value: \"" +
                                std::to_string(static_cast<int>(compression)) + "\"");
     }

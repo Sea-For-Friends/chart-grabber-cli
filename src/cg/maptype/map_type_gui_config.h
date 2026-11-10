@@ -7,11 +7,10 @@
 //        IMapTypeGuiConfigProxy belongs to map_type_gui_config_proxy.h), u_MapTypeGUIConfig.pas,
 //        u_MapTypeGUIConfigStatic.pas
 //
-// The per-map menu/GUI settings (spec maptype.md section 2.10). Three localized string children
-// (MapName, ParentSubMenu, InfoUrl) plus own fields sortIndex (key pnum), hotKey, separator and
-// enabled, read from and written to the map's Maps.ini section against the ZMP defaults.
-// The legacy static carries no bitmaps (the spec's "check the unit"): the icons stay in
-// IZmpInfoGui.
+// The per-map menu/GUI settings. Three localized string children (MapName, ParentSubMenu,
+// InfoUrl) plus own fields sortIndex (key pnum), hotKey, separator and enabled, read from and
+// written to the map's Maps.ini section against the ZMP defaults. The legacy static carries no
+// bitmaps: the icons stay in IZmpInfoGui.
 
 #include "cg/core/config_element_complex.h"
 #include "cg/core/language_manager.h"
@@ -37,7 +36,6 @@ struct MapTypeGuiConfigStatic { // u_MapTypeGUIConfigStatic.pas
 };
 using MapTypeGuiConfigStaticPtr = std::shared_ptr<const MapTypeGuiConfigStatic>;
 
-// FEAT-NET-030
 class MapTypeGuiConfig final : public core::ConfigElementComplex {
 public:
     MapTypeGuiConfig(const std::shared_ptr<core::ILanguageManager>& languageManager,

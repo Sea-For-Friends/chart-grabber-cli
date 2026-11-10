@@ -4,10 +4,10 @@
 
 #pragma once
 // Ports: i_GlobalInternetState.pas, u_GlobalInternetState.pas, i_DownloadInfoSimple.pas,
-// u_DownloadInfoSimple.pas, i_LastResponseInfo.pas, u_LastResponseInfo.pas. docs/specs/net.md §2.19.
+// u_DownloadInfoSimple.pas, i_LastResponseInfo.pas, u_LastResponseInfo.pas.
 //
-// Three tiny, unrelated things that the download path writes and the UI reads. No FEAT ID names any
-// of them individually (net.md §6); they back FEAT-NET-013/016's plumbing.
+// Three tiny, unrelated things that the download path writes and the UI reads. They are plumbing
+// for the download-result classification and the script's HTTP downloader.
 
 #include "cg/core/changeable.h"
 
@@ -48,9 +48,9 @@ private:
     std::atomic<quint64> size_;
 };
 
-// The per-map "headers of the previous response", fed to the next script run as ResponseHead
-// (ADR-0003, FEAT-NET-003). Updated by RetryDownloader from any result with
-// hasServerRespond() == true (u_TileDownloaderSimple.pas:228-230).
+// The per-map "headers of the previous response", fed to the next script run as
+// ResponseHead. Updated by RetryDownloader from any result with hasServerRespond() == true
+// (u_TileDownloaderSimple.pas:228-230).
 class LastResponseInfo final : public cg::core::Changeable {
 public:
     LastResponseInfo() = default;

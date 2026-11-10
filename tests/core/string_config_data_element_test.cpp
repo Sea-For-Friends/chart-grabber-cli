@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002, FEAT-UI-207. Ports u_StringByLanguageWithStaticList.pas,
-// u_StringConfigDataElementWithDefBase/WithLanguage/ByGetText/ByStringRec.pas;
-// docs/specs/maptype.md §2.10 (MapName / MapName_ write rule), §7.3.
+// Ports u_StringByLanguageWithStaticList.pas,
+// u_StringConfigDataElementWithDefBase/WithLanguage/ByGetText/ByStringRec.pas,
+// with the MapName / MapName_ write rule.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"
@@ -65,7 +65,7 @@ TEST(StringByLanguage, IndexZeroNegativeAndOutOfRangeFallBackToTheDefault) {
         EXPECT_EQ(s.getString(r.index), QString::fromLatin1(r.expected)) << r.index;
     }
     EXPECT_EQ(s.getDefault(), u"en"_s);
-    EXPECT_THROW((void)StringByLanguageWithStaticList(QStringList()).getString(1), std::out_of_range); // L-30
+    EXPECT_THROW((void)StringByLanguageWithStaticList(QStringList()).getString(1), std::out_of_range);
 }
 
 // The MapName / MapName_ rule: isStoreDefault writes the label key for the default value.

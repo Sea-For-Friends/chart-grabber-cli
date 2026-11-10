@@ -4,16 +4,16 @@
 
 #pragma once
 // Ports: i_EnumDoublePoint.pas, u_EnumDoublePointAbstract.pas, i_DoublePointFilter.pas, and the
-// point-stream sources/decorators of docs/specs/geo.md §3.4:
+// point-stream sources/decorators:
 // u_EnumDoublePoint{sByArray,BySingleLine,ByLineSet,ClosePoly,FilterEqual,FilterFirstSegment,
-// LonLatToMapPixel,MapPixelToLocalPixel,Line2Poly}.pas. The clipper (declared here, implemented
-// in point_stream_clip.cpp) ports u_EnumDoublePointWithClip.pas + u_EnumDoublePointClipInternal.pas.
+// LonLatToMapPixel,MapPixelToLocalPixel,Line2Poly}.pas. The clipper (declared here, implemented in
+// point_stream_clip.cpp) ports u_EnumDoublePointWithClip.pas + u_EnumDoublePointClipInternal.pas.
 //
-// Pull-based enumerator pipeline: lazy by design (§3.4 "Keep the laziness" -- several nodes emit
-// *more* points than they consume, e.g. ClosePoly re-emits the first vertex, the clipper's
-// outside->inside transition emits two points, the line-set flattener injects separators).
-// Materialising a stage into a vector would allocate one intermediate vector per stage for one
-// clipped polygon; `render` runs this per frame per layer, so do not.
+// Pull-based enumerator pipeline: lazy by design (several nodes emit *more* points than they
+// consume, e.g. ClosePoly re-emits the first vertex, the clipper's outside->inside transition
+// emits two points, the line-set flattener injects separators). Materialising a stage into a
+// vector would allocate one intermediate vector per stage for one clipped polygon; `render` runs
+// this per frame per layer, so do not.
 //
 // Every point value stays a plain DoublePoint regardless of the coordinate space it represents
 // (exactly as legacy's single TDoublePoint did for lon/lat, projected and local pixel alike);
@@ -74,9 +74,9 @@ public:
     [[nodiscard]] bool next(DoublePoint& out) { return s_->next(out); }
     [[nodiscard]] bool next(DoublePoint& out, PointMetaItem& m) { return s_->next(out, m); }
     [[nodiscard]] IPointStream& raw() noexcept { return *s_; }
-    // Not in the spec's illustrative code block, but required to bridge a typed stream back to
-    // the untyped decorators (closePoly/line2Poly/...) that every LonLatPointFilter etc. must
-    // compose internally -- see GeometryLonLatFactory::createPolygonByLine.
+    // An addition, required to bridge a typed stream back to the untyped decorators
+    // (closePoly/line2Poly/...) that every LonLatPointFilter etc. must compose internally --
+    // see GeometryLonLatFactory::createPolygonByLine.
     [[nodiscard]] PointStreamPtr release() && { return std::move(s_); }
 
 private:
@@ -97,7 +97,7 @@ using ProjectedPointFilter = std::function<ProjectedStream(ProjectedStream)>;
 using ProjectedPointConverter = std::function<LocalStream(ProjectedStream)>;
 using LocalPointFilter = std::function<LocalStream(LocalStream)>;
 
-// --- sources (§3.4.1) --------------------------------------------------------------------------
+// --- sources --------------------------------------------------------------------------
 // All non-owning: the caller keeps the backing storage (and, for lineSetStream, the
 // IGeometryLonLatMultiLine itself) alive for the stream's lifetime -- same contract as legacy's
 // raw PDoublePointArray plus an owner reference held only to pin lifetime.
@@ -115,7 +115,7 @@ using LocalPointFilter = std::function<LocalStream(LocalStream)>;
 // separator *between* them (never before the first, never after the last).
 [[nodiscard]] PointStreamPtr lineSetStream(const IGeometryLonLatMultiLine& lineSet);
 
-// --- decorators (§3.4.1) -----------------------------------------------------------------------
+// --- decorators -----------------------------------------------------------------------
 
 // TEnumDoublePointClosePoly: at every break and at EOF, if the run had > 1 point and last != first,
 // emit the first point again, then the break.
@@ -149,14 +149,14 @@ using LocalPointFilter = std::function<LocalStream(LocalStream)>;
 // --- the clipper (point_stream_clip.cpp) --------------------------------------------------------
 
 // The half-plane primitives (u_EnumDoublePointClipInternal.pas), exposed individually because
-// clipByRect composes them and the legacy DUnit suite (§11.1 item 7) pins the left-border
-// primitive directly.
+// clipByRect composes them and the legacy DUnit suite pins the left-border primitive
+// directly.
 [[nodiscard]] PointStreamPtr clipByLeftBorder(double x, PointStreamPtr source);
 [[nodiscard]] PointStreamPtr clipByRightBorder(double x, PointStreamPtr source);
 [[nodiscard]] PointStreamPtr clipByTopBorder(double y, PointStreamPtr source);
 [[nodiscard]] PointStreamPtr clipByBottomBorder(double y, PointStreamPtr source);
 
-// u_EnumDoublePointWithClip.pas: order-sensitive, the two branches differ (§3.4.1) --
+// u_EnumDoublePointWithClip.pas: order-sensitive, the two branches differ --
 // closed:  source -> closePoly -> clipBottom -> closePoly -> clipRight -> closePoly
 //                  -> clipTop   -> closePoly -> clipLeft  -> closePoly        (9 stages)
 // open:    source -> clipBottom -> clipTop -> clipLeft -> clipRight          (4 stages, B,T,L,R)

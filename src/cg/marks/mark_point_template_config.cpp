@@ -11,7 +11,7 @@
 
 #include <utility>
 
-// Ports u_MarkPointTemplateConfig.pas (T-0098). The format text is SAS_STR_NewMark (u_ResStrings.pas,
+// Ports u_MarkPointTemplateConfig.pas. The format text is SAS_STR_NewMark (u_ResStrings.pas,
 // 'FormatString').
 
 using namespace Qt::StringLiterals;

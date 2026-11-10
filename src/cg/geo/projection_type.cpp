@@ -29,8 +29,7 @@ constexpr long double kPiL = std::numbers::pi_v<long double>;
     const double rx = 0.5 + p.lon / 360.0;
     const double z = std::sin(p.lat * kPi / 180.0);
     double ry = 0.5 - 0.5 * std::log((1.0 + z) / (1.0 - z)) / (2.0 * kPi);
-    // The two 1e-12 snaps are load-bearing (docs/specs/geo.md §2.2.2, ADR-0006 decision 1):
-    // written as literals, in this order, after the formula.
+    // The two 1e-12 snaps are load-bearing: written as literals, in this order, after the formula.
     if (std::abs(ry - 0.0) <= 1e-12)
         ry = 0.0;
     if (std::abs(ry - 1.0) <= 1e-12)
@@ -47,11 +46,10 @@ constexpr long double kPiL = std::numbers::pi_v<long double>;
 // --- MercatorOnEllipsoid (u_ProjectionTypeMercatorOnEllipsoid.pas:66-115) -----
 [[nodiscard]] DoublePoint ellipsoidForward(LonLat p, double e) noexcept {
     // u_ProjectionTypeMercatorOnEllipsoid.pas:71-79 declares `z: Extended` (80-bit) even though the
-    // function returns TDoublePoint (64-bit fields). ADR-0006 D-11 permits `long double` only in
-    // the ellipsoidal INVERSE (deviation 6), not here, and the T-0016 review (Q-B) measured why
-    // that is fine: swept over the D-11 grid (lat -85..85 step 0.01), a `double`-only forward and
-    // the `long double` forward produce round trips (through the same, unchanged, `long double`
-    // inverse) that agree to under 1e-9 degrees -- see
+    // function returns TDoublePoint (64-bit fields). `long double` is used only in the ellipsoidal
+    // INVERSE (a deviation from legacy), not here, and that is fine: swept over the lat -85..85
+    // step 0.01 grid, a `double`-only forward and the `long double` forward produce round trips
+    // (through the same, unchanged, `long double` inverse) that agree to under 1e-9 degrees -- see
     // EllipsoidForwardDoubleAgreesWithLongDoubleWithinD11Bound in projection_type_test.cpp. Plain
     // `double` is correct and sufficient.
     const double rx = 0.5 + p.lon / 360.0;
@@ -60,13 +58,12 @@ constexpr long double kPiL = std::numbers::pi_v<long double>;
     return {rx, ry};
 }
 [[nodiscard]] LonLat ellipsoidInverse(DoublePoint p, double e) noexcept {
-    // Precision (docs/specs/geo.md §2.2.3, ADR-0006 decision 1 / deviation 6): legacy computes this
-    // in Delphi Extended (80-bit); ADR-0006 D-11 permits `long double` here, in the ellipsoidal
-    // INVERSE only, so x86-64 `long double` (the same 80-bit format as Delphi Extended) keeps the
-    // iteration's convergence behavior close to the Windows build's. This is a fidelity choice, not
-    // a correctness requirement: the T-0016 review (Q-B) found no measurable difference in the
-    // round-trip's worst-case error between `double` and `long double` here either (both
-    // ~2.8370e-08 degrees over the D-11 grid).
+    // Precision: legacy computes this in Delphi Extended (80-bit); `long double` is used here, in
+    // the ellipsoidal INVERSE only (a deviation from legacy), so x86-64 `long double` (the same
+    // 80-bit format as Delphi Extended) keeps the iteration's convergence behavior close to the
+    // Windows build's. This is a fidelity choice, not a correctness requirement: a sweep found no
+    // measurable difference in the round-trip's worst-case error between `double` and `long double`
+    // here either (both ~2.8370e-08 degrees over the lat -85..85 step 0.01 grid).
     using Extended = long double;
     const double lon = (p.x() - 0.5) * 360.0;
     const bool southern = p.y() > 0.5;
@@ -75,22 +72,21 @@ constexpr long double kPiL = std::numbers::pi_v<long double>;
     Extended zu = 2.0L * std::atan(std::exp(yy)) - kPiL / 2.0L; // first guess
     const Extended eY = std::exp(2.0L * yy);
 
-    // The fallback the spec and the legacy source agree on: the *unsigned*, pre-loop first guess,
-    // never sign-corrected -- reproduced exactly (u_ProjectionTypeMercatorOnEllipsoid.pas:98-113).
+    // The legacy fallback: the *unsigned*, pre-loop first guess, never sign-corrected -- reproduced
+    // exactly (u_ProjectionTypeMercatorOnEllipsoid.pas:98-113).
     Extended lat = zu * 180.0L / kPiL;
 
     for (;;) {
         const Extended zum1 = zu;
         const Extended s = std::sin(zum1);
-        // std::pow, not exp(e*log(base)): they differ in the last ULP inside this loop
-        // (docs/specs/geo.md §2.2.3 rule 3).
+        // std::pow, not exp(e*log(base)): they differ in the last ULP inside this loop.
         const Extended next =
             std::asin(1.0L - (1.0L + s) * std::pow((1.0L - eLD * s) / (1.0L + eLD * s), eLD) / eY);
         if (!std::isfinite(static_cast<double>(next))) {
             break; // keep the pre-loop `lat`, un-sign-corrected -- the legacy NaN fallback.
         }
         zu = next;
-        // The stop is 1e-9 on the RADIAN value, strictly less-than (§2.2.3 rule 1).
+        // The stop is 1e-9 on the RADIAN value, strictly less-than.
         if (std::abs(zum1 - zu) < 1e-9L) {
             lat = (southern ? -zu : zu) * 180.0L / kPiL;
             break;

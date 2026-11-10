@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports u_TileDownloadRequestBuilderFactoryPascalScript.pas, u_TileDownloadRequestBuilderPascalScript.pas
-// (the maptype half), u_TileDownloadRequestBuilderLazy.pas; docs/specs/maptype.md 2.12.4, 7.2.
+// (the maptype half), u_TileDownloadRequestBuilderLazy.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/maptype/tile_download_request_builder_lazy.h"
 #include "cg/maptype/url_template.h"
@@ -204,7 +204,7 @@ TEST(TileDownloadRequestBuilder, ZoomOutsideTheProjectionSetRaisesTheListIndexEr
     }
 }
 
-// The IScriptHost functions of the download path under the Q-8 sandbox: SaveToLocalFile (legacy
+// The IScriptHost functions of the download path under the script sandbox: SaveToLocalFile (legacy
 // u_PascalScriptUtils.pas:173-200) writes nothing and returns 0, FileExists (SysUtils) is false even for an
 // existing file; FakeWriteLn and System.Random are unchanged.
 TEST(TileDownloadRequestBuilder, HostFunctionsOfTheScript) {
@@ -256,8 +256,8 @@ TEST(TileDownloadRequestBuilder, SandboxWarningsAreLoggedOncePerBuilder) {
     EXPECT_EQ(capture.countContaining("script file probes are disabled"), 2);
 }
 
-// The script's Downloader and file:/// URLs (Q-8): status 0 with empty header and body, no request reaches
-// the transport, one warning per builder; an http:// URL is unchanged. The tile transport reading file:///
+// The script's Downloader and file:/// URLs: status 0 with empty header and body, no request reaches the
+// transport, one warning per builder; an http:// URL is unchanged. The tile transport reading file:///
 // (net::CurlDownloader) is not touched: tests/net/file_url_test.cpp FileUrl.FileUrlIsRead.
 TEST(TileDownloadRequestBuilder, ScriptDownloaderRefusesFileUrlsButNotHttp) {
     FactoryEnv env;
@@ -267,7 +267,7 @@ TEST(TileDownloadRequestBuilder, ScriptDownloaderRefusesFileUrlsButNotHttp) {
         ASSERT_TRUE(f.open(QIODevice::WriteOnly));
         f.write("filebody");
     }
-    // file:/// + the path without its leading '/' (/tmp/x on POSIX, C:/x on Windows, T-0335)
+    // file:/// + the path without its leading '/' (/tmp/x on POSIX, C:/x on Windows)
     const QByteArray fileRest = (file.startsWith(u'/') ? file.mid(1) : file).toUtf8();
     auto downloader = std::make_shared<ScriptedDownloader>();
     downloader->replies.push_back(okReply(200, "H: 1", "netbody"));
@@ -374,7 +374,7 @@ TEST(TileDownloadRequestBuilderFactory,
     const QByteArray broken = "var A: string;\nbegin\n  A := 'unterminated1\n  A := 'unterminated2\nend.";
     FactoryEnv env;
     auto factory = env.factory(broken, makeBuilderConfig("http://h/{x}/{y}"));
-    // LD-18 / OQ-13: the call that compiles gets a builder over no program, i.e. a template-only one.
+    // The call that compiles gets a builder over no program, i.e. a template-only one.
     auto builder = factory->buildRequestBuilder(nullptr);
     ASSERT_NE(builder, nullptr);
     const auto state = factory->state()->getStatic();
@@ -733,10 +733,10 @@ std::vector<Zmp> loadStockZmps() {
     return all;
 }
 
-// Every stock ZMP goes through the factory and a builder comes back for each (LD-18 for the broken ones).
-// 164 are template-only, 350 carry a script; 348 of those compile and keep the state enabled. The two
-// Balticsmap scripts are the corpus' known compile failures (corpus_parse_test): the state is disabled with
-// the compiler's message, and the call that compiled still got a template-only builder.
+// Every stock ZMP goes through the factory and a builder comes back for each (a legacy defect for the
+// broken ones). 164 are template-only, 350 carry a script; 348 of those compile and keep the state enabled.
+// The two Balticsmap scripts are the corpus' known compile failures (corpus_parse_test): the state is
+// disabled with the compiler's message, and the call that compiled still got a template-only builder.
 TEST(TileDownloadRequestBuilderFactory, AllStockZmpsGoThroughTheFactory) {
     CG_SKIP_IF_NO_CORPUS();
     const std::vector<Zmp> zmps = loadStockZmps();
@@ -769,7 +769,7 @@ TEST(TileDownloadRequestBuilderFactory, AllStockZmpsGoThroughTheFactory) {
               (QStringList{u"balticmaps.eu.map.zmp: "_s + reason, u"balticmaps.eu.topo.zmp: "_s + reason}));
 }
 
-// Template-only ZMPs: the builder's URL is the T-0053 rendering of the same config. A {s} server is
+// Template-only ZMPs: the builder's URL is the template rendering of the same config. A {s} server is
 // picked at random per builder, so every possible server is rendered and the builder's URL must be one.
 TEST(TileDownloadRequestBuilderFactory, TemplateOnlyStockZmpsGiveTheUrlTemplateOracle) {
     CG_SKIP_IF_NO_CORPUS();

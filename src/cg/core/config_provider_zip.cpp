@@ -87,11 +87,10 @@ IConfigProviderPtr ConfigProviderZip::subItem(QStringView id) const {
         }
         return ConfigProviderIni::wrap(std::make_shared<IniFile>(std::move(loaded.value())));
     }
-    // DEVIATION (T-0273, L-155; register: the D row of this ticket): legacy compares the item name with
-    // "<folder>\" (a trailing delimiter) only, and 7-Zip gives a directory item without it, so a sub-folder
-    // of a zipped map was never found (u_ConfigDataProviderByZip.pas:158-165). The folder is found with its
-    // directory entry (with or without the delimiter) or with any member below it; the members stay readable
-    // by their full path.
+    // DEVIATION: legacy compares the item name with "<folder>\" (a trailing delimiter) only, and 7-Zip gives
+    // a directory item without it, so a sub-folder of a zipped map was never found
+    // (u_ConfigDataProviderByZip.pas:158-165). The folder is found with its directory entry (with or without
+    // the delimiter) or with any member below it; the members stay readable by their full path.
     QString folder = ident;
     folder.replace(QLatin1Char('\\'), QLatin1Char('/'));
     const QString subFolder = withTrailingSlash(subFolder_ + folder);
@@ -107,7 +106,7 @@ IConfigProviderPtr ConfigProviderZip::subItem(QStringView id) const {
     return nullptr;
 }
 
-// ReadString. A missing text member is "" and not "absent" (LD-1).
+// ReadString. A missing text member is "" and not "absent".
 QVariant ConfigProviderZip::value(QStringView id) const {
     if (id == u"::FileName") {
         return sourceFileName_;

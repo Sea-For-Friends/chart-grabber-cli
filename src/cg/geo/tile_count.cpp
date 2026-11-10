@@ -62,12 +62,12 @@ qint64 calcTileCountRecursive(const IProjection& projection, const IGeometryProj
 }
 
 // Wraps a plain reference in a non-owning shared_ptr: get() aliases `obj`, the control block is
-// empty (use_count() == 0, destructor is a no-op). Standard "aliasing constructor with an empty
-// owner" idiom -- lets splitProjectedPolygon(), which per spec only receives a `const IProjection&`
-// / `const IGeometryProjectedPolygon&`, reuse the real TileIteratorByRect/TileIteratorByPolygon
-// (which need a ProjectionPtr / shared_ptr<const IGeometryProjectedPolygon> to match
-// tile_iterator.h's already-landed slice-A signatures) for the one synchronous call below, with no
-// ownership implied and nothing outliving this function.
+// empty (use_count() == 0, destructor is a no-op). Standard
+// "aliasing constructor with an empty owner" idiom -- lets splitProjectedPolygon(), which only
+// receives a `const IProjection&` / `const IGeometryProjectedPolygon&`, reuse the real
+// TileIteratorByRect/TileIteratorByPolygon (which need a ProjectionPtr / shared_ptr<const
+// IGeometryProjectedPolygon> to match the signatures of tile_iterator.h) for the one synchronous
+// call below, with no ownership implied and nothing outliving this function.
 template <typename T> std::shared_ptr<const T> aliasNonOwning(const T& obj) {
     return std::shared_ptr<const T>(std::shared_ptr<void>(), &obj);
 }
@@ -91,7 +91,7 @@ qint64 calcTileCountInProjectedPolygon(const IProjection& projection,
     }
     if (const auto* multi = dynamic_cast<const IGeometryProjectedMultiPolygon*>(&polygon)) {
         // u_GeometryFunc.pas:802-823: a plain sum -- overlapping parts double-count their shared
-        // tiles. Legacy behavior, kept; docs/parity/deviations.md D-5.
+        // tiles. Legacy behavior, kept.
         qint64 total = 0;
         for (std::size_t i = 0; i < multi->count(); ++i) {
             total += calcTileCountInProjectedSinglePolygon(projection, *multi->item(i));

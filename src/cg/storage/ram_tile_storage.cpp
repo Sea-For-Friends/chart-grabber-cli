@@ -25,8 +25,8 @@ RamTileStorage::RamTileStorage(TileStorageTypeAbilities typeAbilities, TileStora
     // (u_TileStorageInRAM.pas:152): every add()/evict() the mem-cache itself performs (including
     // ones triggered by saveTile/deleteTile below) notifies through the SAME injected
     // TilePyramidNotifier every other backend uses -- ports "notifications through the injected
-    // notifier" (ticket). Runs while the mem-cache's own write lock is held (tile_info_mem_cache.h
-    // doc); TilePyramidNotifier::notify() does not re-enter the mem-cache, so that is safe.
+    // notifier". Runs while the mem-cache's own write lock is held (tile_info_mem_cache.h doc);
+    // TilePyramidNotifier::notify() does not re-enter the mem-cache, so that is safe.
     memCache_->setOnTileInfoUpdate([this](const TileUpdate& update) {
         base_.notifyTileUpdate(update.tile, update.zoom, update.version);
     });
@@ -132,7 +132,7 @@ core::Result<bool> RamTileStorage::saveTile(geo::PointI xy, quint8 zoom, const M
 
 core::Result<MapVersionList> RamTileStorage::listVersions(geo::PointI, quint8,
                                                           const MapVersionRequest&) const {
-    return MapVersionList{}; // FEAT-STO-032 default (u_TileStorageAbstract.pas): empty list
+    return MapVersionList{}; // The default (u_TileStorageAbstract.pas): empty list
 }
 
 core::Result<TileRectInfoPtr> RamTileStorage::tileRectInfo(geo::RectI rect, quint8 zoom,
@@ -153,8 +153,7 @@ core::Result<TileRectInfoPtr> RamTileStorage::tileRectInfo(geo::RectI rect, quin
     }
     if (width > 2048 || height > 2048) {
         // Legacy returns nil for a rect over the 2048x2048 cap (u_TileStorageInRAM.pas:229, the
-        // `(VCount.X <= 2048) and (VCount.Y <= 2048)` guard); a null rect info is a legal result (spec §2.6
-        // note 6).
+        // `(VCount.X <= 2048) and (VCount.Y <= 2048)` guard); a null rect info is a legal result.
         return TileRectInfoPtr{};
     }
 
@@ -164,8 +163,8 @@ core::Result<TileRectInfoPtr> RamTileStorage::tileRectInfo(geo::RectI rect, quin
         for (int x = r.left; x < r.right; ++x) {
             if (stop.stop_requested()) {
                 // u_TileStorageInRAM.pas:233-236 sets Result := nil and exits on cancellation; the
-                // port uses the project-wide std::stop_token idiom instead (F2 precedent), so
-                // "cancelled" stays distinguishable from "access denied"/"degenerate rect".
+                // port uses the project-wide std::stop_token idiom instead, so "cancelled" stays
+                // distinguishable from "access denied"/"degenerate rect".
                 return core::fail(core::ErrorCode::Cancelled, QStringLiteral("tileRectInfo cancelled"));
             }
 

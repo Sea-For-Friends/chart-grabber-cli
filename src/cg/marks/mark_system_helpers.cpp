@@ -48,7 +48,7 @@ bool getLevelName(const QString& name, QString& curLevelName, QString& trailName
 // The fixed comparison of the sort. A Qt without ICU cannot honour it (QCollator then follows the C
 // library or compares code points): detected by two probes that hold only for the ICU root order, and
 // then the port compares code points - deterministic, but a name with a space next to its parent and
-// child can split a folder into repeated nodes (L-161 / D-68).
+// child can split a folder into repeated nodes.
 class FixedCollation {
 public:
     FixedCollation() : collator_(QLocale(QLocale::English, QLocale::UnitedStates)) {
@@ -132,13 +132,13 @@ MarkCategoryTreePtr makeLeafOrBranch(const QString& groupName, const MarkCategor
     return std::make_shared<const MarkCategoryTree>(category, groupName, std::vector<MarkCategoryTreePtr>{});
 }
 
-// --- ImportItemsTree and CategoryTreeToMarkTreeHelper (:72-301, T-0106) ---
+// --- ImportItemsTree and CategoryTreeToMarkTreeHelper ---
 
 using NewCategories = std::vector<MarkCategoryPtr>; // ACategoryList of PrepareCategoriesFromTreeForImport
 using ImportedMarks = std::vector<vector::VectorDataItemPtr>; // AMarkList of PrepareFromTreeForImport
 
 // AImportConfig.RootCategory, read where legacy reads its name (:86-90, :140-144). Nil is an access violation
-// in legacy at that point, before any database call; refused (D-95).
+// in legacy at that point, before any database call; refused.
 vector::CategoryPtr rootCategoryOf(const vector::IImportConfig& config) {
     vector::CategoryPtr root = config.rootCategory();
     if (root == nullptr) {
@@ -178,9 +178,9 @@ void prepareCategoriesFromTreeForImport(NewCategories& categories,
 
 // PrepareFromTreeForImport (:118-211). A named node takes its category from the database, or creates and
 // writes it at once (updateCategory), and the node's items take that category. An unnamed node's items take
-// the ROOT category (the category is read from the root in each call, :140; L row). An item is looked up for
-// the ignore check unless its name is generated (an unnamed item of a named node); the factory turns the rest
-// into marks, and a refused item (null) is dropped.
+// the ROOT category (the category is read from the root in each call, :140; a legacy defect, reproduced). An
+// item is looked up for the ignore check unless its name is generated (an unnamed item of a named node); the
+// factory turns the rest into marks, and a refused item (null) is dropped.
 void prepareFromTreeForImport(ImportedMarks& marks, const vector::VectorItemTreePtr& dataItemTree,
                               const vector::IImportConfig& config, IMarkDbImpl& markDb,
                               const IMarkFactory& markFactory, IMarkCategoryDBImpl& categoryDb,
@@ -292,7 +292,7 @@ vector::VectorItemTreePtr categoryTreeToMarkTreeHelper(const IMarkDbImpl& markDb
 // CategoryListToCategoryTree (:408-441)
 MarkCategoryTreePtr categoryListToCategoryTree(const MarkCategoryListPtr& list) {
     if (list == nullptr || list->count() == 0) {
-        return nullptr; // legacy: Assert, then Strings[0] raises EStringListError (L-159)
+        return nullptr; // legacy: Assert, then Strings[0] raises EStringListError
     }
     std::vector<Entry> items;
     items.reserve(static_cast<std::size_t>(list->count()));
@@ -308,8 +308,8 @@ MarkCategoryTreePtr categoryListToCategoryTree(const MarkCategoryListPtr& list) 
         items.push_back({name, item});
     }
     // TStringList.Sort with CaseSensitive = True is AnsiCompareStr (Windows CompareString, user locale).
-    // The port uses ONE fixed comparison, independent of the process locale (D-68): ICU root collation
-    // through QCollator(en_US), case-sensitive, punctuation not ignored. Equal keys keep the input order
+    // The port uses ONE fixed comparison, independent of the process locale: ICU root collation through
+    // QCollator(en_US), case-sensitive, punctuation not ignored. Equal keys keep the input order
     // (Delphi's quick sort is unstable).
     const FixedCollation collation;
     std::stable_sort(items.begin(), items.end(),

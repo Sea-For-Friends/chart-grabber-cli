@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports no legacy test (there is none): Src/Vector/u_VectorItemTreeMarksDb.pas (_GetConfigForExporter
-// :116-139, _GetImpl :141-175, ProcessExport :177-197, ProcessImport :199-221), ticket T-0152.
-// FEAT-GEO-041 contributes (the id closes with V-M2 / V-M3).
+// :116-139, _GetImpl :141-175, ProcessExport :177-197, ProcessImport :199-221).
 //
 // Expectations are literals taken from the Pascal. The factory list, its element and its factory are fakes
 // written here (recording build()); the databases are the shared fakes of tests/marks (FakeDb,
@@ -291,7 +290,7 @@ const QUuid kUnknownGuid = m::cORMMongoDbMarksDbGUID;
 
 } // namespace
 
-// Proof 1: _GetImpl builds the config by the GUID (:153-160); the file name, read-only flag, base path
+// _GetImpl builds the config by the GUID (:153-160); the file name, read-only flag, base path
 // (ExtractFilePath, :172) and the caller's stop token reach build().
 TEST(VectorItemTreeMarksDb, ConfigByGuidAndMethod) {
     struct Row {
@@ -331,7 +330,7 @@ TEST(VectorItemTreeMarksDb, ConfigByGuidAndMethod) {
 
 TEST(VectorItemTreeMarksDb, BasePathIsExtractFilePath) {
     // ExtractFilePath: up to and including the last delimiter; none gives "" (:172). The port's delimiters
-    // are '/' and '\' (D-123), the later one of the two counts.
+    // are '/' and '\' (a deviation from legacy), the later one of the two counts.
     const std::vector<std::pair<QString, QString>> rows{
         {QStringLiteral("/tmp/x/marks.sml"), QStringLiteral("/tmp/x/")},
         {QStringLiteral("C:\\d\\m.db3"), QStringLiteral("C:\\d\\")},
@@ -371,8 +370,8 @@ TEST(VectorItemTreeMarksDb, StopTokenIsTheCallers) {
     EXPECT_TRUE(importRig.factory->stopRequested);
 }
 
-// Proof 2: unknown GUID -> nothing, null tree, the list is NOT asked (config first, :153-160); a known GUID
-// without an element -> the list is asked once and build is not called (:162-166).
+// Unknown GUID -> nothing, null tree, the list is NOT asked (config first, :153-160); a known GUID without
+// an element -> the list is asked once and build is not called (:162-166).
 TEST(VectorItemTreeMarksDb, UnknownGuidDoesNotAskTheList) {
     Rig rig(kUnknownGuid);
     const auto db = rig.make(kUnknownGuid);
@@ -397,7 +396,7 @@ TEST(VectorItemTreeMarksDb, KnownGuidWithoutElementDoesNotBuild) {
     EXPECT_EQ(rig.markDb->calls, 0);
 }
 
-// Proof 3: build() answers null -> nothing / null tree; build() throws -> a failure with the message.
+// build() answers null -> nothing / null tree; build() throws -> a failure with the message.
 TEST(VectorItemTreeMarksDb, BuildReturningNullDoesNothing) {
     Rig rig;
     rig.factory->impl = nullptr;
@@ -423,8 +422,8 @@ TEST(VectorItemTreeMarksDb, BuildThrowingBecomesAFailureWithTheMessage) {
     EXPECT_EQ(rig.markDb->calls, 0);
 }
 
-// Nothing else is caught (finding d): an exception of importItemsTree leaves processExport. A null tree is
-// refused by it with std::invalid_argument (D-95 widening).
+// Nothing else is caught: an exception of importItemsTree leaves processExport. A null tree is refused by
+// it with std::invalid_argument (a deviation from legacy).
 TEST(VectorItemTreeMarksDb, ExceptionOfTheImportHelperPropagates) {
     Rig rig;
     EXPECT_THROW(std::ignore =
@@ -432,7 +431,7 @@ TEST(VectorItemTreeMarksDb, ExceptionOfTheImportHelperPropagates) {
                  std::invalid_argument);
 }
 
-// Proof 4: export needs WRITE access (:187); read access alone writes nothing, write alone writes.
+// Export needs WRITE access (:187); read access alone writes nothing, write alone writes.
 TEST(VectorItemTreeMarksDb, ExportNeedsWriteAccess) {
     {
         Rig rig;
@@ -451,8 +450,8 @@ TEST(VectorItemTreeMarksDb, ExportNeedsWriteAccess) {
     EXPECT_EQ(rig.markDb->writeCalls, 1);
 }
 
-// Proof 4: the tree goes in with the category path rule of the helper: "Город", "Город\Улица", marks of the
-// nested node in the nested category; categories are listed first, marks written last.
+// The tree goes in with the category path rule of the helper: "Город", "Город\Улица", marks of the nested
+// node in the nested category; categories are listed first, marks written last.
 TEST(VectorItemTreeMarksDb, ExportWritesTheTreeWithPathCategories) {
     Rig rig;
     const auto tree =
@@ -538,7 +537,7 @@ TEST(VectorItemTreeMarksDb, ExporterConfigLiterals) {
     EXPECT_EQ(poly->fillAppearance()->fillColor(), 0U);
 }
 
-// Proof 5: import needs READ access (:211); write access alone gives a null tree.
+// Import needs READ access (:211); write access alone gives a null tree.
 TEST(VectorItemTreeMarksDb, ImportNeedsReadAccess) {
     Rig rig;
     rig.categoryDb->categories = {std::make_shared<const m::MarkCategory>(kTown, true, 3, 23)};
@@ -575,8 +574,8 @@ TEST(VectorItemTreeMarksDb, ImportWithoutCategoriesGivesANullTree) {
     EXPECT_EQ(rig.markDb->calls, 0);
 }
 
-// Proof 5: the category tree becomes the mark tree (pre-order, hidden marks included, :214-215); the config
-// argument is never read: null, empty and a normal one give the same tree.
+// The category tree becomes the mark tree (pre-order, hidden marks included, :214-215); the config argument
+// is never read: null, empty and a normal one give the same tree.
 TEST(VectorItemTreeMarksDb, ImportBuildsTheTreeAndIgnoresTheConfig) {
     Rig rig;
     // unsorted on purpose
@@ -621,10 +620,10 @@ TEST(VectorItemTreeMarksDb, NullCollaboratorsAreRefused) {
         m::VectorItemTreeMarksDb(guid, rig.markFactory, rig.categoryFactory, rig.appearances, rig.list));
 }
 
-// Proof 6: end to end on a real .db3 through the REAL factory list. Export a two-category tree, hide one mark
-// in the file (a second opening), import with a second object, compare names, categories and geometry sizes.
-// The .sml case is not run: the landed list registers only the SQLite3 backend (MarkSystemImplFactorySML is
-// not landed, see mark_system_impl_factory_changeable.h).
+// End to end on a real .db3 through the REAL factory list. Export a two-category tree, hide one mark in the
+// file (a second opening), import with a second object, compare names, categories and geometry sizes. The
+// .sml case is not run: the list registers only the SQLite3 backend (MarkSystemImplFactorySML is not ported
+// yet, see mark_system_impl_factory_changeable.h).
 TEST(VectorItemTreeMarksDb, Db3RoundTripThroughTheRealFactoryList) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

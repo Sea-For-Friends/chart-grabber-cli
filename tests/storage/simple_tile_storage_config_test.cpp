@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-034 (per-map half). Ports i_SimpleTileStorageConfig.pas,
-// u_SimpleTileStorageConfig.pas, u_SimpleTileStorageConfigStatic.pas; docs/specs/storage.md
-// §2.11 (:868-918).
+// The per-map half. Ports i_SimpleTileStorageConfig.pas, u_SimpleTileStorageConfig.pas,
+// u_SimpleTileStorageConfigStatic.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/storage/simple_tile_storage_config.h"
@@ -212,7 +211,7 @@ TEST(SimpleTileStorageConfig, ReadWriteRoundTripVerbatimKeysWriteOnlyIfDiffers) 
     EXPECT_TRUE(outSection->readBool(u"IsReadOnly", false));
     EXPECT_FALSE(outSection->readBool(u"AllowRead", true));
     EXPECT_FALSE(outSection->readBool(u"AllowScan", true));
-    EXPECT_EQ(outFile->keyNames(u"zzzMap").size(), 8); // exactly the eight §2.11 keys
+    EXPECT_EQ(outFile->keyNames(u"zzzMap").size(), 8); // exactly the eight keys
 
     // Reset back to the ZMP defaults: doWriteConfig() must delete every key instead of writing it.
     SimpleTileStorageConfig defaultConfig(makeDefaults());

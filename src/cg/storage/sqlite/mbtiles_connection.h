@@ -7,29 +7,29 @@
 //        :131-158 (InvertY, StrToBounds), :159-443 (Create, CreateTables, FetchMetadata,
 //        UpdateMetadata), :446-705 (the seven statement classes + the metadata select/upsert).
 //
-// docs/specs/storage.md §2.17.1 "MBTiles". Depends on the format-independent base landed by
-// T-0022C1 (sqlite_file_connection.h) -- read that header's own top comment first.
+// The MBTiles format. Depends on the format-independent base (sqlite_file_connection.h) -- read
+// that header's own top comment first.
 //
 // The MBTiles flavour of the single-file SQLite cache: schema, the seven statement hooks, and the
 // `metadata` table (name/description/format/scheme/crs on create; minzoom/maxzoom/bounds/center
 // maintained on every write). An MBTiles file written by this class must be readable by legacy and
 // by standard MBTiles readers, and this class must read files legacy wrote -- table/index
 // definitions, metadata rows, and TMS row flipping are all observable file format, not an
-// implementation detail (ticket T-0022C2's "Legacy wins" clause).
+// implementation detail (legacy wins).
 //
-// Two-phase construction, same shape T-0022C1 established (sqlite_file_connection.h's own top
-// comment): a private constructor builds the object, then MbtilesConnection::open() calls the
-// base's initialize() and finishes construction. One extra wrinkle is specific to MBTiles: legacy's
-// derived constructor (u_TileStorageSQLiteFileConnectionMBTiles.pas:159-229) reads `FFileInfo`
-// (format check, bounds/minzoom/maxzoom, and -- critically -- the `scheme` key that decides
+// Two-phase construction, the same shape as sqlite_file_connection.h (see its top comment): a
+// private constructor builds the object, then MbtilesConnection::open() calls the base's
+// initialize() and finishes construction. One extra wrinkle is specific to MBTiles: legacy's derived
+// constructor (u_TileStorageSQLiteFileConnectionMBTiles.pas:159-229) reads `FFileInfo` (format
+// check, bounds/minzoom/maxzoom, and -- critically -- the `scheme` key that decides
 // FTileDataStmt/FTileInfoStmt's Y-inversion) AFTER `inherited Create` has already run FetchMetadata
 // through Object Pascal's virtual dispatch into a not-yet-fully-constructed object -- a trick C++
-// cannot play (T-0022C1 handoff, "Deviations" #1). So this port's constructor builds
-// tileDataStmt_/tileInfoStmt_ with a placeholder inversion flag (their SQL text does not depend on
-// it, only their bind/result logic does -- initialize()'s eager prepare of these two is therefore
-// unaffected either way), calls initialize() (which populates fileInfo() the same way legacy's
-// FetchMetadata did), and only then -- in finishOpen(), after the real `scheme` is known -- rebuilds
-// all seven statement objects (re-preparing tileData/tileInfo if the connection is enabled, since
+// cannot play. So this port's constructor builds tileDataStmt_/tileInfoStmt_ with a placeholder
+// inversion flag (their SQL text does not depend on it, only their bind/result logic does --
+// initialize()'s eager prepare of these two is therefore unaffected either way), calls initialize()
+// (which populates fileInfo() the same way legacy's FetchMetadata did), and only then -- in
+// finishOpen(), after the real `scheme` is known -- rebuilds all seven statement objects
+// (re-preparing tileData/tileInfo if the connection is enabled, since
 // fetchOne()/tileExistsForWrite() assume they are already prepared and skip ensurePrepared()
 // themselves) with the correct Y-inversion. No caller ever observes the placeholder: open() only
 // returns a connection after finishOpen() has completed.
@@ -43,36 +43,36 @@
 
 namespace cg::storage::sqlite {
 
-// FEAT-STO-019. Ports TTileStorageSQLiteFileConnectionMBTiles.
+// Ports TTileStorageSQLiteFileConnectionMBTiles.
 // NOLINTNEXTLINE(readability-identifier-naming)
 class MbtilesConnection final : public SqliteFileConnection {
 private:
-    // Passkey (review finding 4): the constructor below cannot be reached from outside this class
-    // -- a caller cannot name `ConstructKey` (private), so cannot construct one to pass in, so
-    // cannot call the constructor -- open() (public, below) is the only way to obtain an instance,
-    // and it always follows up with initialize() and finishOpen(). The constructor itself stays
-    // technically public (rather than a plain `private:` constructor, which is what the review
-    // suggested) because std::make_unique needs public access to call it, and
-    // tools/validate.sh's RAW-NEW rule forbids a bare `new` outside make_shared/make_unique.
+    // Passkey: the constructor below cannot be reached from outside this class -- a caller cannot
+    // name `ConstructKey` (private), so cannot construct one to pass in, so cannot call the
+    // constructor -- open() (public, below) is the only way to obtain an instance, and it always
+    // follows up with initialize() and finishOpen(). The constructor itself stays technically
+    // public (rather than a plain `private:` constructor) because std::make_unique needs public
+    // access to call it, and tools/validate.sh's RAW-NEW rule forbids a bare `new` outside
+    // make_shared/make_unique.
     struct ConstructKey {
         explicit ConstructKey() = default;
     };
 
 public:
-    // Ports the constructor (:159-229) plus what T-0022C1's initialize() does not cover (see the
+    // Ports the constructor (:159-229) plus what the base's initialize() does not cover (see the
     // class doc comment above): builds the object, calls initialize(), then finishOpen(). Mirrors
-    // the shape T-0022C4's ConnectionMaker will call. The only entry point -- a caller cannot
-    // build an object without finishOpen() running (review finding 4).
+    // the shape the ConnectionMaker calls. The only entry point -- a caller cannot build an
+    // object without finishOpen() running.
     [[nodiscard]] static core::Result<std::unique_ptr<MbtilesConnection>>
     open(bool isReadOnly, QString fileName, core::ContentTypeInfo mainContentType,
          const core::ContentTypeRegistry& contentTypeManager, geo::ProjectionSetPtr projectionSet,
          SqliteFileInfoPtr existingInfo);
 
     // Builds the object with a placeholder Y-inversion flag (see the class doc comment above) --
-    // matches the base's own two-phase-construction contract (T-0022C1 handoff: "construct all
-    // statements in your own constructor before the maker calls initialize()"). Only callable by
-    // open() (above), via the ConstructKey passkey (review finding 4 -- the constructor used to be
-    // reachable without going through open()'s finishOpen() call, future-proofing with no caller).
+    // matches the base's own two-phase-construction contract ("construct all statements in your
+    // own constructor before the maker calls initialize()"). Only callable by open() (above), via
+    // the ConstructKey passkey, so the constructor cannot be reached without open()'s finishOpen()
+    // call.
     MbtilesConnection(ConstructKey, bool isReadOnly, QString fileName, core::ContentTypeInfo mainContentType,
                       const core::ContentTypeRegistry& contentTypeManager,
                       geo::ProjectionSetPtr projectionSet);

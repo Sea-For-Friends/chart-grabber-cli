@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (T-0335, Windows port).
-// The one place a QString path becomes a std::filesystem::path. On Windows the path is built from the UTF-16
-// text, so a name with non-ASCII characters survives (toStdString() would give UTF-8 bytes that the narrow
-// Windows APIs read as the ANSI code page). Elsewhere it is the UTF-8 text, as `toStdString()` always was.
+// Ports: nothing (Windows port). The one place a QString path becomes a std::filesystem::path. On Windows
+// the path is built from the UTF-16 text, so a name with non-ASCII characters survives (toStdString() would
+// give UTF-8 bytes that the narrow Windows APIs read as the ANSI code page). Elsewhere it is the UTF-8 text,
+// as `toStdString()` always was.
 
 #include <QString>
 

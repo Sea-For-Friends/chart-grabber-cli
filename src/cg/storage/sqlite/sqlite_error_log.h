@@ -7,8 +7,8 @@
 //
 // TErrorLoggerToFile, collapsed: legacy supports either a fixed filename or a late-bound
 // "ask the owner for a filename" callback (TErrorLoggerGetFileNameEvent), used only by
-// TTileStorageSQLiteHolder (§2.16.4, T-0022B, out of this ticket's scope). This ticket ports the
-// fixed-filename half only -- the class itself, not its one caller.
+// TTileStorageSQLiteHolder. This is the fixed-filename half only -- the class itself, not its
+// one caller (see sqlite_region_schema.h).
 
 #include <QFile>
 #include <QMutex>

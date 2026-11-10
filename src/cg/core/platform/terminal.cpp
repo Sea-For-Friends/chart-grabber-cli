@@ -23,7 +23,7 @@ void prepareOutputStream(std::FILE* stream) {
     if (stream == nullptr) {
         return;
     }
-    // T-0335: the program writes UTF-8 bytes; the CRT text mode would turn "\n" into "\r\n".
+    // The program writes UTF-8 bytes; the CRT text mode would turn "\n" into "\r\n".
     _setmode(_fileno(stream), _O_BINARY);
     if (isTerminal(stream)) {
         ::SetConsoleOutputCP(CP_UTF8);

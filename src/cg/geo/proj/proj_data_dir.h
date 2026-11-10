@@ -3,12 +3,11 @@
 
 #pragma once
 // Ports: nothing (Linux-only addition; legacy is Windows, where libproj finds proj.db beside the DLL).
-// T-0376: where a relocated Linux CLI finds proj.db. The bundle ships `<exe dir>/proj.db`, the
-// same layout as the Windows zip (tools/vm/win10/package_in_vm.sh:70-71, where libproj looks in its
-// own directory). On Linux libproj knows only PROJ_DATA and its compiled-in prefix, so the
-// directory is handed to the context explicitly.
+// Where a relocated Linux CLI finds proj.db. The bundle ships `<exe dir>/proj.db`, the same layout as
+// the Windows zip (where libproj looks in its own directory). On Linux libproj knows only PROJ_DATA
+// and its compiled-in prefix, so the directory is handed to the context explicitly.
 //
-// FEAT-GEO-002 (custom CRS via PROJ4 strings / EPSG).
+// Used for custom CRS display (PROJ4 strings / EPSG).
 
 #include <QString>
 

@@ -5,7 +5,7 @@
 #pragma once
 // Ports: nothing.
 //
-// The module's QLoggingCategory (core.md §2.7: one category per module). Declared locally like
+// The module's QLoggingCategory (one category per module). Declared locally like
 // cg::maptype::logMapType and cg::geo::logGeo; cg::core::log.h has no logRegion.
 
 #include <QLoggingCategory>

@@ -13,7 +13,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-207
 class StringConfigDataElementWithDefByStringRec final : public StringConfigDataElementWithDefBase {
 public:
     ~StringConfigDataElementWithDefByStringRec() override;

@@ -1,7 +1,7 @@
-; T-0015D golden: geoportal.md.cadastre.zmp - round(IntPower(2,GetZ-1)) with a flipped Y
+; Golden: geoportal.md.cadastre.zmp - round(IntPower(2,GetZ-1)) with a flipped Y
 ; and a NEGATIVE zoom at P1 (GetZ-3 = -2), emitted literally by IntToStr - a defect in this
 ; corpus map script itself (not SAS.Planet code, not the port), reproduced verbatim per the
-; port's 1:1 rule; see docs/parity/map-corpus-defects.md.
+; port's 1:1 rule.
 ; ResultURL := GetURLBase+IntToStr(GetZ-3)+'/'+IntToStr(GetX)+'/'+
 ;   IntToStr(Round(IntPower(2,GetZ-1)-GetY-1))+'.png'
 ; P1: IntPower(2,0)=1; Round(1-0-1)=0 -> '-2/0/0.png'.

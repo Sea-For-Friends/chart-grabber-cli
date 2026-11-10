@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001, FEAT-GEO-014. Ports Test/u_ProjectionSet_Test.pas (48 cases, sixteen
-// checks x three types); docs/specs/geo.md §11.1 item 3, §11.2 projection_test.cpp (22 new).
+// Ports Test/u_ProjectionSet_Test.pas (48 cases, sixteen checks x three types), plus new coverage.
 #include "cg/geo/datum.h"
 #include "cg/geo/projection.h"
 #include "cg/geo/projection_set.h"
@@ -307,7 +306,7 @@ TEST(Projection, ValidateTilePosNeverWrapsY) {
     EXPECT_EQ(pos.y(), 0);
 }
 TEST(Projection, ValidatePixelPosReproducesLegacyYBug) {
-    // The D-1 anchor (u_ProjectionBasic256x256.pas:1648-1652, docs/specs/geo.md §2.5.3/§10 D-1):
+    // The anchor of a reproduced legacy clamping defect (u_ProjectionBasic256x256.pas:1648-1652):
     // every non-negative Y is replaced by pixels_, regardless of whether it was already in range.
     auto factory = makeSetFactory();
     const auto p0 = atZoom(factory, 3857, 0);

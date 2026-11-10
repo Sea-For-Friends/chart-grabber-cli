@@ -5,14 +5,13 @@
 #pragma once
 // Ports: i_TileFileNameGenerator.pas, i_TileFileNameParser.pas, u_TileFileNameBase.pas
 //
-// docs/specs/storage.md §2.10. Legacy splits generation (ITileFileNameGenerator) and parsing
-// (ITileFileNameParser) into two interfaces, both implemented by one class per folder cache
-// format (docs/survey/03-tile-storage.md line 159); the port merges them into one strategy
-// object per format, matching how every call site uses generation and parsing together.
+// Legacy splits generation (ITileFileNameGenerator) and parsing (ITileFileNameParser) into
+// two interfaces, both implemented by one class per folder cache format; the port merges
+// them into one strategy object per format, matching how every call site uses generation and
+// parsing together.
 //
-// Deviation: storage.md §2.10's interface names the tile coordinate type `geo::TilePoint`; per
-// T-0021A (tile_info.h), the type that actually shipped is `geo::PointI` (a plain QPoint, same
-// {x, y} layout) -- the same already-flagged deviation, not re-derived here.
+// Deviation: the tile coordinate type is `geo::PointI` (a plain QPoint, same {x, y} layout),
+// as in tile_info.h.
 
 #include "cg/geo/geo_types.h"
 
@@ -41,7 +40,7 @@ public:
     // the last '/'; if there is one, truncate the path there and append `ext`, otherwise just
     // append `ext`. Every in-scope folder codec's base name contains no dot, so this degenerates
     // to a plain append here -- kept as the general rule because tools/gen_cache_fixtures.py and
-    // the tests exercise it directly, and the OsmAnd codec (T-0021C) overrides it.
+    // the tests exercise it directly, and the OsmAnd codec overrides it.
     [[nodiscard]] virtual QString addExt(const QString& path, QStringView ext) const;
 };
 using ITileNameCodecPtr = std::shared_ptr<const ITileNameCodec>;

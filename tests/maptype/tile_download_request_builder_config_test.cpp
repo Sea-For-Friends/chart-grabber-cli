@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-004. Ports u_TileDownloadRequestBuilderConfig.pas; docs/specs/maptype.md 2.7, 2.7.3.
+// Ports u_TileDownloadRequestBuilderConfig.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/maptype/tile_download_request_builder_config.h"
@@ -60,7 +60,7 @@ TEST(TileDownloadRequestBuilderConfig, ReadsThreeKeysWritesOnlyDifferingTwoWithE
     c->writeConfig(out->orCreateSubItem(u"S"));
     EXPECT_EQ(out->subItem(u"S")->readString(u"URLBase"), QString("http://b%20c/{y}"));
     EXPECT_EQ(out->subItem(u"S")->readString(u"RequestHead"), QString("A: 1\\r\\nB: 2"));
-    EXPECT_EQ(out->subItem(u"S")->readString(u"ServerNames"), QString("old")); // never written (L-140)
+    EXPECT_EQ(out->subItem(u"S")->readString(u"ServerNames"), QString("old")); // never written
 
     // back to the ZMP values: the keys are deleted, not written
     c->setUrlBase("http://a/{x}");

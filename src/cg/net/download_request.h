@@ -4,10 +4,9 @@
 
 #pragma once
 // Ports: i_DownloadRequest.pas, u_DownloadRequest.pas, i_DownloadChecker.pas (IRequestWithChecker),
-// i_TileDownloadRequest.pas. docs/specs/net.md §2.3. Five legacy request interfaces, distinguished
-// at runtime by Supports(), collapse into one value type with a method enum per idioms.md §13
-// ("no abstraction with one user") -- the observable behavior (verb, body, whether a checker runs)
-// is identical either way.
+// i_TileDownloadRequest.pas. Five legacy request interfaces, distinguished at runtime by
+// Supports(), collapse into one value type with a method enum ("no abstraction with one user") --
+// the observable behavior (verb, body, whether a checker runs) is identical either way.
 
 #include <QByteArray>
 
@@ -17,9 +16,9 @@
 namespace cg::net {
 
 // InetSettings (timeouts, UA, proxy, retry, TLS) is a config-provider value snapshot; its
-// definition lands with T-0011A (inet_config.h, a struct). A forward declaration is enough here
-// since only a pointer is stored and net never dereferences it -- T-0010B: fixed the class/struct
-// tag mismatch clang-tidy's clang-diagnostic-mismatched-tags flags once a single TU sees both
+// definition is in inet_config.h (a struct). A forward declaration is enough here since only a
+// pointer is stored and net never dereferences it; the class/struct tag matches the definition,
+// so clang-tidy's clang-diagnostic-mismatched-tags does not flag it once a single TU sees both
 // declarations (curl_session.h/curl_downloader.cpp are the first to include both headers).
 struct InetSettings;
 

@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-011. Ports i_PredicateByTileInfo.pas, u_PredicateByTileInfoBase.pas (7 of its
-// 9 subclasses), i_PredicateByTileRequest.pas; docs/specs/storage.md §2.21;
-// docs/handoffs/T-0021A.md Rework 1 (T-0021A review findings 1, 2, 3)
+// Ports i_PredicateByTileInfo.pas, u_PredicateByTileInfoBase.pas (7 of its 9 subclasses),
+// i_PredicateByTileRequest.pas.
 #include "cg/storage/predicates.h"
 
 #include <QByteArray>
@@ -85,7 +84,7 @@ TEST(Predicates, TileExistsCheckDataDelegatesOnlyForExists) {
     }
 }
 
-// --- tileOlderThan() : ports NotExistOrBeforDate (AIgnoreTNE=False), storage.md §2.4.3 ---------
+// --- tileOlderThan(): ports NotExistOrBeforDate (AIgnoreTNE=False) ---------
 
 TEST(Predicates, TileOlderThanNotExistsIsAlwaysTrue) {
     const auto pred = cg::storage::tileOlderThan(TileDate(QDate(2000, 1, 1), QTime(0, 0, 0)));
@@ -107,16 +106,15 @@ TEST(Predicates, TileOlderThanExistsUsesStrictLessThan) {
 }
 
 TEST(Predicates, TileOlderThanExistsWithInvalidLoadDateIsAlwaysTrue) {
-    // storage.md §2.4.3: invalid loadDate is "infinitely old", checked via isValid() explicitly
-    // (T-0021A review finding 3) rather than relying on QDateTime's own, Qt-version-dependent
-    // ordering of invalid vs. valid values.
+    // Invalid loadDate is "infinitely old", checked via isValid() explicitly rather than
+    // relying on QDateTime's own, Qt-version-dependent ordering of invalid vs. valid values.
     const auto pred = cg::storage::tileOlderThan(TileDate(QDate(1970, 1, 1), QTime(0, 0, 0)));
     EXPECT_TRUE(pred(makeTile(TileInfoType::Exists, 0, TileDate{})));
 }
 
 // --- tileSizeEquals() : ports TPredicateByTileInfoEqualSize, exact legacy semantics ------------
-// (T-0021A review finding 1: the shipped `tileSizeDiffers` inverted this and hard-coded
-// ADeleteTNE=False; fixed here to `tileSizeEquals(size, matchTne)`.)
+// (an earlier `tileSizeDiffers` inverted this and hard-coded ADeleteTNE=False; it is
+// `tileSizeEquals(size, matchTne)` now.)
 
 TEST(Predicates, TileSizeEqualsExistsComparesSizeExactlyNotDiffers) {
     const auto pred = cg::storage::tileSizeEquals(100);
@@ -138,8 +136,8 @@ TEST(Predicates, TileSizeEqualsNotExistsAndUnknownAreAlwaysFalse) {
     EXPECT_FALSE(pred(makeTile(TileInfoType::Unknown)));
 }
 
-// Named per T-0021A review finding 2: the legacy "delete empty tiles" fallback,
-// fr_DeleteTiles.pas:166 -- TPredicateByTileInfoEqualSize.Create(False, 0).
+// Named after the legacy "delete empty tiles" fallback, fr_DeleteTiles.pas:166 --
+// TPredicateByTileInfoEqualSize.Create(False, 0).
 TEST(Predicates, DeleteEmptyTilesLegacyCallSiteEqualSizeFalseZero) {
     const auto deleteEmptyTiles = cg::storage::tileSizeEquals(0, /*matchTne=*/false);
     EXPECT_TRUE(deleteEmptyTiles(makeTile(TileInfoType::Exists, 0)));   // empty tile -> selected

@@ -152,8 +152,8 @@ MapGuidListPtr MapTypeGuiConfigList::buildOrderedList() const {
             ordered = std::move(listed); // legacy: "Do nothing (already sorted)" (:187-189)
             break;
         default:
-            // Out-of-range SortOrder (LD-16, DV-11, ruling OQ-12): by name. The warning is logged
-            // once per ReadConfig in doReadConfig, not here, because this runs on every rebuild.
+            // Out-of-range SortOrder: by name. The warning is logged once per ReadConfig in
+            // doReadConfig, not here, because this runs on every rebuild.
             ordered = byMapName(listed);
             break;
         }
@@ -220,7 +220,7 @@ void MapTypeGuiConfigList::setSortOrder(MapTypeGuiConfigListSortOrder value) {
     }
 }
 
-// u_MapTypeGUIConfigList.pas:237-245 (legacy reads the field without the lock: LD-15)
+// u_MapTypeGUIConfigList.pas:237-245 (legacy reads the field without the lock)
 MapGuidListPtr MapTypeGuiConfigList::orderedMapGuidList() const {
     return orderedMapGuids_.get();
 }

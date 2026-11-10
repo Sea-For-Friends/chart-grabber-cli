@@ -6,8 +6,7 @@
 // Ports: Src/RegionProcess/Export/MBTiles/u_StorageExportToMBTiles.pas
 //
 // The MBTiles writer: the base class (:40-110, :173-399) and the Classic flavour (:114-131,
-// :403-546). The TileMill flavour (:133-151, :550-757) follows (T-0171).
-// docs/specs/region-export.md §2.5.
+// :403-546). The TileMill flavour (:133-151, :550-757) follows.
 
 #include "cg/core/result.h"
 #include "cg/geo/geo_types.h"
@@ -25,7 +24,7 @@
 
 namespace cg::region {
 
-// Legacy TSQLiteStorageMBTilesBase; spec name kept, so the abstract-class rule is waived.
+// Legacy TSQLiteStorageMBTilesBase; the legacy name is kept, so the abstract-class naming rule is waived.
 // NOLINTNEXTLINE(readability-identifier-naming)
 class SqliteStorageMbtilesBase {
 public:

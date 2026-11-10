@@ -22,7 +22,7 @@ XmlStreamingWriter::~XmlStreamingWriter() {
 }
 
 // :130-133 (InternalWrite). The writer does not raise on a failed write (legacy raises EWriteError on
-// flush): the exporter checks the device instead (proposed D row).
+// flush): the exporter checks the device instead (a deviation from legacy).
 void XmlStreamingWriter::put(const QString& text) {
     static_cast<void>(device_.write(text.toUtf8()));
 }

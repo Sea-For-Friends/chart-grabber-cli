@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: docs/specs/net.md §2.16, docs/specs/maptype.md §11.2 P-8 (T-0118).
 // Ports u_GlobalDownloadConfig.pas (defaults :61-63, read :66-75, write :77-85, setters :117-154).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"

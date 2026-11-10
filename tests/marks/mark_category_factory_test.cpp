@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkCategoryFactory.pas (docs/specs/marks.md section 2.3). Ticket T-0091 is a slice of
-// the marks module. One small table per factory method; the expected values are literals taken from
-// the Pascal (:72-146), not from the class under test.
+// Ports u_MarkCategoryFactory.pas. One small table per factory method; the expected values are
+// literals taken from the Pascal (:72-146), not from the class under test.
 #include "cg/core/language_manager.h"
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_factory.h"
@@ -122,7 +121,7 @@ TEST(MarkCategoryFactory, ModifyVisible) {
         {u"Trips"_s, false, 8, 12});
 }
 
-// D-95 (T-0091): legacy fails with an access violation outside any handler: a nil config at the first use
+// Legacy fails with an access violation outside any handler: a nil config at the first use
 // (u_MarkCategoryFactory.pas:78,116), a nil source at ASource.Name (:141). The port throws.
 TEST(MarkCategoryFactory, NilArgumentsAreRefused) {
     EXPECT_THROW(m::MarkCategoryFactory(nullptr), std::invalid_argument);

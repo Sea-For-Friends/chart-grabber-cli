@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-200 (file decoding for the ini backend); docs/specs/core.md 2.11, plan 7.6
+// File decoding for the ini backend.
 #include "cg/core/text_codec.h"
 
 #include <QByteArray>
@@ -69,8 +69,8 @@ TEST(TextCodec, BomlessInvalidUtf8FallsBackToCp1251) {
     EXPECT_TRUE(decoded.text.contains(QStringLiteral("Сотовые сети")));
 }
 
-// Finding 6 (T-0002A rework): a file truncated mid multi-byte UTF-8 sequence must not be reported
-// valid UTF-8 (it would then decode with a silently substituted U+FFFD and never round-trip).
+// A file truncated mid multi-byte UTF-8 sequence must not be reported valid UTF-8 (it would then
+// decode with a silently substituted U+FFFD and never round-trip).
 TEST(TextCodec, BomlessTruncatedMultiByteSequenceFallsBackToCp1251) {
     QByteArray raw = "name=";
     raw.append(static_cast<char>(0xD0)); // start of a 2-byte UTF-8 sequence, no continuation byte
@@ -84,8 +84,8 @@ TEST(TextCodec, EncodeAddsUtf8Bom) {
     EXPECT_EQ(encoded, QByteArray("\xEF\xBB\xBF") + QByteArray("Key=1"));
 }
 
-// Finding 2 (T-0002A rework): encodeConfigTextChecked must fail loudly instead of the '?'
-// substitution encodeConfigText performs, per spec §4 "nothing is ever swallowed".
+// encodeConfigTextChecked must fail loudly instead of the '?' substitution encodeConfigText
+// performs: nothing is ever swallowed.
 TEST(TextCodec, EncodeCheckedCp1251RoundTripSucceeds) {
     const auto result = encodeConfigTextChecked(QStringLiteral("Значение"), TextEncoding::Cp1251);
     ASSERT_TRUE(result.has_value());

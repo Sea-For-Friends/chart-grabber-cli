@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/app/app_context (new code; inherits Src/u_GlobalState.pas:442-974, 1155-1210, 1280-1289).
-// FEAT-NET-001 (load map definitions): contributes through AppContext::loadMaps; the row stays in
-// held-open.md.
+// The map definitions are loaded through AppContext::loadMaps.
 #include "cg/app/app_context.h"
 #include "cg/core/language_list_static.h"
 #include "cg/core/platform/test_support.h"
@@ -99,7 +98,7 @@ protected:
     [[nodiscard]] AppOptions options() {
         AppOptions o;
         o.arguments = {QStringLiteral("--datadir=") + dataDir()};
-        o.mapsDirs = {defaultMapsDir()}; // T-0291: a --maps folder is required; the tests keep their folder
+        o.mapsDirs = {defaultMapsDir()}; // A --maps folder is required; the tests keep their folder
         o.warn = [this](const QString& message) {
             const std::lock_guard<std::mutex> lock(warningsMutex_);
             warnings_.append(message);
@@ -119,8 +118,8 @@ protected:
 
 } // namespace
 
-// Proof 1. The program is read-only towards its configuration: no chart-grabber.conf appears. LoadMaps
-// :1174-1195 with no map: MapTypesNoMapsError, naming the --maps folder (T-0291).
+// The program is read-only towards its configuration: no chart-grabber.conf appears. LoadMaps
+// :1174-1195 with no map: MapTypesNoMapsError, naming the --maps folder.
 TEST_F(AppContextTest, EmptyMapsDirectoryGivesNotFoundAndWritesNoConfiguration) {
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
     auto ctx = AppContext::create(options());
@@ -137,7 +136,7 @@ TEST_F(AppContextTest, EmptyMapsDirectoryGivesNotFoundAndWritesNoConfiguration) 
               QStringList{QStringLiteral("Maps")});
 }
 
-// Proof 2. Three ZMP folders, one without GUID: the two good maps load, the broken one is reported once.
+// Three ZMP folders, one without GUID: the two good maps load, the broken one is reported once.
 TEST_F(AppContextTest, BrokenZmpIsReportedAndTheOthersLoad) {
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
     writeZmp(defaultMapsDir(), QStringLiteral("a.zmp"), kGuidA, "Map A", 1);
@@ -159,7 +158,7 @@ TEST_F(AppContextTest, BrokenZmpIsReportedAndTheOthersLoad) {
     EXPECT_EQ(ctx.value()->zmpErrorCount(), 1);
 }
 
-// Proof 3. --maps pointing at a missing directory: not created, the S-1 (no maps) error.
+// --maps pointing at a missing directory: not created, the "no maps" error.
 TEST_F(AppContextTest, MapsOptionWithMissingDirectoryIsNotCreated) {
     const QString missing = root_.filePath(QStringLiteral("nowhere/Maps"));
     AppOptions o = options();
@@ -167,7 +166,7 @@ TEST_F(AppContextTest, MapsOptionWithMissingDirectoryIsNotCreated) {
     auto ctx = AppContext::create(o);
     ASSERT_TRUE(ctx.has_value());
     EXPECT_FALSE(QFileInfo::exists(missing));
-    // the configured default is not created either (T-0291)
+    // the configured default is not created either
     EXPECT_FALSE(QFileInfo::exists(defaultMapsDir()));
 
     const cg::core::Result<void> loaded = ctx.value()->loadMaps();
@@ -177,7 +176,7 @@ TEST_F(AppContextTest, MapsOptionWithMissingDirectoryIsNotCreated) {
     EXPECT_FALSE(QFileInfo::exists(missing));
 }
 
-// Proof 5. No `lang` directory next to the executable of the test: the language list holds `en` only.
+// No `lang` directory next to the executable of the test: the language list holds `en` only.
 TEST_F(AppContextTest, MissingLanguageDirectoryLeavesEnglishOnly) {
     auto ctx = AppContext::create(options());
     ASSERT_TRUE(ctx.has_value());
@@ -187,7 +186,7 @@ TEST_F(AppContextTest, MissingLanguageDirectoryLeavesEnglishOnly) {
     EXPECT_EQ(list->code(0), QStringLiteral("en"));
 }
 
-// Proof 6. requestClose is idempotent; appClosing fires.
+// requestClose is idempotent; appClosing fires.
 TEST_F(AppContextTest, RequestCloseIsIdempotent) {
     auto ctx = AppContext::create(options());
     ASSERT_TRUE(ctx.has_value());
@@ -200,21 +199,21 @@ TEST_F(AppContextTest, RequestCloseIsIdempotent) {
     EXPECT_TRUE(ctx.value()->appClosing().stop_requested());
 }
 
-// Proof 6. Destruction after loadMaps: ~AppContext (u_GlobalState.pas:1280-1289) fires appClosing even when
-// nobody called requestClose, returns without a hang and leaves no thread of its own (the collector thread
+// Destruction after loadMaps: ~AppContext (u_GlobalState.pas:1280-1289) fires appClosing even when nobody
+// called requestClose, returns without a hang and leaves no thread of its own (the collector thread
 // :735-741 is joined).
 TEST_F(AppContextTest, DestructionClosesJoinsThreadsAndReturnsInTime) {
     if (cg::core::platform::kIsApple) {
         GTEST_SKIP() << "the Mach thread count includes libdispatch workers that come and go: no stable "
-                        "baseline (T-0396)";
+                        "baseline";
     }
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
     writeZmp(defaultMapsDir(), QStringLiteral("a.zmp"), kGuidA, "Map A", 1);
     // ThreadSanitizer starts its own background thread when the first thread of the process is created and
     // keeps it: create and join one thread first, so that the baseline already holds it.
     std::thread([] {}).join();
-    // T-0399: on a slow emulated machine (armhf chroot under qemu TCG) the kernel still counts the joined
-    // thread for a few ms: take the baseline once three reads 50 ms apart agree
+    // On a slow emulated machine (armhf chroot under qemu TCG) the kernel still counts the joined thread
+    // for a few ms: take the baseline once three reads 50 ms apart agree
     int threadsBefore = threadCount();
     for (int stable = 0, tries = 0; stable < 2 && tries < 100; ++tries) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -244,8 +243,8 @@ TEST_F(AppContextTest, DestructionClosesJoinsThreadsAndReturnsInTime) {
     EXPECT_EQ(threadCount(), threadsBefore); // kills: collector thread not joined
 }
 
-// T-0198 (UAT D-1, app-cli.md 1.6). Proof 1: a CacheType=9 map stores a tile on disk below
-// <cache>/cache_sqlite/<NameInCache>/, and a second context over the same directories finds it.
+// a CacheType=9 map stores a tile on disk below <cache>/cache_sqlite/<NameInCache>/, and a second
+// context over the same directories finds it.
 TEST_F(AppContextTest, RamCacheMapStoresTilesOnDiskAndASecondContextFindsThem) {
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
     writeZmp(defaultMapsDir(), QStringLiteral("a.zmp"), kGuidA, "Map A", 1);
@@ -292,8 +291,8 @@ TEST_F(AppContextTest, RamCacheMapStoresTilesOnDiskAndASecondContextFindsThem) {
     EXPECT_EQ(info->data, png);
 }
 
-// Proof 3. The cache type of every map after loadMaps: RAM becomes Default (or SQLite when DefCache=9), every
-// other code stays. Codes: Default 0, Ram 9, Sqlite 71, Bdb 6. A RAM map without NameInCache keeps RAM.
+// The cache type of every map after loadMaps: RAM becomes Default (or SQLite when DefCache=9), every other
+// code stays. Codes: Default 0, Ram 9, Sqlite 71, Bdb 6. A RAM map without NameInCache keeps RAM.
 TEST_F(AppContextTest, OnlyRamCacheMapsAreSwitchedToAFileCache) {
     using cg::storage::CacheTypeId;
     struct Row {
@@ -335,7 +334,7 @@ TEST_F(AppContextTest, OnlyRamCacheMapsAreSwitchedToAFileCache) {
     }
 }
 
-// T-0198 proof 2, storage level: MemCacheCapacity=2 and three saved tiles. A RAM storage keeps the last two
+// Storage level: MemCacheCapacity=2 and three saved tiles. A RAM storage keeps the last two
 // (u_TileInfoBasicMemCache.pas:271-282); the file cache keeps all three.
 TEST_F(AppContextTest, RamCacheMapKeepsMoreTilesThanMemCacheCapacity) {
     ASSERT_TRUE(QDir().mkpath(defaultMapsDir()));
@@ -363,7 +362,7 @@ TEST_F(AppContextTest, RamCacheMapKeepsMoreTilesThanMemCacheCapacity) {
     }
 }
 
-// T-0291 (app-cli.md 1.6.1): the --maps folders. No FEAT; the D row of the ticket records it.
+// The --maps folders (a deviation from legacy).
 namespace {
 
 class MapsFoldersTest : public AppContextTest {
@@ -396,7 +395,7 @@ protected:
 
 } // namespace
 
-// (1) no folder: refused first, nothing created (not even the --datadir directory).
+// No folder: refused first, nothing created (not even the --datadir directory).
 TEST_F(MapsFoldersTest, NoFolderIsRefusedBeforeAnythingIsCreated) {
     AppOptions o = options();
     o.mapsDirs.clear();
@@ -409,7 +408,7 @@ TEST_F(MapsFoldersTest, NoFolderIsRefusedBeforeAnythingIsCreated) {
     EXPECT_FALSE(QFileInfo::exists(dataDir()));
 }
 
-// (2) one GUID in both folders: the later folder's definition is in use; one uncounted warning line.
+// One GUID in both folders: the later folder's definition is in use; one uncounted warning line.
 TEST_F(MapsFoldersTest, LaterFolderDefinitionIsUsedWithOneUncountedWarning) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
     writeZmp(folderB(), QStringLiteral("b.zmp"), kGuidA, "From B", 2);
@@ -425,7 +424,7 @@ TEST_F(MapsFoldersTest, LaterFolderDefinitionIsUsedWithOneUncountedWarning) {
     EXPECT_EQ(ctx.value()->zmpErrorCount(), 0);
 }
 
-// (3) two files of one GUID inside folder A: the legacy rule (the first in sort order stays, one error,
+// Two files of one GUID inside folder A: the legacy rule (the first in sort order stays, one error,
 // u_ZmpInfoSet.pas:174-177); with B also defining the GUID the warning names only A's survivor.
 TEST_F(MapsFoldersTest, DuplicateInsideOneFolderKeepsTheLegacyRuleAndTheWarningNamesTheSurvivor) {
     writeZmp(folderA(), QStringLiteral("u2.zmp"), kGuidA, "A second", 3);
@@ -452,7 +451,8 @@ TEST_F(MapsFoldersTest, DuplicateInsideOneFolderKeepsTheLegacyRuleAndTheWarningN
                               .arg(QString::fromLatin1(kGuidA), folderB(), folderA())});
 }
 
-// (4) a missing folder contributes nothing and is not an error; with every folder missing S-1 names all.
+// A missing folder contributes nothing and is not an error; with every folder missing, the "no maps" error
+// names all.
 TEST_F(MapsFoldersTest, MissingFolderContributesNothingAndAllMissingIsTheNoMapsError) {
     writeZmp(folderB(), QStringLiteral("b.zmp"), kGuidB, "From B", 2);
     {
@@ -475,7 +475,7 @@ TEST_F(MapsFoldersTest, MissingFolderContributesNothingAndAllMissingIsTheNoMapsE
     EXPECT_EQ(loaded.error().what(), noMapsText(none1 + QStringLiteral(", ") + none2));
 }
 
-// (5) a path that exists but is not a directory.
+// A path that exists but is not a directory.
 TEST_F(MapsFoldersTest, AFileAsFolderFailsTheCreate) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
     const QString file = root_.filePath(QStringLiteral("plain.txt"));
@@ -486,7 +486,7 @@ TEST_F(MapsFoldersTest, AFileAsFolderFailsTheCreate) {
     EXPECT_EQ(ctx.error().what(), QStringLiteral("--maps: %1 is not a directory").arg(file));
 }
 
-// (6) the configured maps directory ([PATHtoMAPS] PrimaryPath, u_GlobalConfig.pas:230-231) and the default
+// The configured maps directory ([PATHtoMAPS] PrimaryPath, u_GlobalConfig.pas:230-231) and the default
 // <datadir>/Maps are neither read nor created.
 TEST_F(MapsFoldersTest, ConfiguredMapsDirectoryIsNeitherReadNorCreated) {
     const QString fromIni = root_.filePath(QStringLiteral("ini_maps"));
@@ -511,7 +511,7 @@ TEST_F(MapsFoldersTest, ConfiguredMapsDirectoryIsNeitherReadNorCreated) {
     EXPECT_FALSE(QFileInfo::exists(defaultMapsDir()));
 }
 
-// (7) Maps.ini is read from the LAST folder only (DIR/Maps.ini). Key Enabled=0 (proof key of app-cli 1.6.3,
+// Maps.ini is read from the LAST folder only (DIR/Maps.ini). Key Enabled=0 (the key read by
 // map_type_gui_config.cpp:108-111).
 TEST_F(MapsFoldersTest, MapsIniIsReadFromTheLastFolderOnly) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
@@ -543,7 +543,7 @@ TEST_F(MapsFoldersTest, MapsIniIsReadFromTheLastFolderOnly) {
     EXPECT_FALSE(last.value()->fullMapsSet()->mapTypeByGuid(uuid(kGuidB))->guiConfig()->enabled());
 }
 
-// (7a) T-0357: DIR/Maps.conf is read when it exists, else DIR/Maps.ini; neither file is renamed or written.
+// DIR/Maps.conf is read when it exists, else DIR/Maps.ini; neither file is renamed or written.
 TEST_F(MapsFoldersTest, MapsConfIsPreferredAndMapsIniStillRead) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
     writeZmp(folderB(), QStringLiteral("b.zmp"), kGuidB, "From B", 2);
@@ -566,7 +566,7 @@ TEST_F(MapsFoldersTest, MapsConfIsPreferredAndMapsIniStillRead) {
     EXPECT_FALSE(QFileInfo::exists(folderB() + QStringLiteral("/Maps.ini")));
 }
 
-// (8) a ZMP that fails to load in B does not hide A's definition of the same GUID.
+// A ZMP that fails to load in B does not hide A's definition of the same GUID.
 TEST_F(MapsFoldersTest, AnUnloadableZmpInTheLaterFolderDoesNotHideTheEarlierOne) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
     writeUnloadableZmp(folderB(), QStringLiteral("b.zmp"), kGuidA);
@@ -579,7 +579,7 @@ TEST_F(MapsFoldersTest, AnUnloadableZmpInTheLaterFolderDoesNotHideTheEarlierOne)
     EXPECT_FALSE(warnings().front().contains(QStringLiteral("replaces")));
 }
 
-// (9) + (10) the same folder twice (once spelled with `..`) is loaded once, at its last position.
+// The same folder twice (once spelled with `..`) is loaded once, at its last position.
 TEST_F(MapsFoldersTest, TheSameFolderTwiceCountsOnceAtItsLastPosition) {
     writeZmp(folderA(), QStringLiteral("a.zmp"), kGuidA, "From A", 1);
     writeZmp(folderB(), QStringLiteral("b.zmp"), kGuidB, "From B", 2);

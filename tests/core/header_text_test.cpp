@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-NET-011 -- docs/specs/net.md §2.11, §7.4. T-0028: moved (not copied) from
-// tests/net/http_headers_test.cpp along with the implementation these cases exercise
+// moved (not copied) from tests/net/http_headers_test.cpp along with the implementation these
+// cases exercise
 // (getHeaderValueUp/replaceHeaderValueUp/deleteHeaderValueUp/scriptSetHeaderValue), which now
 // lives in cg::core::header_text. tests/net/http_headers_test.cpp keeps the cases for the
 // functions that stayed in cg::net (addHeaderValue, parseStatusLine).
@@ -55,7 +55,8 @@ TEST(HeaderTextTest, GetValueAbsentReturnsEmpty) {
 
 TEST(HeaderTextTest, GetValuePresentButEmptyReturnsEmpty) {
     const QByteArray headers = QByteArray(kStatus) + "Name: \r\n\r\n";
-    // "" both for absent and for present-but-empty -- indistinguishable (§2.12.1 relies on this).
+    // "" both for absent and for present-but-empty -- indistinguishable (the Content-Length gate relies on
+    // this).
     EXPECT_EQ(getHeaderValueUp(headers, "NAME"), QByteArray());
 }
 
@@ -125,9 +126,9 @@ TEST(HeaderTextTest, DeleteAbsentIsNoOp) {
 }
 
 TEST(HeaderTextTest, EmbeddedNulStopsHeaderScan) {
-    // tech-lead-rulings.md 2026-09-17 "\0 header-scan stop": a literal NUL byte inside the blob
-    // aborts the scan entirely (u_NetworkStrFunc.pas:157-163) rather than being skipped like any
-    // other control byte -- so a header that appears only after the NUL is never found.
+    // A literal NUL byte inside the blob aborts the scan entirely (u_NetworkStrFunc.pas:157-163)
+    // rather than being skipped like any other control byte -- so a header that appears only
+    // after the NUL is never found.
     QByteArray headers = QByteArray(kStatus) + "A: 1\r\n";
     headers += '\0';
     headers += "B: 2\r\n\r\n";
@@ -149,12 +150,11 @@ TEST(HeaderTextTest, DeleteStopsAtEmbeddedNul) {
 }
 
 TEST(HeaderTextTest, ControlByteInNameYieldsEmptyValue) {
-    // L-27/D-24 (docs/handoffs/reliability-audit-2026-09-28.md): when the NAME itself carries a
-    // control byte that the header blob also carries at the matching position, idemPChar's
-    // full-byte compare (D-24) can match past the line's own end, landing valueStart after
-    // lineEnd. getHeaderValueUp must return '' there, exactly like legacy's
-    // Copy(AHeaders, I, K-I) with a negative K-I (u_NetworkStrFunc.pas:156) -- not slice with a
-    // negative length.
+    // When the NAME itself carries a control byte that the header blob also carries at the
+    // matching position, idemPChar's full-byte compare can match past the line's own end,
+    // landing valueStart after lineEnd. getHeaderValueUp must return '' there, exactly like
+    // legacy's Copy(AHeaders, I, K-I) with a negative K-I (u_NetworkStrFunc.pas:156) -- not
+    // slice with a negative length.
     QByteArray nameWithNul("A", 1);
     nameWithNul += '\0';
     nameWithNul += 'Z';
@@ -165,9 +165,9 @@ TEST(HeaderTextTest, ControlByteInNameYieldsEmptyValue) {
 
     EXPECT_EQ(getHeaderValueUp("X\r\nY: v", "X\r\nY"), QByteArray());
 
-    // D-24 pin: the name's embedded NUL stops legacy's IdemPChar compare after "A", so legacy
-    // matches the "AB: 1" line and returns "1"; the port's full-byte compare never matches, so it
-    // stays empty regardless of this fix.
+    // A deviation from legacy: the name's embedded NUL stops legacy's IdemPChar compare after
+    // "A", so legacy matches the "AB: 1" line and returns "1"; the port's full-byte compare never
+    // matches, so it stays empty regardless of this fix.
     QByteArray pinName("A", 1);
     pinName += '\0';
     pinName += 'Z';

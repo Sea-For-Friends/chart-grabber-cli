@@ -49,9 +49,9 @@ struct Tr {
     Q_DECLARE_TR_FUNCTIONS(AppContext)
 };
 
-// --proxy URL (app-cli.md 1.3): scheme http / https / socks4 / socks4a / socks5 / socks5h (no scheme = http),
-// host, optional port, optional user:password. The type, address and login go into the proxy element of the
-// internet configuration, in place of what the configuration file said.
+// --proxy URL: scheme http / https / socks4 / socks4a / socks5 / socks5h (no scheme = http), host, optional
+// port, optional user:password. The type, address and login go into the proxy element of the internet
+// configuration, in place of what the configuration file said.
 core::Result<void> applyProxy(net::InetConfig& inet, const QString& text) {
     const QString trimmed = text.trimmed();
     const QUrl url(trimmed.contains(QStringLiteral("://")) ? trimmed : QStringLiteral("http://") + trimmed);
@@ -101,7 +101,7 @@ core::Result<void> applyProxy(net::InetConfig& inet, const QString& text) {
 AppContext::AppContext(PrivateKey /*key*/) {}
 
 core::Result<std::unique_ptr<AppContext>> AppContext::create(const AppOptions& options) {
-    // app-cli.md 1.6.1 (T-0291): checked first, before any directory is created or any file is read
+    // Checked first, before any directory is created or any file is read
     if (options.mapsDirs.isEmpty()) {
         return core::fail(core::ErrorCode::NotFound,
                           Tr::tr("no map sources given: pass --maps DIR, a folder of map-source definitions "
@@ -185,11 +185,10 @@ core::Result<std::unique_ptr<AppContext>> AppContext::create(const AppOptions& o
     c.cacheConfig_ = std::make_shared<storage::GlobalCacheConfig>(c.cachePath_);
     // u_GlobalState.pas:632 -- download totals
     c.downloadInfo_ = std::make_shared<net::DownloadInfo>();
-    // u_GlobalState.pas:647 -- Berkeley DB helper: removed, T-0333 (owner 2026-10-21)
+    // u_GlobalState.pas:647 -- Berkeley DB helper: removed
 
     // u_GlobalState.pas:567-576, 690-700 -- content types. The bitmap half is built from its codec factory;
-    // the buffer and static factories (u_GlobalState.pas:554-563, app-cli.md 2.3) exist only as its
-    // arguments.
+    // the buffer and static factories (u_GlobalState.pas:554-563) exist only as its arguments.
     c.types_ = std::shared_ptr<const core::ContentTypeRegistry>(std::shared_ptr<void>(),
                                                                 &core::ContentTypeRegistry::standard());
     const auto bitmapTypes = std::make_shared<const bitmap::ContentTypeManagerBitmap>(
@@ -206,9 +205,9 @@ core::Result<std::unique_ptr<AppContext>> AppContext::create(const AppOptions& o
     // u_GlobalState.pas:735-741 -- collector thread (interval: SleepByClass default 1000)
     c.gcThread_ = std::make_unique<core::GarbageCollectorThread>(c.gc_, std::chrono::milliseconds(1000));
 
-    // u_GlobalState.pas:844-858 -- ZMP set; the mark picture list is null
-    // app-cli.md 1.6.1 (T-0291): only the --maps folders; legacy reads one configured directory
-    // (u_GlobalConfig.pas:230-231); D row of T-0291
+    // u_GlobalState.pas:844-858 -- ZMP set; the mark picture list is null: only the --maps
+    // folders; legacy reads one configured directory (u_GlobalConfig.pas:230-231); a deviation
+    // from legacy.
     const auto showError = [&c](const QString& message) { c.report(message); };
     // the same folder twice counts once, at the position of its LAST occurrence
     const auto folderKey = [](const QString& dir) {
@@ -258,8 +257,7 @@ core::Result<std::unique_ptr<AppContext>> AppContext::create(const AppOptions& o
     c.tileIteratorFactory_ = std::make_shared<const geo::TileIteratorFactory>(c.projectedFactory_);
 
     // u_GlobalState.pas:1161-1162 (LoadConfig) creates the configured maps directory; not done: only --maps
-    // folders are read (D row of T-0291)
-    // u_GlobalState.pas:1172 (LoadConfig)
+    // folders are read (a deviation from legacy). u_GlobalState.pas:1172 (LoadConfig)
     c.cacheConfig_->readConfig(c.mainConfig_);
 
     return ctx;
@@ -287,8 +285,8 @@ void AppContext::report(const QString& message) {
 
 core::Result<void> AppContext::loadMaps() {
     // u_GlobalState.pas:1163-1169 -- Maps.ini in the maps directory (a missing file is an empty
-    // configuration); app-cli.md 1.6.1: DIR/Maps.ini of the last --maps folder, never written.
-    // T-0357: DIR/Maps.conf is read when it exists, else DIR/Maps.ini (a SAS.Planet folder); no rename.
+    // configuration); DIR/Maps.ini of the last --maps folder, never written. DIR/Maps.conf is read when
+    // it exists, else DIR/Maps.ini (a SAS.Planet folder); no rename.
     const QDir lastDir(mapsDirs_.back());
     const QString mapsName = QFileInfo::exists(lastDir.filePath(QStringLiteral("Maps.conf")))
                                  ? QStringLiteral("Maps.conf")
@@ -317,9 +315,9 @@ core::Result<void> AppContext::loadMaps() {
     return {};
 }
 
-// UAT D-1 ruling 2026-10-15 (app-cli.md 1.6): legacy keeps a CacheType=9 map in a 100-tile memory cache
-// (u_TileInfoBasicMemCache.pas:271-282), so its export is incomplete; the program switches it to a file
-// cache as frm_MapTypeEdit.pas:266 would. D row of T-0198.
+// Legacy keeps a CacheType=9 map in a 100-tile memory cache (u_TileInfoBasicMemCache.pas:271-282), so
+// its export is incomplete; the program switches it to a file cache as frm_MapTypeEdit.pas:266 would (a
+// deviation from legacy).
 void AppContext::useFileCacheForRamMaps() {
     const maptype::IMapTypeSetPtr maps = mapsList_->fullMapsSet();
     for (int i = 0; i < maps->count(); ++i) {

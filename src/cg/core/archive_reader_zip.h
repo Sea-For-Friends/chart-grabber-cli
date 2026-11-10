@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_ArchiveReadWrite7Zip.pas (TArchiveReadBy7Zip, atZip) -- on libarchive, ADR-0012
+// Ports: u_ArchiveReadWrite7Zip.pas (TArchiveReadBy7Zip, atZip) -- on libarchive
 //
 // The whole zip file lives in memory (legacy: TMemoryStream, u_ZmpInfoSet.pas:141-155). open() lists
 // the item names once; an item's bytes are extracted on demand by re-reading the archive up to
@@ -14,8 +14,8 @@
 
 namespace cg::core {
 
-// Port invention (D-65): one item larger than this is refused instead of being inflated into
-// memory without bound (decompression bomb); legacy has no limit.
+// Port invention: one item larger than this is refused instead of being inflated into memory
+// without bound (decompression bomb); legacy has no limit.
 inline constexpr qint64 kDefaultMaxItemBytes = qint64{512} * 1024 * 1024;
 
 // Fails (Result error) when the bytes are not a readable zip; legacy raised from OpenStream.

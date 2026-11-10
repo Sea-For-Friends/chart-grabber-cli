@@ -1,7 +1,7 @@
-; T-0015D golden: Google/GoogleTransit.zmp - Copy(...,1,0)='' at P1 and 'mod'.
+; Golden: Google/GoogleTransit.zmp - Copy(...,1,0)='' at P1 and 'mod'.
 ; ResultURL := GetURLBase+'&x='+IntToStr(GetX)+'&y='+IntToStr(GetY)+'&zoom='+IntToStr(18-GetZ)+
 ;   '&s='+Copy('Galileo',1,(GetX*3+GetY) mod 8)
-; P1: (0*3+0) mod 8 = 0 -> Copy(...,1,0) = '' (T6: count<=0 yields '').
+; P1: (0*3+0) mod 8 = 0 -> Copy(...,1,0) = '' (count<=0 yields '').
 ; P2: (1*3+1) mod 8 = 4 -> 'Gali'.
 ; P3: (1234*3+5678) mod 8 = 9380 mod 8 = 4 -> 'Gali'.
 ; P4: (131071*3+87654) mod 8 = 480867 mod 8 = 3 -> 'Gal'.

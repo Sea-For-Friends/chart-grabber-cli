@@ -9,9 +9,9 @@
 //
 // An ellipsoid (or sphere) plus the geodesy built on it: distances, bearings, polygon area and
 // perimeter. Every geo/render/region computation that needs "how far" or "how big on the ground"
-// goes through an IDatum. Immutable snapshot, no locks (docs/specs/geo.md §8.1).
+// goes through an IDatum. Immutable snapshot, no locks.
 //
-// FEAT-GEO-003 (WGS84 + Google-sphere datums) on DatumFactory.
+// WGS84 and Google-sphere datums on DatumFactory.
 
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"

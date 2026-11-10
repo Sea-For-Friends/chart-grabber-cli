@@ -21,7 +21,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-207
 // NOLINTNEXTLINE(readability-identifier-naming): abstract class with logic, see config_element.h
 class StringConfigDataElementWithDefBase : public IStringConfigDataElement {
 public:

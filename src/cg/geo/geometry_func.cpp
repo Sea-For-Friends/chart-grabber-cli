@@ -107,8 +107,8 @@ QString lineToPlainText(const IGeometryLonLatLine& line, const CoordToStringConv
 
 // GeometryLonLatContourToPlainText (u_GeometryFunc.pas:1088-1105): joins every vertex with
 // `pointSep`, THEN appends `pointSep` + the first vertex again -- the display-only auto-close
-// (points() itself stays open, geometry_lonlat.h; the WKB writer is the only other auto-closer,
-// §3.7 rule 5). Empty for a 0-point contour.
+// (points() itself stays open, geometry_lonlat.h; the WKB writer is the only other
+// auto-closer). Empty for a 0-point contour.
 QString contourToPlainText(const IGeometryLonLatContour& contour, const CoordToStringConverter& converter,
                            const QString& pointSep) {
     const auto pts = contour.points();

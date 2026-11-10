@@ -60,7 +60,7 @@ QString midStr(const QString& str, const QString& open, const QString& close, bo
 } // namespace
 
 QString stupedHtmlToTextConverter(const QString& source) {
-    // FEAT-GEO-037 (mark hints). Order and literals as legacy; `&#171` has no ';' (L-124).
+    // Order and literals as legacy; `&#171` has no ';'.
     static const struct {
         const char16_t* from;
         const char16_t* to;
@@ -156,7 +156,7 @@ QString HtmlToHintTextConverterStuped::html2Txt(QString origHtml) {
         origHtml = stringReplace(origHtml, noHtml, QString(), true);
     }
     origHtml = stupedHtmlToTextConverter(origHtml);
-    // Legacy replaces these accented-letter entities by a literal '?' (L-125).
+    // Legacy replaces these accented-letter entities by a literal '?'.
     static const char16_t* const kAccented[] = {
         u"&aacute;", u"&atilde;", u"&ccedil;", u"&eacute;", u"&ecirc;",  u"&iacute;", u"&oacute;",
         u"&ocirc;",  u"&otilde;", u"&Aacute;", u"&Atilde;", u"&Ccedil;", u"&Eacute;", u"&Ecirc;",

@@ -10,7 +10,7 @@
 // Legacy stores Windows paths; on read every backslash becomes a forward slash before any further
 // processing, and a value that still looks like a Windows path (`C:\...`, `\\server\...`) is kept
 // verbatim and flagged non-relative -- it will simply not exist on Linux, which is the honest
-// outcome (spec core.md 2.18).
+// outcome.
 
 #include "cg/core/config_element.h"
 
@@ -21,7 +21,6 @@ namespace cg::core {
 class PathConfig;
 using PathConfigPtr = std::shared_ptr<PathConfig>;
 
-// FEAT-UI-199 (part of the config-tree slice; PathConfig itself carries no separate FEAT ID)
 class PathConfig final : public ConfigElement {
 public:
     PathConfig(QString storeIdent, QString defaultPath, PathConfigPtr base);
@@ -46,10 +45,10 @@ protected:
     void doWriteConfig(const IConfigWriterPtr& dst) const override;
 
 private:
-    void setPathLocked(const QString& value); // the "...Locked()" split of core.md 2.16
+    void setPathLocked(const QString& value); // the "...Locked()" split
     [[nodiscard]] QString computeFullPathLocked() const;
     void updateFullPathLocked();
-    void subscribeToBaseLocked(); // only while relative (core.md 2.18 rule 5)
+    void subscribeToBaseLocked(); // only while relative
 
     QString storeIdent_;
     QString defaultPath_;
@@ -57,9 +56,9 @@ private:
     QString path_;
     QString fullPath_;
     bool relative_ = true;
-    bool windowsPathWarned_ = false;                // finding 5a: warn once, not on every setPath()
-    const PathConfig* subscribedBaseRaw_ = nullptr; // finding 5b: identity of the currently
-                                                    // subscribed base, to skip a needless
+    bool windowsPathWarned_ = false;                // Warn once, not on every setPath()
+    const PathConfig* subscribedBaseRaw_ = nullptr; // Identity of the currently subscribed
+                                                    // base, to skip a needless
                                                     // teardown/rebuild; never dereferenced.
     Subscription baseChanged_;
 };

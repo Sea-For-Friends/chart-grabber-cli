@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (docs/specs/bitmap.md §4). Replaces the Exception texts of the codec units: legacy raises a
-// plain Exception / ELibJpegException; the port raises this type, the text is UTF-8.
+// Ports: nothing. Replaces the Exception texts of the codec units: legacy raises a plain
+// Exception / ELibJpegException; the port raises this type, the text is UTF-8.
 
 #include <stdexcept>
 #include <string>

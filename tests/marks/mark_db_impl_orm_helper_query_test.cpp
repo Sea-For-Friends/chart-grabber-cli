@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: nothing of its own (T-0111 has no feature id; contributes to the held-open SQLite mark database).
-// Ports no legacy test (there is none): u_MarkDbImplORMHelper.pas :1753-1819 (_GetMarkIDArrayByRectSQL,
-// S-41), :1968-2070 (GetMarkRecArrayByRect), :2072-2106 (_GetMarkRecArrayByTextSQLite3, S-43), :2159-2269
-// (GetMarkRecArrayByText) and :2271-2279 (SetReadOnly), docs/specs/marks.md 2.9.9, 7.4. The data are written
-// by the write half; every expectation is a literal or a plain-SQL read-back on a second connection.
+// Ports no legacy test (there is none): u_MarkDbImplORMHelper.pas :1753-1819 (_GetMarkIDArrayByRectSQL),
+// :1968-2070 (GetMarkRecArrayByRect), :2072-2106 (_GetMarkRecArrayByTextSQLite3), :2159-2269
+// (GetMarkRecArrayByText) and :2271-2279 (SetReadOnly). The data are written by the write half; every
+// expectation is a literal or a plain-SQL read-back on a second connection.
 #include "cg/geo/geometry_factory.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"
 #include "cg/marks/mormot/marks/mark_db_impl_orm_helper.h"
@@ -128,7 +127,7 @@ TEST(MarkDbImplORMHelperQuery, RectangleQueryReturnsTheMarksWhoseBoundingBoxInte
         {"just below the pole box", {-10, 89.4, 30, 80}, {0, 0}, {}, false, ""},
         // 32-bit R-tree: the stored left bound of the point at 0.1 is rounded outward to a float below it,
         // which alone decides which right edges hit (no rounding of the compared value). How far below
-        // depends on the SQLite version (T-0286: two float steps, 0.09999998658895493, on 3.53.4; one step,
+        // depends on the SQLite version (two float steps, 0.09999998658895493, on 3.53.4; one step,
         // 0.09999999403953552, on 3.54.0), so only edges outside both bounds are pinned: 0.099999997 hits,
         // 0.09999998 does not. (0.099999993 lies between the two bounds and was dropped.)
         {"right edge inside the rounded-out box of 0.1",
@@ -284,9 +283,8 @@ struct TextCase {
     const char* ids; // in the order the helper returns them
 };
 
-// OWNER ruling 2026-10-22: the enhanced full-text syntax (parentheses, DV-9) is not needed on Windows, where
-// the MSYS2 SQLite is built without SQLITE_ENABLE_FTS3_PARENTHESIS. Checked at run time, not by operating
-// system.
+// The enhanced full-text syntax (parentheses) is not needed on Windows, where the MSYS2 SQLite is built
+// without SQLITE_ENABLE_FTS3_PARENTHESIS. Checked at run time, not by operating system.
 bool ftsParenthesisAvailable(Env& env) {
     return env.rows("SELECT sqlite_compileoption_used('ENABLE_FTS3_PARENTHESIS')").value(0) ==
            QStringLiteral("1");
@@ -337,12 +335,12 @@ TEST(MarkDbImplORMHelperQuery, TextQuerySearchesNamesAndDescriptionsAsAnFtsQuery
         {"AND is a word", "alpha AND beta", 0, false, false, ""},
         {"OR is a word", "alpha OR delta", 0, false, false, ""},
         {"NOT is a word", "alpha NOT beta", 0, false, false, ""},
-        // DV-9: the system SQLite has the enhanced syntax, "-beta" is the term beta, not an exclusion
+        // The system SQLite has the enhanced syntax, "-beta" is the term beta, not an exclusion
         {"minus", "alpha -beta", 0, false, false, "4"},
-        // DV-9, user decision pending: the port finds a hyphenated name by its own text; legacy's standard
+        // A deviation from legacy: the port finds a hyphenated name by its own text; legacy's standard
         // syntax reads "saint -petersburg" as "saint and not petersburg" (not run on Windows)
         {"hyphenated name", "saint-petersburg", 0, false, false, "8"},
-        // DV-9, user decision pending: port = syntax error, no result; legacy reads "a AND b"
+        // The same deviation: port = syntax error, no result; legacy reads "a AND b"
         {"unbalanced parenthesis", "(alpha beta", 0, false, false, ""},
         {"parentheses", "(alpha beta)", 0, false, false, "4"},
         // the tokenizer: bytes >= 0x80 are token characters, so the guillemets belong to the token
@@ -373,8 +371,8 @@ TEST(MarkDbImplORMHelperQuery, TextQuerySearchesNamesAndDescriptionsAsAnFtsQuery
 
 TEST(MarkDbImplORMHelperQuery, TheFtsTableOfTheDdlIsFts4WithTheSimpleTokenizer) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // FINDING (T-0111): the tokenizer the DDL names is the system SQLite's own "simple" tokenizer; it folds
-    // ASCII letters only and treats every byte >= 0x80 as a letter. Pinned here as the port's behaviour.
+    // FINDING: the tokenizer the DDL names is the system SQLite's own "simple" tokenizer; it folds ASCII
+    // letters only and treats every byte >= 0x80 as a letter. Pinned here as the port's behaviour.
     Env env;
     if (!ftsParenthesisAvailable(env)) {
         GTEST_SKIP()

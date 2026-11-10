@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors.
 
 #pragma once
-// Ports: nothing (T-0396, macOS port).
+// Ports: nothing (macOS port).
 
 namespace cg::core::platform {
 

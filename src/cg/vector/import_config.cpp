@@ -25,7 +25,6 @@ template <class Facet> std::shared_ptr<const Facet> facetOf(const AppearancePtr&
 
 } // namespace
 
-// FEAT-GEO-037
 ImportPointParams::ImportPointParams(AppearancePtr appearance, bool isForceTextColor, bool isForceTextBgColor,
                                      bool isForceFontSize, bool isForceMarkerSize, bool isForcePicName)
     : appearance_(std::move(appearance)), captionAppearance_(facetOf<IAppearancePointCaption>(appearance_)),
@@ -58,7 +57,7 @@ bool ImportPointParams::isForcePicName() const {
     return isForcePicName_;
 }
 
-// isForceLineColor is ignored: legacy stores isForceLineWidth into both fields (L-130).
+// isForceLineColor is ignored: legacy stores isForceLineWidth into both fields.
 ImportLineParams::ImportLineParams(AppearancePtr appearance, bool /*isForceLineColor*/, bool isForceLineWidth)
     : appearance_(std::move(appearance)), lineAppearance_(facetOf<IAppearanceLine>(appearance_)),
       isForceLineColor_(isForceLineWidth), isForceLineWidth_(isForceLineWidth) {}
@@ -76,7 +75,7 @@ bool ImportLineParams::isForceLineWidth() const {
     return isForceLineWidth_;
 }
 
-// Same slip as the line params (L-130).
+// Same slip as the line params.
 ImportPolyParams::ImportPolyParams(AppearancePtr appearance, bool /*isForceLineColor*/, bool isForceLineWidth,
                                    bool isForceFillColor)
     : appearance_(std::move(appearance)), borderAppearance_(facetOf<IAppearancePolygonBorder>(appearance_)),

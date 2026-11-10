@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (both held open). Ports no legacy test (there is none): the SQL half
-// of u_MarkCategoryDbImplORMHelper.pas against a copy of tests/fixtures/marks/Marks.db3 and an empty
-// database (docs/specs/marks.md §2.9.6, statements S-10 ... S-1C of §2.9.5). Expected values are literals
-// read back with plain SQL on a second connection, never through the helper.
+// Ports no legacy test (there is none): the SQL half of u_MarkCategoryDbImplORMHelper.pas against a copy
+// of tests/fixtures/marks/Marks.db3 and an empty database. Expected values are literals read back with
+// plain SQL on a second connection, never through the helper.
 #include "cg/marks/mormot/categories/mark_category_db_impl_orm_helper.h"
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 #include "cg/marks/mormot/mark_system_orm_log.h"
@@ -129,7 +128,7 @@ void seedTwoUsers(Env& env) {
 
 } // namespace
 
-// ---- insert (S-14, S-19), LC-16 ---------------------------------------------------------------------
+// ---- insert ---------------------------------------------------------------------
 
 namespace {
 struct InsertCase {
@@ -146,7 +145,7 @@ struct InsertCase {
 TEST(MarkCategoryDbImplORMHelper, InsertTable) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     const std::vector<InsertCase> cases = {
-        // LC-16: a visible category gets no CategoryView row, whatever its zooms
+        // A visible category gets no CategoryView row, whatever its zooms
         {"visible default zooms", QStringLiteral("a"), true, 3, 23, "1|a", ""},
         {"visible custom zooms", QStringLiteral("a"), true, 5, 10, "1|a", ""},
         {"hidden custom zooms", QStringLiteral("a"), false, 4, 9, "1|a", "1|1|1|0|4|9"},
@@ -200,7 +199,7 @@ TEST(MarkCategoryDbImplORMHelper, InsertReadOnlyDoesNothing) {
     EXPECT_EQ(env.views(), QStringList{});
 }
 
-// ---- delete (S-1C, S-16) ----------------------------------------------------------------------------
+// ---- delete ----------------------------------------------------------------------------
 
 TEST(MarkCategoryDbImplORMHelper, DeleteRemovesTheViewsOfAllUsersAndTheCaches) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -233,7 +232,7 @@ TEST(MarkCategoryDbImplORMHelper, DeleteReadOnlyAndEmptyId) {
     EXPECT_EQ(env.categories(), QStringList{QStringLiteral("1|a")});
 }
 
-// ---- update, view part (S-17, S-19, S-1A) ------------------------------------------------------------
+// ---- update, view part ------------------------------------------------------------
 
 namespace {
 struct ViewUpdateCase {
@@ -334,8 +333,8 @@ TEST(MarkCategoryDbImplORMHelper, UpdateReadOnlyChangesTheCacheOnly) {
 
 TEST(MarkCategoryDbImplORMHelper, UpdateViewColdCacheReadsTheViewRowFirst) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // S-17 in the update path: the view cache is empty and not prepared. An existing row must be updated
-    // (S-1A); an INSERT would hit the unique index (cvCategory, cvUser) and throw.
+    // The view lookup in the update path: the view cache is empty and not prepared. An existing row must
+    // be updated; an INSERT would hit the unique index (cvCategory, cvUser) and throw.
     {
         Env env(true);
         env.exec("INSERT INTO Category (ID,cName) VALUES (1,'a')");
@@ -350,7 +349,7 @@ TEST(MarkCategoryDbImplORMHelper, UpdateViewColdCacheReadsTheViewRowFirst) {
         EXPECT_EQ(env.views(), QStringList{QStringLiteral("4|1|1|0|7|8")});
     }
     {
-        Env env(true); // no row: S-19 with the five values of the new record
+        Env env(true); // no row: an insert with the five values of the new record
         env.exec("INSERT INTO Category (ID,cName) VALUES (1,'a')");
         auto helper = env.helper();
         OrmCategoryRec oldRec = rec(QStringLiteral("a"));
@@ -362,7 +361,7 @@ TEST(MarkCategoryDbImplORMHelper, UpdateViewColdCacheReadsTheViewRowFirst) {
     }
 }
 
-// ---- update, name part (S-15, sub categories) -------------------------------------------------------
+// ---- update, name part (sub categories) -------------------------------------------------------
 
 TEST(MarkCategoryDbImplORMHelper, RenameRewritesTheSubCategories) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -430,7 +429,7 @@ TEST(MarkCategoryDbImplORMHelper, RenameRewritesTheSubCategories) {
     }
 }
 
-// ---- read (S-10, S-11, S-17) and the two name look-ups, L-187 ----------------------------------------
+// ---- read and the two name look-ups ----------------------------------------
 
 TEST(MarkCategoryDbImplORMHelper, RenamingIntoItsOwnSubtreeRewritesTheRenamedRowAgain) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -511,7 +510,7 @@ TEST(MarkCategoryDbImplORMHelper, ReadByIdAndByNameFromTheDatabase) {
 
 TEST(MarkCategoryDbImplORMHelper, NameLookupIsSystemNoCaseInSqlAndAnsiSameTextInTheCache) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // L-187 / LC-14: Cyrillic names differing in case are the same name for the cache, different for SQL
+    // Cyrillic names differing in case are the same name for the cache, different for SQL
     Env env(true);
     env.exec(
         QStringLiteral("INSERT INTO Category (ID,cName) VALUES (1,'%1')").arg(kTown).toUtf8().constData());
@@ -519,7 +518,7 @@ TEST(MarkCategoryDbImplORMHelper, NameLookupIsSystemNoCaseInSqlAndAnsiSameTextIn
     OrmCategoryRec r;
     EXPECT_FALSE(helper.readCategorySql(r, 0, kTownLower)); // cache empty and not prepared -> SQL -> no row
     EXPECT_TRUE(helper.readCategorySql(r, 0, kTown));       // exact bytes
-    EXPECT_EQ(helper.countCategorySql(kTownLower), 0);      // S-12 is SQL, too
+    EXPECT_EQ(helper.countCategorySql(kTownLower), 0);      // The name lookup is SQL, too
     EXPECT_EQ(helper.countCategorySql(kTown), 1);
 
     std::vector<OrmCategoryRec> all;
@@ -540,7 +539,7 @@ TEST(MarkCategoryDbImplORMHelper, CountCategoryCountsEveryRowOfTheName) {
     EXPECT_EQ(helper.countCategorySql(QStringLiteral("z")), 0);
 }
 
-// ---- list (S-13, S-18) -------------------------------------------------------------------------------
+// ---- list -------------------------------------------------------------------------------
 
 TEST(MarkCategoryDbImplORMHelper, ListIsInIdOrderWithViewValuesOrDefaults) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -579,7 +578,7 @@ TEST(MarkCategoryDbImplORMHelper, ListOfAnEmptyDatabase) {
     }
 }
 
-// ---- set all visible (S-1B, S-19) and read-only toggles ----------------------------------------------
+// ---- set all visible and read-only toggles ----------------------------------------------
 
 TEST(MarkCategoryDbImplORMHelper, SetAllVisibleFalseAddsMissingRowsWithDefaultZooms) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -601,7 +600,7 @@ TEST(MarkCategoryDbImplORMHelper, SetAllVisibleFalseAddsMissingRowsWithDefaultZo
 
 TEST(MarkCategoryDbImplORMHelper, SetAllVisibleOverwritesCacheOnlyZoomsWithTheDefaults) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // LC-16: a visible category with zooms 5-10 has no row; "hide all" gives it 3-23
+    // A visible category with zooms 5-10 has no row; "hide all" gives it 3-23
     Env env(true);
     auto helper = env.helper();
     OrmCategoryRec r = rec(QStringLiteral("a"), true, 5, 10);
@@ -659,12 +658,12 @@ TEST(MarkCategoryDbImplORMHelper, FreeRunningHelpersOnOneConnectionGetTheirOwnId
     // fails. A third thread runs countCategorySql, the one method legacy calls under a read lock, at the same
     // time.
     //
-    // T-0305: the first log line of a process builds Qt's message pattern inside libQt6Core (Qt 6.8.2: the ":
-    // " literal of the default pattern, a qstrdup block). Qt's own once-only set-up is not visible to TSan,
-    // which reported it as a race between the two writers' first ormLogEnter (insertCategorySql ->
-    // addOrUpdate, 78 of 200 fresh processes on Debian 13). The test is about ids, not about Qt's logger: log
-    // once here, before the threads exist.
-    ormLogDebug("T-0305 warm-up of the Qt message pattern before the threads start");
+    // The first log line of a process builds Qt's message pattern inside libQt6Core (Qt 6.8.2: the ": "
+    // literal of the default pattern, a qstrdup block). Qt's own once-only set-up is not visible to TSan,
+    // which reported it as a race between the two writers' first ormLogEnter
+    // (insertCategorySql -> addOrUpdate, 78 of 200 fresh processes on Debian 13). The test is about ids, not
+    // about Qt's logger: log once here, before the threads exist.
+    ormLogDebug("warm-up of the Qt message pattern before the threads start");
     constexpr int kEach = 60;
     Env env(true);
     env.exec("INSERT INTO Category (ID,cName) VALUES (1000,'seed'),(1001,'seed')");

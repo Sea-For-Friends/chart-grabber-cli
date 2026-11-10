@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports u_MapCoverageInfo.pas; docs/specs/maptype.md §2.6.6, §7.3 (MapCenter).
-// No stock ZMP carries a MapCenter key (grep of tests/fixtures/zmp/sas.maps), so the vectors are
-// hand-derived from the legacy parse rules.
+// Ports u_MapCoverageInfo.pas. No stock ZMP carries a MapCenter key (grep of
+// tests/fixtures/zmp/sas.maps), so the vectors are hand-derived from the legacy parse rules.
 #include "cg/maptype/map_coverage_info.h"
 
 #include <QString>
@@ -29,7 +28,7 @@ TEST(MapCoverageInfo, ParseVectors) {
         {" 37.6 , -55.7 , 3 ", true, 37.6, -55.7, 3},
         {"\t1e1,2,0\t", true, 10.0, 2.0, 0},
         {"1,2,$1F", true, 1.0, 2.0, 31}, // TryStrToInt takes Delphi hex
-        {"1,2,256", true, 1.0, 2.0, 0},  // Integer 256 read through a Byte (L-122)
+        {"1,2,256", true, 1.0, 2.0, 0},  // Integer 256 read through a Byte
         {"1,2,-1", true, 1.0, 2.0, 255}, // idem
         {"", false, 0, 0, 0},
         {"37.6,55.7", false, 0, 0, 0},    // two items

@@ -45,7 +45,7 @@ struct Opt {
     Group group;
     bool isArea;
     Setter set;              // empty = handled by parseJob itself
-    bool repeatable = false; // every value of the flag is applied, in order (T-0291: --maps)
+    bool repeatable = false; // every value of the flag is applied, in order (--maps)
 };
 
 QString quoted(const QString& text) {
@@ -56,8 +56,7 @@ QString absPath(const QString& value, const QString& base) {
     if (base.isEmpty()) {
         return QFileInfo(value).absoluteFilePath();
     }
-    // T-0360: forward slashes as QFileInfo gives them for a flag (T-0335); a job-file "charts\x" must not
-    // print mixed.
+    // Forward slashes as QFileInfo gives them for a flag; a job-file "charts\x" must not print mixed.
     return QDir::fromNativeSeparators(QDir(base).absoluteFilePath(value));
 }
 
@@ -426,7 +425,7 @@ std::unexpected<CliError> usageError(QString message) {
     return std::unexpected(CliError{2, std::move(message)});
 }
 
-// Spec 1.7 S-3: two areas are a refusal (exit 3, no usage line), not a syntax error.
+// Two areas are a refusal (exit 3, no usage line), not a syntax error.
 std::unexpected<CliError> areaClashError(QString message) {
     return std::unexpected(CliError{3, std::move(message)});
 }

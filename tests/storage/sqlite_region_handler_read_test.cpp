@@ -2,12 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018, FEAT-STO-032. Ports the read half of
-// Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas: GetTileInfo/CallbackSelectTileInfo
-// (:949-1039, :526-671), GetListOfTileVersions/GetListOfVersions/CallbackSelectVersions
-// (:773-816, :817-853, :715-772); see docs/specs/storage.md §2.15.1, §2.16.3. Kept in its own file
-// (not sqlite_region_handler_test.cpp) per the ticket's parallel-development note: T-0022B4 writes
-// the write side in sqlite_region_handler_write.cpp / its own test file at the same time.
+// Ports the read half of Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas:
+// GetTileInfo/CallbackSelectTileInfo (:949-1039, :526-671), GetListOfTileVersions/
+// GetListOfVersions/CallbackSelectVersions (:773-816, :817-853, :715-772). The write half has its
+// own test file.
 #include "cg/storage/map_version.h"
 #include "cg/storage/sqlite/sqlite_region_handler.h"
 #include "cg/storage/sqlite/sqlite_region_schema.h"
@@ -56,8 +54,8 @@ void writeFile(const QString& path, const QByteArray& content) {
 
 // A region file whose `t.v` is declared TEXT (so LOGICALSORTING applies), 8 columns like the
 // built-in default otherwise, with two rows on the same tile (5,5): v='9' (s=100) and v='10'
-// (s=200) -- the ticket's "TEXT-v file holding '9' and '10'" fixture, built with SqliteDb::exec
-// per the ticket's instruction (no legacy DUnit exists to port).
+// (s=200) -- a "TEXT-v file holding '9' and '10'", built with SqliteDb::exec (no legacy DUnit
+// exists to port).
 std::unique_ptr<SqliteRegionHandler> openTextVersionHandlerWithTwoRows(QTemporaryDir& overridesDir,
                                                                        QTemporaryDir& dbDir) {
     writeFile(overridesDir.path() + QStringLiteral("/t.sql"),
@@ -104,8 +102,8 @@ TEST(SqliteRegionHandlerRead, RepoFixtureTileReadsBackWithSizeDateAndBody) {
     EXPECT_EQ(info->size, 1435u);
     EXPECT_EQ(info->data.size(), 1435);
     EXPECT_EQ(info->contentType, QByteArray("image/jpg")); // c is NULL -> the storage's main type
-    // Measured (docs/specs/storage.md §2.4.3): d=1789643597 -> 2026-09-17 11:13:17 (naive local
-    // re-read of the UTC instant), NOT the source file's real mtime.
+    // Measured: d=1789643597 -> 2026-09-17 11:13:17 (naive local re-read of the UTC instant), NOT
+    // the source file's real mtime.
     EXPECT_EQ(info->loadDate, TileDate(QDate(2026, 9, 17), QTime(11, 13, 17)));
 }
 
@@ -216,11 +214,11 @@ TEST(SqliteRegionHandlerRead, ListVersionsReturnsEveryDistinctVersionInTheFile) 
 
 TEST(SqliteRegionHandlerRead, PreCancelledTokenStoppedBeforeFirstStepYieldsEmptyList) {
     // A token already stopped before the first step() yields an empty (nullptr) list -- same
-    // outcome collectVersions() gives for a genuinely empty result (review finding 4, T-0022B3
-    // rework: renamed from CancellationDiscardsWhateverWasCollected, which claimed to pin
-    // GetMapVersionInfoStatic's "discard whatever was collected" behavior but stops the token
-    // before any row is ever collected, so it cannot distinguish that from the old "keep the
-    // partial list" semantics).
+    // outcome collectVersions() gives for a genuinely empty result (renamed from
+    // CancellationDiscardsWhateverWasCollected, which claimed to pin GetMapVersionInfoStatic's
+    // "discard whatever was collected" behavior but stops the token before any row is ever
+    // collected, so it cannot distinguish that from the old "keep the partial list"
+    // semantics).
     QTemporaryDir overridesDir;
     QTemporaryDir dbDir;
     ASSERT_TRUE(overridesDir.isValid());
@@ -236,7 +234,7 @@ TEST(SqliteRegionHandlerRead, PreCancelledTokenStoppedBeforeFirstStepYieldsEmpty
 }
 
 TEST(SqliteRegionHandlerRead, ListsDisabledWhenTheTableHasNoVersionColumn) {
-    // The §7.4 fixture's t.sql has no v/c/h columns at all.
+    // The test fixture's t.sql has no v/c/h columns at all.
     const QString overridesDir =
         QDir(cgStorageFixture(QStringLiteral("cache/sqlite_overrides"))).absolutePath() + QStringLiteral("/");
     auto schema = makeSchema(overridesDir);
@@ -256,7 +254,7 @@ TEST(SqliteRegionHandlerRead, ListsDisabledWhenTheTableHasNoVersionColumn) {
     EXPECT_EQ(*listAll, nullptr);
 }
 
-// DEVIATION D-160 (T-0276, L-75): an SQL failure of the tile read is an error and is logged; legacy
+// DEVIATION: an SQL failure of the tile read is an error and is logged; legacy
 // (u_TileStorageSQLiteHandler.pas:1027-1037) answered NotExists.
 TEST(SqliteRegionHandlerRead, SqlFailureOfTheReadIsAnErrorWithTheSqlTextAndStillLogged) {
     QTemporaryDir dir;

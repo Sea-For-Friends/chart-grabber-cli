@@ -7,10 +7,10 @@
 //
 // These two legacy units are interfaces with no implementation anywhere in the legacy tree (no
 // u_ConvertProjectionToProjection*.pas exists, and their only consumers receive the factory by
-// injection from a provider that does not exist either -- docs/specs/geo.md §2.8). The behavior
-// they describe (reproject a tile position/rect from one pyramid to another) IS needed by
-// `render`, so it is supplied here as a value type instead: no factory (constructing one is two
-// shared_ptr copies -- `idioms.md` §13 rules out a factory with one implementation and one user).
+// injection from a provider that does not exist either). The behavior they describe (reproject a
+// tile position/rect from one pyramid to another) IS needed by `render`, so it is supplied here
+// as a value type instead: no factory (constructing one is two shared_ptr copies -- no factory
+// with one implementation and one user).
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/projection.h"
@@ -59,9 +59,9 @@ private:
     [[nodiscard]] DoublePoint route(const ProjectionPtr& from, const ProjectionPtr& to,
                                     DoublePoint fromPixel) const;
 
-    // The forward*/backward* pairs are the same ten operations with (from, to) swapped
-    // (T-0016 review finding 14); these four take the direction as parameters so forward*/backward*
-    // are one-line wrappers instead of ten duplicated bodies.
+    // The forward*/backward* pairs are the same ten operations with (from, to) swapped; these four
+    // take the direction as parameters so forward*/backward* are one-line wrappers instead of ten
+    // duplicated bodies.
     [[nodiscard]] DoubleRect pixelRectVia(const ProjectionPtr& from, const ProjectionPtr& to,
                                           const DoubleRect& r) const;
     [[nodiscard]] DoublePoint tilePosVia(const ProjectionPtr& from, const ProjectionPtr& to,

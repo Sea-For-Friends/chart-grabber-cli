@@ -80,9 +80,8 @@ void writeSinglePolygon(core::IConfigWriter& section, const IGeometryLonLatSingl
                         std::size_t& startIndex) {
     writeContour(section, *polygon.outerBorder(), startIndex);
     for (std::size_t h = 0; h < polygon.holeCount(); ++h) {
-        // DEVIATION D-158 (T-0272, L-260): the separator goes to the next free index; legacy writes it at
-        // startIndex + h / + i (u_ConfigProviderHelpers.pas:363-365 / 389-391), which loses every later part
-        // on read-back.
+        // DEVIATION: the separator goes to the next free index; legacy writes it at startIndex + h / + i
+        // (u_ConfigProviderHelpers.pas:363-365 / 389-391), which loses every later part on read-back.
         const QString index = QString::number(startIndex);
         section.writeFloat(QStringLiteral("PointLon_") + index, kNaN);
         section.writeFloat(QStringLiteral("PointLat_") + index, -1);
@@ -95,15 +94,14 @@ void writeSinglePolygon(core::IConfigWriter& section, const IGeometryLonLatSingl
 void writeMultiPolygon(core::IConfigWriter& section, const IGeometryLonLatMultiPolygon& polygon,
                        std::size_t& startIndex) {
     // Pascal Assert(Count > 0) (off in the shipped build). Unreachable in legacy: a multi-polygon is
-    // only built by collapsePolygons with two or more items (geometry_factory.cpp:207); no register row.
+    // only built by collapsePolygons with two or more items (geometry_factory.cpp:207).
     if (polygon.count() == 0) {
         return;
     }
     writeSinglePolygon(section, *polygon.item(0), startIndex);
     for (std::size_t i = 1; i < polygon.count(); ++i) {
-        // DEVIATION D-158 (T-0272, L-260): the separator goes to the next free index; legacy writes it at
-        // startIndex + h / + i (u_ConfigProviderHelpers.pas:363-365 / 389-391), which loses every later part
-        // on read-back.
+        // DEVIATION: the separator goes to the next free index; legacy writes it at startIndex + h / + i
+        // (u_ConfigProviderHelpers.pas:363-365 / 389-391), which loses every later part on read-back.
         const QString index = QString::number(startIndex);
         section.writeFloat(QStringLiteral("PointLon_") + index, kNaN);
         section.writeFloat(QStringLiteral("PointLat_") + index, kNaN);
@@ -114,7 +112,7 @@ void writeMultiPolygon(core::IConfigWriter& section, const IGeometryLonLatMultiP
 
 } // namespace
 
-// FEAT-GEO-024 (see config_provider_helpers.h). u_ConfigProviderHelpers.pas:239-326.
+// See config_provider_helpers.h. u_ConfigProviderHelpers.pas:239-326.
 std::shared_ptr<const IGeometryLonLatPolygon> readPolygon(const core::IConfigProvider& section,
                                                           const GeometryLonLatFactory& factory) {
     const std::optional<FirstPoint> first = findFirstPoint(section);
@@ -156,7 +154,7 @@ std::shared_ptr<const IGeometryLonLatPolygon> readPolygon(const core::IConfigPro
     return std::dynamic_pointer_cast<const IGeometryLonLatPolygon>(builder.makeStaticAndClear());
 }
 
-// FEAT-REG-006 (see config_provider_helpers.h). u_ConfigProviderHelpers.pas:400-419.
+// See config_provider_helpers.h. u_ConfigProviderHelpers.pas:400-419.
 void writePolygon(core::IConfigWriter& section,
                   const std::shared_ptr<const IGeometryLonLatPolygon>& polygon) {
     if (!polygon) {

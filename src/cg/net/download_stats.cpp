@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: i_GlobalInternetState.pas, u_GlobalInternetState.pas, i_DownloadInfoSimple.pas,
-// u_DownloadInfoSimple.pas, i_LastResponseInfo.pas, u_LastResponseInfo.pas. docs/specs/net.md §2.19.
+// u_DownloadInfoSimple.pas, i_LastResponseInfo.pas, u_LastResponseInfo.pas.
 #include "cg/net/download_stats.h"
 
 #include <QMutexLocker>
@@ -68,7 +68,7 @@ void LastResponseInfo::setResponseHead(QByteArray value) {
         }
     }
     if (didChange) {
-        fireChanged(); // outside the lock, matches core.md 3's "firing happens after unlock" rule
+        fireChanged(); // outside the lock: firing happens after unlock
     }
 }
 

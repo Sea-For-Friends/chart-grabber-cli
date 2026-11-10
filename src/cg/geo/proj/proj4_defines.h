@@ -3,14 +3,14 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Includes/Proj4/Proj4.Defines.pas, verbatim (docs/specs/geo.md §7.2, ADR-0006 decision
-// 4). CRS objects are always built from these proj-strings, never from a bare EPSG code, so the
-// datum shift is the Helmert one the Windows build used.
+// Ports: Includes/Proj4/Proj4.Defines.pas, verbatim. CRS objects are always built from these
+// proj-strings, never from a bare EPSG code, so the datum shift is the Helmert one the Windows
+// build used.
 //
 // Included by proj/proj_converter.cpp (the only place these strings are fed to PROJ) and by
 // proj_converter_test.cpp (to build oracles and pass known init strings directly).
 //
-// FEAT-GEO-003: kSk42/kGsk2011 are the SK-42/GSK-2011 Helmert-shift datum strings.
+// kSk42/kGsk2011 are the SK-42/GSK-2011 Helmert-shift datum strings.
 
 #include <QByteArray>
 
@@ -65,12 +65,12 @@ inline constexpr char kUpsNorth[] = "+proj=stere +lat_0=90 +lon_0=0 +k=0.994 +x_
 // EPSG:32761 = WGS 84 / UPS South
 inline constexpr char kUpsSouth[] = "+proj=stere +lat_0=-90 +lon_0=0 +k=0.994 +x_0=2000000 "
                                     "+y_0=2000000 +datum=WGS84 +units=m +no_defs +type=crs";
-// kSk42, kGsk2011, kGsk2011GkFmt, kUpsNorth, kUpsSouth are not reachable from proj4ArgsByEpsg
-// below in legacy either -- CoordTransformer (out of scope, T-0019B) uses them directly.
+// kSk42, kGsk2011, kGsk2011GkFmt, kUpsNorth, kUpsSouth are not reachable from proj4ArgsByEpsg below
+// in legacy either -- CoordTransformer (out of scope) uses them directly.
 
 // Ports Proj4ArgsByEpsg (Proj4.Defines.pas:53-96). Returns an empty QByteArray for a code legacy
-// did not know; the caller then falls through to "EPSG:<code>" via proj.db (ADR-0006 decision 5:
-// the legacy `+init=epsg:` fallback and share/proj/epsg are both dead under PROJ 9).
+// did not know; the caller then falls through to "EPSG:<code>" via proj.db (the legacy
+// `+init=epsg:` fallback and share/proj/epsg are both dead under PROJ 9).
 [[nodiscard]] QByteArray proj4ArgsByEpsg(int epsg);
 
 } // namespace cg::geo

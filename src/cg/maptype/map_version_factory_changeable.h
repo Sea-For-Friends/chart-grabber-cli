@@ -6,10 +6,9 @@
 // Ports: u_MapVersionFactoryChangeable.pas, and IMapVersionFactoryChangeable /
 //        IMapVersionFactoryChangeableInternal of i_MapVersionFactory.pas
 //
-// Holder of the current version factory. TileStorageOfMapType swaps it when the cache type
-// changes (spec maptype.md section 2.9). Legacy's IMapVersionFactoryChangeable (GetStatic + IChangeable)
-// stays on this class; the setter is the storage-side interface
-// storage::IMapVersionFactoryChangeableInternal.
+// Holder of the current version factory. TileStorageOfMapType swaps it when the cache type changes.
+// Legacy's IMapVersionFactoryChangeable (GetStatic + IChangeable) stays on this class; the setter is the
+// storage-side interface storage::IMapVersionFactoryChangeableInternal.
 
 #include "cg/core/changeable.h"
 #include "cg/core/sync.h"
@@ -17,7 +16,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class MapVersionFactoryChangeable final : public core::Changeable,
                                           public storage::IMapVersionFactoryChangeableInternal {
 public:

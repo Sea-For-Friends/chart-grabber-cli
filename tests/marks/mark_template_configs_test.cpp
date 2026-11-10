@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 // Ports u_MarkTemplateConfigBase.pas, u_MarkPointTemplateConfig.pas, u_MarkLineTemplateConfig.pas,
-// u_MarkPolyTemplateConfig.pas, u_MarkFactoryConfig.pas (docs/specs/marks.md section 2.3, ticket T-0098, a
-// slice of the marks module). The proof is the read -> write round trip of the [MarkNewPoint|Line|Poly]
-// sections and their _Name sub-sections of the real fixture. Expected values are literals.
+// u_MarkPolyTemplateConfig.pas, u_MarkFactoryConfig.pas. The proof is the read -> write round trip of the
+// [MarkNewPoint|Line|Poly] sections and their _Name sub-sections of the real fixture. Expected values are
+// literals.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"

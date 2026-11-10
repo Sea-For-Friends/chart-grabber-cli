@@ -23,7 +23,7 @@ qint64 calcRectTilesTotal(const RectI& r) noexcept {
 }
 
 // Types.pas CenterPoint(ARect) = (ARect.Right - ARect.Left) div 2 + ARect.Left (and the same for
-// Y): NOT (Left+Right)/2 -- the two differ for a negative odd sum (slice-A review finding 1).
+// Y): NOT (Left+Right)/2 -- the two differ for a negative odd sum.
 PointI centerOf(const RectI& r) noexcept {
     return {(r.right - r.left) / 2 + r.left, (r.bottom - r.top) / 2 + r.top};
 }
@@ -190,16 +190,15 @@ TileIteratorByPolygon::TileIteratorByPolygon(ProjectionPtr projection,
       startPoint_(startPoint.value_or(rect_.rect().topLeft())), tilesTotal_(tilesToProcess),
       stopOnProcessedTilesCount_(tilesToProcess != -1) {
     if (!polygon_) {
-        // u_TileIteratorByPolygon.pas:95-97: Assert(False); MakeEmptySetup -- but
-        // SASPlanet.dproj's Base property group (shared by every configuration, including Debug)
-        // sets DCC_AssertionsAtRuntime=False, so Assert() never raises in any legacy build; legacy
+        // u_TileIteratorByPolygon.pas:95-97: Assert(False); MakeEmptySetup -- but SASPlanet.dproj's
+        // Base property group (shared by every configuration, including Debug) sets
+        // DCC_AssertionsAtRuntime=False, so Assert() never raises in any legacy build; legacy
         // always falls through to MakeEmptySetup for a null projected polygon. This IS a reachable,
-        // legitimate case here too: T-0018B review finding 1, TileIteratorFactory::makeTileIterator
-        // passes a null projected polygon straight through when nothing survives projection
-        // (u_TileIteratorFactory.pas:91's Supports(nil) == False fallthrough). Q_ASSERT would be
-        // fatal in this build (no NDEBUG), unlike legacy's compiled-out Assert, so it is omitted
-        // here to match legacy's actual (assertions-disabled) runtime behavior: empty setup, no
-        // crash.
+        // legitimate case here too: TileIteratorFactory::makeTileIterator passes a null projected
+        // polygon straight through when nothing survives projection (u_TileIteratorFactory.pas:91's
+        // Supports(nil) == False fallthrough). Q_ASSERT would be fatal in this build (no NDEBUG),
+        // unlike legacy's compiled-out Assert, so it is omitted here to match legacy's actual
+        // (assertions-disabled) runtime behavior: empty setup, no crash.
         makeEmptySetup();
         return;
     }
@@ -223,8 +222,7 @@ TileIteratorByPolygon::TileIteratorByPolygon(ProjectionPtr projection,
 void TileIteratorByPolygon::makeEmptySetup() {
     // u_TileIteratorByPolygon.pas:235-244: also resets FTilesRect/FStartPoint to zero, so the two
     // unreachable-in-practice "neither single nor multi" / "null polygon" branches above cannot
-    // leave rect_ holding the polygon's (possibly non-empty) bounds with a null multiProjected_ --
-    // slice-A review finding 2.
+    // leave rect_ holding the polygon's (possibly non-empty) bounds with a null multiProjected_.
     tilesTotal_ = 0;
     rect_ = TileRect(projection_, RectI{});
     startPoint_ = PointI{0, 0};
@@ -289,8 +287,8 @@ void TileIteratorByPolygon::reset() {
 qint64 TileIteratorByPolygon::tilesTotal() {
     // u_TileIteratorByPolygon.pas:144-150 GetTilesTotal: lazy, memoised, delegates to
     // CalcTileCountInProjectedPolygon -- a different algorithm from next() (recursive bisection,
-    // not a per-tile scan), so this may legitimately differ from the count next() yields (slice-A
-    // handoff open question / slice-A review "For slice B"; docs/parity/deviations.md D-5).
+    // not a per-tile scan), so this may legitimately differ from the count next() yields (a
+    // deviation from legacy).
     if (tilesTotal_ < 0) {
         tilesTotal_ = calcTileCountInProjectedPolygon(*projection_, *polygon_);
     }

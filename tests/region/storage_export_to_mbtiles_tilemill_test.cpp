@@ -3,17 +3,17 @@
 // SAS.Planet development team; modified.
 
 // Tests of SqliteStorageMbtilesTileMill and the file-local MD5Buffer of
-// src/cg/region/storage_export_to_mbtiles, ported from
-// Src/RegionProcess/Export/MBTiles/u_StorageExportToMBTiles.pas :550-757 and Src/u_MD5Func.pas :36-42. T-0171
-// (E3 of docs/specs/region-export.md); T-0172 tags the feature id.
+// src/cg/region/storage_export_to_mbtiles, ported from Src/RegionProcess/Export/MBTiles/
+// u_StorageExportToMBTiles.pas :550-757 and Src/u_MD5Func.pas :36-42.
 //
-// Rig as T-0170: write into a QTemporaryDir, read the finished file back with storage::sqlite::SqliteDb.
-// Expected values are literals taken from the Pascal. Route of the expected sqlite_master texts: the
-// fifteen Pascal statements (:551-615, cCRLF = #10) were extracted from the unit by a script and run once
-// in SQLite (python sqlite3 module on an in-memory database); the stored text has no "IF NOT EXISTS" and
-// no trailing ";". The MD5 literals are the output of md5sum of the same byte strings, upper-cased.
+// Rig as for the Classic flavour: write into a QTemporaryDir, read the finished file back with
+// storage::sqlite::SqliteDb. Expected values are literals taken from the Pascal. Route of the expected
+// sqlite_master texts: the fifteen Pascal statements (:551-615, cCRLF = #10) were extracted from the unit
+// by a script and run once in SQLite (python sqlite3 module on an in-memory database); the stored text
+// has no "IF NOT EXISTS" and no trailing ";". The MD5 literals are the output of md5sum of the same byte
+// strings, upper-cased.
 //
-// Contrast with LC-1 of T-0170: the Classic tiles table has no unique key and keeps duplicates; here
+// Contrast with the Classic flavour: its tiles table has no unique key and keeps duplicates; here
 // map_index is UNIQUE (:589), so a tile exported twice gives ONE map row.
 #include "cg/core/content_type.h"
 #include "cg/core/result.h"
@@ -298,8 +298,8 @@ TEST(MbtilesTileMill, AppendMergesBoundsZoomsAndCentersOnTheNewRect) {
         QString minzoom, maxzoom, center;
     };
     // first export: rect A, zooms 3..5. Second: rect B. Union(A, B) = left -122.5 (A), bottom 47.0 (B),
-    // right -121.0 (B), top 48.0 (B). Centre of B is (-121.25, 47.5); the union's would be -121.75
-    // (LC-3, :671 vs :666).
+    // right -121.0 (B), top 48.0 (B). Centre of B is (-121.25, 47.5); the union's would be -121.75 (a
+    // legacy defect, :671 vs :666).
     const std::vector<Case> cases = {
         {{4, 4}, "3", "5", "-121.25000000,47.50000000,3"}, // existing 3 is smaller, existing 5 is larger
         {{1, 9}, "1", "9", "-121.25000000,47.50000000,1"}, // new values win
@@ -352,7 +352,7 @@ TEST(MbtilesTileMill, AppendRefusesAFileOfAnotherFormatTypeOrScheme) {
 
 // ---- 3. images / map and the tile id (:711-757, u_MD5Func.pas:36-42) ---------------------------------
 
-// T-0179 / FEAT-REG-069: legacy binds a nil buffer for a zero-size tile (:730) -> SQL NULL
+// Legacy binds a nil buffer for a zero-size tile (:730) -> SQL NULL
 TEST(MbtilesTileMill, ZeroByteTileIsStoredAsNullInImagesNotAsEmptyBlob) {
     QTemporaryDir d;
     ASSERT_TRUE(d.isValid());
@@ -417,7 +417,7 @@ TEST(MbtilesTileMill, TilesViewReturnsFlippedYForTmsAndUnchangedForXyz) {
     }
 }
 
-// ---- 5. duplicates: map_index is UNIQUE (:589), the opposite of LC-1 of T-0170 ----------------------
+// ---- 5. duplicates: map_index is UNIQUE (:589), the opposite of the Classic flavour ----------------------
 
 TEST(MbtilesTileMill, SameTileTwiceGivesOneMapRowReplaceKeepsTheLastIgnoreTheFirst) {
     for (const bool replace : {true, false}) {
@@ -588,7 +588,7 @@ TEST(MbtilesTileMill, MapStatementIsPreparedFirstAndTheSecondIsSkippedWhenItFail
     EXPECT_FALSE(r.error().what().contains("tile_data")) << r.error().what().toStdString();
 }
 
-// ---- 8. read-back with the landed cache connector ----------------------------------------------------
+// ---- 8. read-back with the cache connector ----------------------------------------------------
 
 TEST(MbtilesTileMill, FileIsReadBackByMbtilesConnectionWithTheSameBytesAtTheSameXyz) {
     using namespace cg;

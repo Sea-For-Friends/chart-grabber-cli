@@ -16,7 +16,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-200
 class ConfigProviderIniSection final : public IConfigWriter,
                                        public std::enable_shared_from_this<ConfigProviderIniSection> {
 public:
@@ -29,7 +28,7 @@ public:
     [[nodiscard]] IConfigWriterPtr orCreateSubItem(QStringView id) override;
     [[nodiscard]] QVariant value(QStringView id) const override;
     [[nodiscard]] QByteArray binary(QStringView id) const override;
-    [[nodiscard]] QStringList subItemNames() const override; // strips the "S_" prefix (D-1 fix)
+    [[nodiscard]] QStringList subItemNames() const override; // strips the "S_" prefix
     [[nodiscard]] QStringList valueNames() const override;   // keys in file order, first duplicate only
     void deleteSubItem(QStringView id) override;
     void deleteValue(QStringView id) override;

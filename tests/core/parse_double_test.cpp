@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Chart Grabber contributors.
 
-// Tests for src/cg/core/platform/parse_double (T-0396): the contract of std::from_chars for double, on every
+// Tests for src/cg/core/platform/parse_double: the contract of std::from_chars for double, on every
 // platform.
 #include "cg/core/platform/parse_double.h"
 

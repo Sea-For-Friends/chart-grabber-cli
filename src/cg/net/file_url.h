@@ -4,9 +4,8 @@
 
 #pragma once
 // Ports: u_DownloaderHttpBase.pas:270-353 (ProcessFileSystemRequest) -- the URL-recognition half
-// only. docs/specs/net.md:805-822, deviation [D-11]. File I/O and the ContentTypeRegistry lookup
-// stay in processFileSystemRequest() itself, which T-0010B implements and which calls this
-// function first, before doing either.
+// only. File I/O and the ContentTypeRegistry lookup stay in processFileSystemRequest() itself,
+// which calls this function first, before doing either.
 
 #include <QByteArray>
 

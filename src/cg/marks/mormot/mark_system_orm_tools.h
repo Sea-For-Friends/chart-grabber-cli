@@ -3,9 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// FEAT-GEO-034 (held open). Ports: Src/MarksDB/mORMot/u_MarkSystemORMTools.pas
-// (docs/specs/marks.md §2.9.5).
-// Not ported: LonLatDoubleRectToRect (:160-166), cCoordToInt (:59) -- used by the DBMS model only.
+// Ports: Src/MarksDB/mORMot/u_MarkSystemORMTools.pas. Not ported: LonLatDoubleRectToRect
+// (:160-166), cCoordToInt (:59) -- used by the DBMS model only.
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/geometry_lonlat.h"

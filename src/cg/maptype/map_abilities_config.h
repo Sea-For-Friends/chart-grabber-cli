@@ -5,10 +5,10 @@
 #pragma once
 // Ports: i_MapAbilitiesConfig.pas, u_MapAbilitiesConfig.pas, u_MapAbilitiesConfigStatic.pas
 //
-// Per-map "show on the mini-map" / "downloads allowed" flags (spec maptype.md §2.7.1). The
-// changeable element starts from the ZMP's static value, reads its two keys from the map's
-// Maps.ini section and writes back only what differs from the ZMP. The static half is rebuilt
-// as an immutable snapshot before every change notification (core::Snapshot, idioms §4).
+// Per-map "show on the mini-map" / "downloads allowed" flags. The changeable element starts
+// from the ZMP's static value, reads its two keys from the map's Maps.ini section and writes
+// back only what differs from the ZMP. The static half is rebuilt as an immutable snapshot
+// before every change notification (core::Snapshot).
 
 #include "cg/core/config_element.h"
 #include "cg/core/snapshot.h"
@@ -24,7 +24,6 @@ struct MapAbilitiesConfigStatic { // u_MapAbilitiesConfigStatic.pas
 };
 using MapAbilitiesConfigStaticPtr = std::shared_ptr<const MapAbilitiesConfigStatic>;
 
-// FEAT-NET-002
 class MapAbilitiesConfig final : public core::ConfigElement {
 public:
     explicit MapAbilitiesConfig(MapAbilitiesConfigStaticPtr defaults);
@@ -45,7 +44,7 @@ protected:
     void doBeforeChangeNotify() override; // rebuilds the snapshot
 
 private:
-    // The "...Locked()" split (core.md 2.16): doReadConfig runs inside the write lock.
+    // The "...Locked()" split: doReadConfig runs inside the write lock.
     void setIsShowOnSmMapLocked(bool v);
     void setUseDownloadLocked(bool v);
 

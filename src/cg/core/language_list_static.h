@@ -16,7 +16,6 @@
 
 namespace cg::core {
 
-// FEAT-NET-002
 class ILanguageListStatic {
 public:
     virtual ~ILanguageListStatic() = default;
@@ -31,7 +30,7 @@ using ILanguageListStaticPtr = std::shared_ptr<const ILanguageListStatic>;
 
 class LanguageListStatic final : public ILanguageListStatic {
 public:
-    // Throws std::invalid_argument when two codes are equal ignoring case (legacy: dupError, L-128).
+    // Throws std::invalid_argument when two codes are equal ignoring case (legacy: dupError).
     explicit LanguageListStatic(const QStringList& codes);
 
     [[nodiscard]] int count() const override;

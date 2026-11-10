@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: build smoke test (no FEAT); T-0002B extension: BuildInfo (docs/specs/core.md 2.23)
+// Build smoke test, extended with BuildInfo.
 #include "cg/core/version.h"
 
 #include <gtest/gtest.h>
@@ -25,7 +25,7 @@ TEST(Version, BuildInfoFieldsAreNonEmpty) {
     EXPECT_STRNE(info.qtVersion, "");
 }
 
-// T-0328: one source of truth -- the string is the CMake PROJECT_VERSION, not a second hand-kept copy.
+// One source of truth -- the string is the CMake PROJECT_VERSION, not a second hand-kept copy.
 TEST(Version, EqualsProjectVersion) {
     EXPECT_STREQ(cg::core::versionString(), CG_PROJECT_VERSION);
 }

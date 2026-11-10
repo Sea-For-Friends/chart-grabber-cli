@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037, LV-3, LV-4. Ports u_VectorItemSubset.pas, u_VectorItemSubsetBuilder.pas;
-// docs/specs/vector.md §2.6, §7.2.
+// Ports u_VectorItemSubset.pas, u_VectorItemSubsetBuilder.pas.
 #include "cg/vector/vector_item_subset_builder.h"
 
 #include <gtest/gtest.h>
@@ -101,7 +100,7 @@ TEST(VectorItemSubset, EmptyAndItemAccess) {
     EXPECT_FALSE(one.isEmpty());
     EXPECT_EQ(one.hash(), 5u);
     EXPECT_EQ(one.item(0), a);
-    EXPECT_THROW((void)one.item(1), std::out_of_range); // D-61 regression
+    EXPECT_THROW((void)one.item(1), std::out_of_range); // Regression test for a deviation from legacy
     EXPECT_THROW((void)one.item(-1), std::out_of_range);
 }
 
@@ -131,7 +130,7 @@ TEST(VectorItemSubsetBuilder, HashChainAndStaticResults) {
     EXPECT_EQ(builder.count(), 0);
     EXPECT_EQ(builder.makeStaticAndClear(), nullptr);
 
-    // Clear keeps the old hash (L-150) but the next first add overwrites it: restarts the chain.
+    // Clear keeps the old hash but the next first add overwrites it: restarts the chain.
     builder.add(fake(1, "a"));
     builder.add(fake(2, "b"));
     builder.clear();
@@ -148,7 +147,8 @@ TEST(VectorItemSubsetBuilder, CapacityItemAndNullArgument) {
     builder.add(a);
     EXPECT_EQ(builder.item(0), a);
     EXPECT_THROW((void)builder.item(1),
-                 std::out_of_range); // D-61 regression (legacy: nil dereference / list error)
+                 std::out_of_range); // Regression test for a deviation from legacy (legacy: nil
+                                     // dereference / list error)
     EXPECT_THROW((void)VectorItemSubsetBuilder().item(0), std::out_of_range);
     EXPECT_EQ(builder.add(nullptr), -1); // explicit guard in legacy, same in every build
     EXPECT_EQ(builder.count(), 1);
@@ -158,8 +158,8 @@ TEST(VectorItemSubsetBuilder, CapacityItemAndNullArgument) {
     EXPECT_EQ(built->count(), 1);
 }
 
-// LV-3, LV-4. Sorted descending by hash with the literal quicksort; of equal neighbours the FIRST in
-// sorted order survives. Hand trace of the 4-element input in docs/handoffs/T-0057.md.
+// Legacy defects, reproduced. Sorted descending by hash with the literal quicksort; of equal
+// neighbours the FIRST in sorted order survives (hand-traced for the 4-element input).
 TEST(VectorItemSubsetBuilder, RemoveDuplicatesOrderAndSurvivor) {
     const auto a = fake(3, "low");  // equal to c
     const auto b = fake(9, "high"); // equal to d
@@ -178,8 +178,8 @@ TEST(VectorItemSubsetBuilder, RemoveDuplicatesOrderAndSurvivor) {
 }
 
 TEST(VectorItemSubsetBuilder, RemoveDuplicatesComparesNeighboursOnly) {
-    // Equal hash 5 for all three: the sort turns [x1, y, x2] into [x2, y, x1]; the equal pair
-    // x1/x2 is no longer adjacent to each other, so nothing is removed (LV-4).
+    // Equal hash 5 for all three: the sort turns [x1, y, x2] into [x2, y, x1]; the equal pair x1/x2
+    // is no longer adjacent to each other, so nothing is removed.
     const auto x1 = fake(5, "x");
     const auto y = fake(5, "y");
     const auto x2 = fake(5, "x");

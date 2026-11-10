@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-199; docs/specs/core.md 2.18, test plan 7.11 (ports Test/u_PathConfig_Test.pas
-// with Windows paths replaced by POSIX ones: C:\Windows\System32 -> /usr/lib, C:\Windows -> /usr)
+// Ports Test/u_PathConfig_Test.pas with Windows paths replaced by POSIX ones:
+// C:\Windows\System32 -> /usr/lib, C:\Windows -> /usr.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/path_config.h"
@@ -52,9 +52,9 @@ TEST(PathConfigWithoutBase, EmptyPath) {
     EXPECT_EQ(p->fullPath(), expected);
 }
 
-// core.md 2.18 rule 1; u_PathConfig.pas:262 (VFullPath := FPath): an absolute path is kept verbatim,
-// an explicit trailing delimiter included, with or without a base. The Windows form is normalised to
-// '/' by the separator rule (core.md 2.18); the POSIX rows are the same shape.
+// u_PathConfig.pas:262 (VFullPath := FPath): an absolute path is kept verbatim, an explicit trailing
+// delimiter included, with or without a base. The Windows form is normalised to '/' by the separator
+// rule; the POSIX rows are the same shape.
 TEST(PathConfigAbsolute, KeptVerbatimWithAndWithoutTrailingDelimiter) {
     struct Row {
         const char16_t* configured;
@@ -208,8 +208,8 @@ TEST(PathConfig, WindowsAbsolutePathIsKeptAndFlaggedAbsolute) {
 }
 
 TEST(PathConfig, WindowsPathWarningFiresOnlyOnce) {
-    // Rework finding 5a: the warning is diagnostic noise on every setPath()/doReadConfig(), not
-    // just the first, for a Windows install's config -- must fire once per instance.
+    // The warning is diagnostic noise on every setPath()/doReadConfig(), not just the first, for a
+    // Windows install's config -- must fire once per instance.
     static int warnings = 0;
     warnings = 0;
     const QtMessageHandler previous =
@@ -224,14 +224,14 @@ TEST(PathConfig, WindowsPathWarningFiresOnlyOnce) {
     p->setPath(QStringLiteral("E:\\Other"));
     p->setPath(QStringLiteral("F:\\Third"));
     qInstallMessageHandler(previous);
-    // T-0335: on Windows a drive-letter path is native, so there is no warning there
+    // On Windows a drive-letter path is native, so there is no warning there
     EXPECT_EQ(warnings, cg::core::platform::kWindowsHost ? 0 : 1);
 }
 
 TEST(PathConfigWithBase, RepeatedSetPathDoesNotLeakBaseSubscriptions) {
-    // Rework finding 5b: setPathLocked() used to tear down and rebuild the base subscription on
-    // every call even when relative_/base_ did not change; assert it never ends up with more (or
-    // fewer) than the one subscription a relative PathConfig needs.
+    // setPathLocked() used to tear down and rebuild the base subscription on every call even
+    // when relative_/base_ did not change; assert it never ends up with more (or fewer) than the
+    // one subscription a relative PathConfig needs.
     const auto base = PathConfig::create(QString(), QStringLiteral("/usr"), nullptr);
     const auto p = PathConfig::create(QString(), QStringLiteral("Test.txt"), base);
     ASSERT_EQ(base->changed().subscriberCount(), 1u);

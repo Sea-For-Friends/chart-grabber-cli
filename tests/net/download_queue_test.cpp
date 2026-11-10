@@ -2,14 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-010, FEAT-NET-015 -- docs/specs/net.md §2.15, §7.12.
-//
-// Test-count ruling (tech-lead-rulings.md, T-0011B dispatch): 5 cases, not the spec's 8 -- the two
-// load-bearing cases the ticket names explicitly (WorkersTornDownAfterIdleTimeout,
-// WorkersRecreatedOnDemand, both driven by an application cg::core::Notifier ticked by hand plus an injected
-// clock, no real 60 s wait) plus three covering queue capacity 256, FIFO ordering, and shutdown with pending
-// items, per the ticket's "at most ~4 more" allowance (one of the four went to
-// retry_downloader_test.cpp instead).
+// 5 cases: the two load-bearing ones (WorkersTornDownAfterIdleTimeout, WorkersRecreatedOnDemand, both driven
+// by an application cg::core::Notifier ticked by hand plus an injected clock, no real 60 s wait) plus three
+// covering queue capacity 256, FIFO ordering, and shutdown with pending items.
 //
 // None of these tests exercise the wrapped IDownloader chain (RetryDownloader/TtlDownloader/the
 // factory) at all -- the job closures never call RetryDownloader::run(), so NullFactory's
@@ -377,13 +372,12 @@ TEST(DownloadQueueTest, TickOnCollectorThreadTearsDownBetweenPushes) {
     }
 }
 
-// L-169 / D-72 (T-0048): a push that lands between the idle trim's emptiness check and the hand-over
-// of the workers must be served. The only worker is held busy by job A (so it cannot pull the late
-// job), the hook runs at exactly that point (the trim holds workersMutex_) and a second thread
-// pushes; the hook waits until the late job is in the ring. With the legacy ordering (check, release,
-// terminate) the push would find the old worker set still registered and, once the trim stops the
-// worker, the job would be stranded; here the push waits for the lock, finds the set gone and builds
-// a new one.
+// A push that lands between the idle trim's emptiness check and the hand-over of the workers must be
+// served. The only worker is held busy by job A (so it cannot pull the late job), the hook runs at
+// exactly that point (the trim holds workersMutex_) and a second thread pushes; the hook waits until
+// the late job is in the ring. With the legacy ordering (check, release, terminate) the push would
+// find the old worker set still registered and, once the trim stops the worker, the job would be
+// stranded; here the push waits for the lock, finds the set gone and builds a new one.
 TEST(DownloadQueueTest, PushDuringIdleTeardownIsServed) {
     cg::core::Notifier gc;
     FakeClock clock;
@@ -748,13 +742,12 @@ TEST(DownloadQueueTest, SlotDownloaderSurvivesIdleTrimAndIsRebuiltWithTheStateOn
     queue->shutdown();
 }
 
-// Not a FEAT-bearing legacy port: hardening, docs/specs/net.md §2.15 (Tech Lead ruling 2026-10-13, D-87).
-// Three jobs in a row throw FROM INSIDE RetryDownloader::run (the `build` callable), then a normal job
-// runs the slot's retry loop on a one-slot queue: the process is alive (without the catch in
-// workerLoop the exception leaves the std::thread function and std::terminate kills the test binary;
-// checked by running the first test once with the try/catch removed), and the normal run returns Sent,
-// which also proves the slot's run lock was released by unwinding after every throw (a leaked lock
-// would block the normal run until the 30 s wait fails).
+// Not a legacy port: hardening. Three jobs in a row throw FROM INSIDE RetryDownloader::run (the `build`
+// callable), then a normal job runs the slot's retry loop on a one-slot queue: the process is alive
+// (without the catch in workerLoop the exception leaves the std::thread function and std::terminate kills
+// the test binary; checked by running the first test once with the try/catch removed), and the normal run
+// returns Sent, which also proves the slot's run lock was released by unwinding after every throw (a
+// leaked lock would block the normal run until the 30 s wait fails).
 namespace {
 
 void throwingJobsThenNormalRun(const std::function<void()>& thrower) {

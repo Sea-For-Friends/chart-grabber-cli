@@ -43,7 +43,7 @@ constexpr int kMaxInt = std::numeric_limits<int>::max();
 
 [[nodiscard]] int roundClosest(double v) noexcept {
     // Delphi Round() is banker's rounding (half-to-even); std::nearbyint under the default
-    // FE_TONEAREST mode is the same rule (docs/specs/geo.md §11.0).
+    // FE_TONEAREST mode is the same rule.
     return toInt32WithOverflowTrap(std::nearbyint(v));
 }
 

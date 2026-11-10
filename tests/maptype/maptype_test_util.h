@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Shared by the T-0044 config-element tests: an in-memory INI file as a read/write provider tree.
+// Shared by the config-element tests: an in-memory INI file as a read/write provider tree.
 
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"
 #include "cg/bitmap/bitmap32_static_factory.h"
@@ -114,8 +114,8 @@ inline QString fixtureDir() {
 }
 
 // The default icon draws text, which needs a (headless) GUI application for fonts. One per process, shared by
-// every test file through these inline functions. T-0101: it is owned by a gtest Environment that destroys it
-// in TearDown, i.e. before main returns; a function-local `static QGuiApplication` is destroyed too late for
+// every test file through these inline functions. It is owned by a gtest Environment that destroys it in
+// TearDown, i.e. before main returns; a function-local `static QGuiApplication` is destroyed too late for
 // LeakSanitizer, and Qt frees its process-global font cache only when the application object is destroyed.
 inline std::unique_ptr<QGuiApplication>& guiAppSlot() {
     static std::unique_ptr<QGuiApplication> app;
@@ -174,6 +174,6 @@ struct ZmpEnv {
 
 } // namespace cg::maptype::test
 
-// T-0321: skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
+// Skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
 #include "../corpus_skip.h"
 #define CG_SKIP_IF_NO_CORPUS() CG_SKIP_IF_NO_CORPUS_IN(cg::maptype::test::fixtureDir())

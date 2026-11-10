@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (the T-0129 row assigns none). Ports u_VectorDataFactoryForMap.pas;
-// docs/specs/vector.md §2.10.2, §8.1 LV-3, §7.2.
+// Ports u_VectorDataFactoryForMap.pas.
 #include "cg/vector/html_to_hint_text_converter_stuped.h"
 #include "cg/vector/vector_data_factory_for_map.h"
 
@@ -100,7 +99,7 @@ TEST(VectorDataFactoryForMap, IsEqualIgnoresIndexAndUrlLV3) {
     const auto a = factory.buildMainInfo(&one, QStringLiteral("Name"), QStringLiteral("d"));
     const auto b = factory.buildMainInfo(&two, QStringLiteral("Name"), QStringLiteral("d"));
     ASSERT_NE(a->infoUrl(), b->infoUrl());
-    // Equal name and desc, different index and URL: equal (LV-3, u_VectorDataFactoryForMap.pas:157-182).
+    // Equal name and desc, different index and URL: equal (u_VectorDataFactoryForMap.pas:157-182).
     EXPECT_TRUE(a->isEqual(b.get()));
     EXPECT_TRUE(b->isEqual(a.get()));
     EXPECT_TRUE(a->isEqual(a.get()));

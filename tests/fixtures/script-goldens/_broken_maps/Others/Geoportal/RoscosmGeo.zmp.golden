@@ -1,5 +1,5 @@
-; T-0015D golden: RoscosmGeo.zmp - repeat/until, shr, $30, 'and' precedence, Pos, Copy,
-; string indexing past the end (T3: GetUrlBase[length+1] yields #0), break, inc, a 'for' with
+; Golden: RoscosmGeo.zmp - repeat/until, shr, $30, 'and' precedence, Pos, Copy,
+; string indexing past the end (GetUrlBase[length+1] yields #0), break, inc, a 'for' with
 ; a computed zero-trip bound.
 ; GetURLBase = 'http://geoportal.ntsomz.ru/coverages/&src=images&date=&type=jpg' (63 bytes).
 ; dec2bin(x) builds the binary string LSB-first via chr($30 + (x and 1)) then x:=x shr 1,
@@ -15,7 +15,7 @@
 ; binX:=dec2bin(GetX), binY:=dec2bin(GetY), each left-padded with '0' to length (GetZ-1).
 ; then for i:=7 to GetZ-1: append Copy(binY,1,i-6)+'-'+Copy(binX,1,i-6)+'/' (empty loop when
 ; GetZ-1<7, i.e. P1/P2); finally append binY+'-'+binX.
-; &type= value is 'jpg' (chars 61..63, then GetUrlBase[64] reads #0 per T3 since 64 is in
+; &type= value is 'jpg' (chars 61..63, then GetUrlBase[64] reads #0 since 64 is in
 ; [Length+1,Length+16]=[64,79], so the while loop's break fires via the length check before
 ; ever needing the #0 fallback) -> '.jpg'.
 ; P1: GetZ-1=0 -> binX=binY='0' (dec2bin(0), no padding needed, len already 0>=0... the for

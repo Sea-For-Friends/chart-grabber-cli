@@ -6,7 +6,7 @@
 
 #include <utility>
 
-// Ports u_JpegWithExifImportConfig.pas (V10): constructor :55-72 (the two nil arguments of the inherited
+// Ports u_JpegWithExifImportConfig.pas: constructor :55-72 (the two nil arguments of the inherited
 // constructor are :67-68), getters :74-82.
 
 namespace cg::vector {

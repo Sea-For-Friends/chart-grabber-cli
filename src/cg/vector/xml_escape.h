@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/Vector/u_XmlEscape.pas
 //
-// XML text and attribute escaping with the legacy tables (spec vector.md §2.13). Characters above
-// U+003F are never touched; U+0000 ends the scan (legacy defect LV-8, docs/parity/legacy-defects.md).
+// XML text and attribute escaping with the legacy tables. Characters above U+003F are never touched;
+// U+0000 ends the scan (legacy defect).
 
 #include <QString>
 

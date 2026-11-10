@@ -9,7 +9,6 @@
 
 namespace cg::storage {
 
-// FEAT-STO-031
 struct TileStorageAbilities {
     bool allowRead = false;
     bool allowScan = false;
@@ -50,10 +49,9 @@ struct TileStorageTypeAbilities {
     StorageClass storageClass = StorageClass::Other;
 };
 
-// Tech Lead ruling 2026-09-19 (T-0021A rework): the per-type table the ticket's scope line names
-// (storage.md :242-297), keyed by a coarse kind rather than the full `CacheTypeId` (that enum is
-// T-0010/T-0021D scope, not landed yet -- one value per spec table row, folder-type and
-// SQLiteFile-format variants collapsed exactly as the spec table collapses them).
+// The per-type table, keyed by a coarse kind rather than the full `CacheTypeId` (one value per
+// legacy u_TileStorageType*.pas constructor, folder-type and SQLiteFile-format variants
+// collapsed).
 enum class TileStorageKind : std::uint8_t {
     FolderSimple,  // all 9 folder types -- u_TileStorageTypeFileSystemSimple.pas
     Sqlite3Native, // u_TileStorageTypeSQLite.pas (always constructed AIsVersioned = True)

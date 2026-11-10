@@ -37,10 +37,10 @@ int collationNeededXCompare(void* /*pUser*/, int n1, const void* z1, int n2, con
 
 // Ports Callback4CollationNeeded's SQLITE_UTF8/SQLITE_UTF16LE/SQLITE_UTF16BE branches
 // (u_SQLite3Handler.pas:347-380): all three register the SAME comparator with SQLITE_UTF8, so
-// sqlite always converts and hands over UTF-8 bytes (spec §2.15.1 "Registration"). The `else`
-// (an unknown eTextRep) mirrors legacy's `Assert(False, ...)`, which is a silent no-op in a
-// release build (assertions off -- legacy defect L-30): this branch is unreachable in practice
-// since sqlite3_collation_needed only ever passes one of the three UTF encodings.
+// sqlite always converts and hands over UTF-8 bytes. The `else` (an unknown eTextRep) mirrors
+// legacy's `Assert(False, ...)`, which is a silent no-op in a release build (assertions off --
+// legacy defect): this branch is unreachable in practice since sqlite3_collation_needed only
+// ever passes one of the three UTF encodings.
 void collationNeededCallback(void* /*pCollNeededArg*/, sqlite3* db, int eTextRep, const char* zExternal) {
     switch (eTextRep) {
     case SQLITE_UTF8:
@@ -95,7 +95,7 @@ core::Result<SqliteDb> SqliteDb::open(const QString& path, OpenMode mode, bool l
         return core::fail(core::ErrorCode::IoError, message);
     }
 
-    sqlite3_busy_timeout(handle, kBusyTimeoutMs); // Deviation D-6, see sqlite_db.h
+    sqlite3_busy_timeout(handle, kBusyTimeoutMs); // Deviation, see sqlite_db.h
 
     if (logicalCollation) {
         // Ports TSQLite3DbHandler.RegisterCollationNeededCallback (u_SQLite3Handler.pas:830-833).
@@ -121,14 +121,14 @@ SqliteDb::~SqliteDb() {
 
 void SqliteDb::closeHandle() noexcept {
     if (handle_ != nullptr) {
-        // sqlite3_close_v2, not sqlite3_close (T-0022A-review.md finding F3): the port's
-        // independent move-only SqliteDb/SqliteStmt types let a SqliteStmt outlive the SqliteDb it
-        // was prepared from (e.g. member declaration order, or a statement kept in a pool).
-        // sqlite3_close would then return SQLITE_BUSY and leave the connection open forever --
-        // leaking the file handle and WAL lock. _v2 instead marks the connection a zombie that is
-        // deallocated once its last outstanding statement is finalized. Ports
-        // TSQLite3DbHandler.Close, u_SQLite3Handler.pas:563-568 (legacy is safe with plain close()
-        // only because every statement is finalized in a local try/finally).
+        // sqlite3_close_v2, not sqlite3_close: the port's independent move-only
+        // SqliteDb/SqliteStmt types let a SqliteStmt outlive the SqliteDb it was prepared from
+        // (e.g. member declaration order, or a statement kept in a pool). sqlite3_close would then
+        // return SQLITE_BUSY and leave the connection open forever -- leaking the file handle and
+        // WAL lock. _v2 instead marks the connection a zombie that is deallocated once its last
+        // outstanding statement is finalized. Ports TSQLite3DbHandler.Close,
+        // u_SQLite3Handler.pas:563-568 (legacy is safe with plain close() only because every
+        // statement is finalized in a local try/finally).
         sqlite3_close_v2(handle_);
         handle_ = nullptr;
     }
@@ -275,8 +275,8 @@ core::Result<void> SqliteStmt::bindInt64(int index, qint64 value) {
 core::Result<void> SqliteStmt::bindText(int index, const QString& value) {
     const QByteArray utf8 = value.toUtf8();
     // sqlite3_bind_text64, not sqlite3_bind_text: the 32-bit API truncates a size above INT_MAX
-    // through the static_cast<int> this replaces (T-0022A-review.md finding F4). SQLITE_UTF8 tells
-    // sqlite the byte encoding of the buffer being bound.
+    // through the static_cast<int> this replaces. SQLITE_UTF8 tells sqlite the byte encoding of
+    // the buffer being bound.
     const int rc =
         sqlite3_bind_text64(stmt_, index, utf8.constData(), static_cast<sqlite3_uint64>(utf8.size()),
                             SQLITE_TRANSIENT, SQLITE_UTF8);
@@ -379,10 +379,9 @@ QByteArray SqliteStmt::columnDeclType(int index) const {
 // --- compareLogically ---------------------------------------------------------
 //
 // Ports CompareLogicallyAnsi (u_SQLite3Handler.pas:215-327) statement by statement. See the header
-// comment and docs/specs/storage.md §2.15.1 for the semantics and the worked vectors. Legacy defect
-// L-15 (docs/parity/legacy-defects.md): the port bounds every scan by the remaining length instead
-// of reproducing legacy's over-read past the buffer when a string ends in digits. Deviation D-30
-// (docs/parity/deviations.md).
+// comment for the semantics and the worked vectors. A legacy defect: the port bounds every scan by
+// the remaining length instead of reproducing legacy's over-read past the buffer when a string ends
+// in digits (a deviation from legacy).
 int compareLogically(QByteArrayView a, QByteArrayView b) noexcept {
     // 1. Empty strings (legacy: "z1 = nil or n1 = 0").
     const bool aEmpty = a.data() == nullptr || a.size() == 0;
@@ -432,7 +431,7 @@ int compareLogically(QByteArrayView a, QByteArrayView b) noexcept {
         }
 
         // 5. Two digit runs: accumulate as an unsigned 32-bit value, bounded by the remaining
-        // length (this bound is the L-15 fix; legacy's `until not CharInSet(...)` has none).
+        // length (this bound fixes a legacy defect; legacy's `until not CharInSet(...)` has none).
         std::uint32_t v1 = 0;
         qsizetype c1 = 0;
         while (n1 > 0 && *p1 >= '0' && *p1 <= '9') {

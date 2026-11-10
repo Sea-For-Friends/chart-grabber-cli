@@ -33,7 +33,7 @@ char toAsciiLower(char c) {
     return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
 }
 
-// Case-insensitive, ASCII-only compare (spec 2.2: identifier comparison folds ASCII case).
+// Case-insensitive, ASCII-only compare (identifier comparison folds ASCII case).
 bool equalsFolded(const QByteArray& text, const char* keyword) {
     int i = 0;
     for (; i < text.size() && keyword[i] != '\0'; ++i) {
@@ -133,7 +133,7 @@ void Lexer::step() {
         column_ = 1;
     } else {
         ++pos_;
-        ++column_; // a tab also counts as one column (spec 2.3 L1)
+        ++column_; // a tab also counts as one column
     }
 }
 
@@ -151,7 +151,7 @@ void Lexer::skipTrivia() {
     for (;;) {
         const char c = peek();
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-            step(); // a lone '\r' is whitespace too (spec 1.3); step() folds CRLF into one line
+            step(); // a lone '\r' is whitespace too; step() folds CRLF into one line
         } else if (c == '/' && peek(1) == '/') {
             skipToLineEnd();
         } else if (c == '{') {
@@ -199,17 +199,16 @@ Token Lexer::readString() {
     const int startColumn = column_;
     QByteArray value;
     for (;;) {
-        // spec 2.3 L6: pieces fuse only when strictly adjacent - no whitespace/comment between
-        // them (Delphi/PascalScript rule; corpus-verified zero-reliance on the looser form, see
-        // T-0013 handoff F3). Do NOT skipTrivia() here: a separated `'a' 'b'` must fall through to
-        // two tokens, not one.
+        // pieces fuse only when strictly adjacent - no whitespace/comment between them
+        // (Delphi/PascalScript rule; corpus-verified zero-reliance on the looser form). Do NOT
+        // skipTrivia() here: a separated `'a' 'b'` must fall through to two tokens, not one.
         if (peek() == '\'') {
             step();
             bool terminated = false;
             while (!atEnd()) {
                 const char c = peek();
                 if (c == '\r' || c == '\n') {
-                    break; // a string may not span a line (spec 2.3 L5)
+                    break; // a string may not span a line
                 }
                 if (c == '\'') {
                     step();
@@ -293,7 +292,7 @@ Token Lexer::readNumber() {
     }
     QByteArray real = digits;
     bool isReal = false;
-    // Maximal-munch exception (spec 2.3 L8): `1..5` lexes as `1` `..` `5`, never `1.` `.5`.
+    // Maximal-munch exception: `1..5` lexes as `1` `..` `5`, never `1.` `.5`.
     if (peek() == '.' && peek(1) != '.' && isAsciiDigit(peek(1))) {
         isReal = true;
         real.append('.');
@@ -325,9 +324,9 @@ Token Lexer::readNumber() {
     if (isReal) {
         token.kind = TokenKind::RealLiteral;
         double value = 0.0;
-        static_cast<void>(core::platform::parseDouble(
-            real.constData(), real.constData() + real.size(),
-            value)); // T-0396: from_chars where available; out of range leaves 0.0
+        static_cast<void>(
+            core::platform::parseDouble(real.constData(), real.constData() + real.size(),
+                                        value)); // from_chars where available; out of range leaves 0.0
         token.realValue = value;
     } else {
         token.kind = TokenKind::IntLiteral;

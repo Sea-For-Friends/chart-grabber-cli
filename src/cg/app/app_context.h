@@ -7,14 +7,14 @@
 // New code (no legacy unit). Inherits: Src/u_GlobalState.pas:442-974, 1155-1210, 1280-1289 (construction order; see the table below)
 // Ports: nothing.
 //
-// The composition root of the command-line program (docs/specs/app-cli.md section 2, option B): it builds only the
-// objects the stage-0 chain needs, in the order of TGlobalState.Create / LoadConfig, and shuts them down in the
-// order of SendTerminateToThreads. Everything else TGlobalState builds (marks, GPS, geocoders, browser, terrain,
-// importers, ...) is not built (app-cli.md 2.3). The program is read-only towards its configuration: nothing here
-// calls saveMainConfig or a writeConfig.
+// The composition root of the command-line program: it builds only the objects the command-line chain needs,
+// in the order of TGlobalState.Create / LoadConfig, and shuts them down in the order of
+// SendTerminateToThreads. Everything else TGlobalState builds (marks, GPS, geocoders, browser, terrain,
+// importers, ...) is not built. The program is read-only towards its configuration: nothing here calls
+// saveMainConfig or a writeConfig.
 //
-// Requires an existing QGuiApplication (a ZMP without an icon gets a drawn default icon, app-cli.md 2.6); it does
-// not need a running event loop.
+// Requires an existing QGuiApplication (a ZMP without an icon gets a drawn default icon); it does not need a
+// running event loop.
 //
 // Legacy lines ("L" = Src/u_GlobalState.pas unless a file is named), one row per object, in construction order:
 //   #  object                          call in create()                                 legacy
@@ -38,7 +38,7 @@
 //  15  datum and projection sets       geo::DatumFactory, geo::ProjectionSetFactory     L:620-621
 //  16  cache configuration             storage::GlobalCacheConfig; readConfig(main)     L:631; L:1172
 //  17  download totals                 net::DownloadInfo                                L:632
-//  18  Berkeley DB helper              (removed, T-0333)                                L:647
+//  18  Berkeley DB helper              (removed)                                L:647
 //  19  content types                   core::ContentTypeRegistry::standard(),           L:567-576, 690-700
 //                                      bitmap::ContentTypeManagerBitmap,
 //                                      maptype::ContentConverters
@@ -108,7 +108,7 @@ namespace cg::app {
 struct AppOptions {
     QStringList arguments;                    // for AppPaths::detect
     QString cacheDir, proxy;                  // empty = from configuration
-    QStringList mapsDirs;                     // --maps, absolute, in order; empty = refused (T-0291)
+    QStringList mapsDirs;                     // --maps, absolute, in order; empty = refused
     std::function<void(const QString&)> warn; // replaces the legacy error boxes
 };
 
@@ -120,14 +120,13 @@ class AppContext final {
 public:
     // Objects 2 ... 23 and 25. Errors: paths cannot be created; configuration unreadable; unusable `proxy`.
     [[nodiscard]] static core::Result<std::unique_ptr<AppContext>> create(const AppOptions& options);
-    ~AppContext(); // L:1280-1289, written out in the destructor body (app-cli.md 2.4)
+    ~AppContext(); // L:1280-1289, written out in the destructor body
 
     explicit AppContext(PrivateKey);
     AppContext(const AppContext&) = delete;
     AppContext& operator=(const AppContext&) = delete;
 
-    // Object 24. MapTypesNoMapsError and "no non-layer map" become ErrorCode::NotFound naming the maps
-    // directory. FEAT-NET-001 (contributes; held open)
+    // MapTypesNoMapsError and "no non-layer map" become ErrorCode::NotFound naming the maps directory.
     [[nodiscard]] core::Result<void> loadMaps();
     void requestClose(); // fires appClosing; idempotent
     [[nodiscard]] std::stop_token appClosing() const;
@@ -139,21 +138,21 @@ public:
     [[nodiscard]] std::shared_ptr<net::DownloadInfo> downloadInfo() const;
     [[nodiscard]] const core::ILanguageManager& languages() const;
     [[nodiscard]] const core::AppPaths& paths() const;
-    [[nodiscard]] const QStringList& mapsDirs() const; // the folders read, app-cli.md 1.6.1 (T-0291)
+    [[nodiscard]] const QStringList& mapsDirs() const; // the folders read
     [[nodiscard]] QString autoSaveDir() const;         // <dataDir>/AutoSave
-    [[nodiscard]] QString snapshotDir() const;         // <dataDir>/Snapshots (T-0243)
-    [[nodiscard]] std::shared_ptr<net::IDownloaderFactory> downloaderFactory() const; // T-0243
+    [[nodiscard]] QString snapshotDir() const;         // <dataDir>/Snapshots
+    [[nodiscard]] std::shared_ptr<net::IDownloaderFactory> downloaderFactory() const;
     [[nodiscard]] int zmpErrorCount() const;
 
 private:
     void report(const QString& message); // options.warn and the counter
-    void useFileCacheForRamMaps();       // UAT D-1 (app-cli.md 1.6)
+    void useFileCacheForRamMaps();
 
     // Members in the order of construction in create(); the destructor body does the shutdown steps
     // explicitly.
     std::function<void(const QString&)> warn_;
     int zmpErrorCount_ = 0;
-    QStringList mapsDirs_;         // the --maps folders read, deduplicated (T-0291)
+    QStringList mapsDirs_;         // the --maps folders read, deduplicated
     bool curlInitialized_ = false; // set by create() at object 20; the destructor cleans up only then
     core::AppPaths paths_;
     core::IConfigWriterPtr mainConfig_;

@@ -5,12 +5,11 @@
 #pragma once
 // Ports: Src/MarksDB/mORMot/Categories/i_MarkCategoryDbInternalORM.pas (42 lines, interface
 // IMarkCategoryDbInternalORM) and Src/MarksDB/mORMot/Categories/u_MarkCategoryDbInternalORM.pas
-// (170 lines, class MarkCategoryDbInternalORM). Spec: docs/specs/marks.md §2.9.6.
+// (170 lines, class MarkCategoryDbInternalORM).
 //
 // MarkCategoryDbInternalORM is the category object of the SQLite backend: an IMarkCategory that also
 // carries its row id and the dbId of the database it was read from.
-//   isSame()  compares the row id only (legacy IsSame, :158-168); dbId is not compared (see the
-//             L-193 row of docs/parity/legacy-defects.md).
+//   isSame()  compares the row id only (legacy IsSame, :158-168); dbId is not compared (a legacy defect).
 //   isEqual() compares name, visible, afterScale and beforeScale; the row id is not compared (:132-156).
 // The constructor's Assert calls (:88-92) are not ported: the shipped build has assertions off
 // (SASPlanet.dproj:92, DCC_AssertionsAtRuntime False in the Release configuration), so every argument

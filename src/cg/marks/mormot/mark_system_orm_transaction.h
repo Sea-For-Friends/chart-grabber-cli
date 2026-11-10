@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/u_MarkSystemORMTransaction.pas (docs/specs/marks.md §2.9.5).
-// Not ported: TMarkSystemORMTransactionNoOp (:109-124), used only by the MongoDB client.
+// Ports: Src/MarksDB/mORMot/u_MarkSystemORMTransaction.pas. Not ported:
+// TMarkSystemORMTransactionNoOp (:109-124), used only by the MongoDB client.
 
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 
@@ -13,7 +13,7 @@
 namespace cg::marks {
 
 // TMarkSystemORMTransaction (:34-44). mORMot's TransactionActiveSession <> 0 is `active_`, guarded by
-// the database mutex. The test "is a transaction open" is per connection, not per thread (LC-15).
+// the database mutex. The test "is a transaction open" is per connection, not per thread.
 class MarkSystemORMTransaction final : public IMarkSystemORMTransaction {
 public:
     MarkSystemORMTransaction(storage::sqlite::SqliteDb& db, std::recursive_mutex& dbMutex);

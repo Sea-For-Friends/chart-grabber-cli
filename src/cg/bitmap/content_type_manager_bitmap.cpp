@@ -43,7 +43,7 @@ const ContentTypeInfoBitmap* findInfo(const std::map<QByteArray, ContentTypeInfo
 
 ContentTypeManagerBitmap::ContentTypeManagerBitmap(
     const std::shared_ptr<const IBitmapTileSaveLoadFactory>& factory) {
-    // unreachable in legacy (u_GlobalState.pas:573 passes the factory it just built); no register row
+    // unreachable in legacy (u_GlobalState.pas:573 passes the factory it just built)
     if (!factory) {
         throw std::invalid_argument("ContentTypeManagerBitmap: null factory");
     }

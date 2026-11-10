@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: u_AntiBanStuped.pas:70-180. docs/specs/net.md §2.14. FEAT-NET-012.
+// Ports: u_AntiBanStuped.pas:70-180.
 #include "cg/net/anti_ban.h"
 
 #include <stop_token>
@@ -24,7 +24,7 @@ void PreloadPageAntiBan::processAntiBan() const {
     request.url = preloadPage_;
     request.method = Method::Get;
     request.inet = preloadInet_;
-    (void)fetcher_->doRequest(request, std::stop_token{}); // body discarded, [D-14]
+    (void)fetcher_->doRequest(request, std::stop_token{}); // body discarded
 }
 
 void PreloadPageAntiBan::preDownload(const DownloadRequest& /*request*/) {
@@ -51,10 +51,10 @@ std::optional<DownloadResult> PreloadPageAntiBan::postCheckDownload(const Downlo
                                                                     quint32& /*statusCode*/,
                                                                     QByteArray& /*responseHead*/) {
     // Ports PostCheckDownload (u_AntiBanStuped.pas:155-174). Legacy's ban-detection branch is dead
-    // code (`if False then begin ... end`) -- spec: "do not restore the dead code". With that
-    // branch gone, `Result` never leaves nil in legacy either, so the `Supports(Result, ...)`
-    // checks that follow it (ExecOnBan on a ban, FBanFlag.SetFlag on success) are themselves
-    // unreachable -- this is a literal no-op, matching legacy's own observable behavior exactly.
+    // code (`if False then begin ... end`) and is not restored. With that branch gone, `Result`
+    // never leaves nil in legacy either, so the `Supports(Result, ...)` checks that follow it
+    // (ExecOnBan on a ban, FBanFlag.SetFlag on success) are themselves unreachable -- this is a
+    // literal no-op, matching legacy's own observable behavior exactly.
     return std::nullopt;
 }
 

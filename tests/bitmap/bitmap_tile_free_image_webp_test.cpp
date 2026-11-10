@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of T-0162: Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas WebP savers (:149-164, :560-594), GIF
-// saver (:129-136, :515-528), TIFF saver (:166-174, :597-611), 32-bit branch of Save :456-467, :476-491,
+// Tests of Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas WebP savers (:149-164, :560-594), GIF saver
+// (:129-136, :515-528), TIFF saver (:166-174, :597-611), 32-bit branch of Save :456-467, :476-491,
 // failure text :478-482. The decoder in the tests is libwebp's own (WebPDecodeBGRA), independent of the
-// saver. FEAT-RND-044 (WebP save), FEAT-RND-039 (GIF save), FEAT-RND-043 (TIFF save)
+// saver.
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"
 #include "cg/bitmap/bitmap32_static_factory.h"
 #include "cg/bitmap/bitmap_codec_error.h"
@@ -166,7 +166,7 @@ std::string saveFailure(const IBitmapTileSaver& saver, const Bitmap32StaticPtr& 
     return "<no exception>";
 }
 
-// ---- Proof 1: lossless is exact (VP8L, use_argb)
+// ---- Lossless is exact (VP8L, use_argb)
 
 TEST(WebpLossless, OpaqueTileDecodesToTheInputExactly) {
     constexpr int kW = 37; // odd size on purpose: detects a stride or a width / height swap
@@ -204,7 +204,7 @@ TEST(WebpLossless, VariedAlphaKeepsAlphaAndColourOfVisiblePixels) {
     EXPECT_EQ(channel(d.pixels[7 * kW + 10], 24), 0x01);
 }
 
-// ---- Proof 2: lossy, container chunks and decode
+// ---- Lossy, container chunks and decode
 
 TEST(WebpLossy, OpaqueTileIsPlainVp8WithTheInputSize) {
     constexpr int kW = 64;
@@ -271,7 +271,7 @@ TEST(WebpLossy, ByteOrderBgraIsNotSwapped) {
     EXPECT_LE(channel(d.pixels[0], 16), 0x10); // R
 }
 
-// ---- Proof 3: quality
+// ---- Quality
 
 TEST(WebpQuality, OutOfRangeThrowsWithTheLegacyText) {
     struct Case {
@@ -318,14 +318,14 @@ TEST(WebpQuality, LossyIsLossyAndLosslessIsNot) {
     EXPECT_EQ(decodeWebp(BitmapTileFreeImageSaverWebpLossless().save(tile)).pixels, px);
 }
 
-// ---- Null bitmap (the D row of this ticket: legacy dereferences nil at :391)
+// ---- Null bitmap (a deviation from legacy: legacy dereferences nil at :391)
 
 TEST(WebpSavers, NullBitmapThrowsTheSaveFailureText) {
     EXPECT_EQ(saveFailure(BitmapTileFreeImageSaverWebp(50), nullptr), "FreeBitmap.SaveToStream FAIL!");
     EXPECT_EQ(saveFailure(BitmapTileFreeImageSaverWebpLossless(), nullptr), "FreeBitmap.SaveToStream FAIL!");
 }
 
-// ---- Proof 4: GIF and TIFF refuse
+// ---- GIF and TIFF refuse
 
 TEST(GifTiffSavers, SaveRefusesWithTheExactText) {
     const auto tile = buildTile(4, 4, gradientPixels(4, 4, AlphaMode::Opaque));
@@ -333,7 +333,7 @@ TEST(GifTiffSavers, SaveRefusesWithTheExactText) {
     EXPECT_EQ(saveFailure(BitmapTileFreeImageSaverTiff(7, 24), tile), "TIFF saver is not ported");
 }
 
-// ---- Proof 5: stateless savers. The latch starts the threads together; under --tsan this shows that the
+// ---- Stateless savers. The latch starts the threads together; under --tsan this shows that the
 // shared objects hold no state. The outputs of the threads must equal the single-thread output.
 
 TEST(WebpThreads, SharedSaversGiveEqualResults) {

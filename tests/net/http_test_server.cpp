@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: nothing -- a test fixture only. docs/specs/net.md §7.0.
+// Ports: nothing -- a test fixture only.
 #include "http_test_server.h"
 
 #include <QHostAddress>
@@ -56,6 +56,11 @@ void HttpTestServer::setProxyMode(bool on) {
     const QMutexLocker locker(&mutex_);
     proxyMode_ = on;
     challengeSent_ = false;
+}
+
+void HttpTestServer::setRefuseUserAgentsWithout(QByteArray prefix) {
+    const QMutexLocker locker(&mutex_);
+    refuseUserAgentsWithout_ = std::move(prefix);
 }
 
 QList<QByteArray> HttpTestServer::requestLog() const {
@@ -171,8 +176,25 @@ void HttpTestServer::handleConnection(QTcpSocket& socket) {
     Reply reply;
     {
         const QMutexLocker locker(&mutex_);
+        bool refusedByUserAgent = false;
+        if (!refuseUserAgentsWithout_.isEmpty()) {
+            QByteArray agent;
+            for (const QByteArray& line : headerBlob.split('\n')) {
+                if (line.size() > 11 && line.left(11).toLower() == "user-agent:") {
+                    agent = line.mid(11).trimmed();
+                    break;
+                }
+            }
+            refusedByUserAgent = !agent.startsWith(refuseUserAgentsWithout_);
+        }
         const auto it = replies_.constFind(target);
-        if (it == replies_.constEnd() || it->isEmpty()) {
+        if (refusedByUserAgent) {
+            reply.status = 403;
+            reply.reason = "Forbidden";
+            reply.headers.append(QPair<QByteArray, QByteArray>{QByteArrayLiteral("Content-Type"),
+                                                               QByteArrayLiteral("text/plain")});
+            reply.body = "Forbidden";
+        } else if (it == replies_.constEnd() || it->isEmpty()) {
             reply.status = 404;
             reply.reason = "Not Found";
         } else {

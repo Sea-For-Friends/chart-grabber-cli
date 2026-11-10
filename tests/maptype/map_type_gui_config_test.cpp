@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-030, FEAT-NET-002. Ports u_MapTypeGUIConfig.pas, u_MapTypeGUIConfigStatic.pas;
-// docs/specs/maptype.md §2.7, §2.10, §7.2 item 6; legacy-defects L-151 (pnum), L-153 (HotKey).
+// Ports u_MapTypeGUIConfig.pas, u_MapTypeGUIConfigStatic.pas, with two legacy defects (pnum, HotKey),
+// reproduced.
 // Oracle: tests/fixtures/maptype/Maps_stock_extract.ini, written by legacy SAS.Planet.
 #include "cg/core/language_manager.h"
 #include "cg/maptype/map_type_gui_config.h"
@@ -74,7 +74,7 @@ TEST(MapTypeGuiConfig, UntouchedMapWithSortIndexSetWritesTheStockShape) {
     CG_SKIP_IF_NO_FIXTURE(cg::maptype::test::fixtureDir() + u"/maptype/Maps_stock_extract.ini"_s);
     Fixture f;
     MapVersionRequestConfig version(u""_s);
-    // Without the main list's renumbering pnum would be INT_MAX against the raw ZMP -1 (L-151).
+    // Without the main list's renumbering pnum would be INT_MAX against the raw ZMP -1.
     EXPECT_EQ(save(*f.config, version), "[{D0439E79-1D2D-4364-A61E-41757BD819AF}]\r\n"
                                         "MapName_=chandracomp (Google)\r\npnum=2147483647\r\n"
                                         "ShowOtherVersions=1\r\n");
@@ -83,7 +83,7 @@ TEST(MapTypeGuiConfig, UntouchedMapWithSortIndexSetWritesTheStockShape) {
     EXPECT_EQ(written, stockFirstSection(false));
 }
 
-// Read of the legacy-written section, then write: the §7.2 item 6 round trip.
+// Read of the legacy-written section, then write: the round trip.
 TEST(MapTypeGuiConfig, StockSectionReadsAndWritesBackUnchanged) {
     CG_SKIP_IF_NO_FIXTURE(cg::maptype::test::fixtureDir() + u"/maptype/Maps_stock_extract.ini"_s);
     Fixture f;
@@ -132,7 +132,7 @@ TEST(MapTypeGuiConfig, ReadNormalisesSortIndexTruncatesHotKeyAndAlwaysNotifies) 
     EXPECT_EQ(n, 1);
     const auto st = f.config->getStatic();
     EXPECT_EQ(st->sortIndex, INT_MAX);
-    EXPECT_EQ(st->hotKey, 4464); // L-153: 70000 & 0xFFFF
+    EXPECT_EQ(st->hotKey, 4464); // 70000 & 0xFFFF
     EXPECT_TRUE(st->separator);
     EXPECT_FALSE(st->enabled);
     f.config->readConfig(iniFrom("[S]\r\n")->subItem(u"S")); // nothing differs, still notifies

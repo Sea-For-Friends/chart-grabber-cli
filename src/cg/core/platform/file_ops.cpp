@@ -43,8 +43,8 @@ bool renamePath(const QString& from, const QString& to) {
 
 QByteArray nativeFilePathFromUrlPath(const QByteArray& path) {
 #ifdef _WIN32
-    // file:///C:/x leaves "/C:/x"; the drive letter form needs "C:/x" (D-11 listed these forms as not
-    // handled).
+    // file:///C:/x leaves "/C:/x"; the drive letter form needs "C:/x" (these forms were not handled
+    // before).
     if (path.size() >= 3 && path.at(0) == '/' && path.at(2) == ':' &&
         ((path.at(1) >= 'A' && path.at(1) <= 'Z') || (path.at(1) >= 'a' && path.at(1) <= 'z')) &&
         (path.size() == 3 || path.at(3) == '/')) {

@@ -31,7 +31,7 @@ void DownloadTaskProvider::prepareDataProviders() {
         return;
     }
 
-    // unreachable in legacy (u_ProviderTilesDownload.pas:304, :338 pass a non-nil polygon); no register row
+    // unreachable in legacy (u_ProviderTilesDownload.pas:304, :338 pass a non-nil polygon)
     if (!polygon_) {
         throw std::runtime_error("Polygon does not exist!");
     }
@@ -64,7 +64,7 @@ void DownloadTaskProvider::getTasksList(int workerIndex, qint64& tilesTotal,
         const quint8 zoom = provider.projection()->zoom();
 
         // Start point is always a real tile position: the nullopt branch is unreachable in legacy
-        // (u_DownloadTaskProvider.pas:213, u_ProviderTilesDownload.pas:345); no register row.
+        // (u_DownloadTaskProvider.pas:213, u_ProviderTilesDownload.pas:345).
         geo::PointI startPoint = provider.startPoint(workerIndex);
         qint64 tilesToProcess = provider.tilesToProcess(workerIndex);
 
@@ -77,11 +77,11 @@ void DownloadTaskProvider::getTasksList(int workerIndex, qint64& tilesTotal,
                     startPoint = lastProcessedPoint_;
                     if (lastProcessedCount_ > 0) {
                         tilesToProcess -= lastProcessedCount_;
-                        // DEVIATION (T-0226, deviations.md): the discarded next() below spends one unit of
-                        // the budget in legacy (u_DownloadTaskProvider.pas:212-237, L-265), so the last tile
-                        // of the part is never requested; one more unit is given here. Only with a count: a
-                        // point without one (count <= 0) cannot say how much of the part is done, and +1
-                        // would exceed the area total of a one-part rect iterator.
+                        // DEVIATION: the discarded next() below spends one unit of the budget in legacy
+                        // (u_DownloadTaskProvider.pas:212-237), so the last tile of the part is never
+                        // requested; one more unit is given here. Only with a count: a point without one
+                        // (count <= 0) cannot say how much of the part is done, and +1 would exceed the area
+                        // total of a one-part rect iterator.
                         tilesToProcess += 1;
                     }
                     seekToLastProcessedPoint = true;
@@ -92,8 +92,8 @@ void DownloadTaskProvider::getTasksList(int workerIndex, qint64& tilesTotal,
                 provider.projection(), polygon_, tilesToProcess, std::optional<geo::PointI>{startPoint});
 
             if (seekToLastProcessedPoint) {
-                // The seek consumes one unit of the budget (compensated above, DEVIATION (T-0226,
-                // deviations.md)). The Asserts :233-235 are off; the tile is discarded.
+                // The seek consumes one unit of the budget (compensated above, DEVIATION). The
+                // Asserts :233-235 are off; the tile is discarded.
                 geo::PointI discarded;
                 (void)iterator->next(discarded);
             }

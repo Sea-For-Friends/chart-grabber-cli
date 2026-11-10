@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034. Ports u_ThreadConfig.pas (no DUnit suite exists).
+// Ports u_ThreadConfig.pas (no DUnit suite exists).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/thread_config.h"

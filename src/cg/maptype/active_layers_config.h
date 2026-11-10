@@ -8,7 +8,7 @@
 // The set of layer maps switched on, persisted as `Layer0` ... `Layer<n-1>` (braced GUIDs in set
 // order). A key belongs to this element when its first five characters are `Layer`, any case and
 // any suffix. The write path deletes every such key first, so a foreign key with that prefix is
-// deleted on save (legacy behaviour, reproduced; see legacy-defects.md, the L row of T-0145).
+// deleted on save (legacy behaviour, reproduced, a legacy defect).
 
 #include "cg/core/config_element.h"
 #include "cg/core/guid_list_static.h"
@@ -42,7 +42,7 @@ protected:
     void doWriteConfig(const core::IConfigWriterPtr& dst) const override;
 
 private:
-    void selectLayerByGuidLocked(const QUuid& mapGuid); // the "...Locked()" split of core.md 2.16
+    void selectLayerByGuidLocked(const QUuid& mapGuid); // the "...Locked()" split
 
     core::IGuidSetStaticPtr layerGuids_;
 };

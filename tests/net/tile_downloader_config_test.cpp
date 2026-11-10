@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: docs/specs/net.md §2.16, test plan §7.9
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/net/inet_config.h"
@@ -73,7 +72,7 @@ TEST(TileDownloaderConfig, LocalIniOverridesSubset) {
     section->writeInt(u"Sleep", 250);
     section->writeInt(u"MaxConnectToServerCount", 8);
     section->writeBool(u"RestartDownloadOnMemCacheTTL", false);
-    // Neither of these is ever read from the local INI (spec table) -- present only to prove that.
+    // Neither of these is ever read from the local INI -- present only to prove that.
     section->writeBool(u"UseDwn", false);
 
     const auto inet = std::make_shared<InetConfig>();

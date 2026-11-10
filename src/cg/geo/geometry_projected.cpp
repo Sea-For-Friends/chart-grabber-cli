@@ -251,9 +251,9 @@ GeometryProjectedContour::GeometryProjectedContour(const DoubleRect& bounds,
 }
 
 double GeometryProjectedContour::calcArea() const {
-    // §3.3.1: shoelace over the implicitly closed ring, starting from the LAST point, using the
-    // legacy (x1+x2)*(y1-y2) form -- not x1*y2-x2*y1. They agree algebraically, not bit-for-bit;
-    // keep the legacy form (u_GeometryProjected.pas:353-371).
+    // Shoelace over the implicitly closed ring, starting from the LAST point, using the legacy
+    // (x1+x2)*(y1-y2) form -- not x1*y2-x2*y1. They agree algebraically, not bit-for-bit; keep
+    // the legacy form (u_GeometryProjected.pas:353-371).
     double result = 0.0;
     if (count_ > 1) {
         const auto& pts = *points_;
@@ -269,9 +269,9 @@ double GeometryProjectedContour::calcArea() const {
 }
 
 bool GeometryProjectedContour::isPointInPolygon(DoublePoint p) const {
-    // §3.3.1: crossing number, half-open rule (<= on one side, < on the other) and a strict > on
-    // X -- this is what puts a point on a shared edge in exactly one of two adjacent polygons.
-    // Do not substitute a different point-in-polygon test (u_GeometryProjected.pas:378-400).
+    // Crossing number, half-open rule (<= on one side, < on the other) and a strict > on X --
+    // this is what puts a point on a shared edge in exactly one of two adjacent polygons. Do not
+    // substitute a different point-in-polygon test (u_GeometryProjected.pas:378-400).
     bool result = false;
     if (count_ > 1) {
         const auto& pts = *points_;
@@ -306,8 +306,8 @@ bool GeometryProjectedContour::isPointOnBorder(DoublePoint p, double dist) const
 }
 
 RectWithPolygonIntersection GeometryProjectedContour::checkRectIntersection(const DoubleRect& r) const {
-    // §3.3.1 / u_GeometryProjected.pas:448-557: the 4-valued result. NoIntersect if the bounds
-    // don't even overlap; PolygonInRect if the rect fully contains bounds(); otherwise a fused
+    // u_GeometryProjected.pas:448-557: the 4-valued result. NoIntersect if the bounds don't
+    // even overlap; PolygonInRect if the rect fully contains bounds(); otherwise a fused
     // border-crossing + point[0]-in-rect edge walk decides between IntersectPartial,
     // RectInPolygon and NoIntersect.
     DoubleRect intersectRect{};

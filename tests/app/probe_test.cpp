@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit): tests of `probe` (T-0194, docs/specs/app-cli.md 3.13, ticket proofs 4 and 5).
-// Rig: the HttpTestServer and the four ZMP folders of cli_test_util.h, the real download subsystem, worker
-// threads and SQLite cache. Tests that start threads are TSan-relevant.
+// New code (no legacy unit): tests of `probe`. Rig: the HttpTestServer and the four ZMP folders of
+// cli_test_util.h, the real download subsystem, worker threads and SQLite cache. Tests that start threads
+// are TSan-relevant.
 //
 // The probed tile is always the one under lon 100, lat 40 at zoom 3 (0-based): Web Mercator tile x 6, y 3
 // (floor((100+180)/360*8) = 6; y = 3.03), i.e. the paths "/3/6/3.png" and "/alt/3/6/3.png".
@@ -136,8 +136,8 @@ protected:
     HttpTestServer server_;
 };
 
-// Proof 4: good sources are `ok <bytes> <content type>`, a WebP source is skipped without a request, the exit
-// code is 0; the rows are in name order.
+// Good sources are `ok <bytes> <content type>`, a WebP source is skipped without a request, the exit code is
+// 0; the rows are in name order.
 TEST_F(ProbeTest, GoodSourcesAreOkAndTheWebpSourceIsSkippedWithoutARequest) {
     serve();
     const Captured c = runCapture(probe());
@@ -187,8 +187,8 @@ TEST_F(ProbeTest, ASkippedSourceDoesNotFailTheRun) {
     EXPECT_TRUE(requested().isEmpty());
 }
 
-// Proof 5: the help lists probe and its options, probe accepts all of them, and the help says the tile lands
-// in the cache, which is what the cache directory shows.
+// The help lists probe and its options, probe accepts all of them, and the help says the tile lands in the
+// cache, which is what the cache directory shows.
 TEST_F(ProbeTest, HelpNamesTheOptionsProbeAcceptsAndTheCacheWrite) {
     const Captured help = runCapture({u"--help"_s});
     ASSERT_EQ(help.rc, 0);

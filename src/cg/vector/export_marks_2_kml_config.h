@@ -7,9 +7,8 @@
 // IExportMarks2KMLConfig), u_ExportMarks2KMLConfig.pas (TExportMarks2KMLConfigStatic,
 // TExportMarks2KMLConfig).
 //
-// The settings of the KML marks exporter (spec vector.md section 2.12, V10). The element persists six keys
-// in the parent's section and publishes an immutable snapshot through core::Snapshot, rebuilt before every
-// change notification (T-0147 idiom).
+// The settings of the KML marks exporter. The element persists six keys in the parent's section and
+// publishes an immutable snapshot through core::Snapshot, rebuilt before every change notification.
 
 #include "cg/core/snapshot.h"
 #include "cg/vector/export_config.h"

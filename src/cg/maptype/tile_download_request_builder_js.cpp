@@ -22,14 +22,14 @@ namespace cg::maptype {
 
 namespace {
 
-constexpr auto kLimitText = "script time limit exceeded"; // ADR-0014 point 6
+constexpr auto kLimitText = "script time limit exceeded";
 constexpr auto kResultText = "getUrl must return a string or { url: string }";
 
-// The fixed prelude (ADR-0014 point 4): a function of (global, bridge, withHttp) that defines the frozen host
-// objects of spec 5.2 / 5.4 on the global object over the one bridge object, which only its closure sees, and
-// returns `run`, the wrapper every getUrl call goes through. `run` catches what the script throws and returns
-// { v: result } or { e: message, l: line }, so a thrown string is told from a returned one and the lines of
-// host errors (thrown by this prelude) are not reported.
+// The fixed prelude: a function of (global, bridge, withHttp) that defines the frozen host objects on the
+// global object over the one bridge object, which only its closure sees, and returns `run`, the wrapper every
+// getUrl call goes through. `run` catches what the script throws and returns { v: result } or { e: message,
+// l: line }, so a thrown string is told from a returned one and the lines of host errors (thrown by this
+// prelude) are not reported.
 const QString& prelude() {
     static const QString text = QStringLiteral(R"JS(
 (function (g, b, withHttp) {
@@ -102,8 +102,8 @@ QString withLine(const QString& message, const QJSValue& line, qsizetype scriptL
                : message;
 }
 
-// "<message> at line <n>" of an error value that evaluate() returned (spec 5.1, as the interpreter's "%1 at
-// line %2").
+// "<message> at line <n>" of an error value that evaluate() returned (as the interpreter's
+// "%1 at line %2").
 QString errorText(const QJSValue& error, qsizetype scriptLines) {
     if (error.property(QStringLiteral("host"))
             .toBool()) { // thrown by the prelude: its line is not the script's
@@ -114,7 +114,7 @@ QString errorText(const QJSValue& error, qsizetype scriptLines) {
 }
 
 // The raw header blob (CR LF between lines, config.requestHeader) as the object ctx.requestHeaders. A line
-// without a colon has no JSON form (spec 3, headers) and is left out.
+// without a colon has no JSON form (headers) and is left out.
 QJSValue headersToObject(QJSEngine& engine, const QByteArray& blob) {
     QJSValue object = engine.newObject();
     for (const QByteArray& line : blob.split('\n')) {
@@ -226,7 +226,7 @@ void TileDownloadRequestBuilderJs::ensureEngine() {
         return;
     }
     // A slot restarted on another thread (the idle trim ended the old one): the old engine is dropped here
-    // and a new one is built on this thread; only ctx.state and shared survive (ADR-0014 point 3).
+    // and a new one is built on this thread; only ctx.state and shared survive.
     run_.reset();
     engine_.reset();
     bridge_.reset();
@@ -421,7 +421,7 @@ QString TileDownloadRequestBuilderJs::templateToUrl(const QString& tmpl) {
 
 JsHttpReply TileDownloadRequestBuilderJs::httpRequest(const QByteArray& url, const QByteArray& requestHeader,
                                                       const QByteArray& postData) {
-    // Sandbox (Q-8; D-143): a file:/// URL is not read, the call answers status 0 with empty header and body.
+    // Sandbox: a file:/// URL is not read, the call answers status 0 with empty header and body.
     if (downloader_ == nullptr || net::filePathFromUrl(url).has_value()) {
         if (downloader_ != nullptr && !fileUrlWarned_) {
             fileUrlWarned_ = true;

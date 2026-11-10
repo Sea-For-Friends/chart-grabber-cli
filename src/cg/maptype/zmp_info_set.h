@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_ZmpInfoSet.pas, u_ZmpInfoSet.pas except the 32 reserved proxy slots (:190-213, spec 2.14).
+// Ports: i_ZmpInfoSet.pas, u_ZmpInfoSet.pas except the 32 reserved proxy slots.
 //
 // The set of every loadable ZMP, in load order. Built once at start-up by loading each ZMP found by
 // zmpFileNames(); a ZMP that cannot be loaded is reported through the error sink and skipped.
@@ -41,8 +41,8 @@ using ZmpErrorSink = std::function<void(const QString& message)>;
 class ZmpInfoSet final : public IZmpInfoSet { // TZmpInfoSet, u_ZmpInfoSet.pas:43-62
 public:
     // The collaborators are only used while loading (as the legacy constructor), so they are plain
-    // references; they must be the same objects ZmpInfo is meant to be built with (spec 2.4).
-    // `rootFolder` is legacy AFilesIterator.GetRootFolderName, `relativeNames` is zmpFileNames(rootFolder).
+    // references; they must be the same objects ZmpInfo is meant to be built with. `rootFolder` is legacy
+    // AFilesIterator.GetRootFolderName, `relativeNames` is zmpFileNames(rootFolder).
     ZmpInfoSet(const ZmpConfig& zmpConfig, const core::ILanguageManager& languageManager,
                const geo::ProjectionSetFactory& projectionSetFactory,
                const core::ContentTypeRegistry& contentTypes,

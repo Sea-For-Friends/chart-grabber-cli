@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT yet (T-0013 slice A). docs/specs/script.md 2.3, 11.2.
 #include "cg/script/lexer.h"
 
 #include <QByteArray>
@@ -25,7 +24,7 @@ std::vector<Token> lex(const QByteArray& source, DiagnosticList* diagnostics = n
 
 } // namespace
 
-// --- one test per lexer rule L1-L12 (spec 2.3) --------------------------------------------------
+// --- one test per lexer rule L1-L12 --------------------------------------------------
 
 TEST(Lexer, L1WhitespaceIsSkipped) {
     const auto tokens = lex(QByteArrayLiteral(" \t\r\nbegin\t \r\nend"));
@@ -126,7 +125,7 @@ TEST(Lexer, L12IllegalCharacterIsZeroToleranceCanary) {
     EXPECT_EQ(tokens[1].keyword, cg::script::Keyword::End);
 }
 
-// --- the 16 named cases of spec 11.2 -------------------------------------------------------------
+// --- the 16 named lexer cases -------------------------------------------------------------
 
 TEST(Lexer, ApostropheInsideBraceComment) {
     // The real byte sequence from zoomify_usage_example.zmp: an apostrophe inside a `{ }` comment
@@ -198,8 +197,8 @@ TEST(Lexer, AdjacentStringAndCharPiecesConcatenate) {
 }
 
 TEST(Lexer, SeparatedStringPiecesDoNotConcatenate) {
-    // spec 2.3 L6 (F3): only strictly-adjacent pieces fuse; a space, comment or newline between
-    // them yields two independent tokens (legacy: a syntax error unless joined by '+').
+    // Only strictly-adjacent pieces fuse; a space, comment or newline between them yields two
+    // independent tokens (legacy: a syntax error unless joined by '+').
     const auto tokens = lex(QByteArrayLiteral("'a' 'b'"));
     ASSERT_EQ(tokens.size(), 3u); // 'a', 'b', End
     EXPECT_EQ(tokens[0].kind, TokenKind::StringLiteral);

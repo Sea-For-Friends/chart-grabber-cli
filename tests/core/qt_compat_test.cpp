@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: portability (Qt 6.4 floor, ADR-0018; no FEAT). The helpers must give the same QDateTime on every
-// Qt: timeSpec() == Qt::UTC and ISO text with "Z" (QTimeZone::utc() would give "+00:00").
+// Portability (the Qt 6.4 floor): the helpers must give the same QDateTime on every Qt:
+// timeSpec() == Qt::UTC and ISO text with "Z" (QTimeZone::utc() would give "+00:00").
 #include "cg/core/platform/qt_compat.h"
 
 #include <QDateTime>

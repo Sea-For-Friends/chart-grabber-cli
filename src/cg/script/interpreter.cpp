@@ -2,15 +2,15 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: Src/PascalScript/uPSRuntime.pas (TPSExec). See interpreter.h for this slice's scope.
+// Ports: Src/PascalScript/uPSRuntime.pas (TPSExec). See interpreter.h for its scope.
 #include "cg/script/interpreter.h"
 
-#include "cg/core/delphi_format.h" // roundEx (F25) + intToStr/intToHex/delphiRound/delphiTrunc (core, T-0092)
-#include "cg/core/header_text.h" // T-0028: scriptGetHeaderValue/scriptSetHeaderValue/scriptDeleteHeaderEntry (F29-F31)
+#include "cg/core/delphi_format.h" // roundEx + intToStr/intToHex/delphiRound/delphiTrunc (core)
+#include "cg/core/header_text.h"   // scriptGetHeaderValue/scriptSetHeaderValue/scriptDeleteHeaderEntry
 #include "cg/core/platform/qt_compat.h"
-#include "cg/script/delphi_format_adapter.h" // delphiFormat over script::Value (F20/F21)
+#include "cg/script/delphi_format_adapter.h" // delphiFormat over script::Value
 #include "cg/script/parser.h"                // SymbolTable::kBoundVariableCount, externalSymbols()
-#include "cg/script/regex_compat.h"          // compileTRegExpr/tRegExprMatch/tRegExprReplace (F13/F14)
+#include "cg/script/regex_compat.h"          // compileTRegExpr/tRegExprMatch/tRegExprReplace
 
 #include <QByteArray>
 #include <QCryptographicHash>
@@ -41,11 +41,11 @@ long double intPower(long double base, qint64 exponent) {
     return negative ? 1.0L / result : result;
 }
 
-// T-0031 rework (review finding 7 / ruling 3): Low(T) div -1 overflows a signed IDIV at T's own
-// width - the same x86 hardware fault class as Low(Integer) div -1, generalised to every signed
-// integer width the port models (leftIntType never returns anything narrower than Integer for an
-// Unknown-typed operand, so this only fires for an explicitly ShortInt/SmallInt/Integer/Int64-typed
-// left operand). Byte/Word/Cardinal are unsigned - unsigned division never overflows this way.
+// Low(T) div -1 overflows a signed IDIV at T's own width - the same x86 hardware fault class as
+// Low(Integer) div -1, generalised to every signed integer width the port models (leftIntType never
+// returns anything narrower than Integer for an Unknown-typed operand, so this only fires for an
+// explicitly ShortInt/SmallInt/Integer/Int64-typed left operand). Byte/Word/Cardinal are
+// unsigned - unsigned division never overflows this way.
 bool isIntDivOverflow(qint64 a, qint64 b, DeclaredType t) {
     if (b != -1) {
         return false;
@@ -83,7 +83,7 @@ QByteArray asciiLower(QByteArray s) {
     return s;
 }
 
-// Byte-wise `indexOf`, optionally ASCII case-insensitive (D-5: no code-page folding in the port).
+// Byte-wise `indexOf`, optionally ASCII case-insensitive (no code-page folding in the port).
 int findByteString(const QByteArray& hay, const QByteArray& needle, int from, bool ignoreCase) {
     if (needle.isEmpty()) {
         return -1;
@@ -106,8 +106,8 @@ int findByteString(const QByteArray& hay, const QByteArray& needle, int from, bo
     return -1;
 }
 
-// Delphi StrToInt grammar (spec 5.4): optional sign, then decimal digits or a `$`-prefixed hex
-// run; no leading/trailing spaces, no partial parse.
+// Delphi StrToInt grammar: optional sign, then decimal digits or a `$`-prefixed hex run; no
+// leading/trailing spaces, no partial parse.
 core::Result<qint64> parseDelphiInt(const QByteArray& s) {
     auto fail = [] { return core::fail(core::ErrorCode::IoError, QStringLiteral("invalid integer")); };
     if (s.isEmpty()) {
@@ -144,11 +144,10 @@ core::Result<qint64> parseDelphiInt(const QByteArray& s) {
     return neg ? -v : v;
 }
 
-// T-0032 (PD-1, spec I1): the zero value of one element of a static array, by the array's declared
-// element type (ticket scope: char|byte|integer|longint - the corpus's four). Byte/ShortInt/
-// SmallInt/Cardinal/Int64 are included for free since Value::wrappedTo already narrows an Int the
-// same way a scalar slot of that type would. Char defaults to Empty, matching this interpreter's
-// existing (pre-T-0032) scalar-Char-slot gap - see docs/handoffs/T-0032.md "Legacy defects noticed".
+// The zero value of one element of a static array, by the array's declared element type
+// (char|byte|integer|longint - the corpus's four). Byte/ShortInt/SmallInt/Cardinal/Int64 are
+// included for free since Value::wrappedTo already narrows an Int the same way a scalar slot of that
+// type would. Char defaults to Empty, matching this interpreter's existing scalar-Char-slot gap.
 Value defaultElementValue(DeclaredType elementKind) {
     switch (elementKind) {
     case DeclaredType::Byte:
@@ -166,7 +165,7 @@ Value defaultElementValue(DeclaredType elementKind) {
     case DeclaredType::Boolean:
         return Value::fromBool(false);
     case DeclaredType::Char:
-        return Value::fromStr(QByteArray(1, '\0')); // T-0035: InitializeVariant zero-fills (F5)
+        return Value::fromStr(QByteArray(1, '\0')); // InitializeVariant zero-fills
     case DeclaredType::AnsiString:
     case DeclaredType::WideString:
         return Value::fromStr(QByteArray());
@@ -189,10 +188,10 @@ QByteArray getDiv3Path(const QByteArray& number) {
     return result;
 }
 
-// F17 Base64Decode strictness gap (docs/specs/script.md:1086, T-0014 deviation note): standard
-// alphabet only (A-Za-z0-9+/), padding required, no URL alphabet. Any invalid input -> ''.
-// Hand-validated rather than relying on QByteArray::fromBase64Encoding's exact error semantics
-// for malformed/misplaced padding, then decoded with the now-guaranteed-well-formed input.
+// Base64Decode strictness gap (a deviation from legacy): standard alphabet only (A-Za-z0-9+/),
+// padding required, no URL alphabet. Any invalid input -> ''. Hand-validated rather than
+// relying on QByteArray::fromBase64Encoding's exact error semantics for malformed/misplaced
+// padding, then decoded with the now-guaranteed-well-formed input.
 QByteArray base64DecodeStrict(const QByteArray& data) {
     if (data.isEmpty()) {
         return QByteArray();
@@ -228,14 +227,15 @@ Interpreter::Interpreter(std::shared_ptr<const CompiledScript> script, ExecBudge
       storage_(static_cast<std::size_t>(script_->frameSize())) {}
 
 Value Interpreter::defaultValueForSlot(int slot) const {
-    // PD-103 (spec I1/I3): a const's "zero value" at frame entry IS its folded value, not 0/''/
-    // Empty - checked before the declared-type switch below so an untyped const (DeclaredType
-    // Unknown) still gets its fold instead of falling through to Empty.
+    // A const's "zero value" at frame entry IS its folded value, not 0/''/Empty - checked
+    // before the declared-type switch below so an untyped const (DeclaredType Unknown) still
+    // gets its fold instead of falling through to Empty.
     if (const Value* constant = script_->constValue(slot)) {
         return *constant;
     }
-    // Field order matches parser.cpp's kPointFields/kDoublePointFields/kRectFields/
-    // kDoubleRectFields/kTileInfoFields exactly - load-bearing (spec 2.6/5.2).
+    // Field order matches parser.cpp's
+    // kPointFields/kDoublePointFields/kRectFields/kDoubleRectFields/kTileInfoFields
+    // exactly - load-bearing.
     switch (script_->declaredType(slot)) {
     case DeclaredType::TPoint:
         return Value::fromRecord({Value::fromInt(0), Value::fromInt(0)});
@@ -248,24 +248,23 @@ Value Interpreter::defaultValueForSlot(int slot) const {
         return Value::fromRecord(
             {Value::fromReal(0.0L), Value::fromReal(0.0L), Value::fromReal(0.0L), Value::fromReal(0.0L)});
     case DeclaredType::TTileInfo:
-        // LoadDate has no ValueKind (spec 2.6 has no QDateTime kind) - Empty is its zero value;
-        // nothing this slice reads or writes it (TTileInfo is otherwise host-binding surface,
-        // T-0015).
+        // LoadDate has no ValueKind (there is no QDateTime kind) - Empty is its zero value; the
+        // interpreter never reads or writes it (TTileInfo is otherwise host-binding surface).
         return Value::fromRecord({Value::fromBool(false), Value::fromBool(false), Value(), Value::fromInt(0),
                                   Value::fromStr(QByteArray()), Value::fromStr(QByteArray()),
                                   Value::fromStr(QByteArray())});
     case DeclaredType::Single:
     case DeclaredType::Double:
     case DeclaredType::Extended:
-        return Value::fromReal(0.0L); // PD-2/I1: a real-declared scalar slot zero-inits to 0.0, not Empty
+        return Value::fromReal(0.0L); // A real-declared scalar slot zero-inits to 0.0, not Empty
     case DeclaredType::StaticArray: {
-        // PD-1 (spec 3.6/I1): a static array slot zero-inits to `count` zero-valued elements, one
-        // per the declared element type. `arrayInfo` is null only for a slot this parser could not
-        // resolve bounds for (never happens for a real `array[lo..hi] of T` declaration) - Empty,
-        // same defensive fallback as an unresolved primitive type.
+        // A static array slot zero-inits to `count` zero-valued elements, one per the declared
+        // element type. `arrayInfo` is null only for a slot this parser could not resolve bounds
+        // for (never happens for a real `array[lo..hi] of T` declaration) - Empty, same defensive
+        // fallback as an unresolved primitive type.
         const ArrayInfo* info = script_->arrayInfo(slot);
-        if (info == nullptr) { // an empty array[lo..lo-1] (L-70) is a zero-length array: every access raises
-                               // the range error
+        if (info == nullptr) { // an empty array[lo..lo-1] is a zero-length array: every access raises the
+                               // range error
             return Value();
         }
         const auto count = static_cast<std::size_t>(info->highBound - info->lowBound + 1);
@@ -292,11 +291,11 @@ template <class T> std::shared_ptr<void> toVoidShared(const std::shared_ptr<T>& 
 } // namespace
 
 void Interpreter::bindScriptVars(const ScriptVars& vars) {
-    // spec 5.1 registration order == parser.cpp's kBoundVariables order == this list. Interface
-    // slots hold an InterfaceRef (null obj => Assigned() is False); ResultURL/PostData are
-    // cleared, never read from `vars`, exactly as ExecTimeSet does
-    // (u_TileDownloadRequestBuilderPascalScriptVars.pas:225-226). GetURLBase is copied by value -
-    // storage_[9] is a throwaway mutable copy that never aliases vars.getUrlBase (spec 2.7 tail).
+    // The registration order == parser.cpp's kBoundVariables order == this list. Interface slots
+    // hold an InterfaceRef (null obj => Assigned() is False); ResultURL/PostData are cleared,
+    // never read from `vars`, exactly as ExecTimeSet does
+    // (u_TileDownloadRequestBuilderPascalScriptVars.pas:225-226). GetURLBase is copied by
+    // value - storage_[9] is a throwaway mutable copy that never aliases vars.getUrlBase.
     storage_[0] = Value::fromInterface(toVoidShared(vars.tileCache), InterfaceId::TileCache);
     storage_[1] = Value::fromInterface(toVoidShared(vars.logger), InterfaceId::Logger);
     storage_[2] = Value::fromInterface(toVoidShared(vars.global), InterfaceId::Global);
@@ -314,7 +313,7 @@ void Interpreter::bindScriptVars(const ScriptVars& vars) {
     storage_[14] = Value::fromStr(vars.lang);
     storage_[15] = Value::fromInt(vars.getX);
     storage_[16] = Value::fromInt(vars.getY);
-    storage_[17] = Value::fromInt(vars.getZ); // 1-based - the caller already added 1 (spec 5.1)
+    storage_[17] = Value::fromInt(vars.getZ); // 1-based - the caller already added 1
     storage_[18] = Value::fromReal(vars.getLlon);
     storage_[19] = Value::fromReal(vars.getTLat);
     storage_[20] = Value::fromReal(vars.getBLat);
@@ -326,7 +325,7 @@ void Interpreter::bindScriptVars(const ScriptVars& vars) {
 }
 
 void Interpreter::writeBackScriptVars(ScriptVars& vars) const {
-    // spec 2.13 read-back order: ResultUrl, PostData, RequestHead, ScriptBuffer.
+    // The read-back order: ResultUrl, PostData, RequestHead, ScriptBuffer.
     vars.resultUrl = storage_[7].toStr();
     vars.postData = storage_[8].toStr();
     vars.requestHead = storage_[10].toStr();
@@ -335,8 +334,8 @@ void Interpreter::writeBackScriptVars(ScriptVars& vars) const {
 
 core::Result<void> Interpreter::run(IScriptHost& host, ScriptVars& vars) {
     host_ = &host;
-    // spec 4.4 I1/I3: zero-init once per run - a record-declared global starts as a zero-filled
-    // record (Value::fromRecord), everything else as Value() (Empty).
+    // Zero-init once per run - a record-declared global starts as a zero-filled record
+    // (Value::fromRecord), everything else as Value() (Empty).
     for (std::size_t i = 0; i < storage_.size(); ++i) {
         storage_[i] = defaultValueForSlot(static_cast<int>(i));
     }
@@ -373,7 +372,7 @@ core::Result<void> Interpreter::tickBudget(int line) {
 }
 
 core::Result<Value> Interpreter::checkNotBound(int slotIndex, int line) const {
-    // T-0015A: every bound-variable slot is a live value for the duration of run() (bindScriptVars
+    // Every bound-variable slot is a live value for the duration of run() (bindScriptVars
     // above) - nothing is rejected here any more. See interpreter.h for why the function stays.
     (void)slotIndex;
     (void)line;
@@ -399,7 +398,7 @@ DeclaredType Interpreter::leftIntType(const Node* node) const {
             return DeclaredType::Integer; // bts32
         }
         if (static_cast<quint64>(v) <= 0xFFFFFFFFULL) {
-            return DeclaredType::Cardinal; // btu32 - UNSIGNED, review finding 1
+            return DeclaredType::Cardinal; // btu32 - UNSIGNED
         }
         return DeclaredType::Int64; // bts64
     }
@@ -423,7 +422,7 @@ DeclaredType Interpreter::leftIntType(const Node* node) const {
             return t == DeclaredType::Unknown ? DeclaredType::Integer : t;
         }
         // Every registered/intrinsic function returns LongInt/Extended/string/... except
-        // GetUnixTime (spec F35: `GetUnixTime: Int64`) - the one 64-bit-typed builtin.
+        // GetUnixTime - the one 64-bit-typed builtin.
         return static_cast<BuiltinId>(call->callee) == BuiltinId::GetUnixTime ? DeclaredType::Int64
                                                                               : DeclaredType::Integer;
     }
@@ -497,8 +496,8 @@ core::Result<Value> Interpreter::evalExpr(Node* node) {
         return flds[static_cast<std::size_t>(n->fieldIndex)];
     }
     case NodeKind::ArrayLit: {
-        // Set-or-array literal (ast.h G6): this slice only implements the set-of-ordinal use
-        // (`[rfReplaceAll]`) - each element contributes bit `ord` to an Int bitmask.
+        // Set-or-array literal: only the set-of-ordinal use (`[rfReplaceAll]`) is
+        // implemented - each element contributes bit `ord` to an Int bitmask.
         auto* n = static_cast<ArrayLit*>(node);
         qint64 mask = 0;
         for (Node* element : n->elements) {
@@ -509,7 +508,7 @@ core::Result<Value> Interpreter::evalExpr(Node* node) {
             auto ord = v->toInt();
             if (!ord.has_value() || *ord < 0 || *ord > 62) {
                 return unsupported(node->line, QStringLiteral("set/array literals are only supported "
-                                                              "as a small ordinal set this slice"));
+                                                              "as a small ordinal set"));
             }
             mask |= (qint64{1} << *ord);
         }
@@ -536,10 +535,10 @@ core::Result<Value> Interpreter::evalUnary(Unary* node) {
             if (!v.has_value()) {
                 return unsupported(node->line, QStringLiteral("unary '-' needs a numeric operand"));
             }
-            // Review finding 3 / T-0031 rework ruling 2: this is the NESTED path (the unary node
-            // is not itself the value stored into a slot - see evalExprForSlot for that case), so
-            // it still keeps the operand's own static type (uPSCompiler.pas:8148's
-            // "NewVarU.aType := GetTypeNo(BlockInfo, NewVar)") and wraps there.
+            // This is the NESTED path (the unary node is not itself the value stored into a
+            // slot - see evalExprForSlot for that case), so it still keeps the operand's own
+            // static type (uPSCompiler.pas:8148's "NewVarU.aType := GetTypeNo(BlockInfo,
+            // NewVar)") and wraps there.
             return Value::fromInt(-*v).wrappedTo(leftIntType(node->operand));
         }
     case UnaryOp::Not:
@@ -557,13 +556,13 @@ core::Result<Value> Interpreter::evalUnary(Unary* node) {
 }
 
 core::Result<Value> Interpreter::evalExprForSlot(Node* node, int slot) {
-    // Review finding 3 / T-0031 rework ruling 2: DoUnCalc (uPSCompiler.pas:6230-6242) is handed
-    // the real destination register directly whenever a unary '-' node is not nested inside a
-    // further calculation (WriteCalculation, :9604-9688) - so e.g. `R64 := -Low(Integer)` widens
-    // the operand into R64's Int64 width *first*, then negates there: 2147483648, not
-    // -2147483648. Only this exact shape (the Assign's RHS is directly a Unary '-' node) takes
-    // this path; anything else - including `R64 := (-Low(Integer)) + 0` - falls through to
-    // evalExpr/evalUnary's operand-width computation, unchanged.
+    // DoUnCalc (uPSCompiler.pas:6230-6242) is handed the real destination register directly
+    // whenever a unary '-' node is not nested inside a further calculation (WriteCalculation,
+    // :9604-9688) - so e.g. `R64 := -Low(Integer)` (an Int64 destination) widens the operand
+    // into the Int64 width *first*, then negates there: 2147483648, not -2147483648. Only this
+    // exact shape (the Assign's RHS is directly a Unary '-' node) takes this path; anything
+    // else - including `R64 := (-Low(Integer)) + 0` - falls through to evalExpr/evalUnary's
+    // operand-width computation, unchanged.
     if (node->kind == NodeKind::Unary && static_cast<Unary*>(node)->op == UnaryOp::Minus) {
         auto* u = static_cast<Unary*>(node);
         auto operand = evalExpr(u->operand);
@@ -589,7 +588,7 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
     if (!lhsR.has_value()) {
         return std::unexpected(lhsR.error());
     }
-    auto rhsR = evalExpr(node->rhs); // N9: both operands always evaluated, never short-circuit
+    auto rhsR = evalExpr(node->rhs); // Both operands always evaluated, never short-circuit
     if (!rhsR.has_value()) {
         return std::unexpected(rhsR.error());
     }
@@ -599,17 +598,17 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
     const bool eitherReal = lhs.kind() == ValueKind::Real || rhs.kind() == ValueKind::Real;
     const bool eitherBool = lhs.kind() == ValueKind::Bool || rhs.kind() == ValueKind::Bool;
     const int line = node->line;
-    // T-0031 rework (review findings 1/2): PD-104's "compute in the left operand's static integer
-    // type" now goes through the exact type (`leftIntType`) and `Value::wrappedTo`, which already
-    // implements every per-type wrap - Byte/Word/ShortInt/SmallInt at 8/16 bits, Cardinal
-    // **unsigned** 32-bit, Integer signed 32-bit, Int64 none. `+ - *` compute the mathematically
-    // exact qint64 result first: truncating to N<64 bits afterward gives the same low-N-bit pattern
-    // as doing the op in an N-bit register throughout (two's-complement wraparound is associative
-    // with truncation for +/-/*), so this is exact, not an approximation, for every width.
+    // Computing in the left operand's static integer type goes through the exact type
+    // (`leftIntType`) and `Value::wrappedTo`, which already implements every per-type
+    // wrap - Byte/Word/ShortInt/SmallInt at 8/16 bits, Cardinal **unsigned** 32-bit, Integer signed
+    // 32-bit, Int64 none. `+ - *` compute the mathematically exact qint64 result first: truncating
+    // to N<64 bits afterward gives the same low-N-bit pattern as doing the op in an N-bit register
+    // throughout (two's-complement wraparound is associative with truncation for +/-/*), so this is
+    // exact, not an approximation, for every width.
     switch (node->op) {
     case BinaryOp::Add:
         if (eitherStr) {
-            return Value::fromStr(lhs.toStr() + rhs.toStr()); // T5: char/string concatenation
+            return Value::fromStr(lhs.toStr() + rhs.toStr()); // char/string concatenation
         }
         if (eitherReal) {
             auto a = lhs.toReal(), b = rhs.toReal();
@@ -653,8 +652,7 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
                 return unsupported(line, QStringLiteral("'*' needs numeric operands"));
             return Value::fromInt(*a * *b).wrappedTo(leftIntType(node->lhs));
         }
-    // PD-3/PD-4 (T-0031, spec N5 corrected): legacy's PascalScript fork is built without
-    // PS_DELPHIDIV (docs/handoffs/T-0015E-review.md; sasgis/pascalscript uPSCompiler.pas
+    // Legacy's PascalScript fork is built without PS_DELPHIDIV (sasgis/pascalscript uPSCompiler.pas
     // ~8597-8645), so the compiler emits the SAME `otDiv` opcode for both `/` and `div` (codegen
     // ~6248: "if BVAL.Operator = otIntDiv then BlockWriteByte(..., Ord(otDiv))" - the VM never sees
     // a separate `div` instruction). GetResultType's rule for that opcode: int op int -> the
@@ -672,9 +670,8 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
             auto a = lhs.toReal(), b = rhs.toReal();
             if (!a.has_value() || !b.has_value())
                 return unsupported(line, opWord + QStringLiteral(" needs numeric operands"));
-            // Review finding 7 / ruling 3: real division by zero is EZeroDivide, whose message the
-            // engine surfaces verbatim (uPSRuntime.pas:6679) - distinct from the integer EDivByZero
-            // text below.
+            // Real division by zero is EZeroDivide, whose message the engine surfaces verbatim
+            // (uPSRuntime.pas:6679) - distinct from the integer EDivByZero text below.
             if (*b == 0.0L)
                 return runtimeError(line, QStringLiteral("Floating point division by zero"));
             return Value::fromReal(*a / *b);
@@ -687,20 +684,20 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
                 return runtimeError(line, QStringLiteral("Division by zero")); // EDivByZero text
             const DeclaredType t = leftIntType(node->lhs);
             if (isIntDivOverflow(*a, *b, t)) {
-                // Review finding 7 / ruling 3: Low(T) div -1 is a signed IDIV overflow on x86 - a
-                // SEPARATE hardware fault from divide-by-zero (STATUS_INTEGER_OVERFLOW, not
-                // STATUS_INTEGER_DIVIDE_BY_ZERO), which DoCalc's except block (uPSRuntime.pas
-                // :6673-6684) does not special-case: it falls through to "Tmp is Exception" and
-                // surfaces EIntOverflow's own message, not "Division by zero".
+                // Low(T) div -1 is a signed IDIV overflow on x86 - a SEPARATE hardware fault from
+                // divide-by-zero (STATUS_INTEGER_OVERFLOW, not STATUS_INTEGER_DIVIDE_BY_ZERO),
+                // which DoCalc's except block (uPSRuntime.pas :6673-6684) does not special-case:
+                // it falls through to "Tmp is Exception" and surfaces EIntOverflow's own message,
+                // not "Division by zero".
                 return runtimeError(line, QStringLiteral("Integer overflow"));
             }
-            // N3: truncates toward zero (matches C++'s integer '/'); wrapping the result is a
-            // no-op here (division only shrinks magnitude, the overflow case is handled above) but
-            // keeps this case uniform with +/-/*/mod/shl/shr per the ruling.
+            // Truncates toward zero (matches C++'s integer '/'); wrapping the result is a no-op
+            // here (division only shrinks magnitude, the overflow case is handled above) but keeps
+            // this case uniform with +/-/*/mod/shl/shr.
             return Value::fromInt(*a / *b).wrappedTo(t);
         }
     }
-    case BinaryOp::Mod: { // N3: truncates toward zero (matches C++'s integer '%')
+    case BinaryOp::Mod: { // Truncates toward zero (matches C++'s integer '%')
         auto a = lhs.toInt(), b = rhs.toInt();
         if (!a.has_value() || !b.has_value())
             return unsupported(line, QStringLiteral("'mod' needs integer operands"));
@@ -708,7 +705,7 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
             return runtimeError(line, QStringLiteral("Division by zero"));
         return Value::fromInt(*a % *b).wrappedTo(leftIntType(node->lhs));
     }
-    case BinaryOp::Shl: { // PD-104: shifts within the left operand's static integer type
+    case BinaryOp::Shl: { // Shifts within the left operand's static integer type
         auto a = lhs.toInt(), b = rhs.toInt();
         if (!a.has_value() || !b.has_value())
             return unsupported(line, QStringLiteral("'shl' needs integer operands"));
@@ -722,7 +719,7 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
         // register throughout (bits shifted out past bit N-1 are simply discarded either way).
         return Value::fromInt(static_cast<qint64>(shifted)).wrappedTo(t);
     }
-    case BinaryOp::Shr: { // N8: logical shift on the unsigned interpretation, at the static width
+    case BinaryOp::Shr: { // Logical shift on the unsigned interpretation, at the static width
         auto a = lhs.toInt(), b = rhs.toInt();
         if (!a.has_value() || !b.has_value())
             return unsupported(line, QStringLiteral("'shr' needs integer operands"));
@@ -739,7 +736,7 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
     }
     case BinaryOp::And:
     case BinaryOp::Or:
-    case BinaryOp::Xor: { // N9: bitwise on integers, logical on booleans
+    case BinaryOp::Xor: { // Bitwise on integers, logical on booleans
         if (eitherBool) {
             auto a = lhs.toBool(), b = rhs.toBool();
             if (!a.has_value() || !b.has_value())
@@ -764,9 +761,9 @@ core::Result<Value> Interpreter::evalBinary(Binary* node) {
     case BinaryOp::Le:
     case BinaryOp::Ge: {
         int cmp = 0;
-        if (eitherStr) { // T8: byte-wise
+        if (eitherStr) { // Byte-wise
             cmp = lhs.toStr().compare(rhs.toStr());
-        } else if (eitherReal) { // N10
+        } else if (eitherReal) {
             auto a = lhs.toReal(), b = rhs.toReal();
             if (!a.has_value() || !b.has_value())
                 return unsupported(line, QStringLiteral("comparison needs numeric operands"));
@@ -840,7 +837,7 @@ core::Result<Value> Interpreter::evalIndex(Index* node) {
         return base.fields()[*offset];
     }
     if (base.kind() != ValueKind::Str && base.kind() != ValueKind::Empty) {
-        return unsupported(node->line, QStringLiteral("indexing is only supported on strings this slice"));
+        return unsupported(node->line, QStringLiteral("indexing is only supported on strings"));
     }
     auto idxR = evalExpr(node->index);
     if (!idxR.has_value())
@@ -853,7 +850,7 @@ core::Result<Value> Interpreter::evalIndex(Index* node) {
     if (i >= 1 && i <= s.size()) {
         return Value::fromStr(QByteArray(1, s.at(static_cast<int>(i - 1))));
     }
-    if (i > s.size() && i <= s.size() + 16) { // T3: bug-compatible read-past-end window
+    if (i > s.size() && i <= s.size() + 16) { // Bug-compatible read-past-end window
         return Value::fromStr(QByteArray(1, '\0'));
     }
     return runtimeError(node->line, QStringLiteral("string index out of range"));
@@ -894,8 +891,8 @@ core::Result<Value> Interpreter::callUserRoutine(const Routine& routine, Call* n
     const int line = node->line;
 
     // Evaluate every argument BEFORE the frame is touched (recursion reuses these exact slot
-    // numbers on each call, spec 4.4 I4 - an argument that reads one of them must see the
-    // caller's value, not a half-zeroed callee frame).
+    // numbers on each call - an argument that reads one of them must see the caller's value,
+    // not a half-zeroed callee frame).
     std::vector<Value> ins(static_cast<std::size_t>(routine.paramCount));
     for (int i = 0; i < routine.paramCount; ++i) {
         const ParamMode mode = routine.paramModes[static_cast<std::size_t>(i)];
@@ -921,12 +918,11 @@ core::Result<Value> Interpreter::callUserRoutine(const Routine& routine, Call* n
         ins[static_cast<std::size_t>(i)] = *v;
     }
 
-    // spec 4.3 A5: `var`/`out` are by-reference in Delphi. This slice keeps copy-in/copy-out
-    // (T-0014 rework Major 5 - true aliasing needs a slot-indirection rewrite of the flat-slot VM,
-    // beyond this ticket's LOC budget); the one place that silently diverges from Delphi is two
-    // `var`/`out` arguments naming the SAME slot (`P(x, x)`), where Delphi's writes-through-the-
-    // same-cell give a different result than copy-in/copy-out's last-write-wins. Fail loudly
-    // instead of diverging silently; true var-by-reference is recorded for T-0014B.
+    // `var`/`out` are by-reference in Delphi. The interpreter keeps copy-in/copy-out (true
+    // aliasing needs a slot-indirection rewrite of the flat-slot VM); the one place that silently
+    // diverges from Delphi is two `var`/`out` arguments naming the SAME slot (`P(x, x)`), where
+    // Delphi's writes-through-the-same-cell give a different result than copy-in/copy-out's
+    // last-write-wins. Fail loudly instead of diverging silently.
     for (int i = 0; i < routine.paramCount; ++i) {
         const ParamMode modeI = routine.paramModes[static_cast<std::size_t>(i)];
         if (modeI != ParamMode::Var && modeI != ParamMode::Out)
@@ -939,7 +935,7 @@ core::Result<Value> Interpreter::callUserRoutine(const Routine& routine, Call* n
             const int slotJ = static_cast<VarRef*>(node->args[static_cast<std::size_t>(j)])->slot;
             if (slotI == slotJ) {
                 return unsupported(line, QStringLiteral("aliased 'var'/'out' arguments are not "
-                                                        "supported this slice (T-0014B)"));
+                                                        "supported"));
             }
         }
     }
@@ -947,13 +943,13 @@ core::Result<Value> Interpreter::callUserRoutine(const Routine& routine, Call* n
     std::vector<Value> saved(storage_.begin() + first, storage_.begin() + first + count);
     for (int i = 0; i < count; ++i) {
         storage_[static_cast<std::size_t>(first) + static_cast<std::size_t>(i)] =
-            defaultValueForSlot(first + i); // I1: zero-init at frame entry
+            defaultValueForSlot(first + i); // Zero-init at frame entry
     }
     for (int i = 0; i < routine.paramCount; ++i) {
         if (routine.paramModes[static_cast<std::size_t>(i)] != ParamMode::Out) {
             const int slot = first + i;
-            storage_[static_cast<std::size_t>(slot)] = wrapForSlot(
-                slot, ins[static_cast<std::size_t>(i)]); // PD-2/N1/N2: bind through the declared type
+            storage_[static_cast<std::size_t>(slot)] =
+                wrapForSlot(slot, ins[static_cast<std::size_t>(i)]); // Bind through the declared type
         }
     }
 
@@ -991,7 +987,7 @@ core::Result<Value> Interpreter::callUserRoutine(const Routine& routine, Call* n
                 if (auto ok = checkNotBound(vr->slot, line); !ok.has_value())
                     return std::unexpected(ok.error());
                 storage_[static_cast<std::size_t>(vr->slot)] =
-                    wrapForSlot(vr->slot, outs[static_cast<std::size_t>(i)]); // N1/N2
+                    wrapForSlot(vr->slot, outs[static_cast<std::size_t>(i)]);
             }
         }
     }
@@ -1007,7 +1003,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     // Arity must be checked before ANY node->args[i]/evalExpr(args[i]) access below - the parser
     // deliberately does not enforce kExternals' minArgs/maxArgs for Builtin/Registered calls
     // (parser.cpp ~1420-1430), so a malformed script can otherwise drive an out-of-bounds
-    // std::vector access (T-0014 rework Blocker 2).
+    // std::vector access.
     const ExternalSymbol& sym = SymbolTable::externalSymbols()[static_cast<std::size_t>(id)];
     const std::size_t argc = node->args.size();
     if (argc < sym.minArgs || (sym.maxArgs != 0xFF && argc > sym.maxArgs)) {
@@ -1046,7 +1042,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
         if (!cur.has_value())
             return unsupported(line, QStringLiteral("Inc/Dec target must be an integer"));
         storage_[static_cast<std::size_t>(vr->slot)] =
-            wrapForSlot(vr->slot, Value::fromInt(*cur + (id == BuiltinId::Inc ? delta : -delta))); // N1
+            wrapForSlot(vr->slot, Value::fromInt(*cur + (id == BuiltinId::Inc ? delta : -delta)));
         return Value();
     }
     case BuiltinId::SetLength: {
@@ -1058,7 +1054,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
             return std::unexpected(ok.error());
         Value& target = storage_[static_cast<std::size_t>(vr->slot)];
         if (target.kind() != ValueKind::Str && target.kind() != ValueKind::Empty) {
-            return unsupported(line, QStringLiteral("SetLength is only supported on strings this slice"));
+            return unsupported(line, QStringLiteral("SetLength is only supported on strings"));
         }
         auto n = evalExpr(node->args[1]);
         if (!n.has_value())
@@ -1154,9 +1150,9 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
                 return std::unexpected(sepV.error());
             const QByteArray sepStr = sepV->toStr();
             decimalSeparator = sepStr.isEmpty() ? '.' : sepStr.at(0);
-            // F21: a fresh, default-initialised TFormatSettings with only DecimalSeparator set -
-            // ThousandSeparator is the zero char, CurrencyString is empty - "%n"/"%m" produce
-            // garbage. Reproduced deliberately, not fixed up.
+            // A fresh, default-initialised TFormatSettings with only DecimalSeparator
+            // set - ThousandSeparator is the zero char, CurrencyString is empty - "%n"/"%m"
+            // produce garbage. Reproduced deliberately, not fixed up.
             thousandsSeparator = '\0';
             currencyString = QByteArray();
         }
@@ -1185,7 +1181,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     };
 
     switch (id) {
-    // ---- Math (registered, host-backed RNG) ---- F1/F2, spec :1053-1055
+    // ---- Math (registered, host-backed RNG) ----
     case BuiltinId::Random: {
         auto x = argInt(0);
         if (!x.has_value())
@@ -1284,7 +1280,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
             return needNumeric("MinExt");
         return Value::fromReal(std::min(*a, *b));
     }
-    // ---- Regex (registered, pure) ----  F13/F14, spec :1073-1078, §6 :1225-1324
+    // ---- Regex (registered, pure) ----
     case BuiltinId::RegExprGetMatchSubStr: {
         const QByteArray str = args[0].toStr();
         const QByteArray pattern = args[1].toStr();
@@ -1292,7 +1288,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
         if (!matchId.has_value())
             return needNumeric("RegExprGetMatchSubStr");
         const CompiledRegex cre = compileTRegExpr(pattern);
-        if (!cre.ok) // R16: an invalid pattern is a runtime error, never a silent empty match
+        if (!cre.ok) // An invalid pattern is a runtime error, never a silent empty match
             return runtimeError(line, QStringLiteral("RegExprGetMatchSubStr: %1").arg(cre.error));
         return Value::fromStr(tRegExprMatch(str, pattern, static_cast<int>(*matchId)));
     }
@@ -1301,7 +1297,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
         const QByteArray pattern = args[1].toStr();
         const QByteArray replace = args[2].toStr();
         const CompiledRegex cre = compileTRegExpr(pattern);
-        if (!cre.ok) // R16
+        if (!cre.ok)
             return runtimeError(line, QStringLiteral("RegExprReplaceMatchSubStr: %1").arg(cre.error));
         return Value::fromStr(tRegExprReplace(str, pattern, replace));
     }
@@ -1311,7 +1307,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     case BuiltinId::Base64UrlEncode:
         return Value::fromStr(
             args[0].toStr().toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
-    case BuiltinId::Base64Decode: // F17: standard alphabet only, padding required, else ''.
+    case BuiltinId::Base64Decode: // Standard alphabet only, padding required, else ''.
         return Value::fromStr(base64DecodeStrict(args[0].toStr()));
     case BuiltinId::MD5String:
         return Value::fromStr(
@@ -1324,9 +1320,9 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
             return needNumeric("IntToHex");
         return Value::fromStr(core::intToHex(*v, static_cast<int>(*d)));
     }
-    case BuiltinId::FileExists: // F19
+    case BuiltinId::FileExists:
         return Value::fromBool(host_->fileExists(QString::fromUtf8(args[0].toStr())));
-    case BuiltinId::RoundEx: { // F25
+    case BuiltinId::RoundEx: {
         auto v = argReal(0);
         auto p = argInt(1);
         if (!v.has_value() || !p.has_value())
@@ -1391,23 +1387,23 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     }
     case BuiltinId::GetDiv3Path:
         return Value::fromStr(getDiv3Path(args[0].toStr()));
-    // ---- host-backed (F35-F38) ----
-    case BuiltinId::GetUnixTime: // F35: true UTC seconds (D-7 - legacy's local-as-UTC quirk is
-                                 // not reproduced, see docs/parity/deviations.md)
+    // ---- host-backed ----
+    case BuiltinId::GetUnixTime: // True UTC seconds (a deviation from legacy: legacy's local-as-UTC
+                                 // quirk is not reproduced)
         return Value::fromInt(host_->unixTime());
-    case BuiltinId::SaveToLocalFile: // F36 (AFullLocalFilename, AData)
+    case BuiltinId::SaveToLocalFile: // AFullLocalFilename, AData
         return Value::fromInt(host_->saveToLocalFile(QString::fromUtf8(args[0].toStr()), args[1].toStr()));
-    case BuiltinId::WriteLn: // F37: a no-op at tile-download time in legacy (Obj = nil); the
-                             // production host mirrors that, the fake host records the call
+    case BuiltinId::WriteLn: // A no-op at tile-download time in legacy (Obj = nil); the production
+                             // host mirrors that, the fake host records the call
         host_->writeLn(args[0].toStr());
         return Value();
-    case BuiltinId::TemplateToUrl: // F38: delegates to the maptype-owned template engine
+    case BuiltinId::TemplateToUrl: // Delegates to the maptype-owned template engine
         return Value::fromStr(host_->templateToUrl(args[0].toStr()));
-    case BuiltinId::SetHeaderValue: // F29 (AHeaders, AName, AValue)
+    case BuiltinId::SetHeaderValue: // AHeaders, AName, AValue
         return Value::fromStr(core::scriptSetHeaderValue(args[0].toStr(), args[1].toStr(), args[2].toStr()));
-    case BuiltinId::GetHeaderValue: // F30 (AHeaders, AName)
+    case BuiltinId::GetHeaderValue: // AHeaders, AName
         return Value::fromStr(core::scriptGetHeaderValue(args[0].toStr(), args[1].toStr()));
-    case BuiltinId::DeleteHeaderEntry: // F31 (AHeaders, AName)
+    case BuiltinId::DeleteHeaderEntry: // AHeaders, AName
         return Value::fromStr(core::scriptDeleteHeaderEntry(args[0].toStr(), args[1].toStr()));
     case BuiltinId::StringReplace: { // (S, OldPattern, NewPattern, [rfReplaceAll|rfIgnoreCase])
         const QByteArray s = args[0].toStr(), oldP = args[1].toStr(), newP = args[2].toStr();
@@ -1487,7 +1483,7 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
             return Value::fromInt(args[0].toStr().size());
         if (args[0].kind() == ValueKind::Empty)
             return Value::fromInt(0);
-        return unsupported(line, QStringLiteral("Length is only supported on strings this slice"));
+        return unsupported(line, QStringLiteral("Length is only supported on strings"));
     case BuiltinId::Chr: {
         auto n = argInt(0);
         if (!n.has_value())
@@ -1522,11 +1518,11 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     }
     case BuiltinId::High:
         if (args[0].kind() != ValueKind::Str)
-            return unsupported(line, QStringLiteral("High is only supported on strings this slice"));
+            return unsupported(line, QStringLiteral("High is only supported on strings"));
         return Value::fromInt(args[0].toStr().size());
     case BuiltinId::Low:
         if (args[0].kind() != ValueKind::Str)
-            return unsupported(line, QStringLiteral("Low is only supported on strings this slice"));
+            return unsupported(line, QStringLiteral("Low is only supported on strings"));
         return Value::fromInt(1);
     // ---- Numeric (intrinsics) ----
     case BuiltinId::Round: {
@@ -1630,23 +1626,22 @@ core::Result<Value> Interpreter::callBuiltin(BuiltinId id, Call* node) {
     case BuiltinId::Pi:
         return Value::fromReal(3.14159265358979323846L);
     default:
-        return unsupported(line,
-                           QStringLiteral("'%1' is not implemented this slice - see docs/handoffs/T-0014.md")
-                               .arg(QString::fromUtf8(kBuiltinNames[static_cast<std::size_t>(id)])));
+        return unsupported(line, QStringLiteral("'%1' is not implemented")
+                                     .arg(QString::fromUtf8(kBuiltinNames[static_cast<std::size_t>(id)])));
     }
 }
 
 // ==================================================================================================
-// Interface method calls (T-0015B, spec 2.7/5.6)
+// Interface method calls
 // ==================================================================================================
 
 namespace {
 // Marshals TPoint/TDoublePoint/TRect between the generic record Value (field order: parser.cpp's
-// kPointFields/kDoublePointFields/kRectFields - load-bearing, spec 5.2) and the 7 interfaces'
-// script_host.h C++ signatures. A record-typed argument that is not actually a Record Value (a
-// malformed script - never true of a corpus script, every call site here is const-typed in the
-// grammar) degrades to the zero record rather than throwing std::bad_variant_access: "no exception
-// ever crosses a cg::script API boundary" (spec 7) applies here too.
+// kPointFields/kDoublePointFields/kRectFields - load-bearing) and the 7 interfaces' script_host.h
+// C++ signatures. A record-typed argument that is not actually a Record Value (a malformed
+// script - never true of a corpus script, every call site here is const-typed in the grammar)
+// degrades to the zero record rather than throwing std::bad_variant_access: "no exception ever
+// crosses a cg::script API boundary" applies here too.
 Point valueToPoint(const Value& v) {
     if (v.kind() != ValueKind::Record || v.fields().size() < 2) {
         return Point{};
@@ -1673,10 +1668,10 @@ Value rectToValue(Rect r) {
     return Value::fromRecord(
         {Value::fromInt(r.left), Value::fromInt(r.top), Value::fromInt(r.right), Value::fromInt(r.bottom)});
 }
-// spec 5.2: TTileInfo field order IsExists/IsExistsTne/LoadDate/Size/Version/ContentType/Data
-// (parser.cpp's kTileInfoFields) - TileInfo only ever flows host -> script (IScriptTileCache::read
-// is the sole record-result site that isn't one of the 4 plain point/rect shapes above), so only
-// this direction is needed. LoadDate is `Int64` on the script side (a Unix timestamp,
+// TTileInfo field order IsExists/IsExistsTne/LoadDate/Size/Version/ContentType/Data (parser.cpp's
+// kTileInfoFields) - TileInfo only ever flows host -> script (IScriptTileCache::read is the sole
+// record-result site that isn't one of the 4 plain point/rect shapes above), so only this
+// direction is needed. LoadDate is `Int64` on the script side (a Unix timestamp,
 // i_PascalScriptTileCache.pas:30) but `QDateTime` in script_host.h; an invalid/default-constructed
 // QDateTime (never touched by a fake/host that reports IsExists=False) becomes 0.
 Value tileInfoToValue(const TileInfo& t) {
@@ -1692,9 +1687,9 @@ Value tileInfoToValue(const TileInfo& t) {
                               Value::fromStr(t.version), Value::fromStr(t.contentType),
                               Value::fromStr(t.data)});
 }
-// The `AZoom: Byte` parameters (spec 5.1 tail: "the zoom argument is 0-based Byte") - used by both
-// ICoordConverter and IScriptTileCache (u_PascalScriptTypes.pas:159,169,179,187), whose `AZoom` is
-// a plain `int` on the C++ side (script_host.h) but still wraps as a Byte, see callScriptTileCache.
+// The `AZoom: Byte` parameters (the zoom argument is a 0-based Byte) - used by both ICoordConverter
+// and IScriptTileCache (u_PascalScriptTypes.pas:159,169,179,187), whose `AZoom` is a plain `int` on
+// the C++ side (script_host.h) but still wraps as a Byte, see callScriptTileCache.
 quint8 toByteArg(const Value& v) {
     return static_cast<quint8>(v.toInt().value_or(0));
 }
@@ -1721,11 +1716,10 @@ core::Result<Value> Interpreter::evalMethodCallUnguarded(Call* node) {
 
     const Value& ifaceSlot = storage_[static_cast<std::size_t>(boundSlot)];
     if (!ifaceSlot.isAssigned()) {
-        // spec 7's generic runtime-error row (division by zero, bad conversion, ... "invalid regex,
-        // unknown MIME in TileCache.Write" - a method call through a nil interface belongs in the
-        // same family). No compiler/oracle exists to pin legacy's exact exception text for this
-        // specific case (unverifiable - see docs/handoffs/T-0015B.md); this implements the spec's
-        // "Runtime error -> IoError" contract with a message naming the construct.
+        // A method call through a nil interface is a runtime error, in the same family as division
+        // by zero, bad conversion, an invalid regex or an unknown MIME in TileCache.Write. No
+        // compiler or oracle exists to pin legacy's exact exception text for this case, so it is an
+        // IoError with a message naming the construct.
         return runtimeError(line, QStringLiteral("method call through an unassigned (nil) interface"));
     }
     const InterfaceRef& ref = ifaceSlot.interfaceRef();
@@ -1834,12 +1828,12 @@ core::Result<Value> Interpreter::callProjConverterFactory(const InterfaceRef& re
     return Value::fromInterface(toVoidShared(result), InterfaceId::ProjConverter);
 }
 
-// IHttpDownloader::doHttpRequest (kHttpDownloaderMethods' sole entry, 5 script-visible arguments -
-// script_host.h/spec 5.6): the parser's arity check (parser.cpp:1591) guarantees node->args.size()
-// == 5 for any Method call that reached here with this InterfaceId. The 2 `var` output arguments
-// must be simple variables (spec 4.3 A5, same rule as callUserRoutine's var/out parameters); status
-// 0 is passed through unchanged (spec 5.6 - status 0 also means "no connection"/a masked HTTP 403,
-// and must never be normalised away).
+// IHttpDownloader::doHttpRequest (kHttpDownloaderMethods' sole entry, 5 script-visible arguments,
+// script_host.h): the parser's arity check (parser.cpp:1591) guarantees node->args.size() == 5 for
+// any Method call that reached here with this InterfaceId. The 2 `var` output arguments must be
+// simple variables (same rule as callUserRoutine's var/out parameters); status 0 is passed through
+// unchanged (status 0 also means "no connection"/a masked HTTP 403, and must never be normalised
+// away).
 core::Result<Value> Interpreter::callHttpDownloader(const InterfaceRef& ref, Call* node) {
     const int line = node->line;
     Node* responseHeaderNode = node->args[3];
@@ -1884,10 +1878,10 @@ core::Result<Value> Interpreter::callHttpDownloader(const InterfaceRef& ref, Cal
 // parser.cpp's kScriptGlobalMethods, in order: SetVar/GetVar/Exists/SetVarTS/GetVarTS/ExistsTS/
 // Lock/Unlock/LockRead/UnlockRead. Values are Delphi Variants on the script side -> Value here
 // (script_host.h); GetVar/GetVarTS on an absent id return Value() (Empty), matching legacy's
-// Unassigned (spec 5.6) - VarType(Global.GetVar(id)) is then 0 via the existing VarType builtin,
-// no separate mapping needed here. SetVar/GetVar/Exists do no locking of their own (spec 5.6: the
-// script brackets them with Lock/Unlock itself); the …TS methods self-lock inside the host
-// implementation - the interpreter is not involved in that decision either way.
+// Unassigned - VarType(Global.GetVar(id)) is then 0 via the existing VarType builtin, no separate
+// mapping needed here. SetVar/GetVar/Exists do no locking of their own (the script brackets them
+// with Lock/Unlock itself); the …TS methods self-lock inside the host implementation - the
+// interpreter is not involved in that decision either way.
 core::Result<Value> Interpreter::callScriptGlobal(const InterfaceRef& ref, int methodIndex,
                                                   const std::vector<Value>& args, int line) {
     auto* global = static_cast<IScriptGlobal*>(ref.obj.get());
@@ -1928,9 +1922,9 @@ core::Result<Value> Interpreter::callScriptGlobal(const InterfaceRef& ref, int m
 // reusing the same array-literal marshalling as the `Format` builtin in callBuiltin - AArgs is an
 // open-array literal, not a generically-evaluated argument (it would otherwise evaluate as the
 // ordinal-set bitmask StringReplace's `[rfReplaceAll]` uses). The "empty string is dropped" rule
-// (spec 5.6) is the *implementation's* responsibility (legacy u_PascalScriptLogger.pas:121-127
-// checks inside TPascalScriptLogger.Write itself, not at the registration/dispatch layer) - the
-// interpreter always forwards the argument unconditionally.
+// is the *implementation's* responsibility (legacy u_PascalScriptLogger.pas:121-127 checks inside
+// TPascalScriptLogger.Write itself, not at the registration/dispatch layer) - the interpreter
+// always forwards the argument unconditionally.
 core::Result<Value> Interpreter::callScriptLogger(const InterfaceRef& ref, Call* node) {
     const int line = node->line;
     auto* logger = static_cast<IScriptLogger*>(ref.obj.get());
@@ -1974,7 +1968,7 @@ core::Result<Value> Interpreter::callScriptLogger(const InterfaceRef& ref, Call*
 // every TileCache.* zoom as `AZoom: Byte` too (u_PascalScriptTypes.pas:159,169,179,187), so the
 // script value is wrapped with toByteArg, exactly as ICoordConverter's does; the host type stays a
 // plain `int` (script_host.h). All four resolve an empty `version` argument as "default version"
-// host-side (spec 5.6); the interpreter passes it through unchanged either way.
+// host-side; the interpreter passes it through unchanged either way.
 core::Result<Value> Interpreter::callScriptTileCache(const InterfaceRef& ref, int methodIndex,
                                                      const std::vector<Value>& args, int line) {
     auto* cache = static_cast<IScriptTileCache*>(ref.obj.get());
@@ -2131,8 +2125,7 @@ core::Result<Interpreter::Signal> Interpreter::execTryFinally(TryFinally* node) 
     if (node->isExcept) {
         // Only a Delphi-equivalent runtime error (ErrorCode::IoError) is catchable here.
         // Unsupported (a deliberate fail-loud diagnostic) and Cancelled (a budget/abort signal)
-        // are port-internal, not script-level, and must propagate through `except` unchanged
-        // (T-0014 rework Major 3).
+        // are port-internal, not script-level, and must propagate through `except` unchanged.
         if (!bodySig.has_value() && bodySig.error().code() == core::ErrorCode::IoError) {
             return execStmtList(node->handler);
         }
@@ -2142,7 +2135,7 @@ core::Result<Interpreter::Signal> Interpreter::execTryFinally(TryFinally* node) 
     if (!handlerSig.has_value())
         return std::unexpected(handlerSig.error());
     if (!bodySig.has_value())
-        return std::unexpected(bodySig.error()); // re-raise (spec 3.3 S9)
+        return std::unexpected(bodySig.error()); // re-raise
     if (*handlerSig != Signal::Normal)
         return handlerSig;
     return bodySig;
@@ -2157,26 +2150,26 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
         auto* n = static_cast<Assign*>(node);
         if (auto ok = checkNotBound(n->slot, n->line); !ok.has_value())
             return std::unexpected(ok.error());
-        auto v = evalExprForSlot(n->value, n->slot); // review finding 3: unary '-' RHS special case
+        auto v = evalExprForSlot(n->value, n->slot); // Unary '-' RHS special case
         if (!v.has_value())
             return std::unexpected(v.error());
-        storage_[static_cast<std::size_t>(n->slot)] = wrapForSlot(n->slot, *v); // N1/N2, incl. Result
+        storage_[static_cast<std::size_t>(n->slot)] = wrapForSlot(n->slot, *v); // Incl. Result
         return Signal::Normal;
     }
     case NodeKind::IndexAssign: {
         auto* n = static_cast<IndexAssign*>(node);
         if (n->target->kind != NodeKind::VarRef) {
-            return unsupported(
-                n->line, QStringLiteral("indexed assignment target must be a simple variable this slice"));
+            return unsupported(n->line,
+                               QStringLiteral("indexed assignment target must be a simple variable"));
         }
         auto* vr = static_cast<VarRef*>(n->target);
         if (auto ok = checkNotBound(vr->slot, n->line); !ok.has_value())
             return std::unexpected(ok.error());
         Value& target = storage_[static_cast<std::size_t>(vr->slot)];
         if (target.kind() == ValueKind::Array) {
-            // PD-1 (spec 3.6/A5): `arr[i] := v` range-checks `i` exactly like a read
-            // (arrayElementOffset) then stores `v` narrowed to the array's declared element type -
-            // the same wrappedTo an ordinary scalar slot write goes through (N1/N2).
+            // `arr[i] := v` range-checks `i` exactly like a read (arrayElementOffset) then stores
+            // `v` narrowed to the array's declared element type - the same wrappedTo an ordinary
+            // scalar slot write goes through.
             auto idxR = evalExpr(n->index);
             if (!idxR.has_value())
                 return std::unexpected(idxR.error());
@@ -2195,8 +2188,7 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
             return Signal::Normal;
         }
         if (target.kind() != ValueKind::Str && target.kind() != ValueKind::Empty) {
-            return unsupported(n->line,
-                               QStringLiteral("indexed assignment is only supported on strings this slice"));
+            return unsupported(n->line, QStringLiteral("indexed assignment is only supported on strings"));
         }
         auto idxR = evalExpr(n->index);
         if (!idxR.has_value())
@@ -2210,7 +2202,7 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
         QByteArray s = target.toStr();
         const qint64 i = *idx;
         if (i < 1 || i > s.size())
-            return runtimeError(n->line, QStringLiteral("string index out of range")); // T4
+            return runtimeError(n->line, QStringLiteral("string index out of range"));
         const QByteArray ch = valR->toStr();
         s[static_cast<int>(i - 1)] = ch.isEmpty() ? '\0' : ch.at(0);
         target = Value::fromStr(std::move(s));
@@ -2219,8 +2211,7 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
     case NodeKind::FieldAssign: {
         auto* n = static_cast<FieldAssign*>(node);
         if (n->target->kind != NodeKind::VarRef) {
-            return unsupported(
-                n->line, QStringLiteral("field assignment target must be a simple variable this slice"));
+            return unsupported(n->line, QStringLiteral("field assignment target must be a simple variable"));
         }
         auto* vr = static_cast<VarRef*>(n->target);
         if (auto ok = checkNotBound(vr->slot, n->line); !ok.has_value())
@@ -2237,8 +2228,8 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
             return runtimeError(n->line, QStringLiteral("internal error: field index out of range"));
         }
         // Record fields keep their declared C++ type (qint32/double per script_host.h) rather than
-        // a per-field DeclaredType this slice tracks - N1/N2 range-wrap/round applies to named
-        // slots (spec's own write-path list), not into a record field.
+        // a per-field DeclaredType - the range-wrap/round applies to named slots, not into a
+        // record field.
         flds[static_cast<std::size_t>(n->fieldIndex)] = *v;
         return Signal::Normal;
     }
@@ -2273,9 +2264,9 @@ core::Result<Interpreter::Signal> Interpreter::execStmt(Node* node) {
         return Signal::Normal;
     case NodeKind::With: {
         // Every field access in `body` was already lowered to an ordinary Field/VarRef node at
-        // compile time (parser.cpp's with-scope, spec 3.5) - all that is left to do at run time is
-        // evaluate the subject (a plain variable reference, so this is just the bound-variable
-        // check) and run the body.
+        // compile time (parser.cpp's with-scope) - all that is left to do at run time is evaluate
+        // the subject (a plain variable reference, so this is just the bound-variable check) and
+        // run the body.
         auto* n = static_cast<With*>(node);
         auto subject = evalExpr(n->subject);
         if (!subject.has_value())

@@ -4,17 +4,16 @@
 
 #pragma once
 // Ports: i_GeometryProjected.pas, u_GeometryProjected.pas, u_GeometryProjectedMulti.pas.
-// docs/specs/geo.md §3.3.
 //
 // The projected mirror of the lon/lat hierarchy (geometry_lonlat.h): same shape, with four
-// deliberate asymmetries (all legacy, §3.3): no `Point` singular type (only MultiPoint), no
-// hash(), no isSame*, no meta; bounds() is a plain DoubleRect; and the polygon interface (not a
-// free function) carries the spatial predicates -- IsPointInPolygon, IsPointOnBorder,
+// deliberate asymmetries (all legacy): no `Point` singular type (only MultiPoint), no hash(),
+// no isSame*, no meta; bounds() is a plain DoubleRect; and the polygon interface (not a free
+// function) carries the spatial predicates -- IsPointInPolygon, IsPointOnBorder,
 // CheckRectIntersection, IsRectIntersectPolygon/Border, CalcArea.
 //
 // Concrete classes are built ONLY by GeometryProjectedFactory / GeometryProjectedPolygonBuilder
-// (T-0017C2, out of scope here): bounds() is computed once there (ProjectedMBRByPoints) and
-// passed in, never lazily -- same convention as geometry_lonlat.h.
+// (out of scope here): bounds() is computed once there (ProjectedMBRByPoints) and passed in,
+// never lazily -- same convention as geometry_lonlat.h.
 
 #include "cg/geo/geo_types.h"
 
@@ -25,7 +24,6 @@
 
 namespace cg::geo {
 
-// FEAT-GEO-013
 class IGeometryProjected {
 public:
     virtual ~IGeometryProjected() = default;
@@ -137,8 +135,8 @@ private:
     std::vector<GeometryProjectedSingleLinePtr> items_;
 };
 
-// A contour's ring is implicitly closed (§3.3.1: CalcArea/IsPointInPolygon/IsPointOnBorder all
-// treat it as a closed loop by wrapping from the last point back to the first), but
+// A contour's ring is implicitly closed (CalcArea/IsPointInPolygon/IsPointOnBorder all treat it
+// as a closed loop by wrapping from the last point back to the first), but
 // TGeometryProjectedBase.Create(AClosed=True, ...) still trims a caller-supplied literal repeat
 // of the first point, exactly like GeometryLonLatContour (geometry_lonlat.h) does.
 class GeometryProjectedContour final : public IGeometryProjectedContour {

@@ -2,11 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-012. Ports Test/u_GeometryMetaSaveLoadJson_Test.pas (5 published cases --
-// TestEmptyMeta/TestSingleLineWithMeta/TestSingleLineWithoutMeta/TestMultiLine/TestPerformance;
-// the ticket's spec extract names 4, but the legacy source has 5, see docs/handoffs/T-0017A.md)
-// and docs/specs/geo.md §11.2 geometry_meta_json_test.cpp (2 new), plus 2 more added in Rework 1
-// (docs/handoffs/T-0017A-review.md F4/F5) -- 9 cases total.
+// Ports Test/u_GeometryMetaSaveLoadJson_Test.pas (5 published cases -- TestEmptyMeta/
+// TestSingleLineWithMeta/TestSingleLineWithoutMeta/TestMultiLine/TestPerformance), plus 4 new
+// cases -- 9 cases total.
 
 #include "cg/core/platform/qt_compat.h"
 #include "cg/geo/geometry_factory.h"
@@ -113,9 +111,8 @@ TEST(GeometryMetaJson, TestMultiLine) {
 
     // Sub-line 3 (0-based index 2, "elevation only", 30 points) starts at flattened offset
     // 10 + 1 + 20 + 1 = 32: real elevation, but no timestamp (globally present via sub-lines 2/5).
-    // Tech Lead ruling (review F3): the gap is legacy's literal FillChar(...,0)
-    // (u_DoublePointsMetaAggregator.pas:126,196), i.e. the Delphi TDateTime "zero date"
-    // 1899-12-30 -- a *valid* QDateTime, not an invalid/null one.
+    // The gap is legacy's literal FillChar(...,0) (u_DoublePointsMetaAggregator.pas:126,196), i.e.
+    // the Delphi TDateTime "zero date" 1899-12-30 -- a *valid* QDateTime, not an invalid/null one.
     const QDateTime delphiZeroDate = cg::core::platform::utcDateTime(QDate(1899, 12, 30), QTime(0, 0));
     for (int i = 0; i < 30; ++i) {
         EXPECT_NEAR(parsed->elevation[32 + static_cast<std::size_t>(i)], i * 0.5, 0.0001);
@@ -132,9 +129,9 @@ TEST(GeometryMetaJson, TestMultiLine) {
 TEST(GeometryMetaJson, TestEmptyMeta) {
     // The legacy table's 2nd/3rd cases expect a non-null meta with a specific `.Count` even
     // though no sub-line actually carries elevation/timestamp data -- that bare-count concept has
-    // no equivalent in PointsMeta (deliberately: "do not carry a per-item ok flag",
-    // docs/specs/geo.md §3.2), so this port collapses a declared-but-dataless payload to the same
-    // "no meta" (an empty PointsMeta) as a genuinely empty one. See docs/handoffs/T-0017A.md.
+    // no equivalent in PointsMeta (deliberately: "do not carry a per-item ok flag"), so this port
+    // collapses a declared-but-dataless payload to the same "no meta" (an empty PointsMeta) as a
+    // genuinely empty one.
     auto empty1 = parseMetaJson(QByteArrayView());
     ASSERT_TRUE(empty1.has_value());
     EXPECT_TRUE(empty1->isEmpty());
@@ -152,7 +149,7 @@ TEST(GeometryMetaJson, TestEmptyMeta) {
 }
 
 TEST(GeometryMetaJson, TestPerformance) {
-    // Ported as a plain correctness case, without timing (docs/backlog/T-0017A ticket text).
+    // Ported as a plain correctness case, without timing.
     GeometryLonLatFactory factory;
     auto line = makeTestSingleLine(factory, 9000, true, true);
     const QByteArray blob = writeMetaJson(*line);
@@ -162,7 +159,7 @@ TEST(GeometryMetaJson, TestPerformance) {
     EXPECT_EQ(parsed->elevation.size(), 9000u);
 }
 
-// --- new coverage: docs/specs/geo.md §11.2 geometry_meta_json_test.cpp (2 cases) ---------------
+// --- new coverage (2 cases) ---------------
 
 TEST(GeometryMetaJson, PrefixIsLiteralJson) {
     GeometryLonLatFactory factory;
@@ -178,12 +175,12 @@ TEST(GeometryMetaJson, MalformedPayloadReturnsError) {
     EXPECT_FALSE(result.has_value());
 }
 
-// --- Rework 1: docs/handoffs/T-0017A-review.md F4/F5 --------------------------------------------
+// --- key order and unknown meta --------------------------------------------------------------
 
 TEST(GeometryMetaJson, LiteralKeyOrderMatchesLegacy) {
-    // Tech Lead ruling (review F4): writeMetaJson must emit keys in TGeometryMetaToStreamJson's
-    // exact order (v,t,g / c,m / t,n,d), not QJsonObject's alphabetically-sorted order (which
-    // would reorder the root object to g,t,v). Pin the literal output string.
+    // writeMetaJson must emit keys in TGeometryMetaToStreamJson's exact order
+    // (v,t,g / c,m / t,n,d), not QJsonObject's alphabetically-sorted order (which would reorder
+    // the root object to g,t,v). Pin the literal output string.
     GeometryLonLatFactory factory;
     auto line = makeTestSingleLine(factory, 2, true, false); // elevation = {0.0, 0.5}
     const QByteArray blob = writeMetaJson(*line);
@@ -200,9 +197,8 @@ TEST(GeometryMetaJson, LiteralKeyOrderMatchesLegacy) {
 }
 
 TEST(GeometryMetaJson, UnknownVersionOrTypeReturnsNoMetaNotError) {
-    // Tech Lead ruling (review F5): legacy's Parse hits Assert(False); Exit for an unrecognised
-    // "v" or "t" and returns nil ("no meta"), not a parse failure
-    // (u_GeometryMetaFromStreamJson.pas:103-112).
+    // Legacy's Parse hits Assert(False); Exit for an unrecognised "v" or "t" and returns nil
+    // ("no meta"), not a parse failure (u_GeometryMetaFromStreamJson.pas:103-112).
     auto badVersion = parseMetaJson(QByteArrayLiteral("JSON{\"v\":2,\"t\":1,\"g\":[]}"));
     ASSERT_TRUE(badVersion.has_value());
     EXPECT_TRUE(badVersion->isEmpty());

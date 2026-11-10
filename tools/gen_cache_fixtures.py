@@ -3,23 +3,21 @@
 
 Generates tests/fixtures/cache/{cache,cache_old,cache_es}/ (one folder-cache layout each) plus
 tests/fixtures/cache/expected.json, the cross-check manifest tests/storage/tile_name_codec_test.cpp
-reads. Protocol rule 10 (docs/conventions/agent-protocol.md): for a formula-defined layout,
-generated fixtures are legal provided the generator is an INDEPENDENT implementation, written
-directly from the legacy Pascal by a different author than the C++ -- so a test failure means the
-two disagree, not that both copied one bug. Each function below carries its legacy unit and line
-range in a comment, the same way docs/specs/storage.md does; nothing here imports or shells out to
-anything the C++ build touches.
+reads. For a formula-defined layout, generated fixtures are legal provided the generator is an
+INDEPENDENT implementation, written directly from the legacy Pascal by a different author than the
+C++ -- so a test failure means the two disagree, not that both copied one bug. Each function below
+carries its legacy unit and line range in a comment; nothing here imports or shells out to anything
+the C++ build touches.
 
-Scope (T-0021B): the three folder layouts that ticket ported to C++ -- SAS.Planet (cache/),
-GoogleMV (cache_old/) and EarthSlicer (cache_es/).
+Scope: three folder layouts -- SAS.Planet (cache/), GoogleMV (cache_old/) and EarthSlicer
+(cache_es/).
 
-Scope (T-0021C): the six regex-family folder layouts -- GlobalMapper Tiles/Aux/Bing (cache_gmt_*),
-MOBAC (cache_ma/), OsmAnd+ (cache_osmand/) and TMS (cache_tms/). The native-SQLite/BerkeleyDB
-region layout is still out of scope: its formula maps a 256x256 tile BLOCK, not one tile per
-fixture entry like the other nine, so it doesn't fit this script's per-tile TILES table the same
-way; T-0021C's region codec tests are hand-derived from the Pascal directly instead (matching the
-repo's real `cache_sqlite/` fixture, docs/backlog/T-0021C's own acceptance criteria). T-0021D adds
-a native-SQLite layout here if it ends up needing one.
+Also the six regex-family folder layouts -- GlobalMapper Tiles/Aux/Bing (cache_gmt_*), MOBAC
+(cache_ma/), OsmAnd+ (cache_osmand/) and TMS (cache_tms/). The native-SQLite/BerkeleyDB region
+layout is out of scope: its formula maps a 256x256 tile BLOCK, not one tile per fixture entry like
+the other nine, so it doesn't fit this script's per-tile TILES table the same way; the region
+codec tests are hand-derived from the Pascal directly instead (matching the repo's real
+`cache_sqlite/` fixture).
 
 usage: gen_cache_fixtures.py --out DIR [--layout NAME ...] [--check]
   --check   re-generate into a temp dir and diff against --out; non-zero on any difference
@@ -62,9 +60,9 @@ TILES: list[tuple[int, int, int, str, bool]] = [
     (3, 2, 5, "tne", True),
 ]
 
-# T-0321: the native-SQLite region file (cache_sqlite/map/z1/0/0/0.0.sqlitedb). The container layout
-# (table t / index t_v_idx DDL, 4096-byte pages, WAL journal mode, c NULL, d = load date) is the one
-# the legacy SQLite cache writes; the former real captured Google tile was replaced by a synthetic,
+# The native-SQLite region file (cache_sqlite/map/z1/0/0/0.0.sqlitedb). The container layout (table
+# t / index t_v_idx DDL, 4096-byte pages, WAL journal mode, c NULL, d = load date) is the one the
+# legacy SQLite cache writes; the former real captured Google tile was replaced by a synthetic,
 # formula-defined 256x256 8-bit RGB gradient PNG (public release: no third-party imagery).
 SQLITE_REGION_REL = "cache_sqlite/map/z1/0/0/0.0.sqlitedb"
 SQLITE_TILE_DATE = 1789643597  # unchanged from the replaced capture (tests pin 2026-09-17 11:13:17)
@@ -267,8 +265,8 @@ def write_fixtures(out_dir: Path, layout_names: list[str]) -> dict:
         for entry in manifest["layouts"][name]["tiles"]:
             p = layout_dir / entry["relpath"]
             p.parent.mkdir(parents=True, exist_ok=True)
-            # Content is not exercised by T-0021B (path-only codec tests); a minimal non-empty
-            # payload for "tile" entries keeps the fixture visually distinguishable from a TNE.
+            # Content is not exercised (path-only codec tests); a minimal non-empty payload for
+            # "tile" entries keeps the fixture visually distinguishable from a TNE.
             p.write_bytes(b"" if entry["kind"] == "tne" else b"\xff\xd8\xff\xd9")
             os.utime(p, (entry["mtime"], entry["mtime"]))
     write_sqlite_region(out_dir)
@@ -284,8 +282,8 @@ def _all_files(root: Path) -> set[str]:
 
 def _compare_recursive(a: Path, b: Path, layout_names: list[str]) -> bool:
     # Only compare the paths this run owns (its layout directories + expected.json) -- --out may
-    # also hold fixtures other tickets manage by hand (e.g. tests/fixtures/cache/cache_sqlite/,
-    # T-0021A's real captured sqlite region file) that this script never writes and must not flag.
+    # also hold fixtures that are managed by hand (e.g. tests/fixtures/cache/cache_sqlite/, a real
+    # captured sqlite region file) that this script never writes and must not flag.
     owned_dirs = {LAYOUTS[n][0] for n in layout_names}
     def owned(rel: str) -> bool:
         return rel in ("expected.json", SQLITE_REGION_REL) or rel.split("/", 1)[0] in owned_dirs

@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_TileDownloadSubsystemState.pas (docs/specs/maptype.md 2.13.1)
+// Ports: u_TileDownloadSubsystemState.pas
 //
 // The state of a whole map's download subsystem: the first reason, in a fixed priority, why a map cannot
 // download -- the ZMP, the map's abilities, the request builder, the result saver. Legacy derives from

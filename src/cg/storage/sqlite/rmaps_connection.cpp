@@ -25,7 +25,7 @@ constexpr int kEmptyZoom = 255; // ports CEmptyZoomValue (:143)
 // not the Byte the public API otherwise guarantees), so an extreme Z can make `17 - Z` overflow
 // int32. Delphi's overflow checks are off, so legacy wraps as 32-bit two's-complement arithmetic;
 // reproduced with the same unsigned-intermediate idiom mbtiles_connection.cpp's invertY() uses for
-// its own out-of-range case (legacy-defects.md L-47 sibling; T-0022C2-review.md's "For C3" note).
+// its own out-of-range case (the same kind of legacy wrap-around).
 [[nodiscard]] int invertZ(int z) {
     return static_cast<int>(17u - static_cast<quint32>(z));
 }
@@ -209,7 +209,7 @@ protected:
 };
 
 // Ports TInsertTileConnectionStatementRMaps (:497-518): `s` is always 0, a literal in the SQL text
-// (a *layer* index in RMaps, not a size -- storage.md §2.17.2), never bound.
+// (a *layer* index in RMaps, not a size), never bound.
 class RmapsInsertTileStatement final : public InsertTileStatement {
 public:
     using InsertTileStatement::InsertTileStatement;

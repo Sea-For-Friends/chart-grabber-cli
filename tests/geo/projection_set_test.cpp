@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001, FEAT-GEO-014. New coverage only; docs/specs/geo.md §11.2
-// projection_set_test.cpp (8), §2.6.
+// New coverage only.
 #include "cg/geo/datum.h"
 #include "cg/geo/projection_set.h"
 
@@ -61,7 +60,7 @@ TEST(ProjectionSet, SuitableProjectionAcrossSets) {
     const auto google = factory.byCode(3857, kTileSplitQuadrate256x256);
     const auto yandex = factory.byCode(3395, kTileSplitQuadrate256x256);
     // All built-in sets share the 256x256 pyramid, so the nearest-pixelsFloat() level is the same
-    // index (docs/specs/geo.md §2.6).
+    // index.
     const auto suitable = google->suitableProjection(*yandex->zoom(12));
     EXPECT_EQ(suitable->zoom(), 12);
 }
@@ -76,9 +75,8 @@ TEST(ProjectionSet, IsProjectionFromThisSet) {
 
 TEST(ProjectionSet, StandardListOrderIsGoogleYandexGeographic) {
     // u_ProjectionSetListStaticSimple.pas:45-58 registers exactly THREE entries (ESRI 53004 is
-    // reachable by code/config but was never in the selectable list) -- Tech Lead ruling
-    // 2026-09-18, docs/decisions/tech-lead-rulings.md geo.md §13 Q-4. T-0016 review finding 12: the
-    // old name promised a fourth (Esri) entry the list does not register; renamed.
+    // reachable by code/config but was never in the selectable list). The old name promised a
+    // fourth (Esri) entry the list does not register; renamed.
     auto factory = makeFactory();
     const auto list = standardProjectionSetList(factory);
     ASSERT_EQ(list.size(), 3U);

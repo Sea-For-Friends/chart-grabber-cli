@@ -25,7 +25,7 @@ public:
     virtual ~IArchiveReader() = default;
 
     [[nodiscard]] virtual int itemsCount() const = 0;
-    // The first item whose name equals itemName: exactly, else case-insensitively (D-48).
+    // The first item whose name equals itemName: exactly, else case-insensitively.
     [[nodiscard]] virtual std::optional<QByteArray> itemByName(const QString& itemName) const = 0;
     [[nodiscard]] virtual QString itemNameByIndex(int itemIndex) const = 0;
     [[nodiscard]] virtual std::optional<QByteArray> itemByIndex(int itemIndex, QString& itemName) const = 0;

@@ -2,15 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-034. Ports i_TileInfoBasicMemCache.pas, u_TileInfoBasicMemCache.pas
-// (TTileInfoBasicMemCache); docs/specs/storage.md §2.9 (:550-623).
+// Ports i_TileInfoBasicMemCache.pas, u_TileInfoBasicMemCache.pas (TTileInfoBasicMemCache).
 //
-// Test-count ruling (docs/backlog/T-0021E-storage-mem-cache-and-simple-config.md's "22" is not a
-// quota, tests/conventions/tests-port-dont-multiply): legacy has no DUnit suite for this class, so
-// this is the ticket's own minimal ~8-10 case list: hit, miss, negative cache,
-// WithData-miss-on-data-less, version key case sensitivity, TTL expiry + refresh-on-hit (injected
-// clock, no sleeps), capacity eviction order, one table-driven case over the four ClearStrategy
-// values, and enumerate with/without ignoreTne.
+// Legacy has no DUnit suite for this class, so this is a minimal ~8-10 case list: hit, miss,
+// negative cache, WithData-miss-on-data-less, version key case sensitivity, TTL
+// expiry + refresh-on-hit (injected clock, no sleeps), capacity eviction order, one table-driven
+// case over the four ClearStrategy values, and enumerate with/without ignoreTne.
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"
 #include "cg/storage/tile_info_mem_cache.h"
@@ -223,8 +220,8 @@ TEST(TileInfoMemCache, EnumerateWithAndWithoutIgnoreTne) {
     EXPECT_EQ(noTne.front().first, PointI(0, 0));
 }
 
-// Regression for the T-0021E1 rework findings (last-empty-slot reuse, data-less entries skipped,
-// key version returned), all in one case as the Tech Lead ruling asked.
+// Regression test for last-empty-slot reuse, data-less entries skipped and the key version
+// returned, all in one case.
 TEST(TileInfoMemCache, EnumerateAfterRemoveAndReAddUsesLastSlotSkipsDatalessReturnsKeyVersion) {
     TileInfoMemCache cache(4, std::chrono::milliseconds(60'000), ClearStrategy::Never);
     cache.add(PointI(0, 0), 0, version("vA"), makeExists());

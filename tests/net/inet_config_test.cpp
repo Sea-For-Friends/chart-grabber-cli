@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-007; docs/specs/net.md §2.2, test plan §7.8
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/net/inet_config.h"
@@ -76,13 +75,13 @@ TEST(InetConfig, ReadWriteRoundTrip) {
     EXPECT_EQ(outSection->readInt(u"DownloadTryCount", -1), 7);
     EXPECT_EQ(outSection->readInt(u"SleepOnResetConnection", -1), 9000);
     EXPECT_TRUE(outSection->readBool(u"IgnoreTlsErrors", false));
-    EXPECT_EQ(outFile->keyNames(u"Internet").size(), 5); // UserAgentString/TimeOut/DownloadTryCount/
-                                                         // SleepOnResetConnection/IgnoreTlsErrors --
-                                                         // NetworkEngine never written ([D-1])
+    EXPECT_EQ(outFile->keyNames(u"Internet").size(), 5); // UserAgentString, TimeOut,
+                                                         // DownloadTryCount, SleepOnResetConnection,
+                                                         // IgnoreTlsErrors; never NetworkEngine
 
     const auto outProxySection = outSection->subItem(u"Proxy");
     ASSERT_NE(outProxySection, nullptr);
-    EXPECT_EQ(outFile->keyNames(u"Internet_Proxy").size(), 7); // exactly the seven §2.1 keys
+    EXPECT_EQ(outFile->keyNames(u"Internet_Proxy").size(), 7); // exactly the seven keys
 }
 
 TEST(InetConfig, TimeOutHasNoClamp) {
@@ -131,8 +130,7 @@ TEST(InetConfig, NetworkEngineKeyIsReadAndNotWritten) {
 TEST(InetConfig, ProxySubItemIsNamedProxy) {
     // ConfigElementComplex's SaveLoadSlot{"Proxy"} composes, via the shared config-tree machinery,
     // to the on-disk section "<Parent>_Proxy" (u_ConfigDataProviderByIniFileSection.pas:128:
-    // `FSection + '_' + AIdent`) -- not "<Parent>.Proxy" as net.md §2.1's prose literally spells it;
-    // the dot there is descriptive, not a literal section header (see docs/handoffs/T-0011A.md).
+    // `FSection + '_' + AIdent`) -- not "<Parent>.Proxy".
     auto file = std::make_shared<IniFile>();
     const auto root = ConfigProviderIni::wrap(file);
     const auto proxySection = root->orCreateSubItem(u"Internet_Proxy");
@@ -151,7 +149,7 @@ TEST(InetConfig, IgnoreTlsErrorsDefaultsFalse) {
     EXPECT_FALSE(config.settings()->ignoreTlsErrors);
 }
 
-// T-0094 part 2: the before-hook run from finishWrite takes the element lock (legacy
+// The before-hook run from finishWrite takes the element lock (legacy
 // u_ConfigDataElementBase.pas:221-238), so two writers neither race on the members the hook reads nor
 // leave a snapshot older than the last write.
 TEST(InetConfig, ConcurrentWritersLeavePublishedSnapshotEqualToAFreshRebuild) {

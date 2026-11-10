@@ -5,11 +5,11 @@
 #pragma once
 // Ports: nothing (internal helper).
 //
-// The Delphi TCustomIniFile / StrToIntDef / StrToFloat conversion quirks (spec core.md 2.12.2,
-// Q13/Q14/Q16/Q17/Q18/Q19/Q20) shared between IniFile's own typed accessors (ini_file.cpp) and
-// IConfigProvider's typed helpers (config_provider.cpp): a value converts identically whether it
-// is read straight off an IniFile or through a provider tree built on top of one, so the
-// conversion rules live in exactly one place.
+// The Delphi TCustomIniFile / StrToIntDef / StrToFloat conversion quirks shared between
+// IniFile's own typed accessors (ini_file.cpp) and IConfigProvider's typed helpers
+// (config_provider.cpp): a value converts identically whether it is read straight off an IniFile
+// or through a provider tree built on top of one, so the conversion rules live in exactly one
+// place.
 
 #include <QDate>
 #include <QDateTime>

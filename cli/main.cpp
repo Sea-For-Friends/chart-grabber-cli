@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit). docs/specs/app-cli.md 2.6. The platform is offscreen: a terminal program must
-// not try xcb or wayland because a desktop variable happens to be set; plugin path variables are ignored
-// likewise.
+// New code (no legacy unit). The platform is offscreen: a terminal program must not try xcb or wayland
+// because a desktop variable happens to be set; plugin path variables are ignored likewise.
 #include "cg/app/cli_main.h"
 #include "cg/core/app_paths.h"
 #include "cg/core/platform/file_ops.h"
@@ -25,8 +24,8 @@
 
 namespace {
 
-// T-0377, T-0382: a self-contained Linux bundle ships <exe dir>/fontroot (etc/fonts/fonts.conf plus DejaVu
-// Sans) and ALWAYS renders with it. Its fontconfig (Debian 12, 2.14) must not read a newer host /etc/fonts or
+// A self-contained Linux bundle ships <exe dir>/fontroot (etc/fonts/fonts.conf plus DejaVu Sans) and ALWAYS
+// renders with it. Its fontconfig (Debian 12, 2.14) must not read a newer host /etc/fonts or
 // /usr/share/fontconfig (dozens of "Fontconfig warning" lines), and the clean images have no fonts at all.
 // FONTCONFIG_SYSROOT prefixes EVERY path, the cache directory too, so the sysroot cannot be the bundle itself
 // (the cache would be written into it). The sysroot is therefore a per-user directory with two symbolic links
@@ -64,8 +63,8 @@ bool makeSysroot(const QString& sysroot, const QString& root, bool privateDir) {
         QFile::setPermissions(sysroot,
                               QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
     }
-    // T-0385: fontconfig 2.14 creates <sysroot>/var/cache/fontconfig itself and loses a race when several
-    // CLIs start at once ("No writable cache directories"); QDir::mkpath tolerates an existing directory.
+    // Fontconfig 2.14 creates <sysroot>/var/cache/fontconfig itself and loses a race when several CLIs
+    // start at once ("No writable cache directories"); QDir::mkpath tolerates an existing directory.
     if (!QDir().mkpath(QDir(sysroot).filePath(QStringLiteral("var/cache/fontconfig")))) {
         return false;
     }
@@ -119,13 +118,12 @@ void useBundledFontconfig(const QStringList& arguments) {
 } // namespace
 
 int main(int argc, char* argv[]) {
-    QCoreApplication::setApplicationName(
-        QStringLiteral("chart-grabber")); // one directory for both programs (Q-9)
+    QCoreApplication::setApplicationName(QStringLiteral("chart-grabber")); // one directory for both programs
     QCoreApplication::setApplicationVersion(QStringLiteral(CG_TILES_VERSION " (" CG_GIT_COMMIT ")"));
     qputenv("QT_QPA_PLATFORM", "offscreen");
-    cg::core::platform::silenceQtPlatformLogNoise(); // T-0396: macOS only
-    // T-0377: Qt loads only the plugins of its own installation (qt.conf of a bundle, else the compiled-in
-    // path): a QT_PLUGIN_PATH meant for another Qt (a host application's) would otherwise load that build's
+    cg::core::platform::silenceQtPlatformLogNoise(); // macOS only
+    // Qt loads only the plugins of its own installation (qt.conf of a bundle, else the compiled-in path): a
+    // QT_PLUGIN_PATH meant for another Qt (a host application's) would otherwise load that build's
     // offscreen plugin.
     qunsetenv("QT_PLUGIN_PATH");
     qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
@@ -138,7 +136,7 @@ int main(int argc, char* argv[]) {
     cg::core::platform::TerminationSignal termination;
     const int rc = cg::app::runCli(app.arguments(), termination.token(),
                                    [&termination] { return termination.watchStdin(); });
-    if (termination.stoppedByStdin()) { // T-0332: one line, also when the stop came before the job started
+    if (termination.stoppedByStdin()) { // One line, also when the stop came before the job started
         std::fputs("chart-grabber-cli: stop requested on stdin; exit 143\n", stderr);
     }
     return termination.exitCode() != 0 ? termination.exitCode() : rc;

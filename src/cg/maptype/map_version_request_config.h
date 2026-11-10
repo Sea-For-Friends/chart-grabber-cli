@@ -5,9 +5,9 @@
 #pragma once
 // Ports: i_MapVersionRequestConfig.pas, u_MapVersionRequestConfig.pas
 //
-// Per-map version request settings (spec maptype.md sections 2.7, 2.9): `Version` (default = the
-// ZMP's version, written only when it differs) and `ShowOtherVersions` (default true, written
-// always). The static half is rebuilt as an immutable snapshot before every change notification.
+// Per-map version request settings: `Version` (default = the ZMP's version, written only when it
+// differs) and `ShowOtherVersions` (default true, written always). The static half is rebuilt as
+// an immutable snapshot before every change notification.
 
 #include "cg/core/config_element.h"
 #include "cg/core/snapshot.h"
@@ -24,7 +24,6 @@ struct MapVersionRequestConfigStatic { // IMapVersionRequestConfigStatic
 };
 using MapVersionRequestConfigStaticPtr = std::shared_ptr<const MapVersionRequestConfigStatic>;
 
-// FEAT-NET-002
 class MapVersionRequestConfig final : public core::ConfigElement {
 public:
     explicit MapVersionRequestConfig(QString version);

@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/Bitmap32/i_Bitmap32Static.pas:33-52 (IBitmap32Buffer, IBitmap32Static) and
 // Src/Bitmap32/u_Bitmap32Static.pas:34-81 (TBitmap32Static). IBitmapChangeable (:54-57) is not
-// ported (docs/specs/bitmap.md §1.1: no stage-0 caller).
+// ported (no caller in the command-line program).
 //
 // Pixel layout: core::Color32 is $AARRGGBB, not premultiplied. On a little-endian machine the bytes
 // in memory are B, G, R, A, which is what libjpeg JCS_EXT_BGRA, libpng png_set_bgr and libwebp

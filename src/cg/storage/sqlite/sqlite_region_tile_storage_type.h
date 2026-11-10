@@ -5,17 +5,16 @@
 #pragma once
 // Ports: Src/TileStorage/SQLite/u_TileStorageTypeSQLite.pas (:76-136, TTileStorageTypeSQLite).
 //
-// docs/specs/storage.md §2.12, §2.16. The `cache_sqlite` type: tileStorageTypeAbilities(
-// TileStorageKind::Sqlite3Native) -- ReadWrite, versions kept (legacy's constructor is always
-// called with AIsVersioned = True, u_TileStorageTypeListSimple.pas:387), mixed content types,
-// StorageClass::Folder; build() follows FileSystemTileStorageType::build().
+// The `cache_sqlite` type: tileStorageTypeAbilities(TileStorageKind::Sqlite3Native) --
+// ReadWrite, versions kept (legacy's constructor is always called with AIsVersioned = True,
+// u_TileStorageTypeListSimple.pas:387), mixed content types, StorageClass::Folder; build()
+// follows FileSystemTileStorageType::build().
 
 #include "cg/core/notifier.h"
 #include "cg/storage/tile_storage_type.h"
 
 namespace cg::storage::sqlite {
 
-// FEAT-STO-018.
 class SqliteRegionTileStorageType final : public ITileStorageType {
 public:
     SqliteRegionTileStorageType(MapVersionFactoryPtr mapVersionFactory, core::PathConfigPtr basePath,

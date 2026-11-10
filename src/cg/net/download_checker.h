@@ -5,7 +5,7 @@
 #pragma once
 // Ports: i_DownloadChecker.pas, u_DownloadCheckerStuped.pas (interface + a null implementation
 // only -- the concrete checker depends on ITileStorage and ZMP sample lists and belongs to
-// maptype). docs/specs/net.md §2.6. FEAT-NET-011, FEAT-NET-013.
+// maptype).
 
 #include "cg/net/download_request.h"
 #include "cg/net/download_result.h"

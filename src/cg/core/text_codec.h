@@ -32,14 +32,14 @@ struct DecodedText {
 [[nodiscard]] QByteArray encodeConfigText(const QString& text);
 
 // Re-encodes in the encoding a file was loaded with, so that rewriting an untouched file is
-// byte-identical (ADR-0010). `Utf8Bom` is the encoding of a newly created file. Best-effort:
-// a character with no Cp1251 representation is substituted with '?' (see
+// byte-identical. `Utf8Bom` is the encoding of a newly created file. Best-effort: a
+// character with no Cp1251 representation is substituted with '?' (see
 // encodeConfigTextChecked() for the failing counterpart persistence must use).
 [[nodiscard]] QByteArray encodeConfigText(const QString& text, TextEncoding encoding);
 
 // Same as encodeConfigText(text, encoding), but fails loudly instead of substituting '?' when
-// `encoding` cannot represent every character in `text` (only possible for Cp1251 -- UTF-8/
-// UTF-16 represent all of Unicode). Spec §4 "Nothing is ever swallowed": a settings value that
+// `encoding` cannot represent every character in `text` (only possible for Cp1251 --
+// UTF-8/UTF-16 represent all of Unicode). Nothing is ever swallowed: a settings value that
 // does not round-trip through the file's codec must not be silently corrupted on save.
 [[nodiscard]] Result<QByteArray> encodeConfigTextChecked(const QString& text, TextEncoding encoding);
 

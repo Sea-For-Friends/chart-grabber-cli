@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018 (open region-file map, per-file mutex, idle sweep), FEAT-STO-035 (scan).
-// Ports u_TileStorageSQLiteList.pas / u_TileStorageSQLiteHelper.pas (file map) and
+// Covers: the open region-file map, the per-file mutex and the idle sweep, and the scan. Ports
+// u_TileStorageSQLiteList.pas / u_TileStorageSQLiteHelper.pas (file map) and
 // u_EnumTileInfoBySQLite.pas / u_TileStorageSQLiteFetcher.pas (scan); no legacy DUnit exists.
 #include "cg/storage/codecs/region_tile_name_codec.h"
 #include "cg/storage/map_version.h"
@@ -120,9 +120,9 @@ TEST(SqliteRegionPool, SweepIdleClosesIdleFileButNotOneWhoseMutexIsHeld) {
     EXPECT_EQ(pool->entryCountForTest(), 0u);
 }
 
-// FEAT-STO-018. The GC tick is gated as legacy's TListenerTTLCheck(Sync, 180 s): a tick after a use
-// only stamps the time, the sweep runs once kIdleCloseMs have passed since that stamp with no use.
-// The file is idle for longer than the TTL at every tick below, so only the gate can keep it open.
+// The GC tick is gated as legacy's TListenerTTLCheck(Sync, 180 s): a tick after a use only stamps
+// the time, the sweep runs once kIdleCloseMs have passed since that stamp with no use. The file is
+// idle for longer than the TTL at every tick below, so only the gate can keep it open.
 TEST(SqliteRegionPool, GcTickSweepsOnlyAfterTheTtlSinceTheLastObservedUse) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -207,7 +207,7 @@ TEST(SqliteRegionPool, ScanYieldsRepoFixtureTileWithRegionCodecZoom) {
     EXPECT_FALSE(scan->next(info, tile, zoom));
 }
 
-// Legacy defect L-92 is NOT reproduced (deviation D-44): a non-versioned map issues its SELECT once.
+// A legacy defect is NOT reproduced (a deviation from legacy): a non-versioned map issues its SELECT once.
 TEST(SqliteRegionPool, ScanOfNonVersionedFileEnds) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -227,8 +227,8 @@ TEST(SqliteRegionPool, ScanOfNonVersionedFileEnds) {
     EXPECT_FALSE(scan->next(info, tile, zoom));
 }
 
-// Legacy defect L-94(a) is NOT reproduced (deviation of T-0211 (docs/parity/deviations.md)): for a z1-z11
-// file the write that creates it initialises the entry, so a read straight after it finds the tile.
+// A legacy defect is NOT reproduced (a deviation from legacy): for a z1-z11 file the write that creates
+// it initialises the entry, so a read straight after it finds the tile.
 TEST(SqliteRegionPool, FixedEntryReadAfterCreatingWriteIsReadable) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -244,8 +244,8 @@ TEST(SqliteRegionPool, FixedEntryReadAfterCreatingWriteIsReadable) {
     EXPECT_TRUE(pool->run(path, fixed, false, std::stop_token{}, noop));
 }
 
-// The deviation of T-0211 initialises the entry only when the creating write produced a handler: a create
-// that fails (non-writable parent folder) leaves it as in legacy, and the next write still creates the file.
+// The deviation initialises the entry only when the creating write produced a handler: a create that fails
+// (non-writable parent folder) leaves it as in legacy, and the next write still creates the file.
 TEST(SqliteRegionPool, FixedEntryFailedCreateIsRetriedAndThenReadable) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

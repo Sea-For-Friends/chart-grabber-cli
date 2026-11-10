@@ -7,9 +7,9 @@
 //
 // One method per legacy method, in legacy order (i_MapType.pas:55-172). The interface is
 // declared only: types that belong to modules that do not exist yet (bitmap, tile object
-// caches, the download subsystem, IZmpInfo of the ZmpInfo ticket) are forward-declared; the
-// header does not link them. Legacy "= nil" defaults of the cache arguments become explicit
-// arguments at the call site (no default arguments on virtual functions).
+// caches, the download subsystem, IZmpInfo) are forward-declared; the header does not link
+// them. Legacy "= nil" defaults of the cache arguments become explicit arguments at the
+// call site (no default arguments on virtual functions).
 
 #include "cg/core/changeable.h"
 #include "cg/core/config_provider.h"
@@ -32,7 +32,7 @@
 #include <stop_token>
 
 namespace cg::bitmap {
-class IBitmap32Static; // module `bitmap` (spec maptype.md section 2.11.0)
+class IBitmap32Static; // module `bitmap`
 }
 namespace cg::vector {
 class IVectorItemSubset;
@@ -58,10 +58,10 @@ class GlobalCacheConfig;
 
 namespace cg::maptype {
 
-class IZmpInfo;            // zmp_info.h, ZmpInfo ticket
+class IZmpInfo;            // zmp_info.h
 class ITileObjCacheBitmap; // i_TileObjCache.pas, mem_tile_cache.h (after `bitmap`)
 class ITileObjCacheVector;
-class ITileDownloadSubsystem; // tile_download_subsystem.h (spec section 2.13)
+class ITileDownloadSubsystem; // tile_download_subsystem.h
 class MapVersionFactoryChangeable;
 class MapVersionRequestConfig;
 class MapVersionRequestChangeable;
@@ -114,7 +114,6 @@ public:
     [[nodiscard]] virtual std::shared_ptr<MapVersionRequestChangeable> versionRequest() const = 0;
     // Entry of the content-type registry (owned by it, immutable); null when the type is unknown.
     // Lifetime: the pointer belongs to the content-type registry, which must outlive the map.
-    // The spec's `core::ContentTypeInfoPtr` does not exist in core; the landed type is used.
     [[nodiscard]] virtual const core::ContentTypeInfo* contentType() const = 0;
     [[nodiscard]] virtual std::shared_ptr<MapAbilitiesConfig> abilities() const = 0;
     [[nodiscard]] virtual std::shared_ptr<storage::SimpleTileStorageConfig> storageConfig() const = 0;
@@ -147,18 +146,17 @@ public:
     [[nodiscard]] virtual IMapTypePtr getStatic() const = 0;
 };
 
-// Ports u_MapType.pas:1-506, :555-683, :790-835 -- the non-bitmap half of TMapType (docs/specs/maptype.md
-// 2.11.6, ticket T-0140). The bitmap half (the two memory caches, the loaders from storage, the seven load...
-// methods, :507-553, :684-789, :837-1184) is the tile-loading ticket's: those methods answer nullptr.
+// Ports u_MapType.pas:1-506, :555-683, :790-835 -- the non-bitmap half of TMapType. The bitmap half (the two
+// memory caches, the loaders from storage, the seven load... methods, :507-553, :684-789, :837-1184) is not
+// ported yet: those methods answer nullptr.
 //
 // Constructor arguments of the legacy signature (u_MapType.pas:298-326) that are NOT taken, at their legacy
-// positions: AMapVersionFactoryList (ruled deleted: the simple factory is passed directly),
-// AMainMemCacheConfig, AResamplerLoad / AResamplerGetPrev / AResamplerChangeProjection / AResamplerDownload /
-// ABitmap32StaticFactory (bitmap half), AHashFunction (free functions), ADownloaderThreadConfig (:450, :455),
-// AProjectionSetFactory
-// (:453), AInvisibleBrowser (:461, replaced by the anti-ban through the downloader factory, D-14),
-// APerfCounterList (core.md 1.3) -- the three named in the middle are consumed by nothing the landed
-// TileDownloadSubsystem takes; R-12 (MapTypesMainList) must not pass them.
+// positions: AMapVersionFactoryList (deleted: the simple factory is passed directly), AMainMemCacheConfig,
+// AResamplerLoad / AResamplerGetPrev / AResamplerChangeProjection / AResamplerDownload
+// / ABitmap32StaticFactory (bitmap half), AHashFunction (free functions), ADownloaderThreadConfig (:450,
+// :455), AProjectionSetFactory (:453), AInvisibleBrowser (:461, replaced by the anti-ban through the
+// downloader factory), APerfCounterList -- the three named in the middle are consumed by nothing
+// TileDownloadSubsystem takes; MapTypesMainList must not pass them.
 //
 // Members are declared in legacy field order (u_MapType.pas:86-114); C++ destroys them in reverse, so the
 // download subsystem (declared last) is destroyed first: its destructor joins the workers while the storage,
@@ -166,15 +164,15 @@ public:
 // shared_ptr, so the order is not what keeps them alive (the subsystem holds the storage, the storage holds
 // the configs, the factory and the mem-cache).
 //
-// A MapType is destroyed on a thread that is not a download worker, after the app-closing token has fired
-// (spec 3.1 R1). The notifier callbacks of this class (version change, GC tick) capture `this` / a shared
-// cache and are removed first in the destructor; a callback already running on another thread is not waited
-// for (core/notifier.cpp), as in legacy.
+// A MapType is destroyed on a thread that is not a download worker, after the app-closing token has fired.
+// The notifier callbacks of this class (version change, GC tick) capture `this` / a shared cache and are
+// removed first in the destructor; a callback already running on another thread is not waited for
+// (core/notifier.cpp), as in legacy.
 class MapType final : public IMapType {
 public:
-    // `contentTypes` must be the registry the ZMP was built with (D-74): an unresolvable content type is a
-    // programmer error (std::logic_error), not a user-facing rejection. `localConfig` (the Maps.ini section
-    // of the map) may be null. Null `zmp` / `contentTypes` are std::invalid_argument.
+    // `contentTypes` must be the registry the ZMP was built with (a deviation from legacy): an unresolvable
+    // content type is a programmer error (std::logic_error), not a user-facing rejection. `localConfig`
+    // (the Maps.ini section of the map) may be null. Null `zmp` / `contentTypes` are std::invalid_argument.
     MapType(std::shared_ptr<core::ILanguageManager> languageManager, std::shared_ptr<const IZmpInfo> zmp,
             storage::MapVersionFactoryPtr simpleVersionFactory,
             std::shared_ptr<storage::GlobalCacheConfig> globalCacheConfig,
@@ -195,7 +193,7 @@ public:
     void clearMemCache() override;
     [[nodiscard]] QString getTileShowName(geo::PointI xy, quint8 zoom,
                                           const storage::MapVersionInfoPtr& version) const override;
-    // TODO(T-0148): tile loading (u_MapType.pas:507-553, 684-789, 837-1184); nullptr is the legacy "no tile".
+    // TODO: tile loading (u_MapType.pas:507-553, 684-789, 837-1184); nullptr is the legacy "no tile".
     [[nodiscard]] BitmapPtr loadTile(geo::PointI xy, quint8 zoom, const MapVersionRequestPtr& version,
                                      bool ignoreError,
                                      const std::shared_ptr<ITileObjCacheBitmap>& cache) const override;
@@ -239,16 +237,16 @@ public:
     [[nodiscard]] std::shared_ptr<storage::TileInfoMemCache> cacheTileInfo() const override;
 
 private:
-    // Legacy field order, u_MapType.pas:86-114 (fields of the bitmap half are added by its ticket).
+    // Legacy field order, u_MapType.pas:86-114 (fields of the bitmap half are added with it).
     std::shared_ptr<const IZmpInfo> zmp_;
     QString mapDataUrlPrefix_; // KML maps only (:431); read by the tile-loading half
     std::shared_ptr<storage::TileInfoMemCache> cacheTileInfo_;
-    // cacheBitmap_ / cacheVector_: bitmap half (TODO(T-0148)); null until then, as for a map of the other
-    // kind.
+    // cacheBitmap_ / cacheVector_: bitmap half (TODO: not ported yet); null until then, as for a map of
+    // the other kind.
     std::shared_ptr<storage::ITileStorage> storage_;
-    // Not ported until T-0148: FBitmapLoaderFromStorage, FBitmapSaverToStorage, FKmlLoaderFromStorage (their
-    // only non-load users are the two predicates, which the registry's content kind answers),
-    // FVectorDataFactory, FVectorItemSubsetBuilderFactory (:432-440; classes landed in T-0129 / T-0057).
+    // Not ported yet: FBitmapLoaderFromStorage, FBitmapSaverToStorage, FKmlLoaderFromStorage (their only
+    // non-load users are the two predicates, which the registry's content kind answers), FVectorDataFactory,
+    // FVectorItemSubsetBuilderFactory (:432-440).
     geo::ProjectionSetPtr projectionSet_;
     geo::ProjectionSetPtr viewProjectionSet_;
     int loadPrevMaxZoomDelta_ = 0;                                  // :475-483; read by the tile-loading half
@@ -267,7 +265,7 @@ private:
     // FVersionChangeListener (:112): removed first in the destructor body (:488-492).
     core::Subscription versionChangeSubscription_;
     // The TTL sweep of the tile-info cache. Legacy's cache subscribes itself to the GC notifier
-    // (u_TileInfoBasicMemCache.pas:180-183); the landed cache has no timer (its header), so the owner does.
+    // (u_TileInfoBasicMemCache.pas:180-183); the cache has no timer (its header), so the owner does.
     core::Subscription cacheTtlSubscription_;
 };
 

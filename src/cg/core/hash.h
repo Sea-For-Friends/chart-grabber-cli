@@ -29,8 +29,8 @@ using HashValue = std::uint64_t;
 inline constexpr HashValue kNoHash = 0;
 
 // --- primitives -------------------------------------------------------------
-// Google CityHash 1.1.1, vendored in third_party/cityhash (see its README for why 1.1.1 and not
-// the 1.0.3 the spec names). Legacy called the identical functions through CityHash.dll.
+// Google CityHash 1.1.1, vendored in third_party/cityhash (see its README for why this version and
+// not 1.0.3). Legacy called the identical functions through CityHash.dll.
 [[nodiscard]] HashValue cityHash64(const void* data, std::size_t size) noexcept;
 [[nodiscard]] HashValue cityHash64WithSeed(const void* data, std::size_t size, HashValue seed) noexcept;
 

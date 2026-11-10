@@ -17,7 +17,7 @@ namespace {
 constexpr core::HashValue kInitialHash = 0xc74bb7e2dee15036ULL; // CInitialHash (:52)
 
 // :209-217 and :224-232: the GUID of every item, in order. A null item is an access violation in
-// legacy (LD-17); the port throws before the builder gives anything away.
+// legacy; the port throws before the builder gives anything away.
 core::HashValue hashOfItems(const std::vector<IMapTypePtr>& items) {
     core::HashValue hash = kInitialHash;
     for (const IMapTypePtr& item : items) {

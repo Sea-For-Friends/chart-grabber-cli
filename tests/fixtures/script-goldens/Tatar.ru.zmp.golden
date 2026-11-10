@@ -1,4 +1,4 @@
-; T-0015D golden: Tatar.ru.zmp - 'case' with 12 range labels, div/mod, no-match fall-through,
+; Golden: Tatar.ru.zmp - 'case' with 12 range labels, div/mod, no-match fall-through,
 ; zoom guard 3<=Z<=18 (Z := GetZ-1). Outside the guard, ResultURL is never assigned -> ''
 ; (tile does not exist), same rule as map10.
 ; Z:=GetZ-1; Y:=Round(IntPower(2,Z))-1-GetY; X:=GetX; each split div/mod 1000, zero-padded

@@ -34,7 +34,7 @@ MapTypesMainList::MapTypesMainList(std::shared_ptr<const IMapTypeSetBuilderFacto
       fullMapsSetChangeable_(std::make_shared<MapTypeSetChangeableSimple>(setBuilderFactory_, nullptr)) {}
 
 // Legacy: access violation (no handler) when read before LoadMaps (:194, :209, :437, :495); unreachable in
-// legacy (`SASPlanet.dpr:1705-1712` exits before the form exists); no register row.
+// legacy (`SASPlanet.dpr:1705-1712` exits before the form exists).
 void MapTypesMainList::requireLoaded() const {
     if (!guiConfigList_ || !mapsSet_) {
         throw std::logic_error("MapTypesMainList: loadMaps has not run");
@@ -88,7 +88,7 @@ void MapTypesMainList::buildMapsLists() {
     fullMapsSetChangeable_->setStatic(fullMapsSet_);
 }
 
-// :241-410. FEAT-NET-001
+// :241-410.
 void MapTypesMainList::loadMaps(const std::shared_ptr<core::ILanguageManager>& languageManager,
                                 const storage::MapVersionFactoryPtr& simpleVersionFactory,
                                 const std::shared_ptr<storage::GlobalCacheConfig>& globalCacheConfig,
@@ -142,7 +142,7 @@ void MapTypesMainList::loadMaps(const std::shared_ptr<core::ILanguageManager>& l
             const core::IConfigProviderPtr localMapConfig =
                 localMapsConfig->subItem(guidString(guid)); // :305
 
-            // not ported: G-7 proxies (maptype.md §2.14)
+            // not ported: the offline-map proxies
             const IMapTypePtr map = std::make_shared<MapType>(
                 languageManager, zmp, simpleVersionFactory, globalCacheConfig, tileStorageTypeList,
                 gcNotifier, appClosing, inetConfig, downloadConfig, downloaderFactory, contentTypes,
@@ -177,7 +177,7 @@ void MapTypesMainList::loadMaps(const std::shared_ptr<core::ILanguageManager>& l
     guiConfigList_ = std::make_shared<MapTypeGuiConfigList>(languageManager, fullMapsSet_); // :390
     guiConfigList_->readConfig(mapsListConfig);                                             // :395
 
-    // FEAT-NET-030: renumbering, 1..N in the menu order
+    // Renumbering, 1..N in the menu order
     const MapGuidListPtr guidList = guiConfigList_->orderedMapGuidList(); // :397
     {
         const auto lock = guiConfigList_->writeLock(); // :400
@@ -255,7 +255,7 @@ IMapTypePtr MapTypesMainList::nextMapWithTile(const geo::LocalCoordConverterPtr&
     return nullptr;
 }
 
-// :483-507. FEAT-NET-030
+// :483-507.
 void MapTypesMainList::saveMaps(const core::IConfigWriterPtr& localMapsConfig,
                                 const core::IConfigWriterPtr& mapsListConfig) const {
     requireLoaded();
@@ -266,7 +266,7 @@ void MapTypesMainList::saveMaps(const core::IConfigWriterPtr& localMapsConfig,
             if (!map) { // legacy: access violation; unreachable, the list is built from the same set
                 continue;
             }
-            // not ported: G-7 proxies (maptype.md §2.14)
+            // not ported: the offline-map proxies
             const core::IConfigWriterPtr subItem = localMapsConfig->orCreateSubItem(guidString(guid)); // :502
             map->saveConfig(subItem);
         }

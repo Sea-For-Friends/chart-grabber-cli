@@ -5,9 +5,9 @@
 #pragma once
 // Ports: Src/Vector/i_AppearanceOfMarkFactory.pas, u_AppearanceOfMarkFactory.pas
 //
-// FEAT-GEO-037. Builds the three mark appearances and computes their hashes; the hash recipes are
-// byte-exact with legacy because the hashes order and select survivors in duplicate removal.
-// No interning cache (spec vector.md §2.3.4, DV-1): every call creates a new object.
+// Builds the three mark appearances and computes their hashes; the hash recipes are byte-exact
+// with legacy because the hashes order and select survivors in duplicate removal. No interning
+// cache: every call creates a new object (a deviation from legacy).
 
 #include "cg/vector/appearance.h"
 #include "cg/vector/appearance_of_vector_item.h"
@@ -36,7 +36,6 @@ class AppearanceOfMarkFactory final : public IAppearanceOfMarkFactory {
 public:
     AppearanceOfMarkFactory() = default;
 
-    // FEAT-GEO-037
     [[nodiscard]] AppearancePtr createPointAppearance(Color32 textColor, Color32 textBgColor, int fontSize,
                                                       const QString& picName, const MarkPicturePtr& pic,
                                                       int markerSize) const override;

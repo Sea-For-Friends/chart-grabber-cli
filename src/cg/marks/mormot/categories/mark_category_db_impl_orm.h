@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORM.pas (docs/specs/marks.md §2.9.6, §2.9.12).
-// Line numbers in the sources are those of that unit.
+// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORM.pas. Line numbers in the sources are those
+// of that unit.
 //
 // The category database of the SQLite backend: TConfigDataElementBaseEmptySaveLoad (the RW lock and the
 // change notification, here core::ConfigElement) implementing IMarkCategoryDBImpl and
@@ -12,7 +12,7 @@
 // method takes the write lock except getCategoryByNameCount (read lock, :425) and isCategoryFromThisDb (no
 // lock). The lock is non-recursive: where legacy re-enters LockWrite (_UpdateCategory -> GetCategoryByID,
 // :238) the unlocked getCategory() is called instead. One change notification per public call, fired when the
-// write lock is released, after the commit. Caches are not undone on a rollback (LC-17).
+// write lock is released, after the commit. Caches are not undone on a rollback.
 
 #include "cg/core/config_element.h"
 #include "cg/core/read_write_state_internal.h"

@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkSystemImplConfig.pas  (u_MarkSystemImplConfigBase.pas is ticket M4)
+// Ports: i_MarkSystemImplConfig.pas (u_MarkSystemImplConfigBase.pas is ported separately)
 
 #include <QString>
 

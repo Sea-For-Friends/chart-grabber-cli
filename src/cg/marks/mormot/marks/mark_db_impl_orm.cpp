@@ -165,8 +165,7 @@ OrmMarkRec MarkDbImplORM::ormMarkRecFromMark(const vector::IVectorDataItem& mark
 
     // :454: AMark.Geometry.Bounds on a nil geometry is an access violation. Legacy callers catch it: the
     // facade wraps UpdateMark / UpdateMarkList in `except CatchException` (u_MarkDbByImpl.pas:503-516,
-    // :518-534). A reproduction (no D row): the port throws, as the helper does for the same nil
-    // (insertMarkSql).
+    // :518-534). A reproduction: the port throws, as the helper does for the same nil (insertMarkSql).
     const geo::GeometryLonLatPtr geometry = mark.geometry();
     if (!geometry) {
         throw MarkSystemORMError("MarkSystemORM: Geometry is empty!");

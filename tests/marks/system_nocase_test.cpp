@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (held open). The SYSTEMNOCASE collation of Marks.db3, docs/specs/marks.md
-// §2.9.4, against vectors computed from the mORMot Pascal source by
-// tools/gen_system_nocase_vectors.py (tests/fixtures/marks/README.md).
+// The SYSTEMNOCASE collation of Marks.db3, against vectors computed from the mORMot Pascal
+// source by tools/gen_system_nocase_vectors.py (tests/fixtures/marks/README.md).
 #include "cg/marks/mormot/system_nocase.h"
 
 #include <QByteArray>
@@ -61,9 +60,9 @@ TEST(SystemNoCase, SameBufferIsEqualWhateverTheLengths) {
     EXPECT_GT(systemNoCaseCompare(QByteArray("abc"), QByteArray("a")), 0);
 }
 
-// Deviation D-69 regression: FC 80 80 80 81 81 decodes, in the 64-bit Windows build, to
-// 0x3F00000041, passes the "is 8-bit" test (bits 8..31 are clear) and indexes the 256-entry table
-// at that offset. The port folds the low 8 bits (0x41), as the 32-bit build does.
+// Regression test for a deviation from legacy: FC 80 80 80 81 81 decodes, in the 64-bit Windows
+// build, to 0x3F00000041, passes the "is 8-bit" test (bits 8..31 are clear) and indexes the
+// 256-entry table at that offset. The port folds the low 8 bits (0x41), as the 32-bit build does.
 TEST(SystemNoCase, SixByteFormOfAnEightBitCodePointFoldsItsLowByte) {
     const QByteArray sixByteA("\xFC\x80\x80\x80\x81\x81", 6);
     EXPECT_EQ(systemNoCaseCompare(sixByteA, QByteArray("a")), 0);

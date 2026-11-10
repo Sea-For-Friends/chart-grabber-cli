@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Proof of ticket T-0067: find by id / by name (case-insensitive), prepared semantics.
-// Ports u_MarkCategoryDbImplORMCache.pas; docs/specs/marks.md §2.9.6.
+// Find by id / by name (case-insensitive), prepared semantics. Ports
+// u_MarkCategoryDbImplORMCache.pas.
 #include "cg/marks/mormot/categories/mark_category_db_impl_orm_cache.h"
 
 #include <QString>
@@ -59,7 +59,7 @@ TEST(OrmCategoryCache, FindByNameIgnoresCaseAndTakesTheLowestId) {
     cache.addOrUpdate(rec(7, QStringLiteral("Roads")));
     cache.addOrUpdate(rec(3, QStringLiteral("ROADS")));
     cache.addOrUpdate(rec(5, QString::fromUtf8("Город")));
-    // AnsiSameText on the cache: "город" finds "Город" (SQL SYSTEMNOCASE would not, LC-12/LC-14)
+    // AnsiSameText on the cache: "город" finds "Город" (SQL SYSTEMNOCASE would not, a legacy defect)
     const OrmCategoryRow* city = cache.find(QString::fromUtf8("город"));
     ASSERT_NE(city, nullptr);
     EXPECT_EQ(city->id, 5);
@@ -69,7 +69,8 @@ TEST(OrmCategoryCache, FindByNameIgnoresCaseAndTakesTheLowestId) {
     EXPECT_EQ(roads->id, 3);
     EXPECT_EQ(cache.find(QStringLiteral("Road")), nullptr);
     EXPECT_EQ(cache.find(QStringLiteral("")), nullptr);
-    // D row: legacy CompareStringW(NORM_IGNORECASE) equates Straße and STRASSE, simple case folding does not
+    // A deviation from legacy: legacy CompareStringW(NORM_IGNORECASE) equates Straße and STRASSE, simple case
+    // folding does not
     cache.addOrUpdate(rec(9, QString::fromUtf8("Straße")));
     EXPECT_EQ(cache.find(QStringLiteral("STRASSE")), nullptr);
 }
@@ -86,7 +87,7 @@ TEST(OrmCategoryCache, SizeFollowsTheLegacyFormulaAndAddPreparedSkipsDataSize) {
     cache.addOrUpdate(rec(1, QStringLiteral("a")));
     EXPECT_EQ(cache.size(), 114);
     cache.addPrepared({{1, QStringLiteral("a")}, {2, QStringLiteral("bb")}, {3, QStringLiteral("ccc")}});
-    EXPECT_EQ(cache.size(), 144); // 96 + 16 * 3, names not counted (L row)
+    EXPECT_EQ(cache.size(), 144); // 96 + 16 * 3, names not counted
     cache.addOrUpdate(rec(2, QStringLiteral("x")));
     EXPECT_EQ(cache.size(), 142); // 144 + (2 - 4)
 }

@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of T-0163: Src/BitmapTileSaveLoad/u_BitmapTileSaveLoadFactory.pas (creators :158-335), the DUnit
+// Tests of Src/BitmapTileSaveLoad/u_BitmapTileSaveLoadFactory.pas (creators :158-335), the DUnit
 // u_BitmapTileSaveLoadFactory_Test.pas (:89-155) and Src/ContentType/u_ContentTypeManagerSimple.pas
-// TContentTypeManagerBitmap (:579-762). FEAT-STO-033 (bitmap half of the content-type registry).
+// TContentTypeManagerBitmap (:579-762), the bitmap half of the content-type registry.
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"
 #include "cg/bitmap/bitmap32_static_factory.h"
 #include "cg/bitmap/bitmap_codec_error.h"
@@ -97,7 +97,7 @@ template <typename T, typename P> bool is(const P& p) {
     return dynamic_cast<const T*>(p.get()) != nullptr;
 }
 
-// ---- proof 1: the DUnit port (u_BitmapTileSaveLoadFactory_Test.pas :104-155)
+// ---- The DUnit port (u_BitmapTileSaveLoadFactory_Test.pas :104-155)
 
 QByteArray saveSameFormat(const IBitmapTileSaveLoadFactory& f, const char* file, const Bitmap32StaticPtr& b) {
     const std::string name(file);
@@ -175,7 +175,7 @@ TEST(BitmapTileSaveLoadFactory, DunitPortLoadFixtureThenSaveWithSameFormat) {
     }
 }
 
-// ---- proof 2: creators
+// ---- Creators
 
 TEST(BitmapTileSaveLoadFactory, LoadersAreTheMatchingClasses) {
     const auto f = makeFactory();
@@ -280,7 +280,7 @@ TEST(BitmapTileSaveLoadFactory, RefusalsAndParameterErrors) {
     expectThrows([&] { return f->createWebpSaver(0); }, "Invalid WebP quality value: 0");
 }
 
-// ---- proof 3: the table
+// ---- The table
 
 const char* const kTypeKeys[] = {
     "image/jpg",           "image/jpeg",   "image/pjpeg",
@@ -448,7 +448,7 @@ TEST(ContentTypeManagerBitmap, UnknownEmptyAndNonAsciiKeysGiveNull) {
     EXPECT_FALSE(m.isBitmapExt(""));
 }
 
-// ---- proof 4: bitmapLoaderByFileName
+// ---- bitmapLoaderByFileName
 
 TEST(ContentTypeManagerBitmap, LoaderByFileName) {
     const ContentTypeManagerBitmap m(makeFactory());
@@ -468,7 +468,7 @@ TEST(ContentTypeManagerBitmap, LoaderByFileName) {
     EXPECT_TRUE(is<BitmapTileFreeImageLoaderTiff>(m.bitmapLoaderByFileName(u"q.tif"_s)));
 }
 
-// ---- proof 5: core and bitmap tables agree
+// ---- Core and bitmap tables agree
 
 TEST(ContentTypeManagerBitmap, CoreRegistryAgreesOnKeys) {
     const ContentTypeManagerBitmap m(makeFactory());

@@ -35,7 +35,6 @@ void ThreadConfig::setPriority(ThreadPriority value) {
     setPriorityLocked(static_cast<int>(value));
 }
 
-// FEAT-GEO-034
 void ThreadConfig::doReadConfig(const IConfigProviderPtr& src) {
     if (src) {
         setPriorityLocked(src->readInt(u"ThreadPriority", static_cast<qint32>(priority_)));

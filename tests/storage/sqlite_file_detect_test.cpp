@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-022. Ports the sniffer, metadata reader and content-type / projection chains of
-// u_TileStorageSQLiteFileImporter.pas:234-527 and :763-805; docs/specs/storage.md §2.17.4-§2.17.5.
-// Every file is built here with SqliteDb::exec (a table with no row has no columns for the sniffer,
-// so each table gets one row).
+// Ports the sniffer, metadata reader and content-type / projection chains of
+// u_TileStorageSQLiteFileImporter.pas:234-527 and :763-805. Every file is built here with
+// SqliteDb::exec (a table with no row has no columns for the sniffer, so each table gets one row).
 #include "cg/core/content_type.h"
 #include "cg/storage/sqlite/sqlite_db.h"
 #include "cg/storage/sqlite/sqlite_file_detect.h"
@@ -186,7 +185,7 @@ TEST(SqliteFileDetect, MagicFallbackDefaultAndEpsgDefaults) {
 }
 
 TEST(SqliteFileDetect, InvalidSasGisJsonIsAnError) {
-    // Legacy: SO() returns nil and the next call on it raises (L-103).
+    // Legacy: SO() returns nil and the next call on it raises.
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     auto db = SqliteDb::open(makeDb(dir, QStringLiteral("e.rmaps"),
@@ -199,15 +198,14 @@ TEST(SqliteFileDetect, InvalidSasGisJsonIsAnError) {
     EXPECT_EQ(metadata.error().code(), cg::core::ErrorCode::ParseError);
 }
 
-// --- docs/specs/storage.md §7.5 item 5: files written by their native apps ---------------------
+// --- Files written by their native apps ---------------------
 
 TEST(SqliteFileDetect, ForeignFiles) {
     for (const char* name : {"cache/foreign/sample.mbtiles", "cache/foreign/sample.rmaps",
                              "cache/foreign/sample_osmand.sqlitedb"}) {
         const QString path = cgStorageFixture(QString::fromLatin1(name));
         if (!QFileInfo::exists(path)) {
-            GTEST_SKIP() << "missing fixture: " << path.toStdString()
-                         << " (docs/specs/storage.md §7.5 item 5, tests/fixtures/cache/README.md)";
+            GTEST_SKIP() << "missing fixture: " << path.toStdString() << " (tests/fixtures/cache/README.md)";
         }
     }
 }

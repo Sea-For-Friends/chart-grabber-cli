@@ -4,15 +4,14 @@
 
 #pragma once
 // Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMCache.pas, first part: TOrmMarkImageCache,
-// TOrmMarkAppearanceCache, TOrmMarkViewCache, TOrmMarkIdIndex (docs/specs/marks.md §2.9.7). Line numbers
-// below are those of that unit. The caches have no lock of their own: they are reached only under the write
-// lock of their database.
+// TOrmMarkAppearanceCache, TOrmMarkViewCache, TOrmMarkIdIndex. Line numbers below are those of that unit.
+// The caches have no lock of their own: they are reached only under the write lock of their database.
 //
-// Not in this file yet (a later ticket appends them below): TOrmMarkIdByCategoryIndex, TOrmMarkCache,
+// Second part, declared further below: TOrmMarkIdByCategoryIndex, TOrmMarkCache,
 // TOrmMarkGeometryCache and the TOrmMarkDbCache record that creates all seven.
 //
-// Row layout: the landed cache base keys a row by its member `id`, the FIRST field of the legacy record
-// (here ImageId, AppearanceId, MarkId, MarkId). The row pointers returned by find stay valid until the next
+// Row layout: the cache base keys a row by its member `id`, the FIRST field of the legacy record (here
+// ImageId, AppearanceId, MarkId, MarkId). The row pointers returned by find stay valid until the next
 // add / remove / reset.
 
 #include "cg/geo/geometry_lonlat.h"
@@ -155,10 +154,10 @@ struct OrmMarkGeometryRec {
 };
 
 // TOrmMarkGeometryCache (:225-257). Limited (70 %). Its rows live in an inner DynArrayByRecWithPointer
-// (112 + 20 * rows + bytes, see the cache base); its prepared state lives outside that array.
-// L-158 FIXED (deviation D-88): whenever the inner array is going to empty itself (over its
-// limit at the start of an add), or reset() is called, the prepared state is cleared with it; legacy keeps it
-// (see the .cpp).
+// (112 + 20 * rows + bytes, see the cache base); its prepared state lives outside that array. A legacy defect
+// is fixed (a deviation from legacy): whenever the inner array is going to empty itself (over its limit at
+// the start of an add), or reset() is called, the prepared state is cleared with it; legacy keeps it (see the
+// .cpp).
 class OrmMarkGeometryCache {
 public:
     explicit OrmMarkGeometryCache(qint64 maxCacheSize);
@@ -174,7 +173,7 @@ public:
     [[nodiscard]] bool isPrepared() const { return isPrepared_; } // property IsPrepared
 
 private:
-    // The one place of the L-158 fix.
+    // The one place of the legacy-defect fix.
     void forgetPreparedState();
 
     bool isPrepared_ = false;

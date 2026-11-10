@@ -3,9 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Ports u_MarkFactoryDbInternalORM.pas (485): CreatePoint / CreateLine / CreatePoly, both CreateMark
-// overloads, GeoTypeToMarkType, CreateMarkId, CreateInternalMark (docs/specs/marks.md section 2.9.10).
-// Expected hashes are assembled from the Pascal recipe and the raw CityHash primitive, not read from the
-// factory. This ticket implements no feature (Features: — in its header).
+// overloads, GeoTypeToMarkType, CreateMarkId, CreateInternalMark. Expected hashes are assembled from the
+// Pascal recipe and the raw CityHash primitive, not read from the factory.
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"
 #include "cg/geo/geometry_lonlat.h"
@@ -47,8 +46,8 @@ QString qs(const char* utf8) {
 
 using t::FakePictureList;
 
-// This database's categories (the ORM category database is ticket O7, not landed): look-ups by row id and by
-// name, and a count of the row-id look-ups (legacy GetCategoryByID runs once per CreateMark).
+// This database's categories (a stand-in for the ORM category database): look-ups by row id and by name, and
+// a count of the row-id look-ups (legacy GetCategoryByID runs once per CreateMark).
 class FakeCategoryDb final : public m::IMarkCategoryDbInternalORM {
 public:
     std::vector<m::MarkCategoryPtr> categories; // in list order
@@ -151,7 +150,7 @@ const v::IVectorDataItemWithCategory* withCategory(const v::VectorDataItemMainIn
     return dynamic_cast<const v::IVectorDataItemWithCategory*>(info.get());
 }
 
-// An SQLite-style mark main info of database `dbId` with `category` (the MarkIdORM of O8).
+// An SQLite-style mark main info of database `dbId` with `category` (a MarkIdORM).
 std::shared_ptr<const m::MarkIdORM> markIdOf(quintptr dbId, v::CategoryPtr category,
                                              const QString& name = qs("N"), const QString& desc = qs("D")) {
     return std::make_shared<const m::MarkIdORM>(t::converter(), 9, m::MarkIdType::Point, name, desc, 5, dbId,

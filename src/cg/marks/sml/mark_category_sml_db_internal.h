@@ -3,13 +3,13 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/SML/u_MarkCategorySmlDbInternal.pas (160, class TMarkCategorySmlDbInternal;
-// docs/specs/marks.md section 2.8.4). It implements IMarkCategory (the ICategory of the port) and
+// Ports: Src/MarksDB/SML/u_MarkCategorySmlDbInternal.pas (160 lines, class
+// TMarkCategorySmlDbInternal). It implements IMarkCategory (the ICategory of the port) and
 // IMarkCategorySMLInternal (mark_db_sml_internal.h).
 //
 // Legacy constructor Asserts (:78-82) are not ported: the shipped build has assertions off
 // (SASPlanet.dproj:92). Unlike the SQLite twin, the id is an Integer (int), not a 64-bit row id. isSame()
-// compares the id only, not dbId (legacy :148-158; the L-193 row of docs/parity/legacy-defects.md).
+// compares the id only, not dbId (legacy :148-158; a legacy defect).
 
 #include "cg/marks/mark_category.h"
 #include "cg/marks/sml/mark_db_sml_internal.h"

@@ -41,7 +41,7 @@ public:
     virtual void update(int id, const QUuid& databaseGUID, const QString& displayName,
                         const MarkSystemImplConfigStaticPtr& implConfig) = 0;
     // Despite its name the legacy function returns the config OBJECTS (u_MarkSystemConfig.pas:464-484),
-    // in ascending id order; the spec's std::vector<int> is wrong.
+    // in ascending id order, not ids.
     [[nodiscard]] virtual std::vector<MarkSystemConfigStaticPtr> idListStatic() const = 0;
 };
 
@@ -62,8 +62,8 @@ public:
                 const MarkSystemImplConfigStaticPtr& implConfig) override;
     [[nodiscard]] std::vector<MarkSystemConfigStaticPtr> idListStatic() const override;
 
-    // DV-2: legacy shows a modal ShowErrorMessage from inside DoReadConfig (:216, :224, :251);
-    // the messages of the last readConfig() are collected here for the UI instead.
+    // Legacy shows a modal ShowErrorMessage from inside DoReadConfig (:216, :224, :251); the
+    // messages of the last readConfig() are collected here for the UI instead.
     [[nodiscard]] QStringList readErrors() const;
 
 protected:

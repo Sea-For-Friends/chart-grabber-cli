@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_GeometryToStreamSML.pas (TGeometryToStreamSML.Save and its helpers). docs/specs/marks.md 2.8.3.
+// Ports: u_GeometryToStreamSML.pas (TGeometryToStreamSML.Save and its helpers).
 
 #include "cg/geo/geometry_lonlat.h"
 

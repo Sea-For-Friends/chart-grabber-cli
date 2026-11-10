@@ -6,9 +6,9 @@
 // Ports: nothing (the RemObjects bytecode this replaces has no equivalent AST; legacy compiles
 // straight to a VM program).
 //
-// Plain aggregates owned by an `Arena`, never `QObject`, never virtual: the interpreter (a later
-// slice) dispatches on `Node::kind` with a `switch` - a visitor with 24 virtuals would be slower
-// and longer, and idioms.md's "no abstraction without two users" applies.
+// Plain aggregates owned by an `Arena`, never `QObject`, never virtual: the interpreter
+// dispatches on `Node::kind` with a `switch` - a visitor with 24 virtuals would be slower and
+// longer, and there is no abstraction without two users.
 
 #include <QByteArray>
 #include <QString>
@@ -21,8 +21,8 @@
 namespace cg::script {
 
 // Owns every AST node allocated during one compile() call, so `CompiledScript` frees the whole
-// tree in one call (spec 2.5) by destroying the `Arena` (indirectly, via `SymbolTable`, see
-// parser.h). Deliberately not a `std::pmr::monotonic_buffer_resource`: several node kinds hold a
+// tree in one call by destroying the `Arena` (indirectly, via `SymbolTable`, see parser.h).
+// Deliberately not a `std::pmr::monotonic_buffer_resource`: several node kinds hold a
 // `std::vector` member and a monotonic resource never runs destructors on release - this keeps
 // the "free it all in one call" property without leaking each node's vector.
 class Arena {
@@ -34,7 +34,7 @@ public:
         return raw;
     }
 
-    // Stamps position at construction (T-0013 rework F7): replaces the parser's repeated
+    // Stamps position at construction: replaces the parser's repeated
     // `auto* n = make<T>(); n->line = line; n->column = column;` pair with one call. Overload
     // resolution prefers this fixed-arity template over the forwarding variadic one above for a
     // `make<T>(line, column)` call, since every AST node's default constructor takes no arguments.
@@ -100,8 +100,8 @@ struct Node {
     int column = 0;
 
     explicit Node(NodeKind aKind) : kind(aKind) {}
-    // Never virtual (idioms.md/coding standard): `Arena::make<T>` keeps the exact derived
-    // `unique_ptr<T>` alive for destruction, so nothing ever deletes a `Node` through this base.
+    // Never virtual (coding standard): `Arena::make<T>` keeps the exact derived `unique_ptr<T>`
+    // alive for destruction, so nothing ever deletes a `Node` through this base.
 };
 
 // --- expressions -------------------------------------------------------------------------------
@@ -182,9 +182,8 @@ struct Field : Node {
     Node* base = nullptr;
     int fieldIndex = -1; // index into the base's RegisteredType field list
 };
-// `[e1, e2, ...]` (also `[]`): an open-array/set constructor. Corpus-driven addition beyond the
-// ADR-0003/spec 3.1 grammar (Google/GoogleSat.zmp's `Format('...', [Random(4), ...])`) - flagged
-// for the Architect to fold into spec 3.1/3.5 as a "G6" correction; see the T-0013 handoff.
+// `[e1, e2, ...]` (also `[]`): an open-array/set constructor. A corpus-driven addition to the
+// grammar (Google/GoogleSat.zmp's `Format('...', [Random(4), ...])`).
 struct ArrayLit : Node {
     ArrayLit() : Node(NodeKind::ArrayLit) {}
     std::vector<Node*> elements;
@@ -254,7 +253,7 @@ struct TryFinally : Node {
     TryFinally() : Node(NodeKind::TryFinally) {}
     std::vector<Node*> body;
     std::vector<Node*> handler;
-    bool isExcept = false; // `except` swallows; `finally` always re-raises (spec 3.3 S9)
+    bool isExcept = false; // `except` swallows; `finally` always re-raises
 };
 struct Compound : Node {
     Compound() : Node(NodeKind::Compound) {}

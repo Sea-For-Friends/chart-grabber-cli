@@ -3,11 +3,12 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/Network/u_DownloaderHttpBase.pas:122-353, Src/Network/Curl/u_DownloaderHttpByCurl.pas,
-// Src/Network/Curl/u_DownloaderByCurlFactory.pas. docs/specs/net.md §2.9. FEAT-NET-009.
+// Src/Network/Curl/u_DownloaderByCurlFactory.pas.
 #include "cg/net/curl_downloader.h"
 
 #include "cg/core/content_detector.h"
 #include "cg/net/content_decoder.h"
+#include "cg/net/curl_global.h"
 #include "cg/net/download_result_factory.h"
 #include "cg/net/file_url.h"
 #include "cg/net/http_headers.h"
@@ -29,12 +30,12 @@ namespace cg::net {
 namespace {
 
 // Free function has no QObject context for tr(); see download_result_factory.cpp's identical
-// pattern and [D-9].
+// pattern.
 constexpr const char* kTrContext = "cg::net::CurlDownloader";
 
-// docs/specs/net.md §7.0: no test may reach the real network. tests/net/CMakeLists.txt (or, for
-// the nocmake fallback, tools/nocmake_build.sh) sets CG_NET_NO_EXTERNAL_NETWORK=1; read once,
-// lazily, the first time any CurlDownloader needs it.
+// No test may reach the real network. tests/net/CMakeLists.txt (or, for the nocmake fallback,
+// tools/nocmake_build.sh) sets CG_NET_NO_EXTERNAL_NETWORK=1; read once, lazily, the first time
+// any CurlDownloader needs it.
 [[nodiscard]] bool externalNetworkBlocked() {
     static const bool blocked = qEnvironmentVariableIsSet("CG_NET_NO_EXTERNAL_NETWORK");
     return blocked;
@@ -60,9 +61,10 @@ constexpr const char* kTrContext = "cg::net::CurlDownloader";
 } // namespace
 
 CurlDownloader::CurlDownloader(DownloaderOptions options, const cg::core::ContentTypeRegistry& types,
-                               std::shared_ptr<CurlShare> share, std::shared_ptr<IProxyResolver> proxies)
+                               std::shared_ptr<CurlShare> share, std::shared_ptr<IProxyResolver> proxies,
+                               std::shared_ptr<UserAgentFallback> uaFallback)
     : options_(std::move(options)), types_(types), share_(std::move(share)), proxies_(std::move(proxies)),
-      session_(QByteArray(), options_.onProgress) {
+      uaFallback_(std::move(uaFallback)), session_(QByteArray(), options_.onProgress) {
     if (share_) {
         session_.attachShare(*share_);
     }
@@ -107,8 +109,8 @@ DownloadResult CurlDownloader::onAfterResponse(bool tryDecode, bool tryDetect, c
             const qint64 expected = contentLengthStr.toLongLong(&parsed);
             if (!parsed) {
                 // Ports StrToInt raising on a malformed Content-Length (u_DownloaderHttpBase.pas:147),
-                // caught by DoRequest's outer `except` (u_DownloaderHttpByCurl.pas:312-318) and
-                // turned into a load error -- finding 7 (T-0010B rework): was silently skipped here.
+                // caught by DoRequest's outer `except` (u_DownloaderHttpByCurl.pas:312-318) and turned
+                // into a load error (it was silently skipped here before).
                 return result::loadErrorByUnknownReason(QStringLiteral("'%1' is not a valid integer value")
                                                             .arg(QString::fromUtf8(contentLengthStr)));
             }
@@ -152,12 +154,12 @@ DownloadResult CurlDownloader::onAfterResponse(bool tryDecode, bool tryDetect, c
         return result::dataNotExistsZeroSize(statusCode, rawHeader);
     }
     if (isDownloadErrorStatus(statusCode)) {
-        return result::loadErrorByStatusCode(statusCode); // header blob NOT passed, spec §2.9
+        return result::loadErrorByStatusCode(statusCode); // header blob NOT passed
     }
     if (isContentNotExistStatus(statusCode)) {
         return result::dataNotExistsByStatusCode(statusCode, rawHeader);
     }
-    return result::loadErrorByUnknownStatusCode(statusCode); // header blob NOT passed, spec §2.9
+    return result::loadErrorByUnknownStatusCode(statusCode); // header blob NOT passed
 }
 
 DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::stop_token stop) {
@@ -197,28 +199,44 @@ DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::st
         curlOptions.timeoutMs = options_.onProgress ? 0 : static_cast<int>(request.inet->timeoutMs);
         curlOptions.connectTimeoutMs = static_cast<int>(request.inet->timeoutMs);
 
-        QByteArray headers = request.requestHeader;
-        QByteArray userAgent = getHeaderValueUp(headers, "USER-AGENT");
-        if (userAgent.isEmpty()) {
-            userAgent = request.inet->userAgent;
-            headers = "User-Agent: " + userAgent + "\r\n" + headers; // prepend, not append
-        }
+        // A deviation from legacy: the host-scoped User-Agent fallback applies to a request that
+        // carries the default User-Agent only (none in the header blob, the configured one equal to the
+        // default).
+        const QString host = QUrl::fromEncoded(request.url).host();
+        const bool defaultAgent = getHeaderValueUp(request.requestHeader, "USER-AGENT").isEmpty() &&
+                                  request.inet->userAgent == QByteArray(kDefaultUserAgent);
+        const bool eligible = uaFallback_ && defaultAgent &&
+                              (request.method == Method::Get || request.method == Method::Head) &&
+                              !host.isEmpty();
+        const bool switchedAtStart = eligible && uaFallback_->isSwitched(host);
 
-        if (options_.acceptEncoding) {
-            const QByteArray encodingOld = getHeaderValueUp(headers, "ACCEPT-ENCODING");
-            if (encodingOld.isEmpty()) {
-                addHeaderValue(headers, "Accept-Encoding", acceptEncodingList());
-            } else {
-                const QByteArray filtered = filterAcceptEncoding(encodingOld);
-                if (!filtered.isEmpty()) {
-                    if (filtered != encodingOld) {
-                        replaceHeaderValueUp(headers, "ACCEPT-ENCODING", filtered);
-                    }
+        QByteArray userAgent;
+        auto buildHeaders = [&](const QByteArray& agentOverride) {
+            QByteArray headers = request.requestHeader;
+            userAgent = getHeaderValueUp(headers, "USER-AGENT");
+            if (userAgent.isEmpty()) {
+                userAgent = agentOverride.isEmpty() ? request.inet->userAgent : agentOverride;
+                headers = "User-Agent: " + userAgent + "\r\n" + headers; // prepend, not append
+            }
+
+            if (options_.acceptEncoding) {
+                const QByteArray encodingOld = getHeaderValueUp(headers, "ACCEPT-ENCODING");
+                if (encodingOld.isEmpty()) {
+                    addHeaderValue(headers, "Accept-Encoding", acceptEncodingList());
                 } else {
-                    deleteHeaderValueUp(headers, "ACCEPT-ENCODING");
+                    const QByteArray filtered = filterAcceptEncoding(encodingOld);
+                    if (!filtered.isEmpty()) {
+                        if (filtered != encodingOld) {
+                            replaceHeaderValueUp(headers, "ACCEPT-ENCODING", filtered);
+                        }
+                    } else {
+                        deleteHeaderValueUp(headers, "ACCEPT-ENCODING");
+                    }
                 }
             }
-        }
+            return headers;
+        };
+        QByteArray headers = buildHeaders(switchedAtStart ? uaFallback_->agent() : QByteArray());
 
         CurlProxy curlProxy;
         const CurlProxy* proxyPtr = nullptr;
@@ -259,7 +277,7 @@ DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::st
             // Ports the VDescription construction (u_DownloaderHttpByCurl.pas:271-292): the prompt
             // text the user reads carries the parsed realm -- `<address> "<realm>"` -- when the
             // challenge had one, else just the address; both wrapped in the translated sentence.
-            // Finding 5 (T-0010B rework): was previously the bare address, realm dropped entirely.
+            // It was previously the bare address, realm dropped entirely.
             QString addressAndRealm = QString::fromUtf8(curlProxy.address);
             if (challenge && !challenge->realm.isEmpty()) {
                 addressAndRealm = QStringLiteral("%1 \"%2\"").arg(addressAndRealm, challenge->realm);
@@ -282,8 +300,8 @@ DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::st
                 }
                 // Exactly one retry -- mutating curlProxy above (not curlRequest.headers/method) is
                 // what makes CurlSession::perform() see a proxy-only change and reset the handle; the
-                // retry then carries no custom headers at all ([D-18], curl_session.cpp's rebuild-slist
-                // block). Kept 1:1 with legacy, pinned by ProxyAuthRetriesOnceWithCredentialsAndRealm.
+                // retry then carries no custom headers at all (curl_session.cpp's rebuild-slist block).
+                // Kept 1:1 with legacy, pinned by ProxyAuthRetriesOnceWithCredentialsAndRealm.
                 ok = session_.perform(curlRequest, response);
             } else {
                 ok = false;
@@ -292,6 +310,30 @@ DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::st
 
         if (!ok) {
             return result::loadErrorByUnknownReason(response.errorReason);
+        }
+
+        // DEVIATION: one retry of a 403 with the curl User-Agent; legacy never retries a 403
+        // (u_DownloaderHttpByCurl.pas:425-428, u_DownloaderHttpBase.pas:197-216).
+        if (eligible && !switchedAtStart && response.code == 403 && !stop.stop_requested() &&
+            uaFallback_->shouldRetry(host)) {
+            const QByteArray retryHeaders = buildHeaders(uaFallback_->agent());
+            curlRequest.userAgent = userAgent;
+            curlRequest.headers = retryHeaders;
+            CurlResponse response2;
+            const bool ok2 = session_.perform(curlRequest, response2);
+            const bool accepted = ok2 && (isOkStatus(static_cast<quint32>(response2.code)) ||
+                                          isContentNotExistStatus(static_cast<quint32>(response2.code)));
+            const bool switchedNow = uaFallback_->noteRetry(host, accepted);
+            if (accepted) {
+                DownloadResult r =
+                    onAfterResponse(options_.acceptEncoding, options_.tryDetectContentType, request,
+                                    static_cast<quint32>(response2.code), response2.headers, response2.data);
+                if (switchedNow) {
+                    r.userAgentSwitchHost = host;
+                    r.userAgentSwitchedTo = uaFallback_->agent();
+                }
+                return r;
+            }
         }
 
         return onAfterResponse(options_.acceptEncoding, options_.tryDetectContentType, request,
@@ -303,10 +345,17 @@ DownloadResult CurlDownloader::doRequest(const DownloadRequest& request, std::st
 
 CurlDownloaderFactory::CurlDownloaderFactory(const cg::core::ContentTypeRegistry& types,
                                              std::shared_ptr<IProxyResolver> proxies)
-    : types_(types), proxies_(std::move(proxies)), share_(std::make_shared<CurlShare>()) {}
+    : types_(types), proxies_(std::move(proxies)), share_(std::make_shared<CurlShare>()),
+      uaFallback_(std::make_shared<UserAgentFallback>(curlUserAgent())) {}
+
+CurlDownloaderFactory::CurlDownloaderFactory(const cg::core::ContentTypeRegistry& types,
+                                             std::shared_ptr<IProxyResolver> proxies,
+                                             std::shared_ptr<UserAgentFallback> uaFallback)
+    : types_(types), proxies_(std::move(proxies)), share_(std::make_shared<CurlShare>()),
+      uaFallback_(std::move(uaFallback)) {}
 
 IDownloaderPtr CurlDownloaderFactory::build(const DownloaderOptions& options) {
-    return std::make_shared<CurlDownloader>(options, types_, share_, proxies_);
+    return std::make_shared<CurlDownloader>(options, types_, share_, proxies_, uaFallback_);
 }
 
 } // namespace cg::net

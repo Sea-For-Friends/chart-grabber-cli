@@ -16,7 +16,7 @@ namespace cg::core::platform {
 
 #ifdef _WIN32
 void setCurrentThreadName(const QString& name) noexcept {
-    // T-0335: SetThreadDescription exists from Windows 10 1607; resolved at run time, absent = no name.
+    // SetThreadDescription exists from Windows 10 1607; resolved at run time, absent = no name.
     using SetDescription = HRESULT(WINAPI*)(HANDLE, PCWSTR);
     static const auto setDescription = reinterpret_cast<SetDescription>(reinterpret_cast<void (*)()>(
         ::GetProcAddress(::GetModuleHandleW(L"kernel32.dll"), "SetThreadDescription")));

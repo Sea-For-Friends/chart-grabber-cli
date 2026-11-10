@@ -3,27 +3,26 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/PascalScript/u_PSPascalCompilerEx.pas (RemObjects grammar -> the v1 EBNF of spec
-// section 3), Src/PascalScript/u_PascalScriptTypes.pas (the 6 registered types + TTileInfo,
-// consulted here for field layout so `p.x` resolves to a slot at compile time, and (T-0014B) for
-// each slot's primitive `DeclaredType` (spec 2.6) so the interpreter can range-wrap/round on
-// assignment (spec 4.1 N1/N2) without re-deriving it from the AST.
+// Ports: Src/PascalScript/u_PSPascalCompilerEx.pas (RemObjects grammar -> a v1 EBNF),
+// Src/PascalScript/u_PascalScriptTypes.pas (the 6 registered types + TTileInfo, consulted here
+// for field layout so `p.x` resolves to a slot at compile time, and for each slot's primitive
+// `DeclaredType` so the interpreter can range-wrap/round on assignment without re-deriving it
+// from the AST).
 //
 // Recursive-descent parser producing a `Program*` plus every diagnostic it found in one pass
-// (legacy aggregated every RemObjects message into one exception - ADR-0003's error table keeps
-// that behaviour). Compile-time name resolution (local scope, then the fixed SAS API namespace)
-// happens inline, in the shadowing order the corpus proves (spec 2.8): a routine declared in the
-// script, then a variable/parameter in scope, then the fixed set of 26 bound variables, then a
-// registered function or intrinsic (spec 5.1/5.3/5.4). Only the *names* and arities of the fixed
-// namespace are needed here; their runtime behaviour is the interpreter's job (T-0014/T-0015) -
-// see the handoff for how `Call::callee` encodes a reference into that fixed namespace so the
-// interpreter can decode it without re-parsing.
+// (legacy aggregated every RemObjects message into one exception - the port keeps that
+// behaviour). Compile-time name resolution (local scope, then the fixed SAS API namespace)
+// happens inline, in the shadowing order the corpus proves: a routine declared in the script,
+// then a variable/parameter in scope, then the fixed set of 26 bound variables, then a
+// registered function or intrinsic. Only the *names* and arities of the fixed namespace are
+// needed here; their runtime behaviour is the interpreter's job; `Call::callee` encodes a
+// reference into that fixed namespace so the interpreter can decode it without re-parsing.
 
 #include "cg/core/result.h"
 #include "cg/script/ast.h"
 #include "cg/script/diagnostic.h"
 #include "cg/script/token.h"
-#include "cg/script/value.h" // DeclaredType (spec 2.6) - T-0014B
+#include "cg/script/value.h" // DeclaredType
 
 #include <QByteArray>
 
@@ -35,10 +34,10 @@
 
 namespace cg::script {
 
-// A registered free function (spec 5.3) or an interpreter intrinsic (spec 5.4): callable, never
-// assignable. `nonDeterministic` flags the three of the eight names compiled_script.h's
-// isDeterministic() must track that are calls (Random, GetUnixTime, SaveToLocalFile); the other
-// five are bound variables and are flagged where they are declared, see `SymbolTable`.
+// A registered free function or an interpreter intrinsic: callable, never assignable.
+// `nonDeterministic` flags the three of the eight names compiled_script.h's isDeterministic()
+// must track that are calls (Random, GetUnixTime, SaveToLocalFile); the other five are bound
+// variables and are flagged where they are declared, see `SymbolTable`.
 enum class ExternalKind : std::uint8_t { Function, Intrinsic };
 
 struct ExternalSymbol {
@@ -50,19 +49,19 @@ struct ExternalSymbol {
     bool nonDeterministic = false;
 };
 
-// One of the 6 registered record types (spec 5.2): field order is load-bearing (PascalScript maps
-// a record by layout, and so does `Value::fromRecord`, T-0014/T-0014B). `fields` views a static
-// constexpr array (parser.cpp) rather than owning a `std::vector`, so the whole table of these can
-// be `constexpr` - no static-initialization-order or throwing-static-init concerns. `kind` is this
-// type's own `DeclaredType` enumerator (T-0014B), so `SymbolTable::setSlotType` has one thing to
-// stash per slot rather than two.
+// One of the 6 registered record types: field order is load-bearing (PascalScript maps a record by
+// layout, and so does `Value::fromRecord`). `fields` views a static constexpr array (parser.cpp)
+// rather than owning a `std::vector`, so the whole table of these can be `constexpr` - no
+// static-initialization-order or throwing-static-init concerns. `kind` is this type's own
+// `DeclaredType` enumerator, so `SymbolTable::setSlotType` has one thing to stash per slot rather
+// than two.
 struct RegisteredType {
     const char* name = "";
     std::span<const char* const> fields;
     DeclaredType kind = DeclaredType::Unknown;
 };
 
-// One method of one of the 7 script-visible interfaces (spec 2.7/5.6).
+// One method of one of the 7 script-visible interfaces.
 struct InterfaceMethod {
     const char* name = "";
     std::uint8_t argCount = 0;
@@ -79,15 +78,13 @@ struct InterfaceType {
 inline constexpr int kMethodSlotStride = 16;
 
 // Compile-time symbol table: local scopes (routines/vars/params), the 26 bound variables
-// pre-declared as slots 0..25 (spec 5.1's order) and the fixed external-function namespace. Also
-// owns the AST `Arena` so `CompiledScript` frees the whole tree in one call by destroying the
-// `SymbolTable` (see compiled_script.h).
+// pre-declared as slots 0..25 (in registration order) and the fixed external-function namespace.
+// Also owns the AST `Arena` so `CompiledScript` frees the whole tree in one call by destroying
+// the `SymbolTable` (see compiled_script.h).
 class SymbolTable {
 public:
-    // The 26 bound variables (spec 5.1) always occupy slots [0, kBoundVariableCount) - see the
-    // constructor. T-0014's interpreter uses this to recognise a VarRef into ScriptVars/the host
-    // interfaces (unimplemented this slice - no IScriptHost/ScriptVars binding yet) and fail with
-    // a diagnostic instead of silently treating it as an ordinary zero-initialised local.
+    // The 26 bound variables always occupy slots [0, kBoundVariableCount) - see the constructor.
+    // The interpreter uses this to recognise a VarRef into ScriptVars/the host interfaces.
     static constexpr int kBoundVariableCount = 26;
 
     SymbolTable();
@@ -103,30 +100,28 @@ public:
     // declared in that same scope (duplicate identifier).
     int declareLocal(const QByteArray& name);
     int declareRoutine(const QByteArray& name);
-    // `type` is non-null only for one of the 6 registered record types (`.field` resolution,
-    // T-0013); `declared` is always set (T-0014B), including `DeclaredType::Unknown` for a slot
-    // whose type this parser cannot resolve - see `declaredTypes()`.
+    // `type` is non-null only for one of the 6 registered record types (`.field` resolution);
+    // `declared` is always set, including `DeclaredType::Unknown` for a slot whose type this
+    // parser cannot resolve - see `declaredTypes()`.
     void setSlotType(int slot, const RegisteredType* type, DeclaredType declared);
-    // T-0032 (PD-1): the element type + declared bounds of a `DeclaredType::StaticArray` slot -
-    // set right after `setSlotType` in `parseVarSection`. `arrayInfoForSlot` is nullptr for every
-    // other slot.
+    // The element type + declared bounds of a `DeclaredType::StaticArray` slot - set right after
+    // `setSlotType` in `parseVarSection`. `arrayInfoForSlot` is nullptr for every other slot.
     void setArrayInfo(int slot, ArrayInfo info);
     [[nodiscard]] const ArrayInfo* arrayInfoForSlot(int slot) const;
-    // T-0032 (PD-103): the compile-time-folded `Value` of a `const`-declared slot (grammar
-    // `const-decl`, parseConstSection). Looked up two ways: by `Parser::parseConstExpr` when a
-    // later const-expr references an earlier constant (`GetConstantIdentifier`,
-    // uPSCompiler.pas:13072-13084), and by `CompiledScript::constValue` for the interpreter's
-    // default-value-at-frame-entry (spec 4.4 I1/I3 - a const's "zero value" IS its folded value).
-    // nullptr for every slot that is not a `const`.
-    // T-0035: `type` is the engine's static type of the folded value (Integer = s32, Cardinal = u32,
-    // Int64 = s64, Char, AnsiString, Extended, Boolean) - a const is also the target of the
-    // assignment / `var`-argument rejections (uPSCompiler.pas:10653-10658, :5438).
+    // The compile-time-folded `Value` of a `const`-declared slot (grammar `const-decl`,
+    // parseConstSection). Looked up two ways: by `Parser::parseConstExpr` when a later const-expr
+    // references an earlier constant (`GetConstantIdentifier`, uPSCompiler.pas:13072-13084), and by
+    // `CompiledScript::constValue` for the interpreter's default-value-at-frame-entry (a const's
+    // "zero value" IS its folded value). nullptr for every slot that is not a `const`. `type` is the
+    // engine's static type of the folded value (Integer = s32, Cardinal = u32, Int64 = s64, Char,
+    // AnsiString, Extended, Boolean) - a const is also the target of the assignment / `var`-argument
+    // rejections (uPSCompiler.pas:10653-10658, :5438).
     void setConstValue(int slot, Value value, DeclaredType type);
     [[nodiscard]] const Value* constValueForSlot(int slot) const;
     [[nodiscard]] DeclaredType constTypeForSlot(int slot) const;
     // Recorded right after a routine's parameter list is parsed (before its body), so a
-    // recursive call inside that same body resolves with a known arity (spec 3.4's "wrong
-    // argument count" diagnostic is only meaningful once this has been set).
+    // recursive call inside that same body resolves with a known arity (the
+    // "wrong argument count" diagnostic is only meaningful once this has been set).
     void setRoutineArity(int slot, int paramCount);
 
     enum class ResolutionKind : std::uint8_t { LocalRoutine, LocalVariable, ExternalFunction, Unknown };
@@ -138,36 +133,38 @@ public:
         const RegisteredType* declaredType = nullptr;  // LocalVariable, when statically known
         const InterfaceType* boundInterface = nullptr; // LocalVariable, when it is one of the 7
     };
-    // The shadowing order of spec 2.8. Has the side effect of latching
-    // `sawNonDeterministicSymbol()` when the resolved name is one of the eight spec-2.12 names.
+    // Resolves `name` in the shadowing order given at the top of this file. Has the side effect of
+    // latching `sawNonDeterministicSymbol()` when the resolved name is one of the eight
+    // non-deterministic names.
     [[nodiscard]] Resolution resolve(const QByteArray& name);
 
     [[nodiscard]] int frameSize() const noexcept { return nextSlot_; }
 
     // True once `resolve()` has returned a bound variable or external function flagged
-    // `nonDeterministic` (spec 2.12 / 3.7 `Corpus.DeterministicCountMatches`).
+    // `nonDeterministic`.
     [[nodiscard]] bool sawNonDeterministicSymbol() const noexcept { return nonDeterministic_; }
 
     [[nodiscard]] static int fieldIndex(const RegisteredType& type, const QByteArray& fieldName);
     [[nodiscard]] static const RegisteredType* registeredTypeNamed(const QByteArray& name);
     // The registered record type bound to a still-in-scope local variable's slot, or nullptr for
     // any other slot (a primitive, a bound variable, or one already out of scope). Parse-time
-    // only, used to resolve a `with` designator (T-0014B) - unlike `declaredTypes()` below it does
-    // not survive `popScope()`, so callers must query it before the declaring scope closes.
+    // only, used to resolve a `with` designator - unlike `declaredTypes()` below it does not
+    // survive `popScope()`, so callers must query it before the declaring scope closes.
     [[nodiscard]] const RegisteredType* declaredTypeOfSlot(int slot) const;
-    // The interface bound at ScriptVars slot `slot` (spec 5.1: TileCache=0 .. Converter=6), or
-    // nullptr for the other 19 (non-interface) bound variables and any local slot.
+    // The interface bound at ScriptVars slot `slot` (TileCache=0 .. Converter=6), or nullptr for
+    // the other 19 (non-interface) bound variables and any local slot.
     [[nodiscard]] static const InterfaceType* interfaceForBoundSlot(int slot);
     // The fixed registered-function/intrinsic table, in the order `Call::callee` indexes it for
-    // `CallKind::Builtin`/`CallKind::Registered` (spec 5.3 order, then spec 5.4 order).
+    // `CallKind::Builtin`/`CallKind::Registered` (registered functions, then intrinsics, each in
+    // registration order).
     [[nodiscard]] static std::span<const ExternalSymbol> externalSymbols();
 
     // One `DeclaredType` per slot, indexed [0, frameSize()) - `Unknown` for a bound variable, a
     // routine's own slot, or any local whose type this parser did not resolve. Unlike the per-
-    // `Entry` `declaredType`/`declaredKind` above, this flat vector survives `popScope()` (T-0014B:
-    // the interpreter needs a routine's parameter/local types long after that routine's own parse
-    // scope has closed), so it is maintained directly by `declareLocal`/`declareRoutine`/
-    // `setSlotType` rather than derived from `scopes_` after the fact.
+    // `Entry` `declaredType`/`declaredKind` above, this flat vector survives `popScope()` (the
+    // interpreter needs a routine's parameter/local types long after that routine's own parse scope
+    // has closed), so it is maintained directly by `declareLocal`/`declareRoutine`/`setSlotType`
+    // rather than derived from `scopes_` after the fact.
     [[nodiscard]] const std::vector<DeclaredType>& declaredTypes() const noexcept { return declaredTypes_; }
 
 private:
@@ -235,10 +232,9 @@ private:
     void recover(); // skip to the next ';' or a statement/section keyword
 
     // A `var`/parameter/`Result` type annotation, resolved as far as this parser goes: `recordType`
-    // is non-null only for one of the 6 registered record types (`.field` resolution, unchanged
-    // from T-0013); `kind` is the slot's `DeclaredType` (T-0014B), `Unknown` when unresolved.
-    // T-0032 (PD-1): `elementKind`/`lowBound`/`highBound` are populated only when
-    // `kind == DeclaredType::StaticArray` (spec 3.6).
+    // is non-null only for one of the 6 registered record types (`.field` resolution); `kind` is
+    // the slot's `DeclaredType`, `Unknown` when unresolved. `elementKind`/`lowBound`/`highBound`
+    // are populated only when `kind == DeclaredType::StaticArray`.
     struct ParsedType {
         const RegisteredType* recordType = nullptr;
         DeclaredType kind = DeclaredType::Unknown;
@@ -254,9 +250,9 @@ private:
     void parseRoutineDecl(Program* program);
     [[nodiscard]] ParsedType parseTypeName();
     void skipRecordType();
-    // T-0035: the engine's ReadConstant (uPSCompiler.pas:13056-13430) over the token stream - its own
-    // grammar (not the statement parser's), typed values, PreCalc folding. Reports its own
-    // diagnostic and returns nullopt on failure.
+    // The engine's ReadConstant (uPSCompiler.pas:13056-13430) over the token stream - its own grammar
+    // (not the statement parser's), typed values, PreCalc folding. Reports its own diagnostic and
+    // returns nullopt on failure.
     [[nodiscard]] std::optional<ConstVal> parseConstExpr(int level = 0);
     [[nodiscard]] std::optional<BinaryOp> constOpAt(int level) const;
     [[nodiscard]] std::optional<ConstVal> parseConstBound(); // array bound: integer-typed const-expr
@@ -283,7 +279,7 @@ private:
     [[nodiscard]] Node* parseWithStmt();
     [[nodiscard]] Node* parseSimpleStmtOrAssign();
 
-    // --- expressions (Delphi precedence, spec 3.2) --------------------------------------------
+    // --- expressions (Delphi precedence) --------------------------------------------
     [[nodiscard]] Node* parseExpr();
     [[nodiscard]] Node* parseSimpleExpr();
     [[nodiscard]] Node* parseTerm();
@@ -293,10 +289,10 @@ private:
     [[nodiscard]] std::vector<Node*> parseArgList();
     [[nodiscard]] qint64 parseConstIntExpr(); // for case labels
 
-    // One active `with` scope (spec 3.5, T-0014B): `slot` is the with-subject variable (always a
-    // simple local of one of the 6 registered record types, enforced by `parseWithStmt`), `type`
-    // its record layout. `parseDesignatorTail` checks these innermost-first, before ordinary name
-    // resolution, so a bare field name inside the `with` body lowers straight to a `Field` node.
+    // One active `with` scope: `slot` is the with-subject variable (always a simple local of one
+    // of the 6 registered record types, enforced by `parseWithStmt`), `type` its record layout.
+    // `parseDesignatorTail` checks these innermost-first, before ordinary name resolution, so a
+    // bare field name inside the `with` body lowers straight to a `Field` node.
     struct WithScope {
         int slot = -1;
         const RegisteredType* type = nullptr;
@@ -306,7 +302,7 @@ private:
     int pos_ = 0;
     SymbolTable& symbols_;
     DiagnosticList* diagnostics_ = nullptr;
-    int loopDepth_ = 0; // break/continue must be inside a loop (spec 3.3 S8)
+    int loopDepth_ = 0; // break/continue must be inside a loop
     std::vector<WithScope> withScopes_;
 };
 

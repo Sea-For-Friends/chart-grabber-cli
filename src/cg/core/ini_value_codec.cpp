@@ -12,7 +12,7 @@
 
 namespace cg::core::valuecodec {
 
-// Delphi StrToIntDef after TCustomIniFile.ReadInteger has rewritten a leading 0x as $ (Q13).
+// Delphi StrToIntDef after TCustomIniFile.ReadInteger has rewritten a leading 0x as $.
 qint32 parseInt(const QString& text, qint32 def) {
     QString str = text;
     if (str.size() > 2 && str.at(0) == u'0' && (str.at(1) == u'x' || str.at(1) == u'X')) {
@@ -58,7 +58,7 @@ double parseFloat(const QString& text, double def) {
     if (str == QLatin1StringView("NAN")) {
         return qQNaN();
     }
-    const qsizetype comma = str.indexOf(u','); // Q16: the FIRST comma only
+    const qsizetype comma = str.indexOf(u','); // The FIRST comma only
     if (comma >= 0) {
         str.replace(comma, 1, u'.');
     }

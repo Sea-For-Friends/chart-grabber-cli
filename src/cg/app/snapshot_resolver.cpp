@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit). See snapshot_resolver.h. docs/specs/weather-sources.md section 3.1, 3.4.
+// New code (no legacy unit). See snapshot_resolver.h.
 #include "cg/app/snapshot_resolver.h"
 
 #include "cg/app/app_context.h"
@@ -30,7 +30,7 @@ constexpr qsizetype kMaxIndexBytes = qsizetype{8} * 1024 * 1024;
 core::Result<Snapshot> resolveSnapshot(const SnapshotDefinition& definition, const maptype::IMapType& map,
                                        const AppContext& app, const std::stop_token& stop) {
     if (definition.type == SnapshotIndexType::NoneRefetch) {
-        return parseSnapshotIndex(definition, {}); // T-0337: no request, the instant of now
+        return parseSnapshotIndex(definition, {}); // No request, the instant of now
     }
     const QString url = definition.indexUrl;
     const net::IDownloaderPtr downloader = app.downloaderFactory()->build(net::DownloaderOptions{});
@@ -54,7 +54,7 @@ core::Result<Snapshot> resolveSnapshot(const SnapshotDefinition& definition, con
     }
     auto parsed = parseSnapshotIndex(definition, response.responseData);
     if (!parsed && parsed.error().code() == core::ErrorCode::Unsupported) {
-        return parsed; // T-0283: the refusal of --time is a whole text, without the url
+        return parsed; // The refusal of --time is a whole text, without the url
     }
     if (!parsed) {
         return core::fail(parsed.error().code(), QStringLiteral("%1: %2").arg(url, parsed.error().what()));

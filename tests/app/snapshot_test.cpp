@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/app/snapshot (new code, no legacy unit; docs/specs/weather-sources.md §2, §3.2-3.4, §6).
-// No FEAT tag (T-0242: Features none). Fixtures: tests/fixtures/app/snapshot (real answers of the services).
+// Tests for src/cg/app/snapshot (new code, no legacy unit). Fixtures: tests/fixtures/app/snapshot (real
+// answers of the services).
 #include "cg/app/app_context.h"
 #include "cg/app/snapshot.h"
 #include "cg/app/snapshot_store.h"
@@ -110,7 +110,7 @@ QByteArray wmtsDoc(const QByteArray& domain) {
 
 } // namespace
 
-// ---- 1. the eight real answers
+// ---- the eight real answers
 
 struct SampleCase {
     const char* file;
@@ -141,7 +141,7 @@ TEST(SnapshotSamples, EveryFixtureGivesTheSnapshotOfItsReadme) {
          "2026-10-15T14:30:00Z", false},
         {"gibs-viirs-noaa20-describedomains.xml", SnapshotIndexType::WmtsDomain, "", "2026-10-15",
          "2026-10-15", true},
-        // T-0283: the version is the Default text verbatim (with the milliseconds), the time its parse
+        // The version is the Default text verbatim (with the milliseconds), the time its parse
         {"copernicus-waves-wmts-capabilities.xml", SnapshotIndexType::WmtsDefault,
          "GLOBAL_ANALYSISFORECAST_WAV_001_027/cmems_mod_glo_wav_anfc_0.083deg_PT3H-i_202411/VHM0",
          "2026-10-19T12:00:00.000Z", "2026-10-19T12:00:00Z", false},
@@ -169,7 +169,7 @@ TEST(SnapshotSamples, EveryFixtureGivesTheSnapshotOfItsReadme) {
     }
 }
 
-// ---- 2. json-last
+// ---- json-last
 
 TEST(SnapshotJsonLast, RootThatIsNotAnObject) {
     EXPECT_EQ(failure(parseSnapshotIndex(rainDef(), "[1,2]")), "not a JSON object");
@@ -224,7 +224,7 @@ TEST(SnapshotJsonLast, TimeMember) {
     EXPECT_EQ(failure(parseSnapshotIndex(rainDef(), rainLastTime(QStringLiteral("bad")))),
               "bad is not a time");
 
-    // A number is Unix seconds; a string is the §3.3 form.
+    // A number is Unix seconds; a string is the version form.
     const auto num = parseSnapshotIndex(rainDef(), rainLastTime(86400));
     ASSERT_TRUE(num.has_value());
     EXPECT_EQ(isoOf(*num).toStdString(), "1970-01-02T00:00:00Z");
@@ -259,12 +259,12 @@ TEST(SnapshotJsonLast, VersionMember) {
     d.versionField = QStringLiteral("f");
     const QByteArray fractional = R"({"a":{"b":[{"t":86400,"f":1.5}]}})";
     EXPECT_EQ(failure(parseSnapshotIndex(d, fractional)), "the last entry of a.b has no usable f");
-    // A version that §3.3 refuses.
+    // A version that the version rule refuses.
     const QByteArray empty = R"({"a":{"b":[{"t":86400,"f":""}]}})";
     EXPECT_EQ(failure(parseSnapshotIndex(d, empty)), "the version \"\" cannot be used");
 }
 
-// ---- 3. wms-default
+// ---- wms-default
 
 TEST(SnapshotWms, NameOfAStyleIsNotALayerName) {
     // "weather_radar_base_reflectivity" is only the Name of a Style in the nowCOAST file.
@@ -375,7 +375,7 @@ TEST(SnapshotWms, LayerRules) {
     EXPECT_EQ(failure(wms(plain, QStringLiteral("h60"))), "no layer h60");
 }
 
-// ---- 4. wmts-domain
+// ---- wmts-domain
 
 TEST(SnapshotWmts, Domains) {
     const auto wmts = [](const QByteArray& body) {
@@ -408,7 +408,7 @@ TEST(SnapshotWmts, Domains) {
     EXPECT_EQ(failure(wmts(wmtsDoc("x/current/P1D"))), "current is not a time");
 }
 
-// ---- 4b. wmts-default (T-0283)
+// ---- wmts-default
 
 namespace {
 
@@ -670,7 +670,7 @@ TEST(SnapshotWmtsDefault, TimeTextForms) {
     EXPECT_FALSE(parseSnapshotTime(QString::fromUtf8("+\xEF\xBC\x92\xEF\xBC\x94h")).has_value());
 }
 
-// ---- 4c. SnapshotPick=nearest-now and none-refetch (T-0337)
+// ---- SnapshotPick=nearest-now and none-refetch
 
 namespace {
 
@@ -770,7 +770,6 @@ TEST(SnapshotNearestNow, ListOfTheRealDocumentKeepsTheServersText) {
     ASSERT_TRUE(late.has_value()) << late.error().what().toStdString();
     EXPECT_EQ(late->version.toStdString(), "2026-10-15T20:12:08.000Z");
     // before the first frame (12:04:11) by more than its step, the 244 s gap to the next listed frame
-    // (T-0352)
     EXPECT_EQ(failure(wms("2026-10-15T12:00:00Z")),
               "layer conus_base_reflectivity_mosaic has no time up to now + one step (the nearest is "
               "2026-10-15T12:04:11Z)");
@@ -844,9 +843,9 @@ TEST(SnapshotNearestNow, UnreadableDimensionIsRefused) {
     EXPECT_EQ(plain->version.toStdString(), "2026-10-15T19:45:00Z");
 }
 
-// T-0352: the first listed instant takes the gap to the next one as its step (as a range does), so a list
-// whose instants all lie in the future is accepted when the nearest is within that gap of now; a single
-// listed instant keeps step 0.
+// The first listed instant takes the gap to the next one as its step (as a range does), so a list whose
+// instants all lie in the future is accepted when the nearest is within that gap of now; a single listed
+// instant keeps step 0.
 TEST(SnapshotNearestNow, FirstListedInstantTakesTheGapToTheNext) {
     const char* const now = "2026-10-19T10:20:00Z";
     const auto r =
@@ -903,7 +902,7 @@ TEST(SnapshotNoneRefetch, TheInstantOfTheResolveIsTheSnapshot) {
     EXPECT_LE(live->time, after);
 }
 
-// ---- 5. snapshotFromText
+// ---- snapshotFromText
 
 TEST(SnapshotText, TimeForms) {
     struct Case {
@@ -981,7 +980,7 @@ TEST(SnapshotText, VersionRules) {
     EXPECT_EQ(failure(snapshotFromText(QString(), QStringLiteral("x"))), "x is not a time");
 }
 
-// ---- 6. formatters
+// ---- formatters
 
 TEST(SnapshotFormat, TextAndIso) {
     Snapshot s;
@@ -1008,7 +1007,7 @@ TEST(SnapshotFormat, TextAndIso) {
     EXPECT_TRUE(snapshotTimeIso(unknownDay).isEmpty());
 }
 
-// ---- 7, 8. the keys of params.txt, read from loaded maps
+// ---- the keys of params.txt, read from loaded maps
 
 namespace {
 
@@ -1257,7 +1256,7 @@ TEST_F(SnapshotKeysTest, MaxZoomValues) {
     EXPECT_EQ(zoomFailure(20), "MaxZoom=7.5 is not a zoom from 0 to 23");
 }
 
-// T-0249: every {year} is replaced, nothing else.
+// Every {year} is replaced, nothing else.
 TEST(SnapshotWithYear, ReplacesEveryPlaceholder) {
     EXPECT_EQ(cg::app::withYear(QStringLiteral("Meteosat data {year}, {year}"), 2026),
               QStringLiteral("Meteosat data 2026, 2026"));
@@ -1265,7 +1264,7 @@ TEST(SnapshotWithYear, ReplacesEveryPlaceholder) {
               QStringLiteral("no placeholder {Year} {yea}"));
 }
 
-// ---- 4d. The frame before the chosen one (T-0356): `previous` and `newest`
+// ---- The frame before the chosen one: `previous` and `newest`
 
 namespace {
 
@@ -1398,7 +1397,7 @@ TEST(SnapshotPreviousFrame, WmtsDefaultPickAndTimeOption) {
     EXPECT_FALSE(asked->newest);
 }
 
-// ---- 5. T-0443: the model run (reference_time) and its store
+// ---- The model run (reference_time) and its store
 
 namespace {
 

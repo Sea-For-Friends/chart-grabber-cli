@@ -1,7 +1,7 @@
-; T-0015D golden: Bing/Bing.map.zmp - 'for' loop building a quadkey via nested if/else,
+; Golden: Bing/Bing.map.zmp - 'for' loop building a quadkey via nested if/else,
 ; 'byte' loop variable i. osX=osY starts at round(IntPower(2,GetZ-1)) div 2, halved each of
 ; the (GetZ-1) iterations (for i:=2 to GetZ); P1 has GetZ=1 so the loop is zero-trip (empty
-; quadkey). Traced digit-by-digit for P2-P4 (see docs/handoffs/T-0015D.md for the full trace).
+; quadkey). Traced digit-by-digit for P2-P4.
 ; ResultURL := GetURLBase+res+'?g=1180&mkt=en-us&lbl=l1&stl=h&shading=hill&n=z'
 
 [P1]

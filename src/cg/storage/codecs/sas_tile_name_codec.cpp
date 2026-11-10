@@ -11,7 +11,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-002. u_TileFileNameSAS.pas:57-67 GetTileFileName.
+// u_TileFileNameSAS.pas:57-67 GetTileFileName.
 QString SasTileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     return QStringLiteral("z%1/%2/x%3/%4/y%5")
         .arg(int(zoom) + 1)

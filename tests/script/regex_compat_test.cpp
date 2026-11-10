@@ -2,9 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-003 (regex surface, T-0014C2a). docs/specs/script.md:586-609, :1073-1078
-// (F13/F14), :1225-1324 (§6, the R1-R16 TRegExpr->QRegularExpression rewrite table and the
-// substitution-template rewrite).
 #include "cg/script/regex_compat.h"
 
 #include <gtest/gtest.h>
@@ -15,11 +12,12 @@ using namespace cg::script;
 
 namespace {
 
-// --- R1-R16 pattern rewrite table (spec §6.2, script.md:1254-1271) -------------------------------
+// --- the TRegExpr pattern rewrite -------------------------------
 //
-// Each row exercises the exact TRegExpr behaviour named in the "Decided behaviour" column, derived
-// directly from Includes/RegExpr.pas (line ranges in each comment) rather than assumed. Every case
-// asserts against `tRegExprMatch`/`compileTRegExpr` - what a real F13/F14 call observes.
+// Each row exercises one exact TRegExpr behaviour, derived directly from Includes/RegExpr.pas
+// (line ranges in each comment) rather than assumed. Every case asserts against
+// `tRegExprMatch`/`compileTRegExpr` - what a real RegExprGetMatchSubStr /
+// RegExprReplaceMatchSubStr call observes.
 
 struct RTableCase {
     const char* rule;
@@ -67,8 +65,8 @@ INSTANTIATE_TEST_SUITE_P(
         // R5: a '-' bordering a `\d`/`\w` shorthand is a literal dash in TRegExpr, not a range
         // (PCRE2 raises error 150 for `[a-\d]` otherwise).
         RTableCase{"R5", "[a-\\d]+", "a-5b", 0, true, true, "a-5"},
-        // F3/R5: the range-end check (RegExpr.pas:2345-2349) treats '-' as literal next to any of
-        // \d \D \s \S \w \W, not just \d/\w - \s (via EmitRangeStr) never sets CanBeRange either.
+        // The range-end check (RegExpr.pas:2345-2349) treats '-' as literal next to any of \d \D \s
+        // \S \w \W, not just \d/\w - \s (via EmitRangeStr) never sets CanBeRange either.
         RTableCase{"R5b", "[\\s-z]+", "-A", 0, true, true, "-"},
         RTableCase{"R5c", "[a-\\s]+", "a-b", 0, true, true, "a-"},
         RTableCase{"R5d", "[a-\\D]+", "a-D", 0, true, true, "a-D"},
@@ -80,7 +78,7 @@ INSTANTIATE_TEST_SUITE_P(
         // does not vendor - compileTRegExpr must fail loudly, not silently mis-match.
         RTableCase{"R7", QByteArray("[") + char(0xE0) + "-" + char(0xFF) + "]", "", 0, false, false, ""},
         // R8: `(?:...)` was a TRegExpr compile error (RegExpr.pas:2426-2440); PCRE2 supports it - a
-        // strict improvement (D-9), left working.
+        // strict improvement, left working.
         RTableCase{"R8", "(?:abc)+", "abcabc", 0, true, true, "abcabc"},
         // R9: possessive quantifiers were a TRegExpr compile error (reeNestedSQP); left working.
         RTableCase{"R9", "a*+b", "aaab", 0, true, true, "aaab"},
@@ -88,7 +86,7 @@ INSTANTIATE_TEST_SUITE_P(
         // followed by the literal char '0'.
         RTableCase{"R10", "(a)\\10", "aa0", 0, true, true, "aa0"},
         // R11: NSUBEXP = 15 capped TRegExpr at 14 real groups ("Too Many ()"); PCRE2 goes to
-        // 65535 - left working (D-9).
+        // 65535 - left working.
         RTableCase{"R11", "(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)(a)", "aaaaaaaaaaaaaaa", 0, true, true,
                    "aaaaaaaaaaaaaaa"},
         // R12: `{,3}` has no leading digit, so TRegExpr's brace-quantifier grammar never
@@ -105,7 +103,7 @@ INSTANTIATE_TEST_SUITE_P(
         // R16: an invalid pattern must fail loudly (`ok == false`), never silently no-match.
         RTableCase{"R16", "a(", "a(", 0, false, false, ""}));
 
-// --- substitution templates (spec §6.3, script.md:1273-1296) -------------------------------------
+// --- substitution templates -------------------------------------
 //
 // Derived directly from TRegExpr.Substitute (RegExpr.pas:3700-3813): ParseVarName's greedy
 // multi-digit parse, the `${n}` disambiguation, and the "any other \\X drops the backslash" rule
@@ -143,13 +141,13 @@ INSTANTIATE_TEST_SUITE_P(
                       TemplateCase{"NonParticipatingGroupIsEmpty", "(a)|(b)", "a", "[$2]", "[]"},
                       TemplateCase{"GroupFifteenOrAboveIsAlwaysEmpty", "(a)", "a", "$15", ""},
                       TemplateCase{"EmptyTemplateClearsTheMatch", "abc", "Xabc Y", "", "X Y"},
-                      // F2/R15 (RegExpr.pas:3845): TRegExpr.Replace copies the post-match tail from
-                      // the ORIGINAL input, so bytes after an embedded NUL survive a match - the
-                      // port must not truncate the tail at the NUL-truncation boundary.
+                      // TRegExpr.Replace (RegExpr.pas:3845) copies the post-match tail from the
+                      // ORIGINAL input, so bytes after an embedded NUL survive a match - the port
+                      // must not truncate the tail at the NUL-truncation boundary.
                       TemplateCase{"NulTailSurvivesReplace", "a", QByteArray("ab") + '\0' + "cd", "X",
                                    QByteArray("Xb") + '\0' + "cd"}));
 
-// --- Latin-1 byte<->QString shim (spec §6.4, script.md:1301-1307) --------------------------------
+// --- Latin-1 byte<->QString shim --------------------------------
 // A byte >= 0x80 must round-trip exactly through match and replace - `fromUtf8` would corrupt it
 // (0xE9 alone is not a valid UTF-8 sequence and would become U+FFFD).
 
@@ -167,7 +165,7 @@ TEST(Regex_Latin1, HighByteRoundTripsThroughReplace) {
     EXPECT_EQ(tRegExprReplace(subject, pattern, replacement), expected);
 }
 
-// --- 32-entry LRU (spec §2.9, script.md:606-609) --------------------------------------------------
+// --- 32-entry LRU --------------------------------------------------
 // No accessor exposes the cache's internal state (by design - it is a hidden implementation
 // detail of `compileTRegExpr`), so this proves the *observable* contract: pushing more than 32
 // distinct patterns through evicts the oldest, and a since-evicted pattern still compiles and
@@ -189,14 +187,14 @@ TEST(Regex_Lru, EvictionDoesNotBreakReCompilation) {
     EXPECT_EQ(tRegExprMatch(patterns[39], patterns[39], 0), patterns[39]);
 }
 
-// --- real corpus patterns (spec §6.2/§6.5, script.md:1258, :1310-1319) ---------------------------
+// --- real corpus patterns ---------------------------
 //
 // The .zmp map corpus lives in this repo at tests/fixtures/zmp/ (92 scripts, 98 RegExpr* call
 // sites: 87 Replace, 11 Get; verified: grep -rhoE "RegExpr(GetMatchSubStr|ReplaceMatchSubStr)" on
 // tests/fixtures/zmp piped through wc -l gives 98). This table covers all 15 distinct literal
-// patterns found there (the YaTraf script's Get and Replace calls as two separate rows); see
-// docs/handoffs/T-0014C2A.md for the full note. `replacement.isNull()` rows go through
-// `tRegExprMatch` (Get); the rest go through `tRegExprReplace` (Replace, F14).
+// patterns found there (the YaTraf script's Get and Replace calls as two separate rows).
+// `replacement.isNull()` rows go through `tRegExprMatch` (Get); the rest go through
+// `tRegExprReplace` (Replace).
 
 struct CorpusCase {
     const char* script;
@@ -247,8 +245,8 @@ INSTANTIATE_TEST_SUITE_P(
         // 3 calls - the Google mt.google relay rewrite.
         CorpusCase{"mt.google relay (3 calls)", "mt\\.google", "mt2.google", "http://mt.google.com/vt/lyrs=s",
                    0, "http://mt2.google.com/vt/lyrs=s"},
-        // u_RegularExpressions_Test.TestRegExprReplaceMatchSubStrSimple, cExample2 (T-0040): multi-line
-        // CRLF subject; only the numeric `<testKey=1578>` matches, `<testKey=asdfad>` is untouched.
+        // u_RegularExpressions_Test.TestRegExprReplaceMatchSubStrSimple, cExample2: multi-line CRLF
+        // subject; only the numeric `<testKey=1578>` matches, `<testKey=asdfad>` is untouched.
         CorpusCase{"DUnit cExample2 testKey (CRLF)", "<testKey=(\\d+)>", "<testKey=8751>",
                    "<test1=100>\r\n<test2=asdf>\r\n<testKey=asdfad>\r\n<testKey=1578>\r\n", 0,
                    "<test1=100>\r\n<test2=asdf>\r\n<testKey=asdfad>\r\n<testKey=8751>\r\n"},

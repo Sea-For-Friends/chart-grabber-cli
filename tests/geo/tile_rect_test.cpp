@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_TileRect.pas TTileRect.IsEqual(ITileRect) (equal / different rect / different
-// projection); docs/specs/geo.md §4.1 omits the method, legacy is the source of truth (T-0029).
+// projection); legacy is the source of truth.
 #include "cg/geo/datum.h"
 #include "cg/geo/projection.h"
 #include "cg/geo/projection_set.h"

@@ -7,9 +7,9 @@
 // (:118-440), i_TileStorageSQLiteFetcher.pas, and the file walk built in
 // u_TileStorageSQLite.pas:505-558 (ScanTiles: mask '*.sqlitedb', folders by levels, depth 10).
 //
-// docs/specs/storage.md §3.3 scan amendment (2026-09-28): the enumerator keeps one SELECT open on
-// the file's shared connection across next() calls (through a pinned SqliteRegionPool::Lease) and
-// takes that file's mutex per step, not for the whole walk. FEAT-STO-035.
+// The enumerator keeps one SELECT open on the file's shared connection across next() calls
+// (through a pinned SqliteRegionPool::Lease) and takes that file's mutex per step, not for the
+// whole walk.
 
 #include "cg/storage/sqlite/sqlite_region_pool.h"
 #include "cg/storage/tile_info.h"
@@ -22,9 +22,7 @@
 namespace cg::storage::sqlite {
 
 // `storagePath` ends with '/'. `ignoreTne` ports AIgnoreTNE. There is no ignoreMultiVersionTiles
-// parameter: legacy stores it and never reads it (u_EnumTileInfoBySQLite.pas:96, "(!) not used"),
-// docs/parity/legacy-defects.md.
-// FEAT-STO-035
+// parameter: legacy stores it and never reads it (u_EnumTileInfoBySQLite.pas:96, "(!) not used").
 [[nodiscard]] EnumTileInfoPtr makeSqliteRegionScan(std::shared_ptr<SqliteRegionPool> pool,
                                                    QString storagePath, ITileNameCodecPtr codec,
                                                    bool ignoreTne);

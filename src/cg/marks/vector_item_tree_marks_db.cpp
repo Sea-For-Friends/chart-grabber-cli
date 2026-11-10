@@ -23,14 +23,13 @@ namespace cg::marks {
 namespace {
 
 // ExtractFilePath (:172): the text up to and including the last delimiter, empty when there is none
-// (lastIndexOf -1 gives left(0)). Delphi's ':' delimiter is not treated as one (D-123).
+// (lastIndexOf -1 gives left(0)). Delphi's ':' delimiter is not treated as one.
 QString extractFilePath(const QString& fileName) {
     const qsizetype sep = std::max(fileName.lastIndexOf(u'/'), fileName.lastIndexOf(u'\\'));
     return fileName.left(sep + 1);
 }
 
-// WriteAccess / ReadAccess of the impl state (:187, :211). unreachable: no landed impl returns null; no
-// register row.
+// WriteAccess / ReadAccess of the impl state (:187, :211). unreachable: no impl returns null.
 bool hasAccess(const IMarkSystemImpl& impl, bool write) {
     const auto state = impl.state();
     if (!state) {
@@ -90,7 +89,7 @@ std::shared_ptr<IMarkSystemImpl> VectorItemTreeMarksDb::getImpl(std::stop_token 
     }
     const auto factory = element->factory();
     if (!factory) {
-        return nullptr; // unreachable: no landed impl returns null; no register row
+        return nullptr; // unreachable: no impl returns null
     }
     return factory->build(std::move(stop), extractFilePath(fileName), config);
 }
@@ -111,7 +110,7 @@ core::Result<void> VectorItemTreeMarksDb::processExport(std::stop_token stop, co
     const auto markDb = impl->markDb();
     const auto categoryDb = impl->categoryDB();
     if (!markDb || !categoryDb) {
-        return {}; // unreachable: no landed impl returns null; no register row
+        return {}; // unreachable: no impl returns null
     }
     static_cast<void>(importItemsTree(tree, getConfigForExporter(), *markDb, *markFactory_, *categoryDb,
                                       *categoryFactory_));
@@ -134,7 +133,7 @@ VectorItemTreeMarksDb::processImport(std::stop_token stop, const QString& fileNa
     const auto markDb = impl->markDb();
     const auto categoryDb = impl->categoryDB();
     if (!markDb || !categoryDb) {
-        return vector::VectorItemTreePtr{}; // unreachable: no landed impl returns null; no register row
+        return vector::VectorItemTreePtr{}; // unreachable: no impl returns null
     }
     const MarkCategoryListPtr categories = categoryDb->categoriesList();
     if (!categories) {

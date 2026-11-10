@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: u_TileFileNameGM3.pas -- the GlobalMapper Bing folder cache (CacheType id 42), default
-// root folder `cache_gmt_bing`. FEAT-STO-007.
+// root folder `cache_gmt_bing`.
 
 #include "cg/storage/tile_name_codec.h"
 

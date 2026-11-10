@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports u_MapVersionConfig.pas, u_MapVersionRequestConfig.pas,
-// u_MapVersionFactoryChangeable.pas, u_MapVersionChangeable.pas, u_MapVersionRequestChangeable.pas;
-// docs/specs/maptype.md §2.7 (Version / ShowOtherVersions), §2.9, §7.2 item 6; legacy-defects L-152.
+// Ports u_MapVersionConfig.pas, u_MapVersionRequestConfig.pas, u_MapVersionFactoryChangeable.pas,
+// u_MapVersionChangeable.pas, u_MapVersionRequestChangeable.pas.
 #include "cg/maptype/map_version_changeable.h"
 #include "cg/maptype/map_version_config.h"
 #include "cg/maptype/map_version_factory_changeable.h"
@@ -108,8 +107,8 @@ TEST(MapVersionFactoryChangeable, SetFactoryThroughTheInternalInterface) {
     EXPECT_EQ(f.getStatic(), nullptr);
 }
 
-// L-152: the version is compared with the never-assigned static, so getStatic() stays null and
-// every config change notifies.
+// The version is compared with the never-assigned static, so getStatic() stays null and every
+// config change notifies.
 TEST(MapVersionChangeable, StaticIsNeverAssignedAndEveryChangeNotifies) {
     auto config = std::make_shared<MapVersionConfig>(u"v1"_s);
     auto factory =

@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018. Ports the parts of Src/u_SQLite3Handler.pas this module uses; see
-// docs/specs/storage.md §2.15 (:1074-1110) and §3.3 (:1597-1608).
+// Ports the parts of Src/u_SQLite3Handler.pas this module uses.
 #include "cg/storage/sqlite/sqlite_db.h"
 
 #include <QByteArray>
@@ -26,7 +25,7 @@ QString dbPath(const QTemporaryDir& dir, const QString& name = QStringLiteral("t
     return QDir(dir.path()).filePath(name);
 }
 
-// T-0062: the two comparators of the createCollation cases -- plain byte order and its reverse.
+// The two comparators of the createCollation cases -- plain byte order and its reverse.
 int byteOrder(QByteArrayView lhs, QByteArrayView rhs) noexcept {
     return lhs.compare(rhs);
 }
@@ -175,8 +174,7 @@ TEST(SqliteDb, TableColumnsAndTableNamesReflectSchema) {
     EXPECT_TRUE(missing->empty());
 }
 
-// Regression for T-0022A-review.md findings F3 (sqlite3_close_v2) and F4 (checked binds),
-// combined into one case per the rework instruction.
+// Regression for sqlite3_close_v2 and checked binds, combined into one case.
 TEST(SqliteDb, StmtOutlivingDbDoesNotLeakAndFailingBindReportsError) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -191,8 +189,8 @@ TEST(SqliteDb, StmtOutlivingDbDoesNotLeakAndFailingBindReportsError) {
         ASSERT_TRUE(prepared.has_value());
         stmt.emplace(std::move(*prepared));
 
-        // F4: binding a parameter index the statement does not have (only "?" at index 1 exists)
-        // must report the sqlite error, not silently leave the parameter unbound.
+        // Binding a parameter index the statement does not have (only "?" at index 1 exists) must
+        // report the sqlite error, not silently leave the parameter unbound.
         const auto badBind = stmt->bindInt(2, 1);
         ASSERT_FALSE(badBind.has_value());
         EXPECT_EQ(badBind.error().code(), cg::core::ErrorCode::IoError);
@@ -203,19 +201,19 @@ TEST(SqliteDb, StmtOutlivingDbDoesNotLeakAndFailingBindReportsError) {
         ASSERT_TRUE(step.has_value());
         EXPECT_EQ(*step, SqliteStmt::StepResult::Done);
 
-        // `db` is destroyed here while `stmt` is still alive and unfinalized. F3: SqliteDb must
-        // use sqlite3_close_v2 so this zombifies the connection instead of leaking it (ASan build)
-        // or crashing when `stmt` is later used/finalized.
+        // `db` is destroyed here while `stmt` is still alive and unfinalized. SqliteDb must use
+        // sqlite3_close_v2 so this zombifies the connection instead of leaking it (ASan build) or
+        // crashing when `stmt` is later used/finalized.
     }
 
     // The connection is still needed to finalize the statement; this must not crash or leak.
     stmt.reset();
 }
 
-// FEAT-STO-018. Table-driven port of the worked vectors in docs/specs/storage.md §2.15.1, verifying
-// compareLogically() statement by statement against CompareLogicallyAnsi (u_SQLite3Handler.pas:
-// 215-327). Each `expected` is compareLogically(a, b); the mirrored call is checked too, since the
-// collation must be a well-defined total order (b, a) == -(a, b) for every case here.
+// Table-driven port of the worked vectors, verifying compareLogically() statement by statement
+// against CompareLogicallyAnsi (u_SQLite3Handler.pas:215-327). Each `expected` is
+// compareLogically(a, b); the mirrored call is checked too, since the collation must be a
+// well-defined total order (b, a) == -(a, b) for every case here.
 TEST(CompareLogically, WorkedVectorsFromSpec) {
     struct Case {
         QByteArrayView a;
@@ -233,18 +231,18 @@ TEST(CompareLogically, WorkedVectorsFromSpec) {
         {"05", "5", 0, "rule 5 (non-zero case): equal value 5, leading zero ignored"},
         {"btv1b55003119j.f2", "btv1b55003119j.f10", -1,
          "rule 4 then 5: identical prefix up to 'f', then digit runs 2 < 10"},
-        // L-15 regression (review T-0022B1, finding 1): the digit-run scan and the at-end check
-        // must be bounded by the view's LENGTH, not by a NUL terminator. Every case above is a
+        // Regression test for a legacy defect: the digit-run scan and the at-end check must be
+        // bounded by the view's LENGTH, not by a NUL terminator. Every case above is a
         // NUL-terminated literal, so an unbounded (legacy-shaped) scan would also stop at the NUL
         // and this table would not catch a regression. These two rows use an explicit length
         // shorter than the backing buffer, with a digit immediately past the cut: an unbounded
         // scan reads that extra digit and gets the wrong (non-zero) answer.
         {QByteArrayView("91", 1), "9", 0,
-         "L-15: view length cuts a digit run before its end; the byte just past the view (the "
+         "view length cuts a digit run before its end; the byte just past the view (the "
          "second '1' of the backing \"91\" literal) is itself a digit -- an unbounded scan would "
          "read it and return '91' > '9', not equal"},
         {QByteArrayView("a12", 2), "a1", 0,
-         "L-15: same, with the digit run in the middle of the buffer -- 'a1' cut out of the "
+         "same, with the digit run in the middle of the buffer -- 'a1' cut out of the "
          "backing \"a12\" literal, next byte '2' is a digit"},
     };
     for (const auto& c : cases) {
@@ -254,9 +252,9 @@ TEST(CompareLogically, WorkedVectorsFromSpec) {
     }
 }
 
-// spec §2.15.1 "Registration": the collation is only active when open(..., logicalCollation =
-// true), and `sqlite3_collation_needed` registers whatever name the schema asks for -- exercised
-// here with the real name, LOGICALSORTING, the region cache's `t.v` ORDER BYs use.
+// Registration: the collation is only active when open(..., logicalCollation = true), and
+// `sqlite3_collation_needed` registers whatever name the schema asks for -- exercised here with
+// the real name, LOGICALSORTING, the region cache's `t.v` ORDER BYs use.
 TEST(SqliteDb, LogicalSortingCollationIsLiveOnOrderByWhenRequested) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -286,8 +284,8 @@ TEST(SqliteDb, LogicalSortingCollationIsLiveOnOrderByWhenRequested) {
     EXPECT_EQ(*step, SqliteStmt::StepResult::Done);
 }
 
-// T-0062, docs/specs/marks.md §2.9.4: a collation registered by name orders an explicit
-// `ORDER BY x COLLATE name` and the index built over a column declared with it.
+// A collation registered by name orders an explicit `ORDER BY x COLLATE name` and the index built
+// over a column declared with it.
 TEST(SqliteDb, CreateCollationOrdersOrderByAndIndexOverDeclaredColumn) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

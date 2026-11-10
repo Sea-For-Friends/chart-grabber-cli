@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Chart Grabber contributors.
 
-// Covers: FEAT-GEO-002 (T-0376: proj.db next to the exe of a relocated Linux CLI).
+// proj.db next to the exe of a relocated Linux CLI.
 #include "cg/geo/proj/proj_data_dir.h"
 
 #include <QDir>

@@ -21,9 +21,10 @@ bool MapVersionRequest::isValid(const MapVersionInfoPtr& v) const {
         return true;
     }
     if (!baseVersion) {
-        // Deviation D-1: legacy TMapVersionRequest.GetIsValidVersion dereferences FBaseVersion
-        // unconditionally here and crashes on a null base version. The port treats "no base
-        // version, not showing others" as "only the empty/unversioned request is valid".
+        // Deviation: legacy TMapVersionRequest.GetIsValidVersion dereferences FBaseVersion
+        // unconditionally here and crashes on a null base version. The port treats
+        // "no base version, not showing others" as "only the empty/unversioned request is
+        // valid".
         return v == nullptr;
     }
     // Legacy TMapVersionInfo.IsSame(nil) returns False; the port's isSame() takes a reference,

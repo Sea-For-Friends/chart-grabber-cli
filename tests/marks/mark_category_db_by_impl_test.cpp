@@ -53,7 +53,6 @@ std::string namesOf(const m::MarkCategoryListPtr& list) {
     std::string text;
     for (int i = 0; i < list->count(); ++i) {
         if (i > 0) { // not (cond ? "|" : "") + std::string&&: GCC 12 Release reports a false -Werror=restrict
-                     // (T-0316)
             text += '|';
         }
         text += nameOf(list->item(i));
@@ -264,9 +263,8 @@ TEST(MarkCategoryDbByImpl, ForceCreateSubCategoriesCreatesEveryMissingPrefixInOr
     }
 }
 
-// Pins legacy quirk (L-199 in legacy-defects.md): with no category at all in the database, the sub-category
-// queries answer nil even for a category that was passed in (the Build branch is skipped, :264-275 and
-// :303-312).
+// Pins legacy quirk: with no category at all in the database, the sub-category queries answer nil even for
+// a category that was passed in (the Build branch is skipped, :264-275 and :303-312).
 TEST(MarkCategoryDbByImpl, EmptyDatabaseGivesNilForASubCategoryQuery) {
     Fixture f;
     f.db->categories.clear();
@@ -291,7 +289,7 @@ TEST(MarkCategoryDbByImpl, BackendSwitchNotifiesOnceAndMovesTheSubscription) {
     EXPECT_EQ(f.errorCount, 0);
 }
 
-// Pins legacy behaviour (L-194, both constructors): the constructor calls OnDBImplChange, not
+// Pins legacy behaviour (both constructors): the constructor calls OnDBImplChange, not
 // OnImplChange, so a backend that is already open is not subscribed until the next switch.
 TEST(MarkCategoryDbByImpl, ConstructorDoesNotSubscribeTheBackendThatIsAlreadyOpen) {
     Fixture f; // open at construction

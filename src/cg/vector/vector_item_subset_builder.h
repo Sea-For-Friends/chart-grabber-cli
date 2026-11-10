@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/Vector/i_VectorItemSubsetBuilder.pas, u_VectorItemSubsetBuilder.pas
 //
-// FEAT-GEO-037. Mutable, single-threaded. The legacy builder keeps the factory that made it and
-// never uses it: not ported. The IHashFunction argument is core::hashUpdate (DV-2).
+// Mutable, single-threaded. The legacy builder keeps the factory that made it and never uses it:
+// not ported. The IHashFunction argument is core::hashUpdate (a deviation from legacy).
 
 #include "cg/vector/vector_item_subset.h"
 
@@ -38,7 +38,7 @@ using VectorItemSubsetBuilderFactoryPtr = std::shared_ptr<const IVectorItemSubse
 
 class VectorItemSubsetBuilder final : public IVectorItemSubsetBuilder { // TVectorItemSubsetBuilder
 public:
-    void clear() override; // hash_ is not reset (L-150)
+    void clear() override; // hash_ is not reset
     int add(const VectorDataItemPtr& item) override;
     [[nodiscard]] VectorDataItemPtr item(int index) const override;
     [[nodiscard]] int capacity() const override;

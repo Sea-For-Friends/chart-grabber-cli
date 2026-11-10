@@ -32,14 +32,14 @@ struct SaveLoadSlot {
 // ANeedReadLock, ANeedWriteLock, ANeedStopNotify, ANeedChangedListen). Declared at namespace scope,
 // not nested in ConfigElementComplex: a default function argument of `{}` cannot use a nested
 // type's own default member initializers before its enclosing class is complete (GCC 16 correctly
-// diagnoses this, see docs/handoffs/T-0002B.md).
-// deadlock: all-false by default. Every real legacy call site (u_GlobalConfig.pas:224-266, ~30 of
-// them) passes False,False,False,False; the legacy two-argument Add() overload that defaults to
-// all-true only works because TMultiReadExclusiveWriteSynchronizer is re-entrant. Our writeLock()
-// is a non-recursive shared_mutex (tech-lead-rulings.md, 2026-09-17), so all-true propagation
-// self-deadlocks the instant a caller touches a child's own setter/getter, or calls
-// child->readConfig(), from inside the parent's writeLock() scope. Callers that genuinely want
-// propagation opt in explicitly.
+// diagnoses this).
+// Deadlock avoidance: all-false by default. Every real legacy call site
+// (u_GlobalConfig.pas:224-266, ~30 of them) passes False,False,False,False; the legacy
+// two-argument Add() overload that defaults to all-true only works because
+// TMultiReadExclusiveWriteSynchronizer is re-entrant. Our writeLock() is a non-recursive
+// shared_mutex, so all-true propagation self-deadlocks the instant a caller touches a child's own
+// setter/getter, or calls child->readConfig(), from inside the parent's writeLock() scope.
+// Callers that genuinely want propagation opt in explicitly.
 struct ConfigElementChildFlags {
     bool propagateReadLock = false;
     bool propagateWriteLock = false;
@@ -47,7 +47,6 @@ struct ConfigElementChildFlags {
     bool listenToChanges = false;
 };
 
-// FEAT-UI-206
 class ConfigElementComplex : public ConfigElement {
 public:
     ~ConfigElementComplex() override;
@@ -55,9 +54,9 @@ public:
     using ChildFlags = ConfigElementChildFlags;
 
     // Locks self first, then every child flagged propagateReadLock/WriteLock, in add order;
-    // unlocks in reverse (core.md 3: "the only nested lock pair in the whole design"). Shadows
-    // (does not virtually override) ConfigElement::readLock()/writeLock(): call through a
-    // ConfigElementComplex reference/pointer to get propagation.
+    // unlocks in reverse. Shadows (does not virtually override)
+    // ConfigElement::readLock()/writeLock(): call through a ConfigElementComplex
+    // reference/pointer to get propagation.
     class ReadGuard {
     public:
         ReadGuard(ReadGuard&&) noexcept = default;

@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (T-0335, Windows port). Used by tests only: the hygiene rule keeps every platform #ifdef
-// under core/platform/, so the few POSIX-or-Windows calls the tests need live here (header-only, no library
+// Ports: nothing (Windows port). Used by tests only: the hygiene rule keeps every platform #ifdef under
+// core/platform/, so the few POSIX-or-Windows calls the tests need live here (header-only, no library
 // code).
 
 #include <QFile>
@@ -42,9 +42,9 @@ namespace cg::core::platform {
 #endif
 }
 
-// True on macOS (T-0396): the few tests whose expectation is a Linux/ICU/SQLite-build detail ask this instead
-// of carrying a platform #ifdef (the macOS system SQLite leaves the -wal file of a closed database; the
-// native QCollator orders punctuation differently from the ICU root order).
+// True on macOS: the few tests whose expectation is a Linux/ICU/SQLite-build detail ask this instead of
+// carrying a platform #ifdef (the macOS system SQLite leaves the -wal file of a closed database; the native
+// QCollator orders punctuation differently from the ICU root order).
 inline constexpr bool kIsApple =
 #ifdef __APPLE__
     true;
@@ -53,14 +53,14 @@ inline constexpr bool kIsApple =
 #endif
 
 // The -wal file of a database whose last connection has closed (checkpointed): gone on Linux and Windows; the
-// macOS system SQLite leaves it behind, but empty (T-0396).
+// macOS system SQLite leaves it behind, but empty.
 [[nodiscard]] inline bool walGoneOrEmptyAfterClose(const QString& walPath) {
     const QFileInfo info(walPath);
     return !info.exists() || (kIsApple && info.size() == 0);
 }
 
-// Number of threads of this process (T-0340): the entries of /proc/self/task on Linux, the thread snapshot of
-// the toolhelp library filtered by the process id on Windows. -1 when it cannot be read.
+// Number of threads of this process: the entries of /proc/self/task on Linux, the thread snapshot of the
+// toolhelp library filtered by the process id on Windows. -1 when it cannot be read.
 [[nodiscard]] inline int processThreadCount() {
 #ifdef _WIN32
     const HANDLE snapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);

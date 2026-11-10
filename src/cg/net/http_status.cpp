@@ -44,4 +44,15 @@ bool isContentNotExistStatus(quint32 statusCode) noexcept {
     }
 }
 
+bool isRefusalStatus(quint32 statusCode) noexcept { // no legacy counterpart: a deviation from legacy
+    switch (statusCode) {
+    case 401:
+    case 403:
+    case 451:
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace cg::net

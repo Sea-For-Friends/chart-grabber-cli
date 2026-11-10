@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkCategoryFactoryConfig.pas (docs/specs/marks.md section 2.3). Ticket T-0091 is a
-// slice of the marks module. Reads and writes the real [MarkNewCategory] section of the fixture.
+// Ports u_MarkCategoryFactoryConfig.pas. Reads and writes the real [MarkNewCategory] section of the
+// fixture.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"

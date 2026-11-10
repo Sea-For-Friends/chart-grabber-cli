@@ -17,7 +17,7 @@ namespace cg::script {
 
 namespace {
 
-// --- the 6 registered types + TTileInfo (spec 5.2) --------------------------------------------
+// --- the 6 registered types + TTileInfo --------------------------------------------
 // Each type's fields live in their own named array so `RegisteredType::fields` (a `std::span`)
 // can view them without owning anything - keeps every table below usable as a `constexpr` global.
 constexpr const char* kPointFields[] = {"X", "Y"};
@@ -34,10 +34,10 @@ constexpr RegisteredType kTileInfo{"TTileInfo", kTileInfoFields, DeclaredType::T
 constexpr std::array<const RegisteredType*, 5> kRegisteredTypes{&kPoint, &kDoublePoint, &kRect, &kDoubleRect,
                                                                 &kTileInfo};
 
-// Primitive type names the v1 grammar accepts after a `:` (spec 2.6/4.1 N1/N2) - resolved to a
-// `DeclaredType` so `SymbolTable::setSlotType` can record it; a name absent from this table (or
-// not a registered record type) leaves the slot `DeclaredType::Unknown`, i.e. today's unwrapped
-// behaviour (T-0014B, no regression for anything this table doesn't name).
+// Primitive type names the v1 grammar accepts after a `:` - resolved to a `DeclaredType` so
+// `SymbolTable::setSlotType` can record it; a name absent from this table (or not a registered
+// record type) leaves the slot `DeclaredType::Unknown`, i.e. today's unwrapped behaviour (no
+// regression for anything this table doesn't name).
 struct PrimitiveTypeName {
     const char* name;
     DeclaredType type;
@@ -54,7 +54,7 @@ constexpr PrimitiveTypeName kPrimitiveTypeNames[] = {
     {"Boolean", DeclaredType::Boolean},
     {"Char", DeclaredType::Char},
     {"AnsiString", DeclaredType::AnsiString},
-    {"String", DeclaredType::AnsiString}, // spec 4.2 T1: string == AnsiString
+    {"String", DeclaredType::AnsiString}, // String == AnsiString
     {"WideString", DeclaredType::WideString},
     {"Single", DeclaredType::Single},
     {"Double", DeclaredType::Double},
@@ -63,7 +63,7 @@ constexpr PrimitiveTypeName kPrimitiveTypeNames[] = {
     {"TReplaceFlags", DeclaredType::TReplaceFlags},
 };
 
-// --- the 7 script-visible interfaces (spec 2.7/5.6) ----------------------------------------------
+// --- the 7 script-visible interfaces ----------------------------------------------
 constexpr InterfaceMethod kCoordConverterMethods[] = {
     {"Pos2LonLat", 2},  {"LonLat2Pos", 2},   {"LonLat2Metr", 1},      {"Metr2LonLat", 1},
     {"TilesAtZoom", 1}, {"PixelsAtZoom", 1}, {"TilePos2PixelPos", 2}, {"TilePos2PixelRect", 2},
@@ -74,7 +74,7 @@ constexpr InterfaceMethod kProjConverterFactoryMethods[] = {{"GetByEPSG", 1}, {"
 // var responseData): Cardinal` - 5 arguments, not the 3 of the host-side C++ `IHttpDownloader`
 // (script_host.h), which returns an `HttpReply` record instead of using two var parameters.
 // Corpus-verified (GGC/*, Google/GoogleSat.zmp, the 4 token-service maps, Yandex/YaTraf.zmp all pass 5 args)
-// - legacy is truth over the inferred spec mapping; see handoff open questions.
+// - legacy is truth over the inferred mapping.
 constexpr InterfaceMethod kHttpDownloaderMethods[] = {{"DoHttpRequest", 5}};
 constexpr InterfaceMethod kScriptGlobalMethods[] = {
     {"SetVar", 2},   {"GetVar", 1}, {"Exists", 1}, {"SetVarTS", 2}, {"GetVarTS", 1},
@@ -98,7 +98,7 @@ struct BoundVariable {
     bool nonDeterministic;
 };
 
-// spec 5.1, in registration order: TileCache is slot 0, GetBMetr is slot 25.
+// In registration order: TileCache is slot 0, GetBMetr is slot 25.
 constexpr std::array<BoundVariable, 26> kBoundVariables{{
     {"TileCache", &kScriptTileCache, true},
     {"Logger", &kScriptLogger, false},
@@ -128,12 +128,12 @@ constexpr std::array<BoundVariable, 26> kBoundVariables{{
     {"GetBMetr", nullptr, false},
 }};
 
-// The 38 registered free functions (spec 5.3) followed by the intrinsics the interpreter must
-// supply itself (spec 5.4, minus True/False/nil/Result which the grammar/parser handle
-// structurally rather than as callables). `Call::callee` indexes this array for
+// The 38 registered free functions followed by the intrinsics the interpreter must supply
+// itself (minus True/False/nil/Result which the grammar/parser handle structurally rather
+// than as callables). `Call::callee` indexes this array for
 // `CallKind::Registered`/`CallKind::Builtin` - see parser.h.
 constexpr std::array<ExternalSymbol, 72> kExternals{{
-    // --- registered functions (F1-F38) ---
+    // --- registered functions ---
     {"Random", ExternalKind::Function, 1, 1, false, true},
     {"RandomRange", ExternalKind::Function, 2, 2, false, false},
     {"Power", ExternalKind::Function, 2, 2, false, false},
@@ -172,7 +172,7 @@ constexpr std::array<ExternalSymbol, 72> kExternals{{
     {"SaveToLocalFile", ExternalKind::Function, 2, 2, false, true},
     {"WriteLn", ExternalKind::Function, 1, 1, true, false},
     {"TemplateToUrl", ExternalKind::Function, 1, 1, false, false},
-    // --- intrinsics (spec 5.4) ---
+    // --- intrinsics ---
     {"IntToStr", ExternalKind::Intrinsic, 1, 1, false, false},
     {"StrToInt", ExternalKind::Intrinsic, 1, 1, false, false},
     {"StrToIntDef", ExternalKind::Intrinsic, 2, 2, false, false},
@@ -213,11 +213,11 @@ struct NamedConstant {
     const char* name;
     qint64 value;
 };
-// spec 5.2 `TReplaceFlag = (rfReplaceAll, rfIgnoreCase)` (F2): resolved to their Delphi ordinal,
-// the same way `true`/`false` lower straight to a literal in parseDesignatorOrLiteral - not a
-// callable, so not part of kExternals. `[rfReplaceAll]` (StringReplace's 4th argument, spec 3.4)
-// is then a G6 set-constructor of these ordinals; the interpreter (T-0014) is what turns such an
-// ArrayLit into a set bitmask when it drives a set-typed parameter.
+// `TReplaceFlag = (rfReplaceAll, rfIgnoreCase)`: resolved to their Delphi ordinal, the same way
+// `true`/`false` lower straight to a literal in parseDesignatorOrLiteral - not a callable, so
+// not part of kExternals. `[rfReplaceAll]` (StringReplace's 4th argument) is then a
+// set-constructor of these ordinals; the interpreter is what turns such an ArrayLit into a set
+// bitmask when it drives a set-typed parameter.
 constexpr std::array<NamedConstant, 2> kNamedConstants{{
     {"rfReplaceAll", 0},
     {"rfIgnoreCase", 1},
@@ -227,8 +227,8 @@ bool equalsFolded(const QByteArray& a, const char* b) {
     return a.compare(b, Qt::CaseInsensitive) == 0;
 }
 
-// Reserved-in-effect words that are not real `Keyword` values (spec 3.4) because the v1 grammar
-// never accepts them anywhere - so the lexer hands them back as plain identifiers and the parser
+// Reserved-in-effect words that are not real `Keyword` values because the v1 grammar never
+// accepts them anywhere - so the lexer hands them back as plain identifiers and the parser
 // recognises the spelling itself, only where a declaration or statement is expected.
 bool isRejectedClassKeyword(const QByteArray& text) {
     return equalsFolded(text, "class") || equalsFolded(text, "object") || equalsFolded(text, "constructor") ||
@@ -246,11 +246,11 @@ bool isConstInt(DeclaredType t) {
 
 enum class FoldStatus : std::uint8_t { Ok, Mismatch, DivZero };
 
-// T-0035: TPSPascalCompiler.PreCalc (uPSCompiler.pas:3325-3770). `l` is both left operand and
-// destination: the arithmetic runs at the LEFT operand's type (s32/u32/s64 wrap), an integer left
-// with a real right is first converted to Extended (:3331-3332), a failure is "Type mismatch"
-// (:3764-3770). Without PS_DELPHIDIV `/` and `div` are one operator (:3436-3470 `otDiv, otIntDiv`):
-// truncating on integers, real on reals.
+// TPSPascalCompiler.PreCalc (uPSCompiler.pas:3325-3770). `l` is both left operand and destination:
+// the arithmetic runs at the LEFT operand's type (s32/u32/s64 wrap), an integer left with a real
+// right is first converted to Extended (:3331-3332), a failure is "Type mismatch" (:3764-3770).
+// Without PS_DELPHIDIV `/` and `div` are one operator (:3436-3470 `otDiv, otIntDiv`): truncating on
+// integers, real on reals.
 FoldStatus preCalc(BinaryOp op, ConstVal& l, const ConstVal& r) {
     const bool relational = op == BinaryOp::Eq || op == BinaryOp::Ne || op == BinaryOp::Lt ||
                             op == BinaryOp::Gt || op == BinaryOp::Le || op == BinaryOp::Ge;
@@ -386,7 +386,7 @@ FoldStatus preCalc(BinaryOp op, ConstVal& l, const ConstVal& r) {
         // operand (GetUint/GetInt, uPSCompiler.pas:2900-2948): `+ -` at u32 (:3343, :3381), `and or xor`
         // at s32 (:3522, :3539, :3554), `= <>` compare (:3708, :3671). `* / div mod shl shr` and
         // `< > <= >=` have no btEnum case: Type mismatch. The engine keeps the ordinal (`True + 1` is
-        // ordinal 2); a Boolean Value cannot, so the result is stored as `n <> 0` (L-121).
+        // ordinal 2); a Boolean Value cannot, so the result is stored as `n <> 0`.
         qint64 rightOrd = 0;
         if (isConstInt(r.type)) {
             rightOrd = *r.value.toInt();
@@ -448,7 +448,7 @@ FoldStatus foldUnary(bool isNot, ConstVal& v) {
     return FoldStatus::Mismatch;
 }
 
-// The first bound variable that is a Double (GetLlon .. GetBMetr, spec 5.1 order).
+// The first bound variable that is a Double (GetLlon .. GetBMetr, registration order).
 constexpr int kFirstDoubleBoundSlot = 18;
 
 } // namespace
@@ -468,8 +468,8 @@ SymbolTable::SymbolTable() {
         entry.boundInterface = bound.boundInterface;
         entry.nonDeterministic = bound.nonDeterministic;
         scopes_.front().entries.push_back(std::move(entry));
-        // Bound variables are the host's ScriptVars, not a `var`-declared primitive - Unknown
-        // (no range-wrap) is correct and matches N1's "today's behaviour, unchanged".
+        // Bound variables are the host's ScriptVars, not a `var`-declared primitive - Unknown (no
+        // range-wrap) is correct and keeps the behaviour unchanged.
         declaredTypes_.push_back(DeclaredType::Unknown);
     }
 }
@@ -808,15 +808,15 @@ void Parser::parseConstSection() {
         const int line = current().line;
         const int column = current().column;
         advance();
-        // T-0035 (L-68): no typed constants - DoConstBlock goes straight from the identifier to
-        // `=` (uPSCompiler.pas:12162-12167).
+        // No typed constants - DoConstBlock goes straight from the identifier to `=`
+        // (uPSCompiler.pas:12162-12167).
         if (!atKind(TokenKind::Equal)) {
             error(QStringLiteral("is ('=') expected"));
             recover();
             return;
         }
         advance();
-        // T-0035: the engine's own const-expr grammar and folding (ReadConstant, :13056-13430).
+        // The engine's own const-expr grammar and folding (ReadConstant, :13056-13430).
         const std::optional<ConstVal> folded = parseConstExpr();
         if (!folded.has_value()) {
             recover();
@@ -863,7 +863,7 @@ void Parser::parseVarSection() {
         const ParsedType type = parseTypeName();
         if (atKind(TokenKind::Equal)) {
             advance();
-            (void)parseExpr(); // initialiser; slice A parses but does not evaluate it
+            (void)parseExpr(); // initialiser; it is parsed but not evaluated here
         }
         for (const auto& [name, pos] : names) {
             const int slot = symbols_.declareLocal(name);
@@ -872,7 +872,7 @@ void Parser::parseVarSection() {
                         QStringLiteral("duplicate identifier '%1'").arg(QString::fromUtf8(name)));
             } else {
                 symbols_.setSlotType(slot, type.recordType, type.kind);
-                // T-0032 (PD-1): a static-array slot also gets its element type + bounds, so
+                // A static-array slot also gets its element type + bounds, so
                 // defaultValueForSlot/evalIndex/execIndexAssign (interpreter.cpp) can build and
                 // range-check its Value::fromArray.
                 if (type.kind == DeclaredType::StaticArray) {
@@ -891,16 +891,16 @@ Parser::ParsedType Parser::parseTypeName() {
     if (atKeyword(Keyword::Array)) {
         advance(); // 'array'
         if (atKind(TokenKind::LBracket)) {
-            // Static array (spec 3.6, T-0032/PD-1): parse and keep the declared bounds + element
-            // type, unlike the dynamic branch below (zero corpus uses - parsed, not tracked).
+            // Static array: parse and keep the declared bounds + element type, unlike the dynamic
+            // branch below (zero corpus uses - parsed, not tracked).
             advance();
             const std::optional<ConstVal> loVal = parseConstBound();
             expectKind(TokenKind::DotDot, "'..'");
             const std::optional<ConstVal> hiVal = parseConstBound();
             const qint64 lo = loVal.has_value() ? *loVal->value.toInt() : 0;
             const qint64 hi = hiVal.has_value() ? *hiVal->value.toInt() : -1;
-            // T-0035 (L-70): length = hi - lo + 1 must be in [0, MaxInt div 4] (:4200-4205); an
-            // empty array[lo..lo-1] is accepted.
+            // length = hi - lo + 1 must be in [0, MaxInt div 4] (:4200-4205); an empty
+            // array[lo..lo-1] is accepted.
             if (loVal.has_value() && hiVal.has_value() && (hi < lo - 1 || hi - lo + 1 > 0x1FFFFFFF)) {
                 error(QStringLiteral("Type mismatch"));
             }
@@ -914,7 +914,7 @@ Parser::ParsedType Parser::parseTypeName() {
             result.highBound = hi;
             return result;
         }
-        // `array of T` - dynamic (spec 3.6): zero corpus uses, out of this ticket's scope.
+        // `array of T` - dynamic: zero corpus uses, not supported.
         expectKeyword(Keyword::Of, "'of'");
         (void)parseTypeName();
         return {nullptr, DeclaredType::DynamicArray};
@@ -954,7 +954,7 @@ Parser::ParsedType Parser::parseTypeName() {
             return {nullptr, primitive.type};
         }
     }
-    return {}; // an unresolvable type name - Unknown, same as today's behaviour (N1: no wrap)
+    return {}; // an unresolvable type name - Unknown, same as today's behaviour (no wrap)
 }
 
 void Parser::skipRecordType() {
@@ -1011,7 +1011,7 @@ void Parser::parseRoutineDecl(Program* program) {
     int paramCount = 0;
     if (atKind(TokenKind::LParen)) {
         advance();
-        if (!atKind(TokenKind::RParen)) { // spec 3.5 G5: `()` may be empty
+        if (!atKind(TokenKind::RParen)) { // `()` may be empty
             for (;;) {
                 ParamMode mode = ParamMode::Value;
                 if (atKeyword(Keyword::Const)) {
@@ -1067,7 +1067,8 @@ void Parser::parseRoutineDecl(Program* program) {
         const ParsedType resultType = parseTypeName();
         resultSlot = symbols_.declareLocal(QByteArrayLiteral("Result"));
         if (resultSlot >= 0) {
-            symbols_.setSlotType(resultSlot, resultType.recordType, resultType.kind); // N1/N2 on `Result :=`
+            symbols_.setSlotType(resultSlot, resultType.recordType, resultType.kind); // range-wrap/rounding
+                                                                                      // on `Result :=`
         }
     }
     if (routineSlot >= 0) {
@@ -1082,7 +1083,7 @@ void Parser::parseRoutineDecl(Program* program) {
         // in this function, there is nothing well-formed to resume parsing into, so stop this
         // declaration here instead of falling through to the body/trailing-';' parsing below
         // (which would desynchronise the token stream against whatever follows, corpus evidence
-        // or not - spec 3.4 is zero-occurrence for this row, so this path is purely defensive).
+        // or not - the corpus never does this, so this path is purely defensive).
         error(QStringLiteral("external declarations are not supported"));
         recover();
         routine.firstParamSlot = firstParamSlot;
@@ -1214,7 +1215,7 @@ Node* Parser::parseStmt() {
         }
         return parseSimpleStmtOrAssign();
     }
-    // stmt = ... | (* empty *) - legal wherever a delimiter follows immediately (spec 3.3 S1).
+    // stmt = ... | (* empty *) - legal wherever a delimiter follows immediately.
     if (atKind(TokenKind::Semicolon) || atKeyword(Keyword::End) || atKeyword(Keyword::Else) ||
         atKeyword(Keyword::Until) || atKind(TokenKind::End)) {
         return symbols_.make<Empty>(current().line, current().column);
@@ -1232,8 +1233,8 @@ Node* Parser::parseIfStmt() {
     node->cond = parseExpr();
     expectKeyword(Keyword::Then, "'then'");
     node->thenBranch = parseStmt();
-    // spec 3.3 S2: a ';' immediately before 'else' is a syntax error in Delphi but a common
-    // hand-edit RemObjects tolerated - accept it with a warning rather than reject a real script.
+    // A ';' immediately before 'else' is a syntax error in Delphi but a common hand-edit RemObjects
+    // tolerated - accept it with a warning rather than reject a real script.
     if (atKind(TokenKind::Semicolon) && lookAhead(1).kind == TokenKind::Identifier &&
         lookAhead(1).keyword == Keyword::Else) {
         diagnostics_->push_back(
@@ -1430,14 +1431,14 @@ Node* Parser::parseWithStmt() {
     const int column = current().column;
     advance(); // 'with'
     auto* node = symbols_.make<With>(line, column);
-    // spec 3.5: `with` resolves only against the 6 built-in record types (no scope-chain beyond
-    // that); each valid designator pushes a `WithScope` that `parseDesignatorTail` checks
-    // (innermost first) while parsing `body` below, then all of them pop once the statement ends.
-    // `with A, B do` is equivalent to nested `with A do with B do` - B (pushed last) wins a name
-    // both share. Corpus never uses `with`, so only the first designator is kept as `node->subject`
-    // for the interpreter to (trivially) evaluate; a later designator is guaranteed to be a plain
-    // variable reference (records here have no nested record/interface fields to make it anything
-    // else), so it has nothing further to evaluate at run time.
+    // `with` resolves only against the 6 built-in record types (no scope-chain beyond that); each
+    // valid designator pushes a `WithScope` that `parseDesignatorTail` checks (innermost first)
+    // while parsing `body` below, then all of them pop once the statement ends. `with A, B do` is
+    // equivalent to nested `with A do with B do` - B (pushed last) wins a name both share. Corpus
+    // never uses `with`, so only the first designator is kept as `node->subject` for the
+    // interpreter to (trivially) evaluate; a later designator is guaranteed to be a plain variable
+    // reference (records here have no nested record/interface fields to make it anything else), so
+    // it has nothing further to evaluate at run time.
     int pushedCount = 0;
     for (;;) {
         const int desLine = current().line;
@@ -1451,7 +1452,7 @@ Node* Parser::parseWithStmt() {
                                          : nullptr;
         if (type == nullptr) {
             // A designator that is not a variable of one of the 6 built-in record types stays a
-            // parse-time reject, unchanged from T-0013 (spec 3.5).
+            // parse-time reject.
             errorAt(desLine, desColumn,
                     QStringLiteral("'with' requires a variable of a built-in record type"));
         } else {
@@ -1481,8 +1482,8 @@ Node* Parser::parseSimpleStmtOrAssign() {
     if (atKind(TokenKind::Assign)) {
         advance();
         Node* value = parseExpr();
-        // T-0035: the engine's compile-time checks on the target. A constant is not a TPSValueVar
-        // (L-67, ProcessIdentifier :10653-10658); a Real into an integer-typed target fails
+        // The engine's compile-time checks on the target. A constant is not a TPSValueVar
+        // (ProcessIdentifier :10653-10658); a Real into an integer-typed target fails
         // IsCompatibleType (:3271-3272).
         DeclaredType destType = DeclaredType::Unknown;
         if (designator->kind == NodeKind::VarRef) {
@@ -1539,7 +1540,7 @@ Node* Parser::parseSimpleStmtOrAssign() {
 }
 
 // ==================================================================================================
-// Parser - expressions (Delphi precedence, spec 3.2)
+// Parser - expressions (Delphi precedence)
 // ==================================================================================================
 
 Node* Parser::parseExpr() {
@@ -1563,7 +1564,7 @@ Node* Parser::parseExpr() {
             bin->op = relOp.op;
             bin->lhs = lhs;
             bin->rhs = rhs;
-            return bin; // level 4 is non-chaining (spec 3.2)
+            return bin; // level 4 is non-chaining
         }
     }
     if (atKeyword(Keyword::In)) {
@@ -1777,9 +1778,9 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
     const QByteArray& pendingRoutineName = name;
     const ExternalSymbol* pendingExternal = nullptr;
 
-    // `with` scopes shadow ordinary resolution for their field names (spec 3.5): checked innermost
-    // first, matching nested `with A do with B do`. Corpus never uses `with` so this is never hit
-    // outside the dedicated test, but the check itself is O(active with depth), i.e. O(1) here.
+    // `with` scopes shadow ordinary resolution for their field names: checked innermost first,
+    // matching nested `with A do with B do`. Corpus never uses `with` so this is never hit outside
+    // the dedicated test, but the check itself is O(active with depth), i.e. O(1) here.
     const RegisteredType* withType = nullptr;
     int withSlot = -1;
     int withFieldIdx = -1;
@@ -1840,11 +1841,11 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
         if (pendingCallKind == CallKind::UserRoutine) {
             call->callee = pendingRoutineSlot;
             // Arity is exact and fully under this compiler's control, so it is worth enforcing
-            // (spec 3.4 "wrong argument count"). Registered functions/intrinsics are deliberately
-            // NOT checked this strictly here: several have host-side optional/overloaded forms
-            // (Format's open array, Inc/Dec's optional step) that this slice does not model in
+            // ("wrong argument count"). Registered functions/intrinsics are deliberately NOT
+            // checked this strictly here: several have host-side optional/overloaded forms
+            // (Format's open array, Inc/Dec's optional step) that the parser does not model in
             // full, and getting one arity wrong must never turn into a false Corpus.AllParse
-            // failure - see the handoff open questions.
+            // failure.
             if (pendingRoutineParamCount >= 0 && static_cast<int>(args.size()) != pendingRoutineParamCount) {
                 errorAt(line, column,
                         QStringLiteral("'%1' expects %2 argument(s), got %3")
@@ -1861,7 +1862,7 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
     };
 
     if (pendingCall && !atKind(TokenKind::LParen)) {
-        base = materialiseCall({}); // S10: a routine may be called without parentheses
+        base = materialiseCall({}); // A routine may be called without parentheses
         pendingCall = false;
     }
 
@@ -1884,9 +1885,9 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
                         break;
                     }
                 }
-                // spec 3.3 S10 applies to interface methods too - `Global.Lock;`/`Global.Unlock;`
-                // (Google/GoogleSat.zmp, the 4 token-service maps) call a zero-arg method with no
-                // parentheses.
+                // A zero-argument call needs no parentheses, for interface methods
+                // too - `Global.Lock;`/`Global.Unlock;` (Google/GoogleSat.zmp, the 4
+                // token-service maps) call a zero-arg method with no parentheses.
                 std::vector<Node*> args = atKind(TokenKind::LParen) ? parseArgList() : std::vector<Node*>{};
                 if (method == nullptr) {
                     errorAt(memberLine, memberColumn,
@@ -1922,9 +1923,10 @@ Node* Parser::parseDesignatorTail(const QByteArray& name, int line, int column) 
                 }
                 field->fieldIndex = fieldIdx;
             } else {
-                // F4: a statically-unknown base (slice A does not do full type inference through
+                // A statically-unknown base (the parser does not do full type inference through
                 // call results) can no longer be trusted to resolve `.field` - reject it with a
-                // diagnostic instead of silently emitting fieldIndex == -1 for T-0014 to chase.
+                // diagnostic instead of silently emitting fieldIndex == -1 for the interpreter
+                // to chase.
                 errorAt(memberLine, memberColumn,
                         QStringLiteral("cannot access '%1': base expression has no known field type")
                             .arg(QString::fromUtf8(member)));
@@ -2069,7 +2071,7 @@ std::optional<ConstVal> Parser::parseConstExpr(int level) {
     if (atKeyword(Keyword::Not) || atKind(TokenKind::Minus)) {
         const bool isNot = atKeyword(Keyword::Not);
         advance();
-        // `-` applies to a whole TERM, `not` to a factor (L-69, :13104-13118).
+        // `-` applies to a whole TERM, `not` to a factor.
         std::optional<ConstVal> operand = parseConstExpr(isNot ? 3 : 2);
         if (operand.has_value() && foldUnary(isNot, *operand) != FoldStatus::Ok) {
             errorAt(token.line, token.column, QStringLiteral("Type mismatch"));
@@ -2123,7 +2125,7 @@ std::optional<ConstVal> Parser::parseConstExpr(int level) {
                 return ConstVal{Value::fromInt(named.value), DeclaredType::Integer};
             }
         }
-        // The engine's text has an EMPTY name: MakeError('', ecUnknownIdentifier, '') (:13084, L-120).
+        // The engine's text has an EMPTY name: MakeError('', ecUnknownIdentifier, '').
         error(QStringLiteral("Unknown identifier ''"));
         return std::nullopt;
     }
@@ -2144,7 +2146,7 @@ std::optional<ConstVal> Parser::parseConstBound() {
 }
 
 // ==================================================================================================
-// T-0035 - the engine's compile-time type checks that need a static numeric class of an expression
+// The engine's compile-time type checks that need a static numeric class of an expression
 // ==================================================================================================
 
 Parser::NumKind Parser::numericKind(const Node* node) const {

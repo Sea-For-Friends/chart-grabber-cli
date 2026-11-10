@@ -113,21 +113,21 @@ void IniFile::rebuildIndex() {
         if (trimmed.isEmpty()) {
             line.kind = Line::Kind::Blank;
         } else if (trimmed.startsWith(u';')) {
-            line.kind = Line::Kind::Comment; // Q2: ';' only, '#' starts a key
+            line.kind = Line::Kind::Comment; // ';' only, '#' starts a key
         } else if (trimmed.size() >= 2 && trimmed.front() == u'[' && trimmed.back() == u']') {
-            line.kind = Line::Kind::SectionHeader; // Q3
+            line.kind = Line::Kind::SectionHeader;
             currentSection = i;
             line.section = trimmed.sliced(1, trimmed.size() - 2).trimmed();
             line.sectionId = i;
             continue;
         } else {
-            const qsizetype eq = trimmed.indexOf(u'='); // Q4: first '=' only
+            const qsizetype eq = trimmed.indexOf(u'='); // First '=' only
             if (eq >= 0 && currentSection >= 0) {
                 line.kind = Line::Kind::KeyValue;
-                line.key = trimmed.first(eq).trimmed();        // Q5
-                line.value = trimmed.sliced(eq + 1).trimmed(); // Q5, Q6 (quotes kept)
+                line.key = trimmed.first(eq).trimmed();
+                line.value = trimmed.sliced(eq + 1).trimmed(); // Quotes kept
             } else {
-                line.kind = Line::Kind::Orphan; // Q7 and Q8
+                line.kind = Line::Kind::Orphan;
             }
         }
         line.sectionId = currentSection;
@@ -140,7 +140,7 @@ qsizetype IniFile::firstSectionHeader(QStringView section) const {
     for (qsizetype i = 0; i < std::ssize(lines_); ++i) {
         const Line& line = lines_[static_cast<std::size_t>(i)];
         if (line.kind == Line::Kind::SectionHeader && sameIdent(line.section, section)) {
-            return i; // Q10: the first header wins
+            return i; // The first header wins
         }
     }
     return -1;
@@ -157,7 +157,7 @@ qsizetype IniFile::findKeyLine(QStringView section, QStringView key) const {
             break;
         }
         if (line.kind == Line::Kind::KeyValue && sameIdent(line.key, key)) {
-            return i; // Q9: the first occurrence wins
+            return i; // The first occurrence wins
         }
     }
     return -1;
@@ -201,7 +201,7 @@ bool IniFile::hasKey(QStringView section, QStringView key) const {
 
 QString IniFile::readString(QStringView section, QStringView key, const QString& def) const {
     const qsizetype index = findKeyLine(section, key);
-    return index < 0 ? def : lines_[static_cast<std::size_t>(index)].value; // Q12
+    return index < 0 ? def : lines_[static_cast<std::size_t>(index)].value;
 }
 
 qint32 IniFile::readInt(QStringView section, QStringView key, qint32 def) const {
@@ -209,7 +209,7 @@ qint32 IniFile::readInt(QStringView section, QStringView key, qint32 def) const 
 }
 
 bool IniFile::readBool(QStringView section, QStringView key, bool def) const {
-    // Q14: ReadBool is ReadInteger(..., Ord(Default)) <> 0; "True"/"yes" do not parse.
+    // ReadBool is ReadInteger(..., Ord(Default)) <> 0; "True"/"yes" do not parse.
     return readInt(section, key, def ? 1 : 0) != 0;
 }
 
@@ -234,7 +234,7 @@ QDateTime IniFile::readDateTime(QStringView section, QStringView key, const QDat
 QByteArray IniFile::readBinary(QStringView section, QStringView key) const {
     const QString text = readString(section, key, QString());
     if (text.isEmpty() || (text.size() % 2) != 0 || !valuecodec::isHexDigits(text)) {
-        return {}; // Q21
+        return {};
     }
     return QByteArray::fromHex(text.toLatin1());
 }
@@ -243,7 +243,7 @@ void IniFile::setValue(QStringView section, QStringView key, const QString& valu
     const qsizetype existing = findKeyLine(section, key);
     if (existing >= 0) {
         Line& line = lines_[static_cast<std::size_t>(existing)];
-        const QString rendered = line.key + QLatin1Char('=') + value; // Q11: keep the stored key casing
+        const QString rendered = line.key + QLatin1Char('=') + value; // Keep the stored key casing
         if (line.raw != rendered) {
             line.raw = rendered;
             line.value = value;
@@ -254,7 +254,7 @@ void IniFile::setValue(QStringView section, QStringView key, const QString& valu
 
     qsizetype header = firstSectionHeader(section);
     if (header < 0) {
-        // Q23: a new section goes to the end of the file, after one blank separator line.
+        // A new section goes to the end of the file, after one blank separator line.
         if (!lines_.empty()) {
             if (lines_.back().eol.isEmpty()) {
                 lines_.back().eol = eol_;
@@ -272,7 +272,7 @@ void IniFile::setValue(QStringView section, QStringView key, const QString& valu
         header = std::ssize(lines_) - 1;
     }
 
-    // Q23: append after the section's last non-blank line.
+    // Append after the section's last non-blank line.
     qsizetype insertAt = header + 1;
     for (qsizetype i = header + 1; i < std::ssize(lines_); ++i) {
         if (lines_[static_cast<std::size_t>(i)].kind == Line::Kind::SectionHeader) {
@@ -302,27 +302,27 @@ void IniFile::writeInt(QStringView section, QStringView key, qint32 value) {
 }
 
 void IniFile::writeBool(QStringView section, QStringView key, bool value) {
-    setValue(section, key, value ? QStringLiteral("1") : QStringLiteral("0")); // Q15
+    setValue(section, key, value ? QStringLiteral("1") : QStringLiteral("0"));
 }
 
 void IniFile::writeFloat(QStringView section, QStringView key, double value) {
-    setValue(section, key, valuecodec::formatFloat(value)); // Q17
+    setValue(section, key, valuecodec::formatFloat(value));
 }
 
 void IniFile::writeDate(QStringView section, QStringView key, QDate value) {
-    setValue(section, key, valuecodec::formatDate(value)); // Q18
+    setValue(section, key, valuecodec::formatDate(value));
 }
 
 void IniFile::writeTime(QStringView section, QStringView key, QTime value) {
-    setValue(section, key, valuecodec::formatTime(value)); // Q18
+    setValue(section, key, valuecodec::formatTime(value));
 }
 
 void IniFile::writeDateTime(QStringView section, QStringView key, const QDateTime& value) {
-    setValue(section, key, valuecodec::formatDateTime(value)); // Q18
+    setValue(section, key, valuecodec::formatDateTime(value));
 }
 
 void IniFile::writeBinary(QStringView section, QStringView key, const QByteArray& value) {
-    setValue(section, key, QString::fromLatin1(value.toHex().toUpper())); // Q21
+    setValue(section, key, QString::fromLatin1(value.toHex().toUpper()));
 }
 
 void IniFile::eraseSection(QStringView section) {
@@ -352,7 +352,7 @@ void IniFile::deleteKey(QStringView section, QStringView key) {
             continue;
         }
         if (line.kind == Line::Kind::KeyValue && sameIdent(line.key, key)) {
-            lines_.erase(lines_.begin() + i); // D-2: every duplicate goes
+            lines_.erase(lines_.begin() + i); // Every duplicate goes
             removed = true;
         }
     }
@@ -387,9 +387,9 @@ Result<void> IniFile::save() {
 }
 
 Result<void> IniFile::saveAs(const QString& path) {
-    // Spec §4 "nothing is ever swallowed": a value that cannot round-trip through the file's own
-    // codec (only possible for Cp1251) must fail loudly, before anything touches disk, rather
-    // than writing a '?'-corrupted file (finding 2, T-0002A rework).
+    // Nothing is ever swallowed: a value that cannot round-trip through the file's own codec
+    // (only possible for Cp1251) must fail loudly, before anything touches disk, rather than
+    // writing a '?'-corrupted file.
     const Result<QByteArray> encoded = encodeConfigTextChecked(renderedText(), encoding_);
     if (!encoded.has_value()) {
         return fail(encoded.error().code(),

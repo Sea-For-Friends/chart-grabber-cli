@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT yet (status-code classification only). docs/specs/net.md §7.1; legacy
-// u_HttpStatusChecker.pas:112-158.
+// Status-code classification. Legacy u_HttpStatusChecker.pas:112-158.
 #include "cg/net/http_status.h"
 
 #include <gtest/gtest.h>
@@ -11,6 +10,7 @@
 using cg::net::isContentNotExistStatus;
 using cg::net::isDownloadErrorStatus;
 using cg::net::isOkStatus;
+using cg::net::isRefusalStatus;
 
 TEST(HttpStatus, OkSet) {
     for (quint32 code : {200u, 201u, 202u, 203u, 205u, 206u}) {
@@ -55,5 +55,15 @@ TEST(HttpStatus, Unknown403And429) {
         EXPECT_FALSE(isOkStatus(code)) << code;
         EXPECT_FALSE(isDownloadErrorStatus(code)) << code;
         EXPECT_FALSE(isContentNotExistStatus(code)) << code;
+    }
+}
+
+// No legacy counterpart: only 401, 403 and 451 are a refusal by the server.
+TEST(HttpStatus, IsRefusalStatusIsTrueForOnly401403And451) {
+    for (const quint32 code : {401u, 403u, 451u}) {
+        EXPECT_TRUE(isRefusalStatus(code)) << code;
+    }
+    for (const quint32 code : {0u, 200u, 204u, 400u, 404u, 407u, 429u, 450u, 452u, 500u, 503u}) {
+        EXPECT_FALSE(isRefusalStatus(code)) << code;
     }
 }

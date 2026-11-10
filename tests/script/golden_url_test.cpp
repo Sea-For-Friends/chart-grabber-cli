@@ -2,28 +2,25 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: docs/specs/script.md §11.5, docs/backlog/T-0015D-script-golden-urls-21-maps.md. One
-// parameterised test over (map, tile point): loads a hand-derived golden from
-// tests/fixtures/script-goldens/<map>.golden (core::IniFile, spec 2.12), runs the map's real
-// tests/fixtures/zmp/sas.maps/<map>/GetUrlScript.txt through the landed UrlScript with the fake
-// host and the golden's stored inputs, and compares ResultURL/RequestHead/PostData byte for byte.
+// One parameterised test over (map, tile point): loads a hand-derived golden from
+// tests/fixtures/script-goldens/<map>.golden (core::IniFile), runs the map's real
+// tests/fixtures/zmp/sas.maps/<map>/GetUrlScript.txt through UrlScript with the fake host and the
+// golden's stored inputs, and compares ResultURL/RequestHead/PostData byte for byte.
 //
 // How each golden was produced - by reading the script and params.txt and evaluating it by hand,
 // never by running this test - is written down as INI comments in the fixture file itself and
 // summarised in tests/fixtures/script-goldens/README.md. Skips apply per (map, section), not per
-// whole map (docs/handoffs/T-0015D-review.md finding 4b), so the sections of a map that do work
-// once a defect is fixed start being asserted on their own.
+// whole map, so the sections of a map that do work once a defect is fixed start being asserted
+// on their own.
 //
-// PD-1 (static arrays) and PD-103 (const folding) are fixed by T-0032 - see docs/handoffs/T-0032.md
-// for the corpus before/after and the belgeodesy P1/P2 ErrorText correction that fixing PD-1
-// uncovered (T-0015D's derivation did not account for the array's declared low bound). No
+// The static-array and const-folding port defects are fixed; the belgeodesy P1/P2 ErrorText was
+// corrected with them (the derivation did not account for the array's declared low bound). No
 // skipDefectFor() entry remains; the next port defect a golden run turns up gets one.
 //
 // A golden section may declare ExpectError=1 (optionally with an ErrorText substring to match
 // against the failure's message) instead of ResultURL: the test then asserts buildRequest() fails
-// rather than comparing a URL (docs/handoffs/T-0015D-review.md finding 2/4a). A section that is
-// not expected-error and omits the ResultURL key fails the test - it no longer silently expects
-// "" (finding 4c).
+// rather than comparing a URL. A section that is not expected-error and omits the ResultURL key
+// fails the test - it no longer silently expects "".
 #include "cg/core/ini_file.h"
 #include "cg/script/url_script.h"
 
@@ -47,20 +44,19 @@ using cg::script::test::FakeScriptHost;
 
 namespace {
 
-// Test-only pass-through projection. Map 19 (Maps.by.zmp)'s golden (spec table row 19) needs an
-// *identity* DefProjConverter so RoundEx sees the lon/lat inputs directly - distinct from
-// script_host_fake.h's FakeProjConverter (an x1000 scale built for a different ticket's method-
-// dispatch tests, script.md §11.1/§11.2), so it stays local to this file rather than growing the
-// shared fake.
+// Test-only pass-through projection. Map 19 (Maps.by.zmp)'s golden needs an *identity*
+// DefProjConverter so RoundEx sees the lon/lat inputs directly - distinct from
+// script_host_fake.h's FakeProjConverter (an x1000 scale built for the method-dispatch tests),
+// so it stays local to this file rather than growing the shared fake.
 class IdentityProjConverter : public IProjConverter {
 public:
     [[nodiscard]] DoublePoint lonLat2XY(DoublePoint p) const override { return p; }
     [[nodiscard]] DoublePoint xy2LonLat(DoublePoint p) const override { return p; }
 };
 
-// §11.5.1: every lon/lat/metre input is stored as a C99-ish "raw bits" hex literal
-// (0x + 16 hex digits = the IEEE-754 double's bit pattern, big-endian order as written) so the
-// golden is exact and never touches cg::geo.
+// Every lon/lat/metre input is stored as a C99-ish "raw bits" hex literal (0x + 16 hex
+// digits = the IEEE-754 double's bit pattern, big-endian order as written) so the golden is
+// exact and never touches cg::geo.
 double hexBitsToDouble(const QString& s) {
     QByteArray hex = s.toUtf8();
     if (hex.startsWith("0x") || hex.startsWith("0X")) {
@@ -82,8 +78,8 @@ QByteArray readRawBytes(const QString& path) {
     return file.readAll();
 }
 
-// The 21 maps of spec §11.5.3, path relative to both tests/fixtures/zmp/sas.maps/ (the corpus
-// script) and tests/fixtures/script-goldens/ (the golden, same path + ".golden").
+// The 21 golden maps, path relative to both tests/fixtures/zmp/sas.maps/ (the corpus script) and
+// tests/fixtures/script-goldens/ (the golden, same path + ".golden").
 const QStringList& allMaps() {
     static const QStringList maps = {
         QStringLiteral("ESRI/ArcGIS.Imagery.zmp"),
@@ -112,9 +108,9 @@ const QStringList& allMaps() {
 }
 
 // Skip reason for one (map, section) pair, or empty if the section is asserted. Applied per
-// section (finding 4b), not per map. PD-1 (belgeodesy/megafonpro) and PD-103 (zoomify) are fixed
-// by T-0032 - every section of every map is asserted now; kept as a function (not deleted) so the
-// next port defect a golden run turns up has somewhere to go, same as corpus_run_test.cpp's table.
+// section, not per map. The port defects of belgeodesy, megafonpro and zoomify are fixed - every
+// section of every map is asserted now; kept as a function (not deleted) so the next port defect a
+// golden run turns up has somewhere to go, same as corpus_run_test.cpp's table.
 QString skipDefectFor(const QString& map, const QString& section) {
     (void)map;
     (void)section;
@@ -164,9 +160,7 @@ TEST_P(GoldenUrlTest, MatchesHandDerivedGolden) {
     const GoldenCase& c = GetParam();
     if (!c.skipDefect.isEmpty()) {
         GTEST_SKIP() << c.skipDefect.toStdString() << ": " << c.map.toStdString() << " ["
-                     << c.section.toStdString()
-                     << "] is blocked by a landed port defect (docs/handoffs/T-0015D.md), not "
-                        "fixed here (0 production LOC).";
+                     << c.section.toStdString() << "] is blocked by a known port defect.";
     }
 
     const QString fixturesDir = cgScriptFixturesDir();

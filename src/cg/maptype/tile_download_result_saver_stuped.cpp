@@ -131,9 +131,9 @@ void TileDownloadResultSaverStuped::saveTileDownload(const net::DownloadRequest&
         if (!contentTypes_.isBitmapType(contentType)) {
             throw badMimeForDownloadRastr(contentType);
         }
-        // TODO(T-0119) R-13: decode, CropOnDownload (:202-231) / CutDownloadedBitmap (:328-407), re-encode,
-        // empty check, save (:441-477). Needs module `bitmap`; OQ-16: the branch throws, it is not silent.
-        // until then the map is refused: docs/specs/bitmap.md §1.7
+        // TODO: decode, CropOnDownload (:202-231) / CutDownloadedBitmap (:328-407), re-encode, empty check,
+        // save (:441-477). Needs module `bitmap`; the branch throws, it is not silent: until then the map
+        // is refused.
         throw SaveTileDownloadError(QCoreApplication::translate(
             kTrContext, "Crop and cut of downloaded tiles are not supported for this map"));
     }

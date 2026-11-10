@@ -34,8 +34,8 @@ private:
 
 // buildEmpty is the only place of the size rule (the constructor check at :81-86 is the same test).
 Bitmap32BufferPtr Bitmap32BufferFactorySimple::buildEmpty(QPoint size) const {
-    // Ports :131-148. The Asserts (:135-139) are off in the shipped build (SASPlanet.dproj:92).
-    // The product is taken in 64 bits: legacy `X * Y` is a 32-bit Longint and wraps (L row of T-0155).
+    // Ports :131-148. The Asserts (:135-139) are off in the shipped build (SASPlanet.dproj:92). The
+    // product is taken in 64 bits: legacy `X * Y` is a 32-bit Longint and wraps (a legacy defect).
     const auto x = static_cast<std::int64_t>(size.x());
     const auto y = static_cast<std::int64_t>(size.y());
     constexpr std::int64_t kLimit = std::int64_t{1} << 16;

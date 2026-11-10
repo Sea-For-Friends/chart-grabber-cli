@@ -2,15 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-002..013. Ports u_TileStorageFileSystem.pas (GetTileInfo/SaveTile/DeleteTile/
-// GetTileFileName/GetTileInfoByPath); docs/specs/storage.md §2.13 (:952-1046).
+// Ports u_TileStorageFileSystem.pas (GetTileInfo/SaveTile/DeleteTile/GetTileFileName/
+// GetTileInfoByPath).
 //
-// Test-count ruling (tests/conventions/tests-port-dont-multiply): legacy has no DUnit suite for
-// this unit, so this is the ticket's own minimal list: one table-driven save/load/delete round
-// trip over all nine folder layouts (exact relative path per tools/gen_cache_fixtures.py's
-// tile (3,7,5)), TNE write/read/supersede (incl. the "TNE never overwrites a TNE" quirk), mtime
-// == load date, read-only/no-access paths, the tileInfo order-of-operations case (tile + tne both
-// present), and the bad-content-type Result.
+// Legacy has no DUnit suite for this unit, so this is a minimal list: one table-driven
+// save/load/delete round trip over all nine folder layouts (exact relative path per
+// tools/gen_cache_fixtures.py's tile (3,7,5)), TNE write/read/supersede (incl. the
+// "TNE never overwrites a TNE" quirk), mtime == load date, read-only/no-access paths, the
+// tileInfo order-of-operations case (tile + tne both present), and the bad-content-type Result.
 #include "cg/core/content_type.h"
 #include "cg/core/platform/file_times.h"
 #include "cg/geo/datum.h"
@@ -103,7 +102,7 @@ struct LayoutCase {
 };
 
 // Src/TileStorage/FileSystem/u_TileFileName{ES,GM1,GM2,GM3,GMV,MOBAC,OsmAnd,SAS}.pas,
-// u_TileFileNameTMS.pas -- the nine folder-cache formats landed by T-0021B/C.
+// u_TileFileNameTMS.pas -- the nine folder-cache formats.
 std::vector<LayoutCase> nineLayouts() {
     return {
         {"es", std::make_shared<cg::storage::EsTileNameCodec>(), QStringLiteral("06/06-03-07.jpg")},
@@ -315,7 +314,7 @@ TEST(FileSystemTileStorage, TileInfoOrderOfOperationsTileWinsWhenBothTileAndTneE
     ASSERT_TRUE(info.has_value());
     EXPECT_EQ(info->type, TileInfoType::Exists); // the tile file is checked BEFORE the .tne
 
-    // T-0021F1 review finding 2: `Result := DeleteFile(VFileName) or DeleteFile(VTneName)`
+    // `Result := DeleteFile(VFileName) or DeleteFile(VTneName)`
     // (u_TileStorageFileSystem.pas:204) short-circuits under Delphi's default {$B-} -- once the
     // tile file is deleted, the .tne sibling is left untouched.
     const QString tilePath = storagePath + codec->addExt(base, QStringLiteral(".jpg"));
@@ -343,9 +342,9 @@ TEST(FileSystemTileStorage, SaveTileRejectsMismatchedContentTypeAsAResult) {
     EXPECT_FALSE(QFile::exists(storage->tileFileName(xy, zoom, nullptr)));
 }
 
-// T-0021F1 review finding 1: the check is legacy's CheckOtherForSaveCompatible (same KIND, same
-// DEFAULT EXTENSION), not MIME string equality. The four vectors the review lists as required to
-// pass, plus one that must still be rejected (a bitmap into a vector storage).
+// The check is legacy's CheckOtherForSaveCompatible (same KIND, same DEFAULT EXTENSION), not
+// MIME string equality. Four vectors that must pass, plus one that must still be rejected (a
+// bitmap into a vector storage).
 TEST(FileSystemTileStorage, SaveTileContentTypeCompatibilityMatchesLegacyCheckOtherForSaveCompatible) {
     struct Case {
         const char* name;
@@ -417,11 +416,11 @@ private:
 } // namespace
 
 TEST(FileSystemTileStorage, SaveTileIgnoresFailedSetFileMTime) {
-    // T-0021F1 review finding 3: legacy discards FileSetDate's result (u_TileStorageFileSystem.pas
+    // Legacy discards FileSetDate's result (u_TileStorageFileSystem.pas
     // :483 -> u_FileSystemTools.pas:165-176), so a failed setFileMTime must not fail the save.
     // /dev/null lets the write succeed while an explicit-timestamp utimensat(2) fails with EPERM
     // (root-owned, this process is not the owner) -- the "shared cache file owned by another user"
-    // trigger the review describes, reproduced without touching any real cache file.
+    // trigger, reproduced without touching any real cache file.
     const auto probe = cg::core::platform::setFileMTime(QStringLiteral("/dev/null"), 1700000000);
     if (probe.has_value()) {
         GTEST_SKIP() << "this environment allows an explicit utimensat on /dev/null (e.g. running "
@@ -463,7 +462,7 @@ TEST(FileSystemTileStorage, SaveTileWithoutOverwriteProbeMatchesLegacyReentrantG
     const QString base = codec->tilePath(xy, zoom);
     writeFile(storagePath + codec->addExt(base, QStringLiteral(".jpg")), QByteArray("old"));
 
-    // Finding 4a: with AddAccess but not ReadAccess, legacy's reentrant GetTileInfo returns nil
+    // With AddAccess but not ReadAccess, legacy's reentrant GetTileInfo returns nil
     // (u_TileStorageFileSystem.pas:461 -> :407-426), so the "already exists" check never fires and
     // the save proceeds as an overwrite, even though a tile is physically on disk.
     {
@@ -475,8 +474,8 @@ TEST(FileSystemTileStorage, SaveTileWithoutOverwriteProbeMatchesLegacyReentrantG
         EXPECT_TRUE(*saved);
     }
 
-    // Finding 4b: with ReadAccess, legacy's GetTileInfo caches the probed result (:422-424), not
-    // just the save's own outcome.
+    // With ReadAccess, legacy's GetTileInfo caches the probed result (:422-424), not just the
+    // save's own outcome.
     {
         writeFile(storagePath + codec->addExt(base, QStringLiteral(".jpg")), QByteArray("old-again"));
         auto memCache = std::make_shared<cg::storage::TileInfoMemCache>(16, std::chrono::minutes(5),
@@ -495,11 +494,11 @@ TEST(FileSystemTileStorage, SaveTileWithoutOverwriteProbeMatchesLegacyReentrantG
 }
 
 // ---------------------------------------------------------------------------------------------
-// T-0021F2: tileRectInfo (storage.md §2.13.2/§2.5, u_TileStorageFileSystem.pas:GetTileRectInfo)
-// and scanTiles (storage.md §2.13.4, FEAT-STO-035, u_TileStorageFileSystem.pas:ScanTiles +
-// u_EnumTileInfoByFileIterator.pas). Test-count ruling: no legacy DUnit suite for either method
-// (verified: `grep -ril "TileRectInfo\|EnumTileInfoByFileIterator" Test/` in the legacy tree has
-// no hits), so this is the ticket's own minimal list.
+// tileRectInfo (u_TileStorageFileSystem.pas:GetTileRectInfo) and scanTiles
+// (u_TileStorageFileSystem.pas:ScanTiles + u_EnumTileInfoByFileIterator.pas). There is no legacy
+// DUnit suite for either method (verified:
+// `grep -ril "TileRectInfo\|EnumTileInfoByFileIterator" Test/` in the legacy tree has no hits),
+// so this is a minimal list.
 // ---------------------------------------------------------------------------------------------
 
 namespace {
@@ -542,7 +541,7 @@ TEST(FileSystemTileStorage, TileRectInfoPopulatedRectAcrossFoldersIncludingAMiss
     // x=2's folder gets only a .tne at y=7 -- (2,6) shares that folder but has no file either.
     writeFile(storagePath + codec->addExt(codec->tilePath(PointI{2, 7}, zoom), QStringLiteral(".tne")));
     // x=3's folder is never created at all -- exercises the missing-directory shortcut for both
-    // (3,6) and (3,7) (storage.md §2.13.2's VPrevFolderName/VPrevFolderExist optimisation).
+    // (3,6) and (3,7) (legacy's VPrevFolderName/VPrevFolderExist optimisation).
 
     auto storage = makeStorage(storagePath, codec, TileStorageAbilities::readWrite());
     const RectI rect{1, 6, 4, 8}; // x in [1,4), y in [6,8) -- 3x2 grid
@@ -571,8 +570,8 @@ TEST(FileSystemTileStorage, TileRectInfoPopulatedRectAcrossFoldersIncludingAMiss
 }
 
 TEST(FileSystemTileStorage, TileRectInfoCapAndReadAccessGating) {
-    // 2048x2048 cap (storage.md §2.5, u_TileStorageFileSystem.pas:GetTileRectInfo:325): a rect
-    // wider than 2048 tiles after ValidateTileRect clamping gives a null rect info (legacy nil), no error.
+    // 2048x2048 cap (u_TileStorageFileSystem.pas:GetTileRectInfo:325): a rect wider than 2048 tiles after
+    // ValidateTileRect clamping gives a null rect info (legacy nil), no error.
     {
         QTemporaryDir dir;
         ASSERT_TRUE(dir.isValid());
@@ -585,7 +584,7 @@ TEST(FileSystemTileStorage, TileRectInfoCapAndReadAccessGating) {
         ASSERT_TRUE(result.has_value());
         EXPECT_EQ(*result, nullptr);
     }
-    // ReadAccess false: legacy leaves Result = nil (storage.md §2.13.2 "gated on ReadAccess" note,
+    // ReadAccess false: legacy leaves Result = nil (gated on ReadAccess,
     // u_TileStorageFileSystem.pas:319) -- a successful null pointer, not an error.
     {
         QTemporaryDir dir;
@@ -600,19 +599,19 @@ TEST(FileSystemTileStorage, TileRectInfoCapAndReadAccessGating) {
 }
 
 TEST(FileSystemTileStorage, ScanTilesYieldsExactSequenceOrderedByFolderThenMaskThenName) {
-    // Table-driven over ignoreTne on/off (storage.md §2.13.4): within one folder, tile-extension
-    // files are yielded before .tne files (legacy's mask list order,
-    // u_TileStorageFileSystem.pas:574-577), both name-sorted; folders are walked breadth-first
-    // (x=1's folder, discovered first alphabetically under their shared parent, entirely before
-    // x=3's folder -- u_FoldersIteratorRecursiveByLevels' FIFO queue). A same-extension file that
-    // does not parse as a tile name ("bogus.jpg") is skipped silently.
+    // Table-driven over ignoreTne on/off: within one folder, tile-extension files are yielded
+    // before .tne files (legacy's mask list order, u_TileStorageFileSystem.pas:574-577), both
+    // name-sorted; folders are walked breadth-first (x=1's folder, discovered first
+    // alphabetically under their shared parent, entirely before x=3's folder --
+    // u_FoldersIteratorRecursiveByLevels' FIFO queue). A same-extension file that does not parse
+    // as a tile name ("bogus.jpg") is skipped silently.
     //
-    // Review findings F-1/F-2/F-3 (T-0021F2-review.md): four more top-level wrapper folders are
-    // added below, each holding exactly one further-nested valid tile. Their file-bearing leaf
-    // folders sit one level deeper than "z6/0/x1/0" and "z6/0/x3/0", so -- being a strict
-    // breadth-first walk -- the four original entries above are always yielded first, unaffected;
-    // these wrappers only ever affect the tail of the sequence, appended identically for both
-    // ignoreTne cases (none of them carry a .tne sibling).
+    // Four more top-level wrapper folders are added below, each holding exactly one
+    // further-nested valid tile. Their file-bearing leaf folders sit one level deeper than
+    // "z6/0/x1/0" and "z6/0/x3/0", so -- being a strict breadth-first walk -- the four original
+    // entries above are always yielded first, unaffected; these wrappers only ever affect the
+    // tail of the sequence, appended identically for both ignoreTne cases (none of them carry a
+    // .tne sibling).
     struct Case {
         const char* name;
         bool ignoreTne;
@@ -653,24 +652,23 @@ TEST(FileSystemTileStorage, ScanTilesYieldsExactSequenceOrderedByFolderThenMaskT
         // A non-matching extension is filtered at the mask level, never reaches the codec.
         writeFile(storagePath + QStringLiteral("z6/0/x1/0/readme.txt"));
 
-        // F-1: sibling top-level folders "Z3" and "z1" differ only by case. Case-insensitive sort
-        // (the fix) yields "z1" before "Z3" (NTFS order); the pre-fix case-sensitive QDir::Name
-        // would yield "Z3" (uppercase) before "z1".
+        // Sibling top-level folders "Z3" and "z1" differ only by case. Case-insensitive sort (the
+        // fix) yields "z1" before "Z3" (NTFS order); the pre-fix case-sensitive QDir::Name would
+        // yield "Z3" (uppercase) before "z1".
         writeFile(storagePath + QStringLiteral("Z3/") +
                       codec->addExt(codec->tilePath(PointI{20, 20}, zoom), QStringLiteral(".jpg")),
                   QByteArray("z3"));
         writeFile(storagePath + QStringLiteral("z1/") +
                       codec->addExt(codec->tilePath(PointI{21, 21}, zoom), QStringLiteral(".jpg")),
                   QByteArray("z1"));
-        // F-2: a dot-prefixed folder is scanned once QDir::Hidden is set (legacy's
-        // FindFirstFileEx lists hidden/dot-prefixed entries regardless of attributes).
+        // A dot-prefixed folder is scanned once QDir::Hidden is set (legacy's FindFirstFileEx lists
+        // hidden/dot-prefixed entries regardless of attributes).
         writeFile(storagePath + QStringLiteral(".hidden/") +
                       codec->addExt(codec->tilePath(PointI{22, 22}, zoom), QStringLiteral(".jpg")),
                   QByteArray("hidden"));
-        // F-3: a candidate whose relative path runs through a non-ASCII wrapper folder is skipped
-        // before it reaches the parser (u_EnumTileInfoByFileIterator.pas:99's IsAscii gate) -- this
-        // tile must never appear in `entries` below, so it is deliberately absent from
-        // c.expectedOrder.
+        // A candidate whose relative path runs through a non-ASCII wrapper folder is skipped before
+        // it reaches the parser (u_EnumTileInfoByFileIterator.pas:99's IsAscii gate) -- this tile
+        // must never appear in `entries` below, so it is deliberately absent from c.expectedOrder.
         writeFile(storagePath + QStringLiteral("Копия/") +
                       codec->addExt(codec->tilePath(PointI{23, 23}, zoom), QStringLiteral(".jpg")),
                   QByteArray("nonascii"));
@@ -771,7 +769,7 @@ TEST(FileSystemTileStorage, ScanTilesLoadsTileDataButNotTneData) {
     EXPECT_EQ(tneEntry->contentType, QByteArray("image/jpg")); // set unconditionally, both branches
 }
 
-// T-0117: stateChangeable() is the folder storage's own state holder.
+// stateChangeable() is the folder storage's own state holder.
 TEST(FileSystemTileStorage, StateChangeableIsOwnHolder) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

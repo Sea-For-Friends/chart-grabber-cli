@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkNameGenerator.pas (docs/specs/marks.md section 2.3). Ticket T-0091 is a slice of the
-// marks module. The [MarkNew*_Name] sections of the real fixture are read and written back byte for
-// byte; newName() formats the counter with the fixture's format string (Delphi Format).
+// Ports u_MarkNameGenerator.pas. The [MarkNew*_Name] sections of the real fixture are read and
+// written back byte for byte; newName() formats the counter with the fixture's format string
+// (Delphi Format).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"

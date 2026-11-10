@@ -2,15 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-011, FEAT-GEO-016. Rework 1 (docs/handoffs/T-0017A-review.md F6):
 // geometry_func.cpp shipped with zero tests even though it was verified 1:1 against legacy by
 // inspection. A handful of cases for the three pure, non-projection LonLat helpers, derived from
 // u_GeometryFunc.pas:679-732 (IsValidLonLatLine / IsValidLonLatPolygon) and :825-857
 // (IsLonLatPolygonSimpleRect). nearestPoint (the fourth exported symbol) needs an IProjection and
 // is out of scope here.
 //
-// geometryToPlainText (T-0019A2, u_GeometryFunc.pas:1017-1148) lands here too: a small dispatch
-// test per shape. It uses converter.lonLatConvert() itself (already fully covered by
+// geometryToPlainText (u_GeometryFunc.pas:1017-1148) lands here too: a small dispatch test per
+// shape. It uses converter.lonLatConvert() itself (already fully covered by
 // coord_to_string_test.cpp) as its own oracle for a single point's text, so these tests are only
 // exercising this file's join/dispatch/auto-close logic, not CoordToStringConverter's formatting.
 

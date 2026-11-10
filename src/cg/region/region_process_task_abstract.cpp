@@ -27,8 +27,8 @@ RegionProcessTaskAbstract::~RegionProcessTaskAbstract() { // :87-94
 }
 
 geo::TileIteratorPtr RegionProcessTaskAbstract::makeTileIterator(const geo::ProjectionPtr& projection) const {
-    // :100 Assert(factory <> nil) is off in the shipped build; the factory is always given
-    // (unreachable in legacy: frm_RegionProcess.pas:414, u_ExportProviderAbstract.pas:117); no register row.
+    // :100 Assert(factory <> nil) is off in the shipped build; the factory is always given (unreachable in
+    // legacy: frm_RegionProcess.pas:414, u_ExportProviderAbstract.pas:117).
     return tileIteratorFactory_->makeTileIterator(projection, polygon_); // :101
 }
 

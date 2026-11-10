@@ -2,13 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-026. Ports u_TileStorageInRAM.pas; docs/specs/storage.md §2.14 (:1092-1100).
+// Ports u_TileStorageInRAM.pas.
 //
-// Test-count ruling (tests/conventions/tests-port-dont-multiply): legacy has no DUnit suite for
-// this class, so this is the ticket's own minimal list: save/info/load/delete round trip, TNE,
-// versions honoured (two versions of one tile), scan refused, a null mem-cache constructor
-// rejected, the content-type compatibility rule (one compatible + one incompatible row), and the
-// add/delete access gates.
+// Legacy has no DUnit suite for this class, so this is a minimal list: save/info/load/delete
+// round trip, TNE, versions honoured (two versions of one tile), scan refused, a null mem-cache
+// constructor rejected, the content-type compatibility rule (one compatible + one incompatible
+// row), and the add/delete access gates.
 #include "cg/core/content_type.h"
 #include "cg/core/hash.h"
 #include "cg/geo/datum.h"
@@ -215,7 +214,7 @@ TEST(RamTileStorage, ScanTilesReturnsMemCacheEnumerator) {
 }
 
 TEST(RamTileStorage, TileRectInfoOverTheCapIsNullNotAnError) {
-    // u_TileStorageInRAM.pas:229: a rect over 2048 tiles leaves Result = nil; spec §2.6 note 6.
+    // u_TileStorageInRAM.pas:229: a rect over 2048 tiles leaves Result = nil.
     auto storage = makeStorage(tileStorageTypeAbilities(TileStorageKind::Ram).base);
     const auto huge =
         storage->tileRectInfo(cg::geo::RectI{0, 0, 2049, 1}, 13, MapVersionRequest{}, std::stop_token{});
@@ -224,7 +223,7 @@ TEST(RamTileStorage, TileRectInfoOverTheCapIsNullNotAnError) {
 }
 
 TEST(RamTileStorage, NoReadAccessStillAnswersNotExists) {
-    // u_TileStorageInRAM.pas:173-184: no access test; a miss is the not-exists object, not nil (D-106).
+    // u_TileStorageInRAM.pas:173-184: no access test; a miss is the not-exists object, not nil.
     auto storage = makeStorage(TileStorageAbilities::none());
     auto info = storage->tileInfo(PointI{1, 2}, 3, nullptr, LoadMode::AsIs);
     ASSERT_TRUE(info.has_value());
@@ -314,7 +313,7 @@ TEST(RamTileStorage, AddAndDeleteAccessGating) {
     EXPECT_FALSE(*deleted);
 }
 
-// T-0117: stateChangeable() is the RAM storage's own state holder.
+// stateChangeable() is the RAM storage's own state holder.
 TEST(RamTileStorage, StateChangeableIsOwnHolder) {
     auto storage = makeStorage(TileStorageAbilities::readWrite());
     cg::storage::test::expectStateChangeableIsOwn(*storage, true);

@@ -1,8 +1,8 @@
-# Script mode (T-0200, T-0264, docs/specs/app-cli.md 2.6): writes ${OUT} with `#define CG_GIT_COMMIT "<12 hex>[-dirty]"`
-# ("unknown" when no source gives a commit). The file is rewritten only when its text changes, so main.cpp is not
-# recompiled when the commit did not change. Input: -DSRC=<source dir> -DOUT=<header> [-DOVERRIDE=<12 hex>[-dirty]].
-# Precedence: (a) OVERRIDE (cache variable CHART_GRABBER_COMMIT), verbatim; (b) git, only when SRC is itself the work-tree
-# top; (c) the archive stamp cli/archive_commit.txt (`git archive` substitutes the hash, .gitattributes export-subst);
+# Script mode: writes ${OUT} with `#define CG_GIT_COMMIT "<12 hex>[-dirty]"` ("unknown" when no source gives a commit).
+# The file is rewritten only when its text changes, so main.cpp is not recompiled when the commit did not change. Input:
+# -DSRC=<source dir> -DOUT=<header> [-DOVERRIDE=<12 hex>[-dirty]]. Precedence: (a) OVERRIDE (cache variable
+# CHART_GRABBER_COMMIT), verbatim; (b) git, only when SRC is itself the work-tree top; (c) the archive stamp
+# cli/archive_commit.txt (`git archive` substitutes the hash, .gitattributes export-subst);
 # (d) unknown.
 # CMake regular expressions have no {n} repetition: the patterns are built with string(REPEAT).
 string(REPEAT "[0-9a-f]" 12 hex12)
@@ -24,7 +24,7 @@ if(NOT found)
                     OUTPUT_VARIABLE top ERROR_QUIET RESULT_VARIABLE top_rc OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(top_rc EQUAL 0 AND NOT "${top}" STREQUAL "")
       if(WIN32)
-        # T-0347: MSYS2 git prints the top as /c/dir where the native cmake has C:/dir: bring it to the cmake form.
+        # MSYS2 git prints the top as /c/dir where the native cmake has C:/dir: bring it to the cmake form.
         find_program(CYGPATH_EXECUTABLE cygpath)
         if(CYGPATH_EXECUTABLE)
           execute_process(COMMAND ${CYGPATH_EXECUTABLE} -m "${top}"

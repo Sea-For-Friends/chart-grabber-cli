@@ -7,10 +7,10 @@
 // replaced by script::IScriptHost::templateToUrl, which the script wiring forwards here)
 //
 // The URL mini-language of a ZMP's DefURLBase: {x} {y} {-y} {z} {q} {bbox} {s} {timestamp} {ver}
-// {lang} {sas_path}, a comma list {a,b,c} (server names) and integer arithmetic {z-1} (spec
-// maptype.md 2.8). The template is parsed once into items and re-parsed only when the config
-// notifies a change or a different template text arrives. Not thread-safe: owned by one request
-// builder and used under its lock, like legacy.
+// {lang} {sas_path}, a comma list {a,b,c} (server names) and integer arithmetic {z-1}. The
+// template is parsed once into items and re-parsed only when the config notifies a change or a
+// different template text arrives. Not thread-safe: owned by one request builder and used under
+// its lock, like legacy.
 
 #include "cg/core/language_manager.h"
 #include "cg/core/notifier.h"
@@ -52,7 +52,6 @@ public:
     UrlTemplate(const UrlTemplate&) = delete;
     UrlTemplate& operator=(const UrlTemplate&) = delete;
 
-    // FEAT-NET-004
     [[nodiscard]] QString render(const UrlTemplateRequest& request);
     // PSTemplateToUrl: the script's TemplateToUrl, rendered for the stored request.
     [[nodiscard]] QString templateToUrl(const QString& tmpl);

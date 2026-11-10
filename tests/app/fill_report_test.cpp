@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of src/cg/app/fill_report (new code; inherits
-// Src/RegionProcess/Download/u_ThreadDownloadTiles.pas:320-321 classification: IsExists / IsExistsTNE /
-// neither). T-0190, proofs 5, 6, 7 (fill half). No FEAT tag. Contents of the storage: see tile_estimate_rig.h
-// (z6: 80 tiles, 10 present summing 15000, 6 markers, 3 NotExists entries + 61 unknown = 64 missing).
+// Tests of src/cg/app/fill_report (new code; inherits Src/RegionProcess/Download/
+// u_ThreadDownloadTiles.pas:320-321 classification: IsExists / IsExistsTNE / neither). Contents of the
+// storage: see tile_estimate_rig.h (z6: 80 tiles, 10 present summing 15000, 6 markers, 3 NotExists
+// entries + 61 unknown = 64 missing).
 #include "cg/app/fill_report.h"
 
 #include <QLocale>
@@ -33,9 +33,8 @@ protected:
 
 } // namespace
 
-// Proof 5: present / marked missing / missing / bytes exact for each zoom; every tile of the area is looked
-// up once (tiles = iterated), NotExists and unknown tiles are "missing", neighbours and other zooms do not
-// count.
+// Present / marked missing / missing / bytes exact for each zoom; every tile of the area is looked up once
+// (tiles = iterated), NotExists and unknown tiles are "missing", neighbours and other zooms do not count.
 TEST_F(FillReportTest, CountsAndBytesAreExactPerZoom) {
     fillZ6(*storage_);
     storage_->put(3, 1, 3, presentTile(4000));
@@ -61,7 +60,7 @@ TEST_F(FillReportTest, CountsAndBytesAreExactPerZoom) {
     expectMetadataOnlyCalls();
 }
 
-// Proof 5: an empty cache is all missing, no bytes.
+// An empty cache is all missing, no bytes.
 TEST_F(FillReportTest, EmptyCacheIsAllMissing) {
     const auto result = run({3});
     ASSERT_TRUE(result.has_value());
@@ -72,9 +71,9 @@ TEST_F(FillReportTest, EmptyCacheIsAllMissing) {
     EXPECT_EQ((*result)[0].bytes, 0);
 }
 
-// T-0259: a zoom whose legacy count is 0 (area under one pixel, tests/app/tile_estimate_test.cpp T-0241) is
-// not walked: tiles 0, nothing missing, no storage lookup; the row is still there. Zoom 2 of the same area
-// counts one tile.
+// A zoom whose legacy count is 0 (area under one pixel, tests/app/tile_estimate_test.cpp) is not walked:
+// tiles 0, nothing missing, no storage lookup; the row is still there. Zoom 2 of the same area counts one
+// tile.
 TEST_F(FillReportTest, ZoomWithLegacyCountZeroShowsNoTilesAndNothingMissing) {
     const auto area = rect(-1.5, 50.9, -1.0, 50.5);
     const auto result = fillReport(*map_, *area, std::vector<quint8>{0, 1, 2}, app(), {});
@@ -90,7 +89,7 @@ TEST_F(FillReportTest, ZoomWithLegacyCountZeroShowsNoTilesAndNothingMissing) {
     EXPECT_EQ(storage_->calls.size(), 1U);
 }
 
-// Proof 6: a storage error is returned at once.
+// A storage error is returned at once.
 TEST_F(FillReportTest, StorageErrorIsReturnedAndEndsTheJob) {
     storage_->failAtCall = 4;
     const auto result = run({3, 6});
@@ -100,7 +99,7 @@ TEST_F(FillReportTest, StorageErrorIsReturnedAndEndsTheJob) {
     EXPECT_EQ(storage_->calls.size(), 4U);
 }
 
-// Proof 6: stop requested before the call returns at once; during the walk it ends between tiles.
+// Stop requested before the call returns at once; during the walk it ends between tiles.
 TEST_F(FillReportTest, StopRequestedBeforeTheCallReturnsAtOnce) {
     std::stop_source source;
     source.request_stop();
@@ -140,8 +139,8 @@ private:
 
 } // namespace
 
-// Proof 5/7: golden text and the total row. Sizes: 4000 / 1024 = 3.9 KB, 15000 / 1024 = 14.6 KB,
-// total 19000 / 1024 = 18.6 KB.
+// Golden text and the total row. Sizes: 4000 / 1024 = 3.9 KB, 15000 / 1024 = 14.6 KB, total
+// 19000 / 1024 = 18.6 KB.
 TEST_F(FillTableLocale, FillTableGolden) {
     ZoomFill a;
     a.zoom = 3;

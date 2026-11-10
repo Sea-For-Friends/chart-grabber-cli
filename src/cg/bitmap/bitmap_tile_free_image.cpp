@@ -4,8 +4,7 @@
 
 // Ports: Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas:195-268 (loader), :350-371 and :373-495 (saver
 // base, the 32 and 24 bit branches), :499-511 (BMP), :532-556 (PNG); the PNG encoding is the one of
-// FreeImage's PluginPNG.cpp as listed in docs/specs/bitmap.md §2.5 (unverified against the shipped DLL).
-// Feature: FEAT-RND-041, FEAT-RND-038
+// FreeImage's PluginPNG.cpp (unverified against the shipped DLL).
 //
 // libpng reports every error through error_fn, which must not return. The port does a longjmp to the call
 // that owns the libpng structs; the function that contains setjmp owns only trivial locals and the C++
@@ -39,7 +38,7 @@ namespace {
 
 constexpr int kPngZNoCompression = 0x0100; // FreeImage.pas:598 PNG_Z_NO_COMPRESSION
 
-// FreeImage_Save/pHYs default of 72 dpi, in pixels per metre (PluginPNG.cpp, spec §2.5)
+// FreeImage_Save/pHYs default of 72 dpi, in pixels per metre (PluginPNG.cpp)
 constexpr png_uint_32 kPixelsPerMeter = 2835;
 
 void pngError(png_structp png, png_const_charp) {
@@ -86,7 +85,7 @@ bool encodePng(const unsigned char* pixels, std::size_t rowBytes, int width, int
     png_set_IHDR(png, info, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height), 8, colorType,
                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
     png_set_pHYs(png, info, kPixelsPerMeter, kPixelsPerMeter, PNG_RESOLUTION_METER);
-    // spec §2.5 gives these two under "pixel depth >= 16": ours is 24 or 32
+    // FreeImage gives these two under "pixel depth >= 16": ours is 24 or 32
     png_set_compression_level(png, level);
     png_set_compression_strategy(png, Z_FILTERED);
     png_set_filter(png, 0, PNG_FILTER_NONE | PNG_FILTER_SUB | PNG_FILTER_PAETH);
@@ -108,7 +107,7 @@ BitmapTileFreeImageLoader::BitmapTileFreeImageLoader(
     std::shared_ptr<const IBitmap32StaticFactory> staticFactory)
     : staticFactory_(std::move(staticFactory)) {
     // unreachable in legacy (u_BitmapTileFreeImage.pas:200 asserts, the registry passes the factory it
-    // owns); no register row
+    // owns)
     if (!staticFactory_) {
         throw std::invalid_argument("BitmapTileFreeImageLoader: null factory");
     }
@@ -146,8 +145,8 @@ Bitmap32StaticPtr BitmapTileFreeImageLoader::load(const QByteArray& data) const 
 BitmapTileFreeImageSaverBmp::BitmapTileFreeImageSaverBmp() : BitmapTileFreeImageSaver(0, 32) {}
 
 QByteArray BitmapTileFreeImageSaverBmp::save(const Bitmap32StaticPtr& bitmap) const {
-    // D row of T-0161: legacy dereferences nil (ABitmap.Size, :391), no handler; the converter
-    // u_ContentConverterBitmap.pas:77 passes the loader's nil for an oversize image.
+    // A deviation from legacy: legacy dereferences nil (ABitmap.Size, :391), no handler; the
+    // converter u_ContentConverterBitmap.pas:77 passes the loader's nil for an oversize image.
     if (!bitmap) {
         throw BitmapCodecError("FreeBitmap.SaveToStream FAIL!");
     }
@@ -191,14 +190,14 @@ BitmapTileFreeImageSaverPng::BitmapTileFreeImageSaverPng(quint8 compress, int bi
     if (compress > 9) {
         throw BitmapCodecError("Invalid PNG compression level: " + std::to_string(compress)); // :542-547
     }
-    // unreachable in legacy (u_BitmapTileSaveLoadFactory.pas:218-241 passes 8/24/32 only); no register row
+    // unreachable in legacy (u_BitmapTileSaveLoadFactory.pas:218-241 passes 8/24/32 only)
     if (bitsPerPixel != 24 && bitsPerPixel != 32) {
         throw BitmapCodecError("PNG 8 bpp saver is not ported");
     }
 }
 
 QByteArray BitmapTileFreeImageSaverPng::save(const Bitmap32StaticPtr& bitmap) const {
-    // D row of T-0161: see BitmapTileFreeImageSaverBmp::save
+    // A deviation from legacy: see BitmapTileFreeImageSaverBmp::save
     if (!bitmap) {
         throw BitmapCodecError("FreeBitmap.SaveToStream FAIL!");
     }
@@ -207,7 +206,7 @@ QByteArray BitmapTileFreeImageSaverPng::save(const Bitmap32StaticPtr& bitmap) co
     const auto* bgra = reinterpret_cast<const unsigned char*>(bitmap->data());
     const int level = flag() == kPngZNoCompression ? 0 : flag();
 
-    // 24 bit: ConvertTo24Bits drops alpha (:468-474); 32 bit: RGB rows when every alpha is $FF (spec §2.5)
+    // 24 bit: ConvertTo24Bits drops alpha (:468-474); 32 bit: RGB rows when every alpha is $FF
     bool withAlpha = false;
     if (bitsPerPixel() == 32) {
         for (std::size_t i = 0; i < count && !withAlpha; ++i) {

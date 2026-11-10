@@ -3,15 +3,13 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_CoordToStringConverter.pas, u_CoordToStringConverter.pas. docs/specs/geo.md:1969-2086
-// (§6.2). FEAT-GEO-004 (WGS84 display), FEAT-GEO-005/006/007 (UTM/MGRS/SK-42/GSK-2011 -- see the
-// note on lonLatConvertExt below).
+// Ports: i_CoordToStringConverter.pas, u_CoordToStringConverter.pas. WGS84, UTM, MGRS, SK-42 and
+// GSK-2011 display (see the note on lonLatConvertExt below).
 //
-// Non-WGS84 display (T-0019B2) goes through a CoordTransformer member, exactly as legacy's
+// Non-WGS84 display goes through a CoordTransformer member, exactly as legacy's
 // TCoordToStringConverter holds its own FTransformer (u_CoordToStringConverter.pas's uses clause).
 // When a transform fails -- PROJ unavailable, or the point is out of range for its CRS -- this
-// class falls back to legacy's own failure sentinel (spec §6.2.4: the literal "NaN" in Lon/Lat, an
-// empty Zone).
+// class falls back to legacy's own failure sentinel (the literal "NaN" in Lon/Lat, an empty Zone).
 
 #include "cg/geo/coord_representation.h"
 #include "cg/geo/coord_transformer.h"
@@ -39,7 +37,7 @@ enum class CoordPart : std::uint8_t { Zone = 0, Lon = 1, Lat = 2 };
 using CoordPartArray = std::array<QString, 3>;
 
 // Ports TCoordToStringConverter (u_CoordToStringConverter.pas). Not an interface: one
-// implementation; the legacy ICoordToStringConverterChangeable wrapper is `ui`'s (spec §6.2).
+// implementation; the legacy ICoordToStringConverterChangeable wrapper is `ui`'s.
 class CoordToStringConverter {
 public:
     explicit CoordToStringConverter(const CoordRepresentationSettings& settings);
@@ -50,7 +48,7 @@ public:
     // LonLatConvert, u_CoordToStringConverter.pas:310-335. The only method that applies
     // isLatitudeFirst (added to `options` before delegating) -- the two lonLatConvertExt overloads
     // do not, so a dialog filling separate Lat/Lon boxes gets untransposed parts. Preserve that
-    // asymmetry, `fr_LonLat` depends on it (spec §6.2.4).
+    // asymmetry, `fr_LonLat` depends on it.
     [[nodiscard]] QString lonLatConvert(LonLat lonLat, CoordToStringOptions options = {}) const;
 
     // LonLatConvertExt, 1-arg overload: u_CoordToStringConverter.pas:337-343 (dispatches on the
@@ -58,9 +56,8 @@ public:
     [[nodiscard]] CoordPartArray lonLatConvertExt(LonLat lonLat, CoordToStringOptions options = {}) const;
 
     // LonLatConvertExt, 2-arg overload: u_CoordToStringConverter.pas:345-474. `options` has no
-    // default (unlike legacy's `[]`, never relied on by any in-scope caller --
-    // docs/handoffs/T-0019A1-review.md finding 3): a default here would make
-    // `lonLatConvertExt(lonLat, {})` genuinely ambiguous against the 1-arg overload's own
+    // default (unlike legacy's `[]`, never relied on by any in-scope caller): a default here would
+    // make `lonLatConvertExt(lonLat, {})` genuinely ambiguous against the 1-arg overload's own
     // `options = {}` (a scalar value-initialization outranks the class-type default constructor in
     // overload resolution), so `{}` would silently pick this overload with `coordSysType`
     // defaulted to Wgs84 instead of dispatching on the converter's own configured system. Without

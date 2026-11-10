@@ -4,15 +4,10 @@
 
 #pragma once
 // Ports: the portable half of Src/Network/Curl/u_CurlProxyResolver.pas:479-551 (GetProxyAuthenticateInfo);
-// replaces u_InternetExplorerProxy.pas and u_WindowsCredentials.pas. docs/specs/net.md §2.18.
-// FEAT-NET-008.
+// replaces u_InternetExplorerProxy.pas and u_WindowsCredentials.pas.
 //
-// CurlProxy is spec'd (net.md §2.8, :603-609) to live in curl_session.h, owned by T-0010B, which
-// has not landed in this worktree yet (T-0011A's own header, proxy_resolver.h, is the only other
-// place this ticket's public API needs it). It is defined here, field-for-field identical to the
-// spec, as the canonical definition until T-0010B lands; that ticket's curl_session.h must then
-// #include this header for CurlProxy rather than redefine it (or the two must be reconciled some
-// other way) -- see docs/handoffs/T-0011A.md open questions.
+// CurlProxy is defined here, the one definition; curl_session.h includes this header for it
+// rather than redefining it.
 
 #include "cg/net/proxy_config.h"
 
@@ -64,9 +59,9 @@ public:
                                 QByteArray& pass) = 0;
 };
 
-// The Linux implementation: environment variables first, then QNetworkProxyFactory. The one place
-// in cg::net's transport that touches Qt6::Network (tech-lead-rulings.md 2026-09-17 net.md §10,
-// point 4); kept in its own translation unit so the QNAM-IN-DOWNLOADER validate.sh rule stays simple.
+// The Linux implementation: environment variables first, then QNetworkProxyFactory. The one place in
+// cg::net's transport that touches Qt6::Network; kept in its own translation unit so the
+// QNAM-IN-DOWNLOADER validate.sh rule stays simple.
 [[nodiscard]] std::shared_ptr<IProxyResolver> makeSystemProxyResolver();
 
 } // namespace cg::net

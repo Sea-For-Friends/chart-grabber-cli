@@ -160,7 +160,7 @@ buildArea(const Job& job, const geo::GeometryLonLatFactory& factory,
     case AreaKind::None:
         break;
     }
-    return refuse(QStringLiteral("no area given")); // parseJob refuses this earlier (job.cpp, S-3)
+    return refuse(QStringLiteral("no area given")); // parseJob refuses this earlier (job.cpp)
 }
 
 // frm_Main.pas:7624-7636: TLonLatPointFilterLine2Poly fed to CreateLonLatPolygonByLonLatPathAndFilter.

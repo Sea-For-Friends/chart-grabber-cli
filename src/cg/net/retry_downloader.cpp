@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: Src/Network/u_TileDownloaderSimple.pas:117-318. docs/specs/net.md §2.15. FEAT-NET-010.
+// Ports: Src/Network/u_TileDownloaderSimple.pas:117-318.
 #include "cg/net/retry_downloader.h"
 
 #include "cg/net/download_result_factory.h"

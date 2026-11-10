@@ -30,7 +30,7 @@
 namespace cg::maptype {
 
 // i_MapTypeGUIConfigList.pas:32 (the stored value may be any int read from the INI; see doReadConfig)
-// NOLINTNEXTLINE(performance-enum-size): the INI can hold any integer (DV-11), so the base type stays int
+// NOLINTNEXTLINE(performance-enum-size): the INI can hold any integer, so the base type stays int
 enum class MapTypeGuiConfigListSortOrder : int { ByMapNumber = 0, ByMapName = 1, ByZmpName = 2 };
 
 // Legacy IGUIDListStatic (u_GUIDListStatic.pas): an ordered, not sorted, list of ZMP GUIDs as an

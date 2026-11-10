@@ -17,8 +17,8 @@ namespace cg::net {
 
 namespace {
 
-// A tile is never anywhere near this size; legacy had no cap at all, which is a
-// decompression-bomb exposure this port closes [D-12].
+// A tile is never anywhere near this size; legacy had no cap at all, which is a decompression-bomb
+// exposure this port closes.
 constexpr qsizetype kMaxDecodedSize = qsizetype{64} * 1024 * 1024;
 constexpr qsizetype kChunkSize = qsizetype{64} * 1024;
 

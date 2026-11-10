@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// New code (no legacy unit). Inherits: nothing. docs/specs/weather-sources.md section 4.2. Ports: nothing.
+// New code (no legacy unit). Inherits: nothing. Ports: nothing.
 //
 // The store file Snapshots/<GUID>.conf: the latest snapshot that download / run took for a source.
 
@@ -22,14 +22,14 @@ namespace cg::app {
 [[nodiscard]] core::Result<void> saveSnapshot(const QString& dir, const QString& guid, const Snapshot& s,
                                               const QDateTime& resolvedUtc);
 
-// T-0357: a <guid>.ini of an older version is renamed to <guid>.conf once (stderr note); with both, .conf
-// wins. nullopt: no file, no [Snapshot] section, or an empty Version. Time / DateOnly are read back with
+// A <guid>.ini of an older version is renamed to <guid>.conf once (stderr note); with both, .conf wins.
+// nullopt: no file, no [Snapshot] section, or an empty Version. Time / DateOnly are read back with
 // snapshotFromText (an unreadable time stays invalid = unknown).
 [[nodiscard]] std::optional<Snapshot> loadSnapshot(const QString& dir, const QString& guid);
 
-// T-0443 (weather-sources.md 4.2): the run of `taken` against the stored snapshot. No run: no seen time.
-// The same run as the stored one: its seen time. Otherwise (no store, no Reference key, another or an
-// older run): seen = nowUtc and referenceChanged.
+// The run of `taken` against the stored snapshot. No run: no seen time. The same run as the stored one:
+// its seen time. Otherwise (no store, no Reference key, another or an older run): seen = nowUtc and
+// referenceChanged.
 void carryReference(Snapshot& taken, const std::optional<Snapshot>& stored, const QDateTime& nowUtc);
 
 } // namespace cg::app

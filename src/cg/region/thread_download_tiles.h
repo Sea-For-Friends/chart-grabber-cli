@@ -6,16 +6,16 @@
 // Ports: Src/RegionProcess/Download/u_ThreadDownloadTiles.pas
 //
 // One worker of an area download: walks the iterators of its part and downloads one tile at a time.
-// FEAT-REG-018 (progress, pause, resume: the worker feeds the progress object).
+// The worker feeds the progress object (progress, pause, resume).
 //
-// Lifetime contract of the CALLER (DR-1: legacy frees the thread object from the thread itself, here the
+// Lifetime contract of the CALLER (legacy frees the thread object from the thread itself, here the
 // object owns a std::jthread and the destructor joins it):
 //  - the destructor must not run on the worker thread itself;
 //  - it must not run before `cancel` was requested, unless the worker has finished (otherwise the join
 //    waits for the whole area);
 //  - the map (hence its download subsystem) must outlive the worker;
-//  - on application shutdown `cancel` must be requested too: `appClosing` alone ends no wait of the loop
-//    (LR-6).
+//  - on application shutdown `cancel` must be requested too: `appClosing` alone ends no wait of the
+//    loop.
 
 #include "cg/geo/tile_iterator.h"
 #include "cg/maptype/map_abilities_config.h"
@@ -107,8 +107,9 @@ private:
     // The 16 texts of the unit (PrepareStrings); %1 / %2 placeholders as in the English source.
     QString resUserStop_, resProcessedFile_, resLoadProcessRepl_, resLoadProcess_, resFileBeCreateTime_,
         resTneBeCreateTime_, resFileBeCreateLen_, resAuthorization_, resWaitTime_, resBan_, resBadMime_,
-        resTileNotExists_, resNoConnectionsToInternet_, resFileExistsShort_, resTneExistsShort_,
-        resProcessFilesComplete_;
+        resTileNotExists_, resNoConnectionsToInternet_, resServerRefused_, resFileExistsShort_,
+        resTneExistsShort_, resProcessFilesComplete_;
+    QString resUserAgentSwitched_; // A deviation from legacy (no legacy text)
 
     std::atomic<bool> terminated_{false}; // TThread.Terminated
     std::unique_ptr<Event> finishEvent_;  // null when the constructor left early (legacy: nil)

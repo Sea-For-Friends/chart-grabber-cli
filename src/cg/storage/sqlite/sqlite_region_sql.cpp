@@ -47,8 +47,8 @@ ParsedVersion parseVersionForSql(VersionColMode mode, QByteArrayView requestedVe
 
 } // namespace
 
-// Deviation D-31 (docs/parity/deviations.md): uses Qt's `toLongLong` grammar, not legacy
-// `TryStrToInt64A`'s (source not in the legacy tree; disputed, no oracle).
+// Deviation: uses Qt's `toLongLong` grammar, not legacy `TryStrToInt64A`'s (source not in the
+// legacy tree; disputed, no oracle).
 bool localTryStrToInt64(QByteArrayView s, qint64* value) {
     if (s.isEmpty()) {
         return false;

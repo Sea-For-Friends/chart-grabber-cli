@@ -53,8 +53,8 @@ MarkFactoryDbInternalORM::createPoint(qint64 id, const QString& name, bool visib
                                       const vector::CategoryPtr& category, const QString& desc,
                                       const geo::GeometryLonLatPtr& geometry, quint32 textColor,
                                       quint32 textBgColor, qint32 fontSize, qint32 markerSize) const {
-    // :176-187: the picture of the name; if there is none, the default picture (LC-5: the requested name
-    // is replaced by the default's name). A found index whose picture is null keeps the requested name.
+    // :176-187: the picture of the name; if there is none, the default picture (the requested name is
+    // replaced by the default's name). A found index whose picture is null keeps the requested name.
     const int picIndex = markPictureList_->indexByName(picName);
     vector::MarkPicturePtr pic =
         picIndex >= 0 ? markPictureList_->get(picIndex) : markPictureList_->defaultPicture();
@@ -209,8 +209,7 @@ MarkFactoryDbInternalORM::createInternalMark(const vector::VectorDataItemPtr& ma
     }
 
     // :482 Result := AMark. The Assert of :481 is not ported: a mark whose category is from another database
-    // and has no same-named category here is returned unchanged (legacy-defects.md, L-204
-    // CreateInternalMark).
+    // and has no same-named category here is returned unchanged (a legacy defect of CreateInternalMark).
     return mark;
 }
 

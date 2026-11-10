@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-004; docs/specs/geo.md:1896-1968 (§6.1), test plan §11.1 item 13.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/geo/coord_representation.h"
@@ -90,7 +89,7 @@ TEST(CoordRepresentation, ProjCoordShowFormatIdIsTheOrdinal) {
 TEST(CoordRepresentation, MgrsAndCoordSysInfoOrdinalsValidateInsteadOfUncheckedCast) {
     // Legacy casts these with an *unchecked* `TFoo(Integer)` (u_CoordRepresentationConfig.pas
     // :142,144); the port validates the range and falls back to the first enumerator instead --
-    // a strict improvement with no effect on any valid file (spec §6.1, §10 D-7).
+    // a strict improvement with no effect on any valid file.
     EXPECT_EQ(mgrsCoordShowFormatToInt(MgrsCoordShowFormat::Splitted), 0);
     EXPECT_EQ(mgrsCoordShowFormatToInt(MgrsCoordShowFormat::Joined), 1);
     EXPECT_EQ(intToMgrsCoordShowFormat(1), MgrsCoordShowFormat::Joined);
@@ -164,7 +163,7 @@ TEST(CoordRepresentationSettings, ReadWriteRoundTripAllKeys) {
 }
 
 TEST(CoordRepresentationSettings, ReadValidatesOutOfRangeMgrsAndCoordSysInfoOrdinals) {
-    // The port's strict-improvement case (§10 D-7): legacy's unchecked cast would be UB here.
+    // The port's strict-improvement case: legacy's unchecked cast would be UB here.
     std::shared_ptr<IniFile> file;
     const auto section = makeSection(file);
     section->writeInt(u"MgrsCoordShowFormat", 7);

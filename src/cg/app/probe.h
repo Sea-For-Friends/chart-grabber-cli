@@ -4,7 +4,7 @@
 
 #pragma once
 // New code (no legacy unit). Inherits: u_ThreadDownloadTiles.pas:357-390, 500-575 (one request, result
-// classes). Ports: nothing. docs/specs/app-cli.md 1.1 (probe), 3.13, 5.2.
+// classes). Ports: nothing.
 //
 // `probe`: for each source that passes the refusals of `sources`, ONE request for the tile under --at at
 // --probe-zoom, made the way the worker makes it (the subsystem's getRequestTask, a finish notifier,
@@ -39,7 +39,7 @@ struct ProbeRow {
 [[nodiscard]] std::vector<maptype::IMapTypePtr> matchingSources(const AppContext& app, const QString& filter);
 
 // One row per matching source, in name order, until `stop` is requested (the rest has no row). `timeout` is
-// the wait for one result (spec: 60 s; a parameter for the tests).
+// the wait for one result (60 s by default; a parameter for the tests).
 [[nodiscard]] std::vector<ProbeRow>
 probeSources(const AppContext& app, const Job& job, const std::stop_token& stop,
              std::chrono::milliseconds timeout = std::chrono::seconds(60));

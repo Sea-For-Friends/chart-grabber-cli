@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (NEW code, ADR-0014 point 5). The script-time limit of the JavaScript builders: one thread
-// per factory looks every 25 ms at the engines of its builders and interrupts one whose deadline has passed.
-// Time inside http and the wait for shared.locked is paused, not counted.
+// Ports: nothing (NEW code). The script-time limit of the JavaScript builders: one thread per factory looks
+// every 25 ms at the engines of its builders and interrupts one whose deadline has passed. Time inside http
+// and the wait for shared.locked is paused, not counted.
 
 #include <chrono>
 #include <condition_variable>

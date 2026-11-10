@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0145: ActiveMapConfig (u_ActiveMapConfig.pas). Expectations are literals taken from the Pascal.
+// ActiveMapConfig (u_ActiveMapConfig.pas). Expectations are literals taken from the Pascal.
 #include "cg/maptype/active_map_config.h"
 
 #include <QByteArray>
@@ -47,7 +47,7 @@ TEST(ActiveMapConfig, WritesBracedUpperCaseTextAlsoForTheZeroGuid) {
     EXPECT_EQ(ini2->file().toBytes().toStdString(), kZeroText.toStdString());
 }
 
-// D row of T-0145: a null writer returns (legacy: access violation).
+// A deviation from legacy: a null writer returns (legacy: access violation).
 TEST(ActiveMapConfig, NullWriterIsIgnored) {
     ActiveMapConfig config(true, kMain);
     config.writeConfig(nullptr);

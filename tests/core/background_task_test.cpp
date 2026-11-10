@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034. Ports u_BackgroundTask.pas (+ the Start/Terminate half of
-// u_InterfacedThread.pas); no DUnit suite exists. Synchronisation is by latches and semaphores
-// only: no sleeps, no timing assumptions.
+// Ports u_BackgroundTask.pas (+ the Start/Terminate half of u_InterfacedThread.pas); no DUnit
+// suite exists. Synchronisation is by latches and semaphores only: no sleeps, no timing
+// assumptions.
 #include "cg/core/background_task.h"
 
 #include <gtest/gtest.h>
@@ -270,7 +270,7 @@ TEST(BackgroundTask, AppClosingCancelsTheRunAndEndsTheThread) {
     task->startExecute(); // after closing nothing runs any more
     task.reset();
     EXPECT_TRUE(sawCancel);
-    EXPECT_EQ(calls, 1); // D-58: the request after closing starts nothing
+    EXPECT_EQ(calls, 1); // The request after closing starts nothing
 }
 
 TEST(BackgroundTask, AlreadyClosingApplicationTerminatesAtConstruction) {

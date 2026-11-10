@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: i_TileDownloaderConfig.pas, u_TileDownloaderConfig.pas:102-179,331-410,
-// u_TileDownloaderConfigStatic.pas. docs/specs/net.md §2.16.
+// u_TileDownloaderConfigStatic.pas.
 #include "cg/net/tile_downloader_config.h"
 
 #include <utility>
@@ -90,7 +90,7 @@ void TileDownloaderConfig::setMaxConnectToServerCount(quint32 v) {
 }
 
 void TileDownloaderConfig::setMaxConnectToServerCountLocked(quint32 v) {
-    // The 1..64 clamp is not a constant to "improve" (ticket notes): >64 -> 64, ==0 -> 1.
+    // The 1..64 clamp is not a constant to "improve" (legacy): >64 -> 64, ==0 -> 1.
     quint32 clamped = v;
     if (clamped > 64) {
         clamped = 64;
@@ -194,7 +194,7 @@ void TileDownloaderConfig::doReadConfig(const cg::core::IConfigProviderPtr& src)
     if (!src) {
         return;
     }
-    // enabled and iteratorSubRectSize are NEVER read from the local INI -- ZMP-only (spec table).
+    // enabled and iteratorSubRectSize are NEVER read from the local INI -- ZMP-only.
     allowUseCookie_ = src->readBool(u"AllowUseCookie", allowUseCookie_);
     ignoreMimeType_ = src->readBool(u"IgnoreContentType", ignoreMimeType_);
     detectMimeType_ = src->readBool(u"DetectContentType", detectMimeType_);

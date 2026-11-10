@@ -5,17 +5,17 @@
 #pragma once
 // Ports: u_TileStorageTypeSQLiteFile.pas:73-133.
 //
-// docs/specs/storage.md §2.17. One instance per SqliteFileFormat: ReadWrite for every format but
-// OruxMaps (ReadOnly), versions ignored, no mixed content types, StorageClass::OneFile (so
-// StorageConfig.ini is "<path>.StorageConfig.ini"). The contentTypeManager is the shared standard
-// registry. build() is the landed six-parameter ITileStorageType::build().
+// One instance per SqliteFileFormat: ReadWrite for every format but OruxMaps (ReadOnly), versions
+// ignored, no mixed content types, StorageClass::OneFile (so StorageConfig.ini is
+// "<path>.StorageConfig.ini"). The contentTypeManager is the shared standard registry. build() is
+// the six-parameter ITileStorageType::build().
 
 #include "cg/storage/sqlite/sqlite_file_connection.h"
 #include "cg/storage/tile_storage_type.h"
 
 namespace cg::storage::sqlite {
 
-// FEAT-STO-019, FEAT-STO-020, FEAT-STO-021. Ports TTileStorageTypeSQLiteFile.
+// Ports TTileStorageTypeSQLiteFile.
 class SqliteFileTileStorageType final : public ITileStorageType {
 public:
     SqliteFileTileStorageType(SqliteFileFormat format, MapVersionFactoryPtr mapVersionFactory,

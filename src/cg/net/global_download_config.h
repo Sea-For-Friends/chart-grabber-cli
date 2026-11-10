@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_GlobalDownloadConfig.pas, u_GlobalDownloadConfig.pas:33-154. docs/specs/net.md §2.16,
-// docs/specs/maptype.md §11.2 P-8 (T-0118).
+// Ports: i_GlobalDownloadConfig.pas, u_GlobalDownloadConfig.pas:33-154.
 //
 // Three app-level flags that steer the region downloader and the tile result saver; this unit only
 // holds and persists them. Persisted as GoNextTile (default true), SessionLastSuccess (true) and

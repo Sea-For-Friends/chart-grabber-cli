@@ -43,7 +43,6 @@ void BackgroundTask::start() {
     }
 }
 
-// FEAT-GEO-033
 void BackgroundTask::startExecute() {
     {
         const std::lock_guard lock(mutex_);
@@ -75,7 +74,7 @@ void BackgroundTask::execute() {
             break;
         }
         // Invariant under mutex_: allowExecute_ implies needStart_ (legacy's two objects, set one
-        // after the other without a lock, can disagree: L-144).
+        // after the other without a lock, can disagree).
         bool needStart = std::exchange(needStart_, false);
         while (needStart) {
             allowExecute_ = false;

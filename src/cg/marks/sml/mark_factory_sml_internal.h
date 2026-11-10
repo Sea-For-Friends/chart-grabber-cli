@@ -4,8 +4,7 @@
 
 #pragma once
 // Ports: Src/MarksDB/SML/i_MarkFactorySmlInternal.pas (55): IMarkFactorySmlInternal and the constant
-// CNotExistMarkID (docs/specs/marks.md section 2.8.4). Interface and constant only; the class is in
-// mark_factory_sml_db_internal.h.
+// CNotExistMarkID. Interface and constant only; the class is in mark_factory_sml_db_internal.h.
 //
 // Colours are TColor32 (quint32) and the scales are Integer (int), as in the SML row objects.
 

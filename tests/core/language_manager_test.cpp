@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports u_LanguageListStatic.pas, u_LanguageManager.pas (non-UI half);
-// docs/specs/maptype.md §2.5.2, §7.2 (language list = en + the six stock .mo names).
+// Ports u_LanguageListStatic.pas, u_LanguageManager.pas (non-UI half): the language list is
+// en + the six stock .mo names.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"
@@ -55,7 +55,7 @@ TEST(LanguageListStatic, FindCodeIgnoresCaseAndKeepsInputOrder) {
 }
 
 TEST(LanguageListStatic, DuplicateAndOutOfRangeThrowLikeLegacyStringList) {
-    EXPECT_THROW(LanguageListStatic({u"en"_s, u"EN"_s}), std::invalid_argument); // L-128
+    EXPECT_THROW(LanguageListStatic({u"en"_s, u"EN"_s}), std::invalid_argument);
     const LanguageListStatic list({u"en"_s});
     EXPECT_THROW((void)list.code(1), std::out_of_range);
     EXPECT_THROW((void)list.code(-1), std::out_of_range);
@@ -88,7 +88,7 @@ TEST(LanguageManager, MissingFolderLeavesOnlyEnglishAndUppercaseExtensionIsStrip
     EXPECT_EQ(m.languageList()->code(1), u"DE"_s);
 }
 
-// D-50: legacy raises in the list constructor (L-128); the manager skips the duplicate code instead.
+// Legacy raises in the list constructor; the manager skips the duplicate code instead.
 TEST(LanguageManager, DuplicateCodesAreSkippedFirstInNameOrderWins) {
     const QTemporaryDir tmp;
     if (!cg::core::platform::directoryIsCaseSensitive(tmp.path())) {

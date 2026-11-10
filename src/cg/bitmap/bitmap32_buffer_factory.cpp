@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/Bitmap32/u_Bitmap32BufferFactory.pas:66-124 (the pool branch of BuildEmpty, :108-113,
-// and the pool itself, :72-78, are not ported: D row of T-0155)
+// and the pool itself, :72-78, are not ported: a deviation from legacy)
 #include "cg/bitmap/bitmap32_buffer_factory.h"
 
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"

@@ -2,12 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018 (SqliteRegionTileStorage + SqliteRegionTileStorageType: read, save, delete,
-// rect across region files, scan, read-only StorageConfig.ini), FEAT-STO-035 (scan, rect).
 // Ports u_TileStorageSQLite.pas / u_TileStorageSQLiteHelper.pas / u_TileStorageTypeSQLite.pas; no
 // legacy DUnit exists. Real fixture: cache/cache_sqlite/map/z1/0/0/0.0.sqlitedb (copied to a temp dir).
-// Region files at zero-based zoom <= 10 are legacy's "fixed" entries (L-94); the tests that
-// write use zoom 11 and the fixture (zoom 0) is only read.
+// Region files at zero-based zoom <= 10 are legacy's "fixed" entries; the tests that write use zoom 11
+// and the fixture (zoom 0) is only read.
 #include "cg/core/content_type.h"
 #include "cg/core/notifier.h"
 #include "cg/geo/datum.h"
@@ -107,7 +105,7 @@ TEST(SqliteRegionTileStorage, ReadsTheFixtureTile) {
     EXPECT_EQ(storage->tileFileName(PointI{0, 0}, 0, nullptr), root + QStringLiteral("z1/0/0/0.0.sqlitedb"));
 }
 
-// u_TileStorageSQLite.pas:271-278, :299-304: no read access is the not-exists object, not nil (D-106).
+// u_TileStorageSQLite.pas:271-278, :299-304: no read access is the not-exists object, not nil.
 TEST(SqliteRegionTileStorage, NoReadAccessStillAnswersNotExists) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -143,10 +141,10 @@ TEST(SqliteRegionTileStorage, SaveReadBackAndDeleteInANewRegionFile) {
     EXPECT_EQ(info->type, TileInfoType::NotExists);
 }
 
-// T-0211 (UAT D-1): a small MemCacheCapacity must not lose a tile. The write that creates a z1-z11 region
-// file initialises its entry (deviation of T-0211; legacy L-94(a) left it unreadable,
-// u_TileStorageSQLiteList.pas:489-566), so a tile evicted from the info cache is read back from the file.
-// Capacity 1: the next save evicts the first tile, so the read cannot be answered by the info cache.
+// A small MemCacheCapacity must not lose a tile. The write that creates a z1-z11 region file initialises
+// its entry (a deviation from legacy; legacy left it unreadable, u_TileStorageSQLiteList.pas:489-566), so
+// a tile evicted from the info cache is read back from the file. Capacity 1: the next save evicts the
+// first tile, so the read cannot be answered by the info cache.
 TEST(SqliteRegionTileStorage, SingleTileFixedRegionFileIsReadableOnceEvictedFromTheInfoCache) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -206,9 +204,9 @@ TEST(SqliteRegionTileStorage, RectCrossingTwoRegionFiles) {
     EXPECT_EQ(*huge, nullptr);
 }
 
-// The idle close (L-9x, review finding 1) is driven by the GC tick; the pool's clock cannot be
-// advanced here, so this checks the wiring: a built storage listens to the tick, a destroyed one
-// does not, and a tick on a live storage is harmless.
+// The idle close is driven by the GC tick; the pool's clock cannot be advanced here, so this
+// checks the wiring: a built storage listens to the tick, a destroyed one does not, and a tick
+// on a live storage is harmless.
 TEST(SqliteRegionTileStorage, BuiltStorageListensToTheGcTickUntilDestroyed) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -261,7 +259,7 @@ TEST(SqliteRegionTileStorage, ReadOnlyStorageConfigIniRefusesASave) {
     EXPECT_FALSE(QFileInfo::exists(root + QStringLiteral("z12")));
 }
 
-// T-0117: stateChangeable() is the region storage's own state holder.
+// stateChangeable() is the region storage's own state holder.
 TEST(SqliteRegionTileStorage, StateChangeableIsOwnHolder) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -270,8 +268,8 @@ TEST(SqliteRegionTileStorage, StateChangeableIsOwnHolder) {
     cg::storage::test::expectStateChangeableIsOwn(*storage, true);
 }
 
-// DEVIATION D-160 (T-0276, L-75): a failed read is an error and is not put into the info cache; once the
-// file is healthy again the same call reads the tile (legacy cached the NotExists of the failure).
+// DEVIATION: a failed read is an error and is not put into the info cache; once the file is healthy
+// again the same call reads the tile (legacy cached the NotExists of the failure).
 //
 TEST(SqliteRegionTileStorage, ReadErrorIsNotCachedAndTheNextCallReadsTheFile) {
     QTemporaryDir dir;
@@ -307,9 +305,9 @@ TEST(SqliteRegionTileStorage, ReadErrorIsNotCachedAndTheNextCallReadsTheFile) {
     EXPECT_EQ(stored->type, TileInfoType::Exists);
 }
 
-// DEVIATION D-160 (T-0276, L-75): a region file that exists but cannot be opened is an error of the read, for
-// a Dynamic and a Fixed entry (the failed open of a Fixed entry is cached by the pool, the error must stay);
-// a region file that does not exist stays NotExists.
+// DEVIATION: a region file that exists but cannot be opened is an error of the read, for a Dynamic and a
+// Fixed entry (the failed open of a Fixed entry is cached by the pool, the error must stay); a region file
+// that does not exist stays NotExists.
 TEST(SqliteRegionTileStorage, UnopenableRegionFileIsAReadErrorAndAMissingOneIsNotExists) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

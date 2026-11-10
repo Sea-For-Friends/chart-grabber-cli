@@ -7,9 +7,8 @@
 // :208-228, GetAllowExport :321-324, GetIsLayer :346-352, GetMapType :359-368, GetDirectTilesCopy :375-418,
 // GetBitmapTileSaver :478-515 (the format half). The frame's widgets are the ui module's.
 //
-// ExportMbtilesParams is the state of the frame's controls. Stage 0 has no image-format selector input:
-// the automatic format is the only one, the recompose-only formats are absent (FEAT-REG-069 held open).
-// docs/specs/region-export.md 2.7.
+// ExportMbtilesParams is the state of the frame's controls. There is no image-format selector input:
+// the automatic format is the only one, the recompose-only formats are absent.
 
 #include "cg/core/content_type.h"
 #include "cg/maptype/map_type.h"

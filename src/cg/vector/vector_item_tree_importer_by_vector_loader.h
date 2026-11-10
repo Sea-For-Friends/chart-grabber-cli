@@ -6,7 +6,7 @@
 // Ports: Src/Vector/u_VectorItemTreeImporterByVectorLoader.pas
 //
 // Reads a whole file and hands the bytes to a loader. The result is a tree with an empty name and
-// no children, also when the loader found nothing (LV-10: its items are then null).
+// no children, also when the loader found nothing (its items are then null).
 
 #include "cg/vector/vector_data_factory.h"
 #include "cg/vector/vector_data_loader.h"

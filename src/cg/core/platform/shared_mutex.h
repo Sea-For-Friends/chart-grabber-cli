@@ -4,10 +4,10 @@
 
 #pragma once
 // Ports: u_ReadWriteSyncSRW.pas (the legacy Windows backend: a slim reader/writer lock).
-// New code (T-0335). core::Mutex is this type. On POSIX it is std::shared_mutex. On Windows it is the system
-// SRW lock: std::shared_mutex of MinGW-w64 (winpthreads, GCC 16.2 of MSYS2 UCRT64) let two writers in at once
-// (a plain unique_lock loop of 6 threads broke exclusion in about 1 of 3000 rounds;
-// TileDownloadRequestBuilderFactory ConcurrentFirstCalls... failed in most runs), so it cannot be used there.
+// New code. core::Mutex is this type. On POSIX it is std::shared_mutex. On Windows it is the system SRW lock:
+// std::shared_mutex of MinGW-w64 (winpthreads, GCC 16.2 of MSYS2 UCRT64) let two writers in at once (a plain
+// unique_lock loop of 6 threads broke exclusion in about 1 of 3000 rounds; TileDownloadRequestBuilderFactory
+// ConcurrentFirstCalls... failed in most runs), so it cannot be used there.
 
 #include <shared_mutex>
 

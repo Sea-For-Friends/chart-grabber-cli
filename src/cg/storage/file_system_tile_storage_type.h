@@ -5,30 +5,29 @@
 #pragma once
 // Ports: u_TileStorageTypeFileSystemSimple.pas
 //
-// docs/specs/storage.md §2.13 (intro). One instance per folder-cache codec (T-0021B/C's nine
-// ITileNameCodec implementations): fixed abilities ReadWrite / VersionSupport::Ignored /
-// supportsMixedContentTypes == false / StorageClass::InSeparateFiles, exactly
-// TTileStorageTypeFileSystemSimple.Create's TTileStorageTypeAbilities.Create(...) call
-// (u_TileStorageTypeFileSystemSimple.pas:73-91) -- reused here via the already-landed
-// tileStorageTypeAbilities(TileStorageKind::FolderSimple) (tile_storage_abilities.cpp), which
-// returns the identical row.
+// One instance per folder-cache codec (the nine ITileNameCodec implementations): fixed
+// abilities ReadWrite / VersionSupport::Ignored / supportsMixedContentTypes == false /
+// StorageClass::InSeparateFiles, exactly TTileStorageTypeFileSystemSimple.Create's
+// TTileStorageTypeAbilities.Create(...) call (u_TileStorageTypeFileSystemSimple.pas:73-91) --
+// reused here via tileStorageTypeAbilities(TileStorageKind::FolderSimple)
+// (tile_storage_abilities.cpp), which returns the identical row.
 //
-// build() ports BuildStorageInternal (:93-122): applies applyStorageConfigIni() (already landed,
-// tile_storage_type.cpp) to narrow the abilities, then constructs a FileSystemTileStorage with the
-// codec, the caller's projection set and tile notifier, and the caller-supplied mem cache.
+// build() ports BuildStorageInternal (:93-122): applies applyStorageConfigIni()
+// (tile_storage_type.cpp) to narrow the abilities, then constructs a FileSystemTileStorage with
+// the codec, the caller's projection set and tile notifier, and the caller-supplied mem cache.
 // `mainContentType` is already resolved by the caller (tile_storage_type.h); `path` is used
-// verbatim, the caller guarantees a trailing '/' (T-0021F3b rework -- see tile_storage_type.h).
+// verbatim, the caller guarantees a trailing '/' (see tile_storage_type.h).
 
 #include "cg/storage/tile_name_codec.h"
 #include "cg/storage/tile_storage_type.h"
 
 namespace cg::storage {
 
-// FEAT-STO-001. Ports TTileStorageTypeFileSystemSimple.
+// Ports TTileStorageTypeFileSystemSimple.
 class FileSystemTileStorageType final : public ITileStorageType {
 public:
-    // `codec` ports FNameGenerator + FTileNameParser (merged, tile_name_codec.h); `basePath` is
-    // the collapsed ITileStorageTypeConfig (its only member, storage.md §2.12 header comment).
+    // `codec` ports FNameGenerator + FTileNameParser (merged, tile_name_codec.h); `basePath` is the
+    // collapsed ITileStorageTypeConfig (its only member).
     FileSystemTileStorageType(ITileNameCodecPtr codec, MapVersionFactoryPtr mapVersionFactory,
                               core::PathConfigPtr basePath);
 

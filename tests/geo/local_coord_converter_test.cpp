@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001. New coverage only; docs/specs/geo.md §11.2 local_coord_converter_test.cpp
-// (16), §2.7.
+// New coverage only.
 #include "cg/geo/datum.h"
 #include "cg/geo/local_coord_converter.h"
 #include "cg/geo/projection_set.h"

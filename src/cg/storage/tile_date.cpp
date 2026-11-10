@@ -22,7 +22,7 @@ double toDelphiDateTime(const TileDate& d) {
     // legacy's TTileInfoBasicNotExists reports LoadDate = 0 and BerkeleyDB writes that raw value,
     // so this is the byte-exact match for "no load date" on round-trip through storage. It is
     // asymmetric with fromDelphiDateTime(NaN) -> invalid on purpose: 0.0 is a valid legacy
-    // encoding, NaN never occurs in a real record. See T-0021A review finding 6.
+    // encoding, NaN never occurs in a real record.
     static const QDate kEpoch(1899, 12, 30);
     return double(kEpoch.daysTo(d.date())) + double(d.time().msecsSinceStartOfDay()) / 86400000.0;
 }

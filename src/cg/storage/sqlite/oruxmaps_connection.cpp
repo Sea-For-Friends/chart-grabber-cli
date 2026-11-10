@@ -24,7 +24,7 @@ namespace cg::storage::sqlite {
 
 namespace {
 
-// Ports SetBit/IsBitSet (:112-119) with the same masked-shift-count convention landed for
+// Ports SetBit/IsBitSet (:112-119) with the same masked-shift-count convention used for
 // invertY()/invertZ() in the sibling flavours (mbtiles_connection.cpp, rmaps_connection.cpp): the
 // compiled SHL/test-bit instruction masks its count to 5 bits, so a bit index is folded into
 // [0,31] here explicitly instead of relying on `1 << n`'s C++ undefined behaviour for n >= 32.
@@ -43,8 +43,8 @@ void setBit(quint32& bits, quint32 index) {
 
 // Ports the (Windows-only, case-insensitive-by-OS-convention) '*.otrk2.xml' match
 // TDirectory.GetFiles performs (:202-203) -- reproduced explicitly instead of relying on the host
-// file system (coding standard: "never assume ... case-insensitive FS"), ASCII-only (Tech Lead
-// ruling: ported SameText/LowerCase fold ASCII letters only).
+// file system (coding standard: "never assume ... case-insensitive FS"), ASCII-only (ported
+// SameText/LowerCase fold ASCII letters only).
 [[nodiscard]] bool asciiEqualFold(QChar a, QChar b) {
     const auto fold = [](QChar c) -> char16_t {
         const char16_t u = c.unicode();
@@ -78,7 +78,7 @@ struct OruxLayer {
     double maxLon = 0.0;
 };
 
-// The slice of IXMLNode legacy touches: element name, attributes, direct text, element children.
+// The part of IXMLNode legacy touches: element name, attributes, direct text, element children.
 struct XmlNode {
     QString name;
     QHash<QString, QString> attributes;
@@ -95,7 +95,7 @@ struct XmlNode {
         return nullptr;
     }
     // IXMLNode.GetAttribute: legacy gets a Null variant for an absent attribute and the string
-    // conversion raises (L-81), failing the whole parse; `failed` records that, '' is returned.
+    // conversion raises, failing the whole parse; `failed` records that, '' is returned.
     [[nodiscard]] QString attribute(const QString& key, bool& failed) const {
         const auto it = attributes.constFind(key);
         if (it == attributes.constEnd()) {
@@ -293,11 +293,11 @@ void appendString(QByteArray& out, const QString& str) {
 // int32 layer count, then per layer two more length-prefixed strings (Datum, Projection -- neither
 // read by BasePointsStrToArray, but still on the wire and must be skipped to reach the next
 // layer), an int32 Zoom, and four IEEE-754 doubles (MinLat, MaxLat, MinLon, MaxLon). Both this
-// build and the Windows box legacy runs on are little-endian, so a raw byte copy matches. Bounds-
-// checked (unlike TStream.ReadBuffer, which raises EReadError on a short stream -- reproduced here
-// as a clean ParseError instead of reading past the decoded buffer: the same "no undefined
-// behaviour on values from a foreign file" instruction this ticket documents for the zoom/base-
-// point arithmetic below applies to a truncated/corrupt `base_points` blob too).
+// build and the Windows box legacy runs on are little-endian, so a raw byte copy matches.
+// Bounds-checked (unlike TStream.ReadBuffer, which raises EReadError on a short stream --
+// reproduced here as a clean ParseError instead of reading past the decoded buffer: the same "no
+// undefined behaviour on values from a foreign file" rule as for the zoom/base-point arithmetic
+// below applies to a truncated/corrupt `base_points` blob too).
 class CalibrationReader {
 public:
     explicit CalibrationReader(QByteArray bytes) : bytes_(std::move(bytes)) {}
@@ -407,10 +407,10 @@ basePointsStrToArray(const QString& str, const geo::ProjectionSetPtr& projection
         const geo::DoublePoint tilePos = projectionSet->zoom(zoomByte)->lonLat2TilePosFloat(lonLat);
         // Ports `Result[VZoom] := PointFromDoublePoint(..., prToTopLeft)` (:145-149) -- indexed by
         // zoomByte, the SAME truncated value CheckZoom just validated, not the untruncated VZoom
-        // legacy indexes with: for a VZoom whose low byte is a valid zoom but whose full value
-        // is not (e.g. 261 -> Byte 5), legacy writes `Result[261]`, out of `TBasePointsArray`'s
+        // legacy indexes with: for a VZoom whose low byte is a valid zoom but whose full value is
+        // not (e.g. 261 -> Byte 5), legacy writes `Result[261]`, out of `TBasePointsArray`'s
         // declared `[0..23]` bounds -- a memory-unsafe write on a corrupt/foreign `base_points`
-        // blob. Reproduced safely here (noted in the handoff's "Legacy defects noticed").
+        // blob. Reproduced safely here.
         result.points[zoomByte] = geo::roundPoint(tilePos, geo::PointRounding::ToTopLeft);
         setBit(result.bits, zoomByte);
     }
@@ -688,7 +688,7 @@ core::Result<void> OruxmapsConnection::finishOpen() {
 
 QString oruxmapsSiblingXmlFile(const QString& dbFilePath) {
     // Ports TryGetOruxMapsXmlFileName's TDirectory.GetFiles(dir, '*.otrk2.xml')[0]: the first match
-    // in name order (D-43).
+    // in name order.
     const QString dirPath = QFileInfo(dbFilePath).absolutePath();
     const QStringList entries = QDir(dirPath).entryList(QDir::Files);
     const auto found = std::find_if(entries.cbegin(), entries.cend(), endsWithOtrk2XmlCi);

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-011 groundwork (MimeTypeSubst parsing); docs/specs/core.md 2.10, plan 7.17
+// MimeTypeSubst parsing.
 #include "cg/core/delimited_text.h"
 
 #include <QStringList>

@@ -3,14 +3,14 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMHelper.pas (docs/specs/marks.md §2.9.6,
-// statements S-10 ... S-1C of §2.9.5). Line numbers in the sources are those of that unit.
+// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMHelper.pas. Line numbers in the sources
+// are those of that unit.
 //
-// Every method except countCategorySql is called with the write lock of the owning category database held
-// (§2.9.12); countCategorySql runs under the read lock (u_MarkCategoryDbImplORM.pas:425) and touches no
-// cache. The helper and its caches have no lock of their own. The helper never starts or commits a
-// transaction (legacy does not either: the caller, u_MarkCategoryDbImplORM, owns them); each statement runs
-// under the connection's dbMutex.
+// Every method except countCategorySql is called with the write lock of the owning category database held;
+// countCategorySql runs under the read lock (u_MarkCategoryDbImplORM.pas:425) and touches no cache. The
+// helper and its caches have no lock of their own. The helper never starts or commits a transaction (legacy
+// does not either: the caller, u_MarkCategoryDbImplORM, owns them); each statement runs under the
+// connection's dbMutex.
 
 #include "cg/marks/mormot/categories/mark_category_db_impl_orm_cache.h"
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
@@ -40,8 +40,8 @@ public:
     void setReadOnly(bool value); // :634-642
 
 private:
-    int fillPrepareCategoryCache();     // :459-486  S-13 once, then the cache
-    int fillPrepareCategoryViewCache(); // :488-521  S-18 once, then the cache
+    int fillPrepareCategoryCache();     // :459-486 the query once, then the cache
+    int fillPrepareCategoryViewCache(); // :488-521 the query once, then the cache
 
     qint64 userId_;
     IMarkSystemImplORMClientProvider& provider_;

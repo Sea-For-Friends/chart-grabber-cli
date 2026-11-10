@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (adapter; the Format port is cg/core/delphi_format.h).
-// Adapter from script::Value to the core Delphi `Format` argument (T-0092). Maps by ValueKind so
-// core sees exactly the kinds the interpreter's Format/FormatEx/WriteFmt call sites passed before the move.
+// Ports: nothing (adapter; the Format port is cg/core/delphi_format.h). Adapter from script::Value to the
+// core Delphi `Format` argument. Maps by ValueKind so core sees exactly the kinds the interpreter's
+// Format/FormatEx/WriteFmt call sites passed before the move.
 
 #include "cg/core/delphi_format.h"
 #include "cg/script/value.h"

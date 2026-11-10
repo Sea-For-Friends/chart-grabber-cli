@@ -4,7 +4,7 @@
 
 // Ports u_MarkCategorySmlDbInternal.pas: isSame (:148-158) and isEqual (:122-146). Each table row pins one
 // branch of the Pascal; the expected values are literals from the Pascal, not from the class under test.
-// The isSame rule compares the id only: the SML twin of the L-193 row of docs/parity/legacy-defects.md.
+// The isSame rule compares the id only: the SML twin of the SQLite isSame defect (a legacy defect).
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mormot/categories/mark_category_db_internal_orm.h"
 #include "cg/marks/sml/mark_category_sml_db_internal.h"
@@ -42,7 +42,7 @@ TEST(MarkCategorySmlDbInternal, IsSameTable) {
     const auto base = sml(5, kDbA, QStringLiteral("A"));
     const std::vector<Row> rows{
         {"same id and db", sml(5, kDbA, QStringLiteral("A")), true},
-        {"same id, other db (L-193: id only)", sml(5, kDbB, QStringLiteral("A")), true},
+        {"same id, other db (id only)", sml(5, kDbB, QStringLiteral("A")), true},
         {"same id, other name, visible, zooms", sml(5, kDbA, QStringLiteral("other"), false, 7, 9), true},
         {"other id", sml(6, kDbA, QStringLiteral("A")), false},
         {"other id, same db", sml(4, kDbA, QStringLiteral("A")), false},

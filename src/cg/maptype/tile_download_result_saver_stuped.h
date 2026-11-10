@@ -3,12 +3,12 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_TileDownloadResultSaver.pas, u_TileDownloadResultSaverStuped.pas (the non-bitmap path, R-9)
+// Ports: i_TileDownloadResultSaver.pas, u_TileDownloadResultSaverStuped.pas (the non-bitmap path)
 //
 // Stores what a download produced: an OK result is converted to the map's content type (ContentConverters,
-// the converter matrix of T-0120) and saved, a
-// data-not-exists result is saved as a TNE marker when the global option says so. The crop / cut half of the
-// unit (:202-231, :328-407, :434-486) needs `bitmap` and is R-13; it ends in a ticketed exception here.
+// the converter matrix) and saved, a data-not-exists result is saved as a TNE marker when the global option
+// says so. The crop / cut half of the unit (:202-231, :328-407, :434-486) needs `bitmap` and is not ported;
+// it ends in an "unsupported" exception here.
 //
 // Not ported here, with the reason: the constructor arguments of legacy that only that half (or the discarded
 // result below) uses: ImageResampler, Bitmap32StaticFactory, ResultFactory. A saver that built the
@@ -57,7 +57,7 @@ public:
 class TileDownloadResultSaverStuped final : public ITileDownloadResultSaver {
 public:
     // Argument order as the Pascal constructor (:141-151) minus the three unported arguments (ImageResampler,
-    // Bitmap32StaticFactory, ResultFactory: TODO(T-0119)): downloadConfig, emptyTilePredicate,
+    // Bitmap32StaticFactory, ResultFactory; TODO: port them): downloadConfig, emptyTilePredicate,
     // contentTypes (AContentTypeManager), converters (its GetConverter half), contentTypeSubst,
     // saveContentType, cropConfig, storage. downloadConfig: legacy IGlobalDownloadConfig, IsSaveTileNotExists
     // is read at every save (:315). The saver subscribes to storage->stateChangeable().changed() (legacy
@@ -96,10 +96,10 @@ private:
     std::shared_ptr<TileDownloaderStateInternal> state_;
     // Declared after storage_ and state_, so it is destroyed first: the listener is gone before the storage
     // (whose holder it is subscribed to) or the state it writes can die. Legacy :187-194 intends the same
-    // (its destructor calls Add instead of Remove, so legacy never unsubscribes; the port does).
-    // This covers unsubscription only: `Subscription::reset` does not wait for a callback in flight, so the
-    // owner (R-10) must make sure the storage state no longer changes on another thread before the saver is
-    // destroyed (docs/specs/maptype.md §2.13.5 item 8).
+    // (its destructor calls Add instead of Remove, so legacy never unsubscribes; the port does). This
+    // covers unsubscription only: `Subscription::reset` does not wait for a callback in flight, so the
+    // owner must make sure the storage state no longer changes on another thread before the saver is
+    // destroyed.
     core::Subscription storageStateSubscription_;
 };
 

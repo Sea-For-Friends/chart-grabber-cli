@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: u_TileFileNameMOBAC.pas -- the Mobile Atlas Creator (MOBAC) folder cache (CacheType id
-// 43), default root folder `cache_ma`. FEAT-STO-008.
+// 43), default root folder `cache_ma`.
 
 #include "cg/storage/tile_name_codec.h"
 

@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-004; docs/specs/core.md 2.19, test plan 7.12
 #include "cg/core/app_paths.h"
 #include "cg/core/platform/test_support.h"
 
@@ -46,8 +45,8 @@ TEST_F(AppPathsTest, PortableWhenFlagGiven) {
     EXPECT_EQ(result->dataDir, appDir_);
 }
 
-// finding 7: these two exercise the "marker file next to the exe" detection without writing into
-// the real build tree -- a QTemporaryDir stands in for applicationDirPath() via the test-only
+// These two exercise the "marker file next to the exe" detection without writing into the real
+// build tree -- a QTemporaryDir stands in for applicationDirPath() via the test-only
 // `applicationDirOverride` seam, so a crashed/filtered run leaves nothing behind for XdgOtherwise
 // (or any other test in this binary) to trip over.
 TEST_F(AppPathsTest, PortableWhenChartGrabberIniIsNextToExe) {
@@ -100,8 +99,7 @@ TEST_F(AppPathsTest, MainConfigFileNameIsChartGrabberIni) {
 }
 
 TEST_F(AppPathsTest, DataDirOverridesAllThreeRootsAndWinsOverPortable) {
-    // finding 7 (previously untested): --datadir= forces all three roots to the given path and
-    // takes precedence over --portable (core.md 2.19's precedence, now written down).
+    // --datadir= forces all three roots to the given path and takes precedence over --portable.
     QTemporaryDir explicitDir;
     ASSERT_TRUE(explicitDir.isValid());
     const auto result =
@@ -113,8 +111,7 @@ TEST_F(AppPathsTest, DataDirOverridesAllThreeRootsAndWinsOverPortable) {
     EXPECT_EQ(result->cacheDir, explicitDir.path());
 }
 
-// T-0360 item 1: the space form is accepted as parseJob accepts it; a missing value is rejected like an empty
-// one.
+// The space form is accepted as parseJob accepts it; a missing value is rejected like an empty one.
 TEST_F(AppPathsTest, DataDirSpaceFormIsAccepted) {
     QTemporaryDir explicitDir;
     ASSERT_TRUE(explicitDir.isValid());
@@ -135,7 +132,7 @@ TEST_F(AppPathsTest, EmptyDataDirIsRejectedNotAutoDetected) {
     ASSERT_FALSE(result.has_value());
 }
 
-// T-0382: cli/main.cpp puts the fontconfig sysroot into the data directory; it reads --datadir through this
+// cli/main.cpp puts the fontconfig sysroot into the data directory; it reads --datadir through this
 // function.
 TEST_F(AppPathsTest, ExplicitDataDirArgumentReadsBothFormsAndTheLastWins) {
     bool present = true;
@@ -158,11 +155,11 @@ TEST_F(AppPathsTest, ExplicitDataDirArgumentReadsBothFormsAndTheLastWins) {
     EXPECT_TRUE(present);
 }
 
-// T-0311 (a): D rows of this ticket (directories SAS.Planet -> chart-grabber, one-time move). HOME points to
-// a temporary directory, so the XDG test-mode roots (<HOME>/.qttest/config and /share) are private. T-0340:
-// the roots are asked from Qt (the parent of the application folder it reports), because Windows has no XDG
-// variables: HOME and USERPROFILE (Qt's home on Windows) both point to the temporary directory, and the test
-// is skipped when the roots still lie outside it, so that the real profile is never moved.
+// Deviations from legacy (directories SAS.Planet -> chart-grabber, one-time move). HOME points to a
+// temporary directory, so the XDG test-mode roots (<HOME>/.qttest/config and /share) are private. The roots
+// are asked from Qt (the parent of the application folder it reports), because Windows has no XDG variables:
+// HOME and USERPROFILE (Qt's home on Windows) both point to the temporary directory, and the test is skipped
+// when the roots still lie outside it, so that the real profile is never moved.
 namespace {
 
 class DataDirMigrationTest : public ::testing::Test {
@@ -338,8 +335,8 @@ TEST_F(DataDirMigrationTest, SettingsFileRenameFailureKeepsReadingOldName) {
     EXPECT_NE(err.find("cannot rename"), std::string::npos);
 }
 
-// T-0360 item 4: the tile cache and AutoSave move once from the roaming data folder (Windows; the seam makes
-// the same code run here) to the local one.
+// The tile cache and AutoSave move once from the roaming data folder (Windows; the seam makes the same code
+// run here) to the local one.
 TEST_F(DataDirMigrationTest, RoamingDirIsMovedOnceWithOneLine) {
     const QString roaming = home_.path() + QStringLiteral("/Roaming/chart-grabber");
     put(roaming + QStringLiteral("/cache_sqlite/osm"), QStringLiteral("tile.bin"), "tile-bytes");
@@ -411,8 +408,8 @@ TEST_F(DataDirMigrationTest, ExplicitDataDirLeavesRoamingAlone) {
     EXPECT_EQ(read(roaming + QStringLiteral("/keep.bin")), QByteArray("keep"));
 }
 
-// T-0362 item 2: a name found in both folders is not moved (never merged); the one note names it, so the
-// user knows what to resolve.
+// A name found in both folders is not moved (never merged); the one note names it, so the user knows
+// what to resolve.
 TEST_F(DataDirMigrationTest, RoamingNameInBothFoldersIsNamedInTheNote) {
     const QString roaming = home_.path() + QStringLiteral("/Roaming/chart-grabber");
     put(roaming + QStringLiteral("/cache_sqlite"), QStringLiteral("tile.bin"), "tile-bytes");
@@ -431,8 +428,8 @@ TEST_F(DataDirMigrationTest, RoamingNameInBothFoldersIsNamedInTheNote) {
     EXPECT_NE(err.find("the name is in both folders: chart-grabber.conf"), std::string::npos) << err;
 }
 
-// T-0362 item 1: a move that fails partway leaves the data split; the note says what was moved and what
-// stayed, not "the cache starts empty". The read-only directory b_dir cannot be renamed to another parent.
+// A move that fails partway leaves the data split; the note says what was moved and what stayed, not
+// "the cache starts empty". The read-only directory b_dir cannot be renamed to another parent.
 TEST_F(DataDirMigrationTest, RoamingPartialMoveNamesWhatMovedAndWhatStayed) {
     if (cg::core::platform::directoryPermissionsIgnored()) {
         GTEST_SKIP() << "root ignores directory permissions";

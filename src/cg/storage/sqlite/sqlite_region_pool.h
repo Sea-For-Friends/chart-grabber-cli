@@ -7,20 +7,18 @@
 // TSQLiteSingleList, :669-738 TSQLiteDynList) and u_TileStorageSQLiteHelper.pas (:151-273: Create,
 // Destroy, Sync, InternalGetHandler, InternalHandlerFactory).
 //
-// docs/specs/storage.md §3.3 (D-10, amended 2026-09-27/28): the open region files of one storage
-// root. One entry per .sqlitedb path, each owning ONE SqliteRegionHandler (or the remembered fact
-// that the file is absent -- legacy's FDBNotFound, List.pas:361) and ONE core::Mutex held for the
-// whole of every operation on it. Legacy's fixed/dynamic entry arrays (a lookup-speed device for
-// z1-z11 vs z12+) are not ported, only their observable results (legacy defect L-94, (a) deviates, deviation
-// of T-0211): a caller says which kind of entry the file belongs to (EntryKind) and a Fixed entry then keeps
-// legacy's state machine -- a write that creates the file initialises the entry (deviation of T-0211; legacy
-// left it "not initialized" so the next READ returned no tile); a remembered absence lasts until a write; a
-// failed open of an existing file is cached; none of these entries is closed by the sweep until initialized.
+// The open region files of one storage root. One entry per .sqlitedb path, each owning ONE
+// SqliteRegionHandler (or the remembered fact that the file is absent -- legacy's FDBNotFound, List.pas:361)
+// and ONE core::Mutex held for the whole of every operation on it. Legacy's fixed/dynamic entry arrays (a
+// lookup-speed device for z1-z11 vs z12+) are not ported, only their observable results (one of them
+// deviates from legacy to fix a legacy defect, see below): a caller says which kind of entry the file
+// belongs to (EntryKind) and a Fixed entry then keeps legacy's state machine -- a write that creates the
+// file initialises the entry (the deviation; legacy left it "not initialized" so the next READ returned no
+// tile); a remembered absence lasts until a write; a failed open of an existing file is cached; none of
+// these entries is closed by the sweep until initialized.
 //
-// Idle sweep: legacy's InternalSync closes an entry untouched for one whole sync interval; the
-// ticket/spec restate that as "closed after kIdleCloseMs of idleness" (§2.16 intro).
-//
-// FEAT-STO-018.
+// Idle sweep: legacy's InternalSync closes an entry untouched for one whole sync interval; the port
+// closes it after kIdleCloseMs of idleness.
 
 #include "cg/core/sync.h"
 #include "cg/storage/sqlite/sqlite_region_handler.h"
@@ -46,8 +44,8 @@ public:
     static constexpr quint32 kIdleCloseMs = 3 * 60 * 1000;
 
     // A pinned, read-mode hold on one open region file: the sweep never closes it while the lease
-    // lives. The scan enumerator keeps a SELECT open across next() calls (spec §3.3 amendment) and
-    // runs each step through run(), which takes the file's mutex for that step only.
+    // lives. The scan enumerator keeps a SELECT open across next() calls and runs each step
+    // through run(), which takes the file's mutex for that step only.
     class Lease final {
     public:
         explicit Lease(std::shared_ptr<RegionEntry> entry);
@@ -76,17 +74,16 @@ public:
     // ones (List.pas:244-668 vs :669-738). The caller derives it from the zoom of the tile.
     enum class EntryKind : quint8 { Fixed, Dynamic };
 
-    // Ports InternalGetHandler + InternalHandlerFactory. Runs `fn` on the handler of region file
-    // `dbPath` with that file's mutex held, and returns true; returns false without calling `fn`
-    // when legacy returns a nil handler: the file is absent and `forWrite` is false (the absence
-    // is remembered, no stat on later reads) or the pool is read-only (never creates), the open
-    // failed, or `stop` is signalled (ports AOper.IsOperationCancelled; a Fixed entry checks it first, a
-    // Dynamic one only before opening). A Fixed entry may also return false for an existing, readable file
-    // (L-94: cached failed open). `forWrite` ports
-    // AForceMakeDB: only then is a missing file created, after ForceDirectories of its folder.
-    // T-0276: when `openError` is given and false is returned because the open of an existing file failed
-    // (also a failed open cached by a Fixed entry), it receives the handler's failure text; it is left
-    // untouched for every other reason of a false return.
+    // Ports InternalGetHandler + InternalHandlerFactory. Runs `fn` on the handler of region file `dbPath`
+    // with that file's mutex held, and returns true; returns false without calling `fn` when legacy
+    // returns a nil handler: the file is absent and `forWrite` is false (the absence is remembered, no
+    // stat on later reads) or the pool is read-only (never creates), the open failed, or `stop` is
+    // signalled (ports AOper.IsOperationCancelled; a Fixed entry checks it first, a Dynamic one only
+    // before opening). A Fixed entry may also return false for an existing, readable file (cached failed
+    // open). `forWrite` ports AForceMakeDB: only then is a missing file created, after ForceDirectories of
+    // its folder. When `openError` is given and false is returned because the open of an existing file
+    // failed (also a failed open cached by a Fixed entry), it receives the handler's failure text; it is
+    // left untouched for every other reason of a false return.
     bool run(const QString& dbPath, EntryKind kind, bool forWrite, const std::stop_token& stop,
              const std::function<void(SqliteRegionHandler&)>& fn, QString* openError = nullptr);
 
@@ -106,7 +103,6 @@ public:
     // finds the use flag set only stamps the time; once kIdleCloseMs have passed since that stamp
     // with no use, sweepIdle() runs, and a sweep that followed a use re-arms the gate. `nowMs` is
     // injected for tests. Every run()/lease() raises the use flag (CheckUseTimeUpdated).
-    // FEAT-STO-018.
     void gcTick(quint32 nowMs);
     void gcTick() { gcTick(currentTickMs()); }
 

@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_Downloader.pas, i_DownloaderFactory.pas, u_DownloaderFactory.pas. docs/specs/net.md
-// §2.7. FEAT-NET-006 (as a deviation: one engine, no neWinInet/neCurl split -- ADR-0004). Qt-free:
-// no Qt Network here or anywhere under src/cg/net (enforced by tools/validate.sh's
-// QNAM-IN-DOWNLOADER rule) -- the tile transport is libcurl, added with T-0010B.
+// Ports: i_Downloader.pas, i_DownloaderFactory.pas, u_DownloaderFactory.pas, as a deviation from
+// legacy: one engine, no neWinInet/neCurl split. Qt-free: no Qt Network here or anywhere under
+// src/cg/net (enforced by tools/validate.sh's QNAM-IN-DOWNLOADER rule) -- the tile transport is
+// libcurl.
 
 #include "cg/net/download_request.h"
 #include "cg/net/download_result.h"
@@ -25,17 +25,17 @@ class IDownloader {
 public:
     virtual ~IDownloader() = default;
 
-    // Blocking. Returns a Canceled result promptly once `stop` is signalled. Never throws --
-    // every failure, including a curl error, becomes a DownloadResult (docs/specs/net.md §4).
+    // Blocking. Returns a Canceled result promptly once `stop` is signalled. Never throws -- every
+    // failure, including a curl error, becomes a DownloadResult.
     [[nodiscard]] virtual DownloadResult doRequest(const DownloadRequest& request, std::stop_token stop) = 0;
 };
 using IDownloaderPtr = std::shared_ptr<IDownloader>;
 
-// Ports IDownloaderFactory. Kept per idioms.md §13 purpose (a)'s exception: there are two real
-// implementations (CurlDownloader, and a scripted FakeDownloader in tests), and a TTL-holding
-// wrapper needs this seam to rebuild its client after the TTL fires.
+// Ports IDownloaderFactory. Kept as an interface: there are two real implementations
+// (CurlDownloader, and a scripted FakeDownloader in tests), and a TTL-holding wrapper needs
+// this seam to rebuild its client after the TTL fires.
 struct DownloaderOptions {
-    bool allowCookies = false; // ZMP AllowUseCookie (FEAT-NET-009)
+    bool allowCookies = false; // ZMP AllowUseCookie
     bool allowRedirect = true;
     bool tryDetectContentType = false; // ZMP DetectContentType
     bool acceptEncoding = true;        // legacy hardcodes True, u_DownloaderByCurlFactory.pas:47

@@ -12,7 +12,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-207
 class StringConfigDataElementWithLanguage final : public StringConfigDataElementWithDefBase {
 public:
     ~StringConfigDataElementWithLanguage() override;

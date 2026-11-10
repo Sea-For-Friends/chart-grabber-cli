@@ -30,9 +30,9 @@ namespace {
 constexpr auto kParamsFileName = u"params.txt";
 constexpr auto kParamsSection = u"PARAMS";
 constexpr auto kScriptFileName = u"GetUrlScript.txt";  // u_TileDownloadSubsystem.pas:59
-constexpr auto kJsScriptFileName = u"GetUrlScript.js"; // T-0225: SourceJsonContainer
+constexpr auto kJsScriptFileName = u"GetUrlScript.js"; // SourceJsonContainer
 
-// The anti-ban's preload-page fetch (D-14, in place of the invisible browser): every call builds a fresh
+// The anti-ban's preload-page fetch (in place of the invisible browser): every call builds a fresh
 // downloader from the factory, so no curl session is ever used from two worker threads (CurlSession is
 // single-thread) and the fetch is as independent of the slots as a browser would be.
 class PerCallDownloader final : public net::IDownloader {
@@ -175,7 +175,7 @@ void runTileDownloadJob(const TaskInternalPtr& task, ITileDownloadResultSaver& s
         }
     } catch (...) {
         task->setFinished(nullptr); // legacy `finally SetFinished(VResult)` with VResult = nil
-        throw;                      // the queue's worker loop logs it and goes on (D-87)
+        throw;                      // the queue's worker loop logs it and goes on (a deviation from legacy)
     }
     task->setFinished(result);
 }
@@ -185,8 +185,8 @@ void runTileDownloadJob(const TaskInternalPtr& task, ITileDownloadResultSaver& s
 // Ports TRequestBuilderProviderInternal (u_TileDownloadSubsystem.pas:200-256): the TTL downloader and the
 // lazy builder that serve getRequest, rebuilt as a pair on every change of the tile-downloader config, on the
 // thread that changed it. The config-change callback takes only the provider's own lock, never a builder's
-// mutex (R4). Owned by a shared_ptr; the callback holds a weak reference (core::Subscription::reset does not
-// wait for a callback in flight).
+// mutex. Owned by a shared_ptr; the callback holds a weak reference (core::Subscription::reset does not wait
+// for a callback in flight).
 class RequestBuilderProviderInternal final
     : public std::enable_shared_from_this<RequestBuilderProviderInternal> {
 public:
@@ -212,7 +212,7 @@ public:
         const core::ReadLock lock(mutex_);
         return builder_;
     }
-    // T-0366: the lazy builder of the current pair, to load its script now.
+    // The lazy builder of the current pair, to load its script now.
     [[nodiscard]] std::shared_ptr<TileDownloadRequestBuilderLazy> lazyBuilder() const {
         const core::ReadLock lock(mutex_);
         return builder_;
@@ -267,7 +267,6 @@ TileDownloadSubsystem::TileDownloadSubsystem(
             !requestBuilderConfig || !globalDownloadConfig || !mapAbilitiesConfig) {
             throw std::invalid_argument("TileDownloadSubsystem: a collaborator is null");
         }
-        // FEAT-NET-032
         // :313-319. An empty sample list is legacy's nil list: the predicate stays empty.
         PredicateByBinaryData banPredicate;
         PredicateByBinaryData emptyPredicate;
@@ -293,9 +292,9 @@ TileDownloadSubsystem::TileDownloadSubsystem(
         const net::IDownloadCheckerPtr checker = std::make_shared<DownloadCheckerStuped>(
             antiBan, banPredicate, emptyPredicate, tileDownloaderConfig_, storage_);
 
-        // :328-341. The script is read as raw bytes, BOM kept (docs/specs/maptype.md LD-14).
-        // T-0225 (docs/specs/map-source-json.md section 7): a *.source.json container offers its JavaScript
-        // as GetUrlScript.js and gets the JavaScript factory; every other source keeps the Pascal factory.
+        // :328-341. The script is read as raw bytes, BOM kept. A *.source.json container offers its
+        // JavaScript as GetUrlScript.js and gets the JavaScript factory; every other source keeps the
+        // Pascal factory.
         const QByteArray jsScript = data->binary(kJsScriptFileName);
         if (!jsScript.isEmpty()) {
             factory_ = std::make_shared<TileDownloadRequestBuilderFactoryJs>(
@@ -320,7 +319,7 @@ TileDownloadSubsystem::TileDownloadSubsystem(
                                                               std::move(mapAbilitiesConfig));
         state_->subscribe();
 
-        // :365-382. Capacity 256. The slot-state factory captures nothing that owns the queue (R1).
+        // :365-382. Capacity 256. The slot-state factory captures nothing that owns the queue.
         queue_ = std::make_shared<net::DownloadQueue>(
             downloaderFactory, gc, *tileDownloaderConfig_, net::kQueueCapacity, net::SteadyClockFn{},
             [factory = factory_](const net::IDownloaderPtr& downloader) -> net::DownloadQueue::SlotState {
@@ -351,7 +350,7 @@ TileDownloadSubsystem::~TileDownloadSubsystem() {
     destroySource_.request_stop(); // :411-413 NextOperation: cancels the builds of getRequest
     appClosingCallback_.reset();   // :414-418; waits for a callback running on another thread
     provider_.reset();             // :419
-    queue_.reset();                // joins the workers (R1): the jobs hold neither the queue nor this object
+    queue_.reset();                // joins the workers: the jobs hold neither the queue nor this object
 }
 
 void TileDownloadSubsystem::download(const ITileRequestTaskPtr& task) {
@@ -360,7 +359,7 @@ void TileDownloadSubsystem::download(const ITileRequestTaskPtr& task) {
         return;
     }
     if (zmpDownloadEnabled_ && state_->getStatic()->enabled) {
-        // R1: the closure holds the task and the saver, nothing that owns the queue.
+        // The closure holds the task and the saver, nothing that owns the queue.
         queue_->push([internal, saver = saver_](net::RetryDownloader& loop, void* slotState,
                                                 const std::stop_token& stop) {
             detail::runTileDownloadJob(internal, *saver, loop, slotState, stop);
@@ -371,8 +370,8 @@ void TileDownloadSubsystem::download(const ITileRequestTaskPtr& task) {
 }
 
 void TileDownloadSubsystem::checkRequestBuilder() {
-    // T-0366: only a JavaScript source is loaded ahead of its first tile (a port extension, no legacy unit);
-    // a ZMP script stays lazy as in legacy. A failed load disables the factory state (disableReason).
+    // Only a JavaScript source is loaded ahead of its first tile (a port extension, no legacy unit); a ZMP
+    // script stays lazy as in legacy. A failed load disables the factory state (disableReason).
     if (zmpDownloadEnabled_ &&
         dynamic_cast<TileDownloadRequestBuilderFactoryJs*>(factory_.get()) != nullptr) {
         provider_->lazyBuilder()->load();

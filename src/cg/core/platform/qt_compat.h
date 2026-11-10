@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (Qt 6.4 floor portability helpers, ADR-0018).
-// Qt 6.4 floor (ADR-0018): QTimeZone::UTC is Qt 6.5, the Qt::TimeSpec overloads are deprecated from Qt 6.9.
-// These give the same QDateTime on every version: timeSpec() == Qt::UTC, ISO text with "Z". The only place
-// that tests QT_VERSION (coding standard: version/platform code lives under core/platform/).
+// Ports: nothing (Qt 6.4 floor portability helpers). Qt 6.4 floor: QTimeZone::UTC is Qt 6.5, the
+// Qt::TimeSpec overloads are deprecated from Qt 6.9. These give the same QDateTime on every version:
+// timeSpec() == Qt::UTC, ISO text with "Z". The only place that tests QT_VERSION (coding standard:
+// version/platform code lives under core/platform/).
 
 #include <QDateTime>
 #include <QRegularExpression>

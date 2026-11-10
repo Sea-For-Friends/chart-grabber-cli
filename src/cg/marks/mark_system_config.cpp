@@ -220,7 +220,7 @@ void MarkSystemConfig::deleteById(int id) {
 int MarkSystemConfig::add(const QUuid& databaseGUID, const QString& displayName,
                           const MarkSystemImplConfigStaticPtr& implConfig, bool setAsActive) {
     if (!implConfig) {
-        return 0; // D-77: legacy dereferences nil in DoWriteConfig (:306), an access violation
+        return 0; // Legacy dereferences nil in DoWriteConfig (:306), an access violation
     }
     const WriteGuard guard = writeLock();
     const MarkSystemConfigStaticPtr config =
@@ -236,7 +236,7 @@ int MarkSystemConfig::add(const QUuid& databaseGUID, const QString& displayName,
 void MarkSystemConfig::update(int id, const QUuid& databaseGUID, const QString& displayName,
                               const MarkSystemImplConfigStaticPtr& implConfig) {
     if (!implConfig) {
-        return; // D-77: see add()
+        return; // See add()
     }
     const WriteGuard guard = writeLock();
     if (list_.isExists(id)) {

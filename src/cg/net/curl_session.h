@@ -3,17 +3,14 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/Network/Curl/t_CurlHttpClient.pas, u_CurlHttpClient.pas. docs/specs/net.md §2.8.
-// FEAT-NET-009.
+// Ports: Src/Network/Curl/t_CurlHttpClient.pas, u_CurlHttpClient.pas.
 //
 // One CURL* easy handle per CurlSession, used by one thread AT A TIME (libcurl's rule; legacy's is mutual
 // exclusion too: u_DownloaderHttpWithTTL.pas:102-138 builds/uses/frees the client under FCS from whichever
 // thread calls, the GC thread included). The handle may move between threads between calls; the callers
 // serialise (TtlDownloader::mutex_, a fresh downloader per call). Debug builds assert that no second thread
-// is inside perform()/attachShare() or the destructor (T-0144). CurlProxy is NOT redefined here: it
-// already exists in proxy_resolver.h (landed with T-0011A before this header did) and is included from
-// there, field-for-field identical to the spec, to keep exactly one definition (Tech Lead note on this
-// ticket, docs/handoffs/T-0011A.md).
+// is inside perform()/attachShare() or the destructor. CurlProxy is NOT redefined here: it already exists
+// in proxy_resolver.h and is included from there, to keep exactly one definition.
 
 #include "cg/net/curl_callbacks.h"
 #include "cg/net/curl_share.h"
@@ -32,11 +29,11 @@ namespace cg::net {
 struct CurlOptions { // ports TCurlOptions, t_CurlHttpClient.pas:38-48
     bool storeCookie = false;
     bool followLocation = true;
-    bool verifyTls = true; // legacy: IgnoreSSLCertificateErrors, inverted. [D-2]
+    bool verifyTls = true; // legacy: IgnoreSSLCertificateErrors, inverted.
     int timeoutMs = 40000;
     int connectTimeoutMs = 40000;
     // NOTE legacy's operator== omits AcceptEncoding; we have no such field at all here --
-    // Accept-Encoding is a request header, never a curl option (docs/specs/net.md §2.8.3).
+    // Accept-Encoding is a request header, never a curl option.
 
     [[nodiscard]] bool operator==(const CurlOptions&) const = default;
 };
@@ -92,15 +89,15 @@ private:
     CurlResponse* currentResponse_ = nullptr; // valid only during perform()
 
     // Re-setup memo, ported 1:1 from FOptions/FProxy/FReqMethod/FReqHeaders/FReqUserAgent
-    // (u_CurlHttpClient.pas re-setup rule, docs/specs/net.md §2.8.3). Deliberately reproduces the
-    // legacy quirk that a null request.options/proxy is treated as "unchanged", not "cleared".
+    // (u_CurlHttpClient.pas re-setup rule). Deliberately reproduces the legacy quirk that a null
+    // request.options/proxy is treated as "unchanged", not "cleared".
     CurlOptions cachedOptions_;
     CurlProxy cachedProxy_;
     // Delphi zero-initialises FReqMethod to rmHead (TReqMethod = (rmHead, rmGet, rmPost)), not
     // rmGet -- Method has the same declaration order (download_request.h), so Method::Head is the
-    // faithful default. Finding 8 (T-0010B rework): benign either way today (the downloader always
-    // prepends a User-Agent: line, so the first request's header blob always differs from the
-    // empty cachedHeaders_ and rebuilds the slist regardless), kept 1:1 anyway.
+    // faithful default. Benign either way today (the downloader always prepends a User-Agent:
+    // line, so the first request's header blob always differs from the empty cachedHeaders_ and
+    // rebuilds the slist regardless), kept 1:1 anyway.
     Method cachedMethod_ = Method::Head;
     QByteArray cachedHeaders_;
     QByteArray cachedUserAgent_;

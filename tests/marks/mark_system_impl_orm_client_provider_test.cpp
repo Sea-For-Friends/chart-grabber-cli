@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (held open). Ports no legacy test (there is none): the connection bootstrap
-// and the transaction object against the real Marks.db3 written by Windows SAS.Planet
-// (tests/fixtures/marks/Marks.db3), docs/specs/marks.md §2.9.3 B-1...B-14 and §2.9.5.
+// Ports no legacy test (there is none): the connection bootstrap and the transaction object
+// against the real Marks.db3 written by Windows SAS.Planet (tests/fixtures/marks/Marks.db3).
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 #include "cg/marks/mormot/mark_system_orm_transaction.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"
@@ -188,7 +187,7 @@ TEST(MarkSystemImplORMClientProvider, ThreeErrorMessages) {
               QStringLiteral("MarkSystemORM: Can't init User in read-only mode!"));
 }
 
-TEST(MarkSystemImplORMClientProvider, FileNameResolution) { // B-1
+TEST(MarkSystemImplORMClientProvider, FileNameResolution) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     const QString root = dir.path(); // T
@@ -226,7 +225,7 @@ TEST(MarkSystemImplORMClientProvider, FileNameResolution) { // B-1
     EXPECT_TRUE(exists("base/q.db3"));
 }
 
-TEST(MarkSystemImplORMClientProvider, ZeroByteReadOnlyStillOpensReadWriteAndSetsWal) { // B-3, B-8, LC-18
+TEST(MarkSystemImplORMClientProvider, ZeroByteReadOnlyStillOpensReadWriteAndSetsWal) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     const QString path = QDir(dir.path()).filePath(QStringLiteral("Marks.db3"));
@@ -241,7 +240,7 @@ TEST(MarkSystemImplORMClientProvider, ZeroByteReadOnlyStillOpensReadWriteAndSets
     EXPECT_EQ(rows(db, "PRAGMA journal_mode"), QStringList{QStringLiteral("wal")}); // converted anyway
 }
 
-TEST(MarkSystemImplORMClientProvider, FailedCommitIsSwallowed) { // L-184
+TEST(MarkSystemImplORMClientProvider, FailedCommitIsSwallowed) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     MarkSystemImplORMClientProvider provider(dir.path(), TestConfig({}, false, {}));
@@ -259,7 +258,7 @@ TEST(MarkSystemImplORMClientProvider, FailedCommitIsSwallowed) { // L-184
     EXPECT_TRUE(db.exec("ROLLBACK TRANSACTION;").has_value());
 }
 
-TEST(MarkSystemImplORMClientProvider, RefusedBeginDoesNotWedgeTheObject) { // D-79
+TEST(MarkSystemImplORMClientProvider, RefusedBeginDoesNotWedgeTheObject) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     MarkSystemImplORMClientProvider provider(dir.path(), TestConfig({}, false, {}));
@@ -278,7 +277,7 @@ TEST(MarkSystemImplORMClientProvider, RefusedBeginDoesNotWedgeTheObject) { // D-
     EXPECT_EQ(rows(other, "SELECT x FROM t").size(), 1);
 }
 
-TEST(MarkSystemImplORMClientProvider, JoinerRowVanishesWithOwnersRollbackAcrossThreads) { // LC-15
+TEST(MarkSystemImplORMClientProvider, JoinerRowVanishesWithOwnersRollbackAcrossThreads) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     MarkSystemImplORMClientProvider provider(dir.path(), TestConfig({}, false, {}));
@@ -318,7 +317,7 @@ TEST(MarkSystemImplORMClientProvider, JoinerRowVanishesWithOwnersRollbackAcrossT
     }
 }
 
-TEST(MarkSystemImplORMClientProvider, TransactionMatrix) { // §2.9.5
+TEST(MarkSystemImplORMClientProvider, TransactionMatrix) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     const QString path = QDir(dir.path()).filePath(QStringLiteral("Marks.db3"));
@@ -365,7 +364,7 @@ TEST(MarkSystemImplORMClientProvider, TransactionMatrix) { // §2.9.5
     EXPECT_EQ(visible(), 1U);
     tx.rollBack(b);
     EXPECT_EQ(visible(), 1U);
-    tx.rollBack(a); // the joiner's row is lost with the owner's rollback (LC-15)
+    tx.rollBack(a); // the joiner's row is lost with the owner's rollback
     EXPECT_EQ(rows(provider.db(), "SELECT x FROM t").size(), 1U);
 
     // the object is reusable after the owner finished

@@ -6,13 +6,12 @@
 // Ports: i_IDList.pas (IIDInterfaceList), i_EnumID.pas, u_IDInterfaceList.pas, u_IDListBase.pas.
 //
 // Map keyed by NativeInt (qintptr), enumerated in ascending SIGNED key order (CompareID,
-// u_IDListBase.pas:174-186; binary search Find :213-236) -- not insertion order. Add keeps an
-// existing value, Replace overwrites or inserts, Remove of an absent key is a no-op, GetByID of an
-// absent key is null. Not synchronised (legacy neither). IEnumID / IEnumUnknown become snapshot
-// vectors (idioms.md section 11).
-// Legacy IInterface is the template parameter: std::shared_ptr<T>, T may be const-qualified.
-// Not ported: Capacity, the Count setter, the enumerator Skip/Reset/Clone ABI. IIDObjectList (owner of
-// TObject) is not ported.
+// u_IDListBase.pas:174-186; binary search Find :213-236) -- not insertion order. Add keeps an existing
+// value, Replace overwrites or inserts, Remove of an absent key is a no-op, GetByID of an absent key
+// is null. Not synchronised (legacy neither). IEnumID / IEnumUnknown become snapshot vectors. Legacy
+// IInterface is the template parameter: std::shared_ptr<T>, T may be const-qualified. Not ported:
+// Capacity, the Count setter, the enumerator Skip/Reset/Clone ABI. IIDObjectList (owner of TObject) is
+// not ported.
 
 #include "cg/core/sorted_key_list.h"
 
@@ -25,7 +24,6 @@
 
 namespace cg::core {
 
-// FEAT-GEO-033, FEAT-GEO-034
 template <class T> class IIdInterfaceList {
 public:
     using Ptr = std::shared_ptr<T>;

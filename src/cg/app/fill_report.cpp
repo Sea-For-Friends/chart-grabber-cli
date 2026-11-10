@@ -29,7 +29,7 @@ core::Result<std::vector<ZoomFill>> fillReport(const maptype::IMapType& map,
         ZoomFill fill;
         fill.zoom = zoom;
         // The download walk is budgeted by the legacy count (u_DownloadTaskProvider.pas:208-229): a zoom
-        // whose count is 0 (area of at most 1 pixel) is not walked at all (T-0259).
+        // whose count is 0 (area of at most 1 pixel) is not walked at all.
         const qint64 budget = legacyTileCount(projectionSet->zoom(zoom), area, app);
         if (budget == 0) {
             result.push_back(fill);

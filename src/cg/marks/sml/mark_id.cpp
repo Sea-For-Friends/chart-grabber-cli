@@ -101,9 +101,8 @@ QString MarkId::desc() const {
 }
 
 // :265-308. Asymmetric with TMarkMainInfo::IsEqual (u_MarkFullBase.pas:154-157): an item without
-// IVectorDataItemWithCategory matches this mark only when this mark has no category (:301-306).
-// The category test calls ICategory.IsSame of this mark's category (:291), which compares the id only
-// (L-193).
+// IVectorDataItemWithCategory matches this mark only when this mark has no category (:301-306). The
+// category test calls ICategory.IsSame of this mark's category (:291), which compares the id only.
 bool MarkId::isEqual(const vector::IVectorDataItemMainInfo* item) const {
     if (item == nullptr) {
         return false;

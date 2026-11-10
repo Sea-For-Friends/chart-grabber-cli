@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Test doubles of T-0181 (tiles_download_test.cpp, provider_tiles_download_test.cpp).
-// Why new doubles: the scripted subsystem and storage of thread_download_tiles_test.cpp live in that file's
-// anonymous namespace and script single-worker timing cases; here every worker of a start shares one
-// recording subsystem and one empty storage, and nothing is scripted.
+// Test doubles of tiles_download_test.cpp and provider_tiles_download_test.cpp. Why new doubles: the
+// scripted subsystem and storage of thread_download_tiles_test.cpp live in that file's anonymous namespace
+// and script single-worker timing cases; here every worker of a start shares one recording subsystem and
+// one empty storage, and nothing is scripted.
 
 #include "cg/maptype/tile_download_subsystem.h"
 #include "cg/maptype/tile_downloader_state.h"

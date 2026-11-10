@@ -5,7 +5,7 @@
 #pragma once
 // New code (no legacy unit). Inherits: Src/RegionProcess/Download/u_ThreadDownloadTiles.pas:318-356 (the
 // worker's tile-info classification as ported in region/thread_download_tiles.cpp processTask): exists / TNE
-// marker / neither. Ports: nothing. docs/specs/app-cli.md 3.8.
+// marker / neither. Ports: nothing.
 //
 // What the cache holds for the area after a download. Read-only: LoadMode::WithoutData only.
 

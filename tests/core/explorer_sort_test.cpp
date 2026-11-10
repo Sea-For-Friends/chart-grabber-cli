@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-001 (compareStringOrdinal, maptype spec 2.4.1, 7.3; L-118)
+// compareStringOrdinal (with a legacy defect).
 #include "cg/core/explorer_sort.h"
 
 #include <QString>
@@ -47,7 +47,7 @@ TEST(CompareStringOrdinal, Vectors) {
         {u"\\"_s, u"/"_s, 1},      // UTF-16 code unit order: 0x5C > 0x2F
         {u"a\\b"_s, u"a;b"_s, 1},
         {u"А"_s, u"а"_s, 0},          // Cyrillic case folding
-        {u"4294967296"_s, u"0"_s, 1}, // L-118: wraps to 0, both zero -> longer run is greater
+        {u"4294967296"_s, u"0"_s, 1}, // Wraps to 0, both zero -> longer run is greater
         {u"4294967296"_s, u"00000000000"_s, -1},
         {u"4294967296"_s, u"1"_s, -1}, // wraps to 0 < 1
         {u"2147483648"_s, u"1"_s, -1}, // wraps to INT_MIN (signed compare)

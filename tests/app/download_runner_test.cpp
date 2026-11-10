@@ -3,18 +3,15 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/app/download_runner (new code; inherits frm_ProgressDownload.pas:268-279, 306-393,
-// 431-437, 586-595 and the policy of docs/specs/app-cli.md 1.8, 1.9, 5.2, 6.1-6.3).
-// Covers: FEAT-REG-018 (progress, pause, resume): contributes only (docs/parity/held-open.md).
+// 431-437, 586-595 and the unattended download policy: progress, pause, resume).
 //
-// New code, so the expectations are the literals of the spec and the ticket (T-0191 proofs 1-7), not Pascal
-// results.
+// New code, so the expected values are the documented outputs, not Pascal results.
 //
 // Rig A: a scripted IRegionProcessProgressInfoDownload behind the IRunStarter seam (no worker thread). The
 // test drives it through counters and through a hook that resume() calls on the polling thread, so a
 // sequence like "pause, resume, pause again without progress" needs no clock and no helper thread. A
 // scripted run is "finished" once it is cancelled (the real worker ends at its next test), or when the test
-// says so.
-// Rig B: the real ProviderTilesDownload with the T-0181 recording subsystem (every request is answered Ok
+// says so. Rig B: the real ProviderTilesDownload with the recording subsystem (every request is answered Ok
 // with 5 bytes on the calling thread) behind the same seam, wrapped as the production starter wraps it.
 // There is no tile cache in Rig B: "the cache holds N tiles" is "N distinct tiles were requested, answered
 // and counted as downloaded". The default starter (ProviderStarter over the AppContext maps) is not reached
@@ -143,6 +140,7 @@ public:
     std::atomic<bool> pausedV{false};
     std::atomic<bool> finishedV{false};
     std::atomic<qint64> streakV{0};
+    cg::region::RefusalCounts refusalsV; // Set before the run starts
     std::atomic<qint64> unavailableRunV{0};
     std::atomic<qint64> inClassV{0};
     std::atomic<qint64> otherV{0};
@@ -210,6 +208,7 @@ public:
         count = workersCountV;
     }
     qint64 connectionErrorStreak() const override { return streakV; }
+    cg::region::RefusalCounts refusalCounts() const override { return refusalsV; }
     cg::region::FrameAnswers frameAnswers() const override { return {unavailableRunV, inClassV, otherV}; }
 };
 
@@ -480,12 +479,12 @@ QDateTime at(int y, int mo, int d, int h, int mi, int s = 0) {
 
 // ---- 0. policy constants -------------------------------------------------------------------------------
 
-// app-cli.md 1.8: wait 5 s, three save retries, 300 s stall; 1.10: one poll a second.
+// Wait 5 s, three save retries, 300 s stall; one poll a second.
 TEST_F(RunnerTest, DefaultPolicyIsTheSpecs) {
     const DownloadPolicy policy;
     EXPECT_EQ(policy.stallTimeoutSec, 300);
     EXPECT_EQ(policy.saveRetries, 3);
-    EXPECT_EQ(policy.maxConnectionErrors, 60); // T-0271
+    EXPECT_EQ(policy.maxConnectionErrors, 60);
     EXPECT_EQ(policy.resumeDelaySec, 5);
     EXPECT_EQ(policy.pollMs, 1000);
 }
@@ -627,8 +626,8 @@ TEST_F(RunnerTest, ZeroStallTimeoutNeverStalls) {
     EXPECT_FALSE(QDir(sessionDir()).exists());
 }
 
-// T-0271 (deviates from L-271): a streak of connection errors stops the run with Stalled, at the limit and
-// not one tile before; 0 never stops.
+// A streak of connection errors stops the run with Stalled, at the limit and not one tile before; 0 never
+// stops.
 TEST_F(RunnerTest, ConnectionErrorStreakAtTheLimitStops) {
     auto lost = std::make_shared<Scripted>();
     lost->say(QStringLiteral("Error connecting to server"));
@@ -660,7 +659,61 @@ TEST_F(RunnerTest, ConnectionErrorStreakBelowTheLimitOrWithZeroLimitDoesNotStop)
     }
 }
 
-// ---- T-0356: the newest young frame is not served --------------------------------------------------------
+// A streak made only of refusals is reported as the server refusing; the refusal check comes before
+// the connection check (both limits are reached in the same poll).
+TEST_F(RunnerTest, RefusalStreakAtTheLimitStopsWithRefusedText) {
+    auto refused = std::make_shared<Scripted>();
+    refused->say(QStringLiteral("Server refused: HTTP 403"));
+    refused->streakV = 60;
+    refused->refusalsV = {60, 60, 0, 403};
+    refused->finishAt = Clock::now() + 2000ms;
+    starter_->prepared = {refused};
+    DownloadPolicy policy = fast();
+    policy.maxConnectionErrors = 60;
+    EXPECT_EQ(run(policy), DownloadOutcome::Stalled);
+    EXPECT_TRUE(refused->cancelled());
+    EXPECT_EQ(sessionFiles(), (QStringList{QStringLiteral("final.sls")}));
+    EXPECT_TRUE(
+        err_.text().contains(QStringLiteral("error: the server refused 60 tiles in a row: HTTP 403")));
+    EXPECT_FALSE(err_.text().contains(QStringLiteral("no connection to the server")));
+}
+
+TEST_F(RunnerTest, MixedStreakKeepsTheConnectionText) {
+    auto mixed = std::make_shared<Scripted>();
+    mixed->say(QStringLiteral("Error connecting to server"));
+    mixed->streakV = 60;
+    mixed->refusalsV = {10, 10, 0, 403};
+    mixed->finishAt = Clock::now() + 2000ms;
+    starter_->prepared = {mixed};
+    DownloadPolicy policy = fast();
+    policy.maxConnectionErrors = 60;
+    EXPECT_EQ(run(policy), DownloadOutcome::Stalled);
+    EXPECT_TRUE(
+        err_.text().contains(QStringLiteral("error: no connection to the server for 60 tiles in a row")));
+    EXPECT_FALSE(err_.text().contains(QStringLiteral("the server refused")));
+}
+
+TEST_F(RunnerTest, LastRefusalsSumsTheSlots) {
+    auto a = std::make_shared<Scripted>();
+    auto b = std::make_shared<Scripted>();
+    a->workersCountV = b->workersCountV = 2;
+    a->workerIndexV = 0;
+    b->workerIndexV = 1;
+    a->refusalsV = {0, 2, 0, 403};
+    b->refusalsV = {0, 1, 3, 401};
+    a->complete();
+    b->complete();
+    starter_->prepared = {a, b};
+    DownloadRunner runner(*app_, console_, job_, {}, fast(), starter_);
+    EXPECT_EQ(runner.run(source(), area_), DownloadOutcome::Completed);
+    const auto sum = runner.lastRefusals();
+    EXPECT_EQ(sum.refused, 3);
+    EXPECT_EQ(sum.notRefused, 3);
+    EXPECT_EQ(sum.streak, 0);
+    EXPECT_TRUE(sum.lastStatus == 403 || sum.lastStatus == 401);
+}
+
+// ---- The newest young frame is not served --------------------------------------------------------
 
 namespace {
 // Completed = the run goes on to its end; Early = the stop comes at once; End = the stop comes when the run
@@ -809,8 +862,7 @@ TEST_F(RunnerTest, TerminationWakesTheWaitAtOnce) {
         err_.text().contains(QStringLiteral("session saved; run the same command again to continue")));
 }
 
-// app.appClosing() is a termination too (region-download.md section 7). Own AppContext: the flag cannot be
-// cleared.
+// app.appClosing() is a termination too. Own AppContext: the flag cannot be cleared.
 TEST_F(RunnerTest, AppClosingIsTermination) {
     QTemporaryDir otherDir;
     const std::unique_ptr<AppContext> other = makeApp(otherDir.path());
@@ -824,10 +876,10 @@ TEST_F(RunnerTest, AppClosingIsTermination) {
 
 // ---- progress and log ----------------------------------------------------------------------------------
 
-// The worker log reaches the console and the progress line is made of the sums over the runs: processed
-// 3 + 4 of 10 + 10, downloaded 2 + 1 tiles, the highest zoom (0-based 6) shown as z7 (legacy shows VZoom + 1,
-// frm_ProgressDownload.pas:321). The line starts with the source's name (app-cli.md 1.10), not with the
-// ResolvedSource name ("Src", the MBTiles name, which `download` leaves empty).
+// The worker log reaches the console and the progress line is made of the sums over the runs: processed 3 + 4
+// of 10 + 10, downloaded 2 + 1 tiles, the highest zoom (0-based 6) shown as z7 (legacy shows VZoom + 1,
+// frm_ProgressDownload.pas:321). The line starts with the source's name, not with the ResolvedSource name
+// ("Src", the MBTiles name, which `download` leaves empty).
 TEST_F(RunnerTest, LogLinesAndTheSummedProgressLineReachTheConsole) {
     auto a = std::make_shared<Scripted>();
     auto b = std::make_shared<Scripted>();
@@ -849,7 +901,7 @@ TEST_F(RunnerTest, LogLinesAndTheSummedProgressLineReachTheConsole) {
     EXPECT_TRUE(text.contains(QStringLiteral("Chart Name  z7  7/20 (35%)  downloaded 3 tiles ")));
 }
 
-// T-0267: the final line is made of the final counters (processed == total): 100%.
+// The final line is made of the final counters (processed == total): 100%.
 TEST_F(RunnerTest, NonTerminalFinalLineCarriesTheFinalCounters) {
     auto a = std::make_shared<Scripted>();
     auto b = std::make_shared<Scripted>();
@@ -869,7 +921,7 @@ TEST_F(RunnerTest, NonTerminalFinalLineCarriesTheFinalCounters) {
     EXPECT_TRUE(last.contains(QStringLiteral("20/20 (100%)"))) << qPrintable(last);
 }
 
-// ---- --progress=lines records (T-0203) ---------------------------------------------------------------
+// ---- --progress=lines records ---------------------------------------------------------------
 
 namespace {
 
@@ -885,8 +937,8 @@ QStringList recordLines(const QString& text, const QString& type) {
 
 } // namespace
 
-// Proof 1-3 (runner part): phase first, the record carries the sums of the runs, the highest zoom 0-based (6,
-// not the 7 of the text line), 0.5 s given in days rounds to 1; no text progress line at all.
+// Runner part: phase first, the record carries the sums of the runs, the highest zoom 0-based (6, not the 7
+// of the text line), 0.5 s given in days rounds to 1; no text progress line at all.
 TEST_F(RunnerTest, LinesModeWritesThePhaseAndTheSummedProgressRecordsOnly) {
     auto a = std::make_shared<Scripted>();
     auto b = std::make_shared<Scripted>();
@@ -933,7 +985,7 @@ TEST_F(RunnerTest, LinesModeElapsedSecondsAreZeroForZeroAndRoundedOtherwise) {
     }
 }
 
-// T-0233: a finished run reports 0 (as the real info does when never paused); the records must not go back.
+// A finished run reports 0 (as the real info does when never paused); the records must not go back.
 TEST_F(RunnerTest, LinesModeElapsedNeverDecreasesAfterTheRunFinishes) {
     auto a = std::make_shared<Scripted>();
     a->elapsedV = 3.0 / 86400.0;
@@ -955,7 +1007,7 @@ TEST_F(RunnerTest, LinesModeElapsedNeverDecreasesAfterTheRunFinishes) {
     EXPECT_EQ(previous, 3); // the last record keeps the value seen while the run was going
 }
 
-// Proof 5: in Auto mode nothing of this is written.
+// In Auto mode nothing of this is written.
 TEST_F(RunnerTest, AutoModeWritesNoRecords) {
     auto a = std::make_shared<Scripted>();
     a->complete();
@@ -1019,7 +1071,7 @@ TEST_F(RunnerTest, MixedRunsGiveTheWorstOutcomeAndSaveOnlyTheFailedOne) {
     EXPECT_TRUE(err_.text().contains(QStringLiteral("error: tile store broke")));
 }
 
-// T-0234: the termination arrives when the last tile is in (every run completed): nothing is interrupted.
+// The termination arrives when the last tile is in (every run completed): nothing is interrupted.
 // Completed, no cancel is needed for the outcome, no "session saved", the session directory is removed.
 TEST_F(RunnerTest, TerminationAfterTheLastTileStillCompletesAndRemovesTheState) {
     auto done = std::make_shared<Scripted>();
@@ -1096,8 +1148,8 @@ TEST_F(RunnerTest, NewestFilePerWorkerPrefixIsResumed) {
     EXPECT_TRUE(err_.text().contains(QStringLiteral("continuing the session of 2023-01-02 03:04:05")));
 }
 
-// T-0202: the time shown is the one of the file before the run started (the run may save over it at once),
-// in `run`'s continue path and in `resume`.
+// The time shown is the one of the file before the run started (the run may save over it at once), in
+// `run`'s continue path and in `resume`.
 TEST_F(RunnerTest, TheContinuingLineShowsTheFileTimeBeforeTheStart) {
     const QString dir = sessionDir();
     touch(dir + QStringLiteral("/01_a.sls"), at(2024, 5, 6, 7, 8, 9));
@@ -1166,7 +1218,7 @@ TEST_F(RunnerTest, UnreadableSessionFileWarnsAndStartsFresh) {
     EXPECT_TRUE(first->cancelled());
 }
 
-// ---- fresh start parameters (ticket step 2) ------------------------------------------------------------
+// ---- fresh start parameters ------------------------------------------------------------
 
 TEST_F(RunnerTest, FreshStartParamsCarryTheJob) {
     job_.zooms = {3, 4};
@@ -1242,7 +1294,7 @@ TEST_F(RunnerTest, ResumeSkipsUnreadableFilesAndRefusesWhenNoneStarts) {
         err_.text().contains(QStringLiteral("error: cannot continue ") + worse + QStringLiteral(": boom")));
 }
 
-// T-0217 item 2: the progress line of `resume` names the session's map, not the file stem ("final").
+// The progress line of `resume` names the session's map, not the file stem ("final").
 TEST_F(RunnerTest, ResumeProgressLineNamesTheSessionsMap) {
     QTemporaryDir dir;
     const QString file = dir.filePath(QStringLiteral("final.sls"));
@@ -1253,9 +1305,9 @@ TEST_F(RunnerTest, ResumeProgressLineNamesTheSessionsMap) {
     EXPECT_FALSE(err_.text().contains(QStringLiteral("final  z")));
 }
 
-// T-0231: a session file whose map GUID cannot be read (a directory in its place: IniFile::fromFile cannot
-// open it, the first return of sessionMapGuid) is still resumed, but --progress=lines writes no record with
-// an empty GUID field: neither phase nor progress.
+// A session file whose map GUID cannot be read (a directory in its place: IniFile::fromFile cannot open it,
+// the first return of sessionMapGuid) is still resumed, but --progress=lines writes no record with an empty
+// GUID field: neither phase nor progress.
 TEST_F(RunnerTest, ResumeLinesModeWritesNoRecordWithAnEmptyGuid) {
     QTemporaryDir dir;
     const QString file = dir.path(); // a directory: the file cannot be opened
@@ -1324,7 +1376,7 @@ TEST_F(RunnerTest, JobIdIsStableAndChangesWithEveryInput) {
     };
     expectNew(changed([](Job& j) { j.zooms = {3, 5}; }), "zoom");
     expectNew(changed([](Job& j) { j.zooms = {3}; }), "zoom count");
-    // T-0245: the id hashes the effective list of the source, not job.zooms
+    // The id hashes the effective list of the source, not job.zooms
     expectNew(DownloadRunner::jobId(job_, *map_, *area_, std::vector<quint8>{3, 6}), "effective zooms");
     EXPECT_EQ(DownloadRunner::jobId(job_, *map_, *area_, std::vector<quint8>{3, 4}), base);
     EXPECT_EQ(DownloadRunner::jobId(changed2(), *map_, *area_, std::vector<quint8>{3, 4}), base);
@@ -1418,7 +1470,7 @@ TEST_F(RunnerTest, RealRunOfNineTilesCompletes) {
                      .exists());
 }
 
-// Proof 2 (real rig): the last progress record equals the final values of the progress info, zoom 0-based.
+// Real rig: the last progress record equals the final values of the progress info, zoom 0-based.
 TEST_F(RunnerTest, RealRunLinesRecordEqualsTheFinalProgressInfo) {
     RigB rig(4);
     auto real = std::make_shared<RealStarter>(rig);
@@ -1446,7 +1498,7 @@ TEST_F(RunnerTest, RealRunLinesRecordEqualsTheFinalProgressInfo) {
     EXPECT_EQ(f[7], QStringLiteral("45"));
 }
 
-// T-0245: the run asks for the zooms of the source (job zooms 3 and 4, the source stops at 3 -> 0-based {3}
+// The run asks for the zooms of the source (job zooms 3 and 4, the source stops at 3 -> 0-based {3}
 // is not the nine tiles of zoom 4: only zoom 3 is requested).
 TEST_F(RunnerTest, RealRunRequestsOnlyTheZoomsOfTheSource) {
     RigB rig(4);
@@ -1495,7 +1547,7 @@ TEST_F(RunnerTest, RealRunWithTwoWorkersCoversTheAreaOnce) {
     EXPECT_EQ(rig.subsystem->requests().size(), 9u);
 }
 
-// T-0450: the job folder a session prefix names (the lock of a resumed file).
+// The job folder a session prefix names (the lock of a resumed file).
 TEST(JobDirOfSessionPrefix, T0450_NamesTheFirstSegmentAndNeverLeavesAutoSave) {
     using namespace Qt::StringLiterals;
     const QString root = QStringLiteral("/d/AutoSave");

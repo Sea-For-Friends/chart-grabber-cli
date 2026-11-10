@@ -6,7 +6,7 @@
 // Ports: i_ReadWriteState.pas, u_ReadWriteStateStatic.pas
 //
 // "May the database be read / written" as an immutable snapshot plus a Changeable that publishes
-// it. The marks module hands one of these to its consumers (docs/specs/marks.md section 1.3).
+// it. The marks module hands one of these to its consumers.
 
 #include "cg/core/changeable.h"
 
@@ -14,7 +14,7 @@
 
 namespace cg::core {
 
-// FEAT-GEO-033. Ports IReadWriteStateStatic / TReadWriteStateStatic.
+// Ports IReadWriteStateStatic / TReadWriteStateStatic.
 struct ReadWriteStateStatic {
     bool readAccess = false;
     bool writeAccess = false;

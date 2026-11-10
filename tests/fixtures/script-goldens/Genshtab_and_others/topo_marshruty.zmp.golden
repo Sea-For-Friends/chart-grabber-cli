@@ -1,4 +1,4 @@
-; T-0015D golden: Genshtab_and_others/topo_marshruty.zmp - GetURLBase ends mid query string.
+; Golden: Genshtab_and_others/topo_marshruty.zmp - GetURLBase ends mid query string.
 ; ResultURL := GetURLBase+IntToStr(GetX)+'&y='+IntToStr(GetY)+'&z='+IntToStr(GetZ-1)
 
 [P1]

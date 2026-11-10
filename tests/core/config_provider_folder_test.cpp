@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-201, FEAT-NET-001 (ZMP folder members, maptype spec 2.2; L-117)
+// ZMP folder members (with a legacy defect).
 #include "cg/core/config_provider_folder.h"
 #include "cg/core/platform/test_support.h"
 
@@ -94,7 +94,7 @@ TEST(FolderValues, EmptyTilesOfStockZmp) {
     EXPECT_FALSE(root->subItemNames().contains(QStringLiteral("EmptyTiles")));
 }
 
-TEST(FolderValues, StrayFileInSampleFolderIsAValue) { // L-117
+TEST(FolderValues, StrayFileInSampleFolderIsAValue) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     writeFile(dir.filePath(QStringLiteral("Thumbs.db")), "x");

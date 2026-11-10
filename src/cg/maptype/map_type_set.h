@@ -58,7 +58,6 @@ public:
     [[nodiscard]] virtual std::unique_ptr<IMapTypeSetBuilder> build(bool allowNil) const = 0;
 };
 
-// FEAT-NET-001 (contributes; held open)
 class MapTypeSetBuilderFactory final : public IMapTypeSetBuilderFactory {
 public:
     [[nodiscard]] std::unique_ptr<IMapTypeSetBuilder> build(bool allowNil) const override;

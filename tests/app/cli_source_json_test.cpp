@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of the `sources` command with a *.source.json source (T-0224 acceptance 4). NEW code, no FEAT id:
-// the expectations are the literals of docs/specs/map-source-json.md 6.1, 6.3 and the row format of
-// tests/app/cli_main_test.cpp (GUID, kind, name, content type, EPSG, cache type, verdict).
+// Tests of the `sources` command with a *.source.json source. NEW code: the expected values are the
+// literals of the *.source.json format description and the row format of tests/app/cli_main_test.cpp
+// (GUID, kind, name, content type, EPSG, cache type, verdict).
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>

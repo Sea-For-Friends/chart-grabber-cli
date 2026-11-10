@@ -28,7 +28,6 @@ enum class ThreadPriority : std::uint8_t {
     TimeCritical = 6,
 };
 
-// FEAT-GEO-034
 class IThreadConfig : public ConfigElement {
 public:
     [[nodiscard]] virtual ThreadPriority priority() const = 0;

@@ -4,8 +4,6 @@
 
 #pragma once
 // Ports: Src/Vector/i_VectorDataFactory.pas
-//
-// FEAT-GEO-037.
 
 #include "cg/geo/geometry_lonlat.h"
 #include "cg/vector/appearance.h"

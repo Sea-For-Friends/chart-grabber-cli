@@ -5,9 +5,9 @@
 #pragma once
 // Ports: Src/MarkPicture/i_MarkPicture.pas
 //
-// Interfaces only; implementations stay in `render` (spec vector.md §2.2.1). The one unit of
-// Src/MarkPicture that lives below `render` because the appearance facets use it.
-// FEAT-GEO-038 (interfaces only). IMarkPictureListInternal.LoadList stays with the implementation.
+// Interfaces only; implementations stay in `render`. The one unit of Src/MarkPicture that lives
+// below `render` because the appearance facets use it. IMarkPictureListInternal.LoadList stays
+// with the implementation.
 
 #include "cg/core/hash.h"
 

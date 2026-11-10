@@ -8,8 +8,8 @@
 // i_LocalCoordConverterFactorySimpe.pas, u_LocalCoordConverterFactorySimpe.pas
 //
 // The renderer's per-frame object: an IProjection, a viewport rect in *local* (widget) pixels, a
-// scale, and the map-pixel coordinate that sits at local (0,0). Immutable snapshot, no locks
-// (§8.1); a new frame gets a new converter, never a mutated one.
+// scale, and the map-pixel coordinate that sits at local (0,0). Immutable snapshot, no locks; a
+// new frame gets a new converter, never a mutated one.
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/hash_seed.h"
@@ -57,8 +57,7 @@ using LocalCoordConverterPtr = std::shared_ptr<const ILocalCoordConverter>;
 
 // u_LocalCoordConverter.pas. Legacy has three classes (TLocalCoordConverter,
 // TLocalCoordConverterNoScaleIntDelta, TLocalCoordConverterNoScale) that differ only in whether
-// they multiply by `scale`; ported as one class with a `scale_ == 1.0` fast path
-// (docs/specs/geo.md §2.7), not three.
+// they multiply by `scale`; ported as one class with a `scale_ == 1.0` fast path, not three.
 class LocalCoordConverter final : public ILocalCoordConverter {
 public:
     LocalCoordConverter(core::HashValue hash, RectI localRect, RectI rectInMapPixel,
@@ -109,8 +108,8 @@ private:
     DoublePoint mapPixelAtLocalZero_;
 };
 
-// i_LocalCoordConverterFactory.pas (3 methods) + i_LocalCoordConverterFactorySimpe.pas (10
-// methods, minus the legacy unit-name typo) merged into one factory (docs/specs/geo.md §2.7.1).
+// i_LocalCoordConverterFactory.pas (3 methods) + i_LocalCoordConverterFactorySimpe.pas (10 methods,
+// minus the legacy unit-name typo) merged into one factory.
 class LocalCoordConverterFactory {
 public:
     explicit LocalCoordConverterFactory(HashSeed hash);
@@ -124,14 +123,14 @@ public:
 
     [[nodiscard]] LocalCoordConverterPtr createForTile(ProjectionPtr projection, PointI tile) const;
 
-    // Spec §2.7.1 types `src` as `const ILocalCoordConverter&`, mirroring the legacy
-    // `const ASource: ILocalCoordConverter` parameter. Legacy's "no change needed" paths
+    // A signature mirroring the legacy `const ASource: ILocalCoordConverter` parameter would take
+    // `src` as `const ILocalCoordConverter&`. Legacy's "no change needed" paths
     // (`Result := ASource; Exit;`) return the SAME refcounted interface, which Delphi extends for
     // free; a C++ reference cannot be turned back into a shared_ptr without either UB or a
     // non-owning alias that dangles once the caller's own shared_ptr is dropped. `src` is
     // therefore taken by `const LocalCoordConverterPtr&` here -- a disclosed, safety-motivated
-    // deviation from the spec's literal signature (see docs/handoffs/T-0016.md); the behavior is
-    // unchanged, only the ownership is made explicit.
+    // deviation from that signature; the behavior is unchanged, only the ownership is made
+    // explicit.
     [[nodiscard]] LocalCoordConverterPtr changeCenterLonLat(const LocalCoordConverterPtr& src,
                                                             LonLat c) const;
     [[nodiscard]] LocalCoordConverterPtr changeByLocalDelta(const LocalCoordConverterPtr& src,

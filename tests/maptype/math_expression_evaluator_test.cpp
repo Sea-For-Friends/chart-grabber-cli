@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-004. Ports u_MathExpressionEvaluator.pas; docs/specs/maptype.md 2.8, 7.3
-// (trailing-text and failure cases; no legacy test exists, vectors derived by hand from the Pascal).
+// Ports u_MathExpressionEvaluator.pas, with the trailing-text and failure cases (no legacy test
+// exists, vectors derived by hand from the Pascal).
 #include "cg/maptype/math_expression_evaluator.h"
 
 #include <QString>
@@ -35,7 +35,7 @@ TEST(MathExpressionEvaluator, VectorsForTileX200Y300Z18) {
         {u"x*y", u"60000"},
         {u"x", u"200"},
         {u"2*3+4*5", u"26"},
-        // trailing text is not an error: evaluation stops where the expression cannot continue (L-137)
+        // trailing text is not an error: evaluation stops where the expression cannot continue
         {u"z + 1", u"18"},
         {u"x*2abc", u"400"},
         {u"x y", u"200"},

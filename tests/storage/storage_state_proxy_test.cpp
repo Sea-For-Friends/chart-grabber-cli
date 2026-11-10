@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports i_StorageStateProxy.pas, u_StorageStateProxy.pas; docs/specs/storage.md §2.22.2 (ticket T-0136, P-4c)
+// Ports i_StorageStateProxy.pas, u_StorageStateProxy.pas
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"

@@ -3,10 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/region_process_progress_info_download
-// (Src/RegionProcess/u_RegionProcessProgressInfoDownload.pas :128-506).
-// FEAT-REG-013 (start paused) and FEAT-REG-018 (progress, pause, resume): contribute only.
-// saveState route: DownloadSession::save is still the T-0164 placeholder, so the session behind the
-// progress object is a forwarding fake (below) that records the call of save.
+// (Src/RegionProcess/u_RegionProcessProgressInfoDownload.pas :128-506). saveState route: the
+// session behind the progress object is a forwarding fake (below) that records the call of save.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/log_ring_buffer.h"
@@ -97,7 +95,7 @@ struct Rig {
 
 } // namespace
 
-// Proof 1: :147-161. Distinct literals for each argument.
+// :147-161. Distinct literals for each argument.
 TEST(RegionProcessProgressInfoDownload, AddDownloadedTileThenProcessedTile) {
     Rig r(false);
     r.info->addDownloadedTile({3, 4}, 700);
@@ -128,7 +126,7 @@ TEST(RegionProcessProgressInfoDownload, AddManyProcessedTileAddsCount) {
     EXPECT_EQ(r.info->processed(), 6);
 }
 
-// Proofs 1 and 3: :177-188 and :399-417.
+// :177-188 and :399-417.
 TEST(RegionProcessProgressInfoDownload, LastTileInfoSizeAndNotNecessaryTile) {
     Rig r(false);
     r.info->setZoom(10);
@@ -162,7 +160,7 @@ TEST(RegionProcessProgressInfoDownload, LastTileInfoSizeAndNotNecessaryTile) {
     EXPECT_EQ(size, 0);
 }
 
-// Proof 2: :297-313.
+// :297-313.
 TEST(RegionProcessProgressInfoDownload, ProcessedRatio) {
     Rig r(false);
     r.info->addManyProcessedTile({0, 0}, 3);
@@ -188,7 +186,7 @@ TEST(RegionProcessProgressInfoDownload, ProcessedRatio) {
     EXPECT_EQ(z.info->processedRatio(), 1.0);
 }
 
-// Proof 4: :128-145, :257-265, :434-462, :464-473.
+// :128-145, :257-265, :434-462, :464-473.
 TEST(RegionProcessProgressInfoDownload, PauseSemantics) {
     Rig r(true);
     EXPECT_TRUE(r.info->isPaused());
@@ -215,7 +213,7 @@ TEST(RegionProcessProgressInfoDownload, PauseSemantics) {
     EXPECT_TRUE(s.info->isPaused());
 }
 
-// Proof 5: :233-245, :464-484, :203-211.
+// :233-245, :464-484, :203-211.
 TEST(RegionProcessProgressInfoDownload, ElapsedTimeWithClock) {
     Rig r(false); // startTime = 100.0
     r.inner->setElapsedTime(2.0);
@@ -232,13 +230,13 @@ TEST(RegionProcessProgressInfoDownload, ElapsedTimeWithClock) {
     r.clock = 103.25;
     EXPECT_EQ(r.info->elapsedTime(), 2.75);
 
-    // LR-1 neighbour: finish() does NOT fold the stretch in, the value drops to the session total.
+    // finish() does NOT fold the stretch in, the value drops to the session total.
     r.info->finish();
     EXPECT_EQ(r.info->elapsedTime(), 2.5);
     EXPECT_EQ(r.inner->elapsedTime(), 2.5);
 }
 
-// Proof 5, DEVIATION L-266 (deviations.md, T-0274): saveState folds the stretch in once and restarts it.
+// DEVIATION: saveState folds the stretch in once and restarts it.
 TEST(RegionProcessProgressInfoDownload, SaveStateWhileRunningCountsStretchOnce) {
     Rig r(false); // startTime = 100.0
     r.inner->setElapsedTime(1.0);
@@ -257,7 +255,7 @@ TEST(RegionProcessProgressInfoDownload, SaveStateWhileRunningCountsStretchOnce) 
     EXPECT_EQ(r.session->saveCalls, 2);
 }
 
-// Proof 5, DEVIATION L-266 (T-0274): three saves one unit apart while running add exactly three units.
+// DEVIATION: three saves one unit apart while running add exactly three units.
 TEST(RegionProcessProgressInfoDownload, SaveStateWhileRunningAddsEachStretchExactlyOnce) {
     Rig r(false); // startTime = 100.0
     r.inner->setElapsedTime(1.0);
@@ -299,7 +297,7 @@ TEST(RegionProcessProgressInfoDownload, SaveStateTestsNeedPause) {
     EXPECT_EQ(c.inner->elapsedTime(), 0.0);
 }
 
-// Proof 6: :369-397 forwarding and :315-357, :486-506 round trips with distinct values.
+// :369-397 forwarding and :315-357, :486-506 round trips with distinct values.
 TEST(RegionProcessProgressInfoDownload, ForwardsToSession) {
     auto session = std::make_shared<DownloadSession>(
         nullptr, nullptr, nullptr, 7, std::vector<quint8>{3, 5, 7}, nullptr, false, cg::storage::TileDate{},
@@ -334,14 +332,14 @@ TEST(RegionProcessProgressInfoDownload, ForwardsToSession) {
     EXPECT_EQ(p, kUnset);
 }
 
-// Proof 7: :267-275.
+// :267-275.
 TEST(RegionProcessProgressInfoDownload, LogAndLogProviderReturnTheBuffer) {
     Rig r(false);
     EXPECT_EQ(r.info->log(), r.log);
     EXPECT_EQ(r.info->logProvider(), r.log);
 }
 
-// Proof 8: one writer, three readers on every getter. Proves consistent counters and a quiet TSan;
+// One writer, three readers on every getter. Proves consistent counters and a quiet TSan;
 // nothing about the clock (constant here).
 TEST(RegionProcessProgressInfoDownload, WriterAndReadersKeepCountersConsistent) {
     constexpr int kCalls = 3000;
@@ -412,8 +410,8 @@ TEST(RegionProcessProgressInfoDownload, WriterAndReadersKeepCountersConsistent) 
     EXPECT_EQ(info.zoom(), 5);
 }
 
-// T-0271 (no legacy counterpart): the streak of connection errors counts up, one answer resets it, and
-// it never reaches the session (nothing of it is saved; no counter of the session moves).
+// No legacy counterpart: the streak of connection errors counts up, one answer resets it, and it never
+// reaches the session (nothing of it is saved; no counter of the session moves).
 TEST(RegionProcessProgressInfoDownload, ConnectionErrorStreakCountsAndResets) {
     Rig r(false);
     EXPECT_EQ(r.info->connectionErrorStreak(), 0);
@@ -434,8 +432,23 @@ TEST(RegionProcessProgressInfoDownload, ConnectionErrorStreakCountsAndResets) {
     EXPECT_EQ(r.session->saveCalls, 1);
 }
 
-// T-0356 (no legacy counterpart): Unavailable answers count in a row (any other answer restarts that run);
-// the class total and the answers outside it only grow.
+// No legacy counterpart: refusals count in a row and in total; any other answer ends the streak.
+TEST(RegionProcessProgressInfoDownload, RefusalCountsStreakResetsOnOtherAnswers) {
+    Rig r(false);
+    for (int i = 0; i < 3; ++i) {
+        r.info->noteRefusal(true, 403);
+    }
+    r.info->noteRefusal(false, 200);
+    r.info->noteRefusal(true, 401);
+    const cg::region::RefusalCounts counts = r.info->refusalCounts();
+    EXPECT_EQ(counts.streak, 1);
+    EXPECT_EQ(counts.refused, 4);
+    EXPECT_EQ(counts.notRefused, 1);
+    EXPECT_EQ(counts.lastStatus, 401u);
+}
+
+// No legacy counterpart: Unavailable answers count in a row (any other answer restarts that run); the
+// class total and the answers outside it only grow.
 TEST(RegionProcessProgressInfoDownload, FrameAnswersCountTheRunTheClassAndTheOthers) {
     using cg::region::FrameAnswer;
     Rig r(false);

@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // New code (no legacy unit). Inherits: fr_ExportMBTiles.pas:550-573 (texts), :375-418 (via
-// region::directTilesCopy); fr_TilesDownload.pas:428-431 (via region::allowDownload); region-export.md
-// section 9.
+// region::directTilesCopy); fr_TilesDownload.pas:428-431 (via region::allowDownload).
 #include "cg/app/job_checks.h"
 
 #include "cg/app/app_context.h"
@@ -46,7 +45,7 @@ struct Tr {
 };
 
 constexpr int kExitRefused = 3;
-constexpr quint8 kMaxExportZoom = 21; // C-9, 0-based
+constexpr quint8 kMaxExportZoom = 21; // 0-based
 
 std::unexpected<CliError> refused(QString message) {
     return std::unexpected(CliError{kExitRefused, std::move(message)});
@@ -56,7 +55,7 @@ QString quoted(const QString& text) {
     return QStringLiteral("\"%1\"").arg(text);
 }
 
-// The file name of the .zmp without directory and without the .zmp (or .source.json, T-0362) extension.
+// The file name of the .zmp without directory and without the .zmp (or .source.json) extension.
 QString zmpStem(const maptype::IMapType& map) {
     QString base = QFileInfo(map.zmp()->fileName()).fileName();
     if (base.endsWith(QLatin1String(".zmp"), Qt::CaseInsensitive)) {
@@ -93,7 +92,7 @@ QString lowerBase(const QString& text) {
     return text.toLower();
 }
 
-// Output files of app-cli.md 1.5.
+// Checks of the output files.
 bool isDirectoryName(const QString& out) {
     return out.endsWith(u'/') || QFileInfo(out).isDir();
 }
@@ -110,7 +109,7 @@ bool hasMbtilesExtension(const QString& file) {
     return file.endsWith(QLatin1String(".mbtiles"), Qt::CaseInsensitive);
 }
 
-// S-10 for one file.
+// The output-file check for one file.
 std::optional<QString> refusalForOutput(const QString& file, bool overwrite) {
     if (!hasMbtilesExtension(file)) {
         return Tr::tr("the output file name %1 does not end with .mbtiles").arg(quoted(file));
@@ -180,13 +179,13 @@ std::optional<QString> refusalForExport(const maptype::IMapType& map, const Job&
     const core::ContentTypeInfo* info = map.contentType();
     // The key legacy reads: IMapType.ContentType (fr_ExportMBTiles.pas:390,
     // GetMBTilesContentType(AMapType.ContentType)). Null is unreachable in legacy (the MapType constructor
-    // throws first, map_type.cpp:82); no register row.
+    // throws first, map_type.cpp:82).
     const region::MbtilesContentType type =
         info != nullptr ? region::mbtilesContentType(info->type) : region::MbtilesContentType::Unknown;
     const int epsg = map.projectionSet()->zoom(0)->projectionType()->projectionEpsg();
 
     std::optional<QString> reason;
-    bool structural = true; // S-4, S-5 or S-6 (unknown type): what directTilesCopy refuses on its own
+    bool structural = true; // What directTilesCopy refuses on its own
     if (!map.isBitmapTiles()) {
         reason = Tr::tr("%1 does not hold bitmap tiles").arg(quoted(sourceName(map)));
     } else if (type == region::MbtilesContentType::Unknown) {
@@ -217,7 +216,6 @@ std::optional<QString> refusalForExport(const maptype::IMapType& map, const Job&
         return reason;
     }
 
-    // S-7 (C-9)
     for (const quint8 zoom : job.zooms) {
         if (zoom > kMaxExportZoom) {
             return Tr::tr("zoom %1 is above %2 (0-based)").arg(zoom).arg(kMaxExportZoom);
@@ -232,17 +230,16 @@ std::optional<QString> refusalForExport(const maptype::IMapType& map, const Job&
 }
 
 std::optional<QString> refusalForDownload(const maptype::IMapType& map) {
-    // S-8: T-0159 refuses crop / cut at save time, this refuses at start.
+    // The tile saver refuses crop / cut at save time; this refuses at start.
     const auto crop = map.zmp()->tilePostDownloadCropConfig();
     if (crop && (crop->isCropOnDownload() || crop->isCutOnDownload())) {
         return Tr::tr("%1 has crop or cut after download switched on; this is not supported")
             .arg(quoted(sourceName(map)));
     }
-    // S-9
     if (!map.abilities()->useDownload()) {
         return Tr::tr("downloads are disabled for this map");
     }
-    // T-0366 (port extension): a JavaScript source that does not load is turned off here, with its reason.
+    // Port extension: a JavaScript source that does not load is turned off here, with its reason.
     map.tileDownloadSubsystem()->checkRequestBuilder();
     if (!region::allowDownload(map)) {
         if (!map.storageConfig()->allowAdd()) {
@@ -255,10 +252,10 @@ std::optional<QString> refusalForDownload(const maptype::IMapType& map) {
     return std::nullopt;
 }
 
-// S-16 (T-0277, app-cli.md 1.7). DEVIATION (T-0277, L-18): a refusal guard; the count itself stays
-// legacy (tile_count.cpp wrappingRectArea). The check uses the projected bounds of the WHOLE area, a
-// sufficient (conservative) bound, not the per-part rectangle legacy multiplies (u_GeometryFunc.pas:757,
-// 790). The rectangle is outside rounding: floor of the left and top, ceil of the right and bottom.
+// DEVIATION: a refusal guard; the count itself stays legacy (tile_count.cpp wrappingRectArea). The check
+// uses the projected bounds of the WHOLE area, a sufficient (conservative) bound, not the per-part
+// rectangle legacy multiplies (u_GeometryFunc.pas:757, 790). The rectangle is outside rounding: floor of
+// the left and top, ceil of the right and bottom.
 std::optional<QString> refusalForAreaSize(const maptype::IMapType& map,
                                           const geo::IGeometryLonLatPolygon& area,
                                           std::span<const quint8> zooms) {
@@ -295,7 +292,7 @@ std::optional<QString> refusalForSnapshot(const maptype::IMapType& map) {
         return Tr::tr("%1: the snapshot keys are invalid: %2")
             .arg(quoted(sourceName(map)), definition.error().what());
     }
-    if (const auto limit = maxZoom(map); !limit) { // T-0245, every source
+    if (const auto limit = maxZoom(map); !limit) { // Every source
         return Tr::tr("%1: %2").arg(quoted(sourceName(map)), limit.error().what());
     }
     if (!*definition) {
@@ -311,10 +308,10 @@ std::optional<QString> refusalForSnapshot(const maptype::IMapType& map) {
 }
 
 namespace {
-// S-15 (T-0275): can the cache be written at `path`? Nothing is created. One trailing '/' is dropped as
-// prepareFileName does (u_TileStorageSQLiteFileConnectionBuilder.pas:210-212): the path of a single-file
-// cache (CacheType 72-76 with an extension) is the file itself. The nearest existing entry must be writable,
-// and an ancestor must not be a regular file.
+// Can the cache be written at `path`? Nothing is created. One trailing '/' is dropped as prepareFileName
+// does (u_TileStorageSQLiteFileConnectionBuilder.pas:210-212): the path of a single-file cache (CacheType
+// 72-76 with an extension) is the file itself. The nearest existing entry must be writable, and an ancestor
+// must not be a regular file.
 bool cacheLocationWritable(QString path) {
     if (path.size() > 1 && path.endsWith(u'/')) {
         path.chop(1);
@@ -346,13 +343,12 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
         return std::vector<ResolvedSource>{};
     }
 
-    // T-0283 (app-cli.md 1.7): export uses the frame stored by the last download, a time is no input of it
+    // Export uses the frame stored by the last download, a time is no input of it
     if (job.command == Command::Export && job.time) {
         return refused(
             Tr::tr("--time is not accepted by export: export uses the frame stored by the last download"));
     }
 
-    // S-1
     const maptype::IMapTypeSetPtr maps = app.fullMapsSet();
     if (!maps || maps->count() == 0) {
         QStringList folders;
@@ -362,7 +358,7 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
         return refused(Tr::tr("no map source is loaded from %1").arg(folders.join(QStringLiteral(", "))));
     }
 
-    // S-3, in the order of fr_ExportMBTiles.pas:554-570. parseJob (job.cpp checkJob) already refuses an empty
+    // In the order of fr_ExportMBTiles.pas:554-570. parseJob (job.cpp checkJob) already refuses an empty
     // --out and a job without a source with exit 2; they are kept for a Job built by hand.
     if (exports && job.out.trimmed().isEmpty()) {
         return refused(Tr::tr("Output file name is not set or incorrect!"));
@@ -373,7 +369,7 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
     if (job.source.isEmpty() && job.overlay.isEmpty()) {
         return refused(Tr::tr("Please select at least one map or overlay layer"));
     }
-    // S-11 (C-14): given texts
+    // Given texts
     if (exports) {
         const QPair<const char*, QString> given[] = {
             {"--name", job.name}, {"--description", job.description}, {"--attribution", job.attribution}};
@@ -395,8 +391,7 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
             return std::unexpected(found.error());
         }
         const maptype::IMapTypePtr& map = *found;
-        // S-15, every command (T-0275, L-44): the facade builds its backend in its constructor, so the cause
-        // is there already.
+        // Every command: the facade builds its backend in its constructor, so the cause is there already.
         if (const auto cache = map->tileStorage()) { // never null for a MapType
             if (const auto reason = refusalForCacheBuild(*cache, sourceName(*map))) {
                 return refused(*reason);
@@ -415,8 +410,8 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
             if (const auto reason = refusalForDownload(*map)) {
                 return refused(*reason);
             }
-            // S-15 (T-0275, L-44): the sqlite / file backends open their files at the first save, so a
-            // location that cannot be written shows only after --save-retries. Nothing is created here.
+            // The sqlite / file backends open their files at the first save, so a location that cannot
+            // be written shows only after --save-retries. Nothing is created here.
             if (const auto* facade =
                     dynamic_cast<const storage::TileStorageOfMapType*>(map->tileStorage().get())) {
                 const QString folder = facade->path();
@@ -426,11 +421,11 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
                 }
             }
         }
-        if (const auto reason = refusalForSnapshot(*map)) { // S-14, every command
+        if (const auto reason = refusalForSnapshot(*map)) { // Every command
             return refused(*reason);
         }
-        // T-0283 (app-cli.md 1.7): --time needs a snapshot source of the wmts-default type. The definition is
-        // valid: refusalForSnapshot has accepted it.
+        // --time needs a snapshot source of the wmts-default type. The definition is valid:
+        // refusalForSnapshot has accepted it.
         if (job.time) {
             const auto definition = snapshotDefinition(*map).value_or(std::nullopt);
             if (!definition || definition->type != SnapshotIndexType::WmtsDefault) {
@@ -438,8 +433,8 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
             }
         }
         ResolvedSource source{map, asOverlay, {}, {}, {}, {}, {}};
-        // T-0245 (weather-sources.md 6): the zooms above the source's MaxZoom are skipped. refusalForSnapshot
-        // has accepted the key, so the value is there.
+        // The zooms above the source's MaxZoom are skipped. refusalForSnapshot has accepted the key, so the
+        // value is there.
         source.zooms = job.zooms;
         if (const std::optional<quint8> limit = maxZoom(*map).value_or(std::nullopt)) {
             QStringList skipped;
@@ -475,7 +470,7 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
                 }
             }
             // Attribution: --attribution (trimmed as the frame does, :341-344), else the License text of the
-            // source's ZMP in the current language (T-0222; legacy leaves the field empty, D row).
+            // source's ZMP in the current language (legacy leaves the field empty).
             source.attribution = job.attribution.trimmed();
             if (source.attribution.isEmpty()) {
                 const core::IStringByLanguagePtr license = map->zmp()->license();
@@ -495,12 +490,12 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
         result.push_back(std::move(source));
     }
 
-    // S-13 (no tile at any zoom) is checked by the caller with the estimate (tile_estimate.h anyTile).
+    // A source with no tile at any zoom is checked by the caller with the estimate (tile_estimate.h anyTile).
     if (!exports) {
         return result;
     }
 
-    // Output files, app-cli.md 1.5. The base first, then the overlay.
+    // Output files. The base first, then the overlay.
     const ResolvedSource* base = nullptr;
     for (ResolvedSource& source : result) {
         if (!source.asOverlay) {
@@ -522,7 +517,6 @@ resolveJob(const Job& job, const AppContext& app, const std::function<void(const
             source.outFile = outputFile(job.out, *source.map);
         }
     }
-    // S-10
     for (const ResolvedSource& source : result) {
         if (const auto reason = refusalForOutput(source.outFile, job.overwrite)) {
             return refused(*reason);

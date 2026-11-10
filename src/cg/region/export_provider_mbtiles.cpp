@@ -18,7 +18,7 @@ ExportProviderMbtiles::ExportProviderMbtiles(
     std::shared_ptr<const geo::TileIteratorFactory> tileIteratorFactory)
     : tileIteratorFactory_(std::move(tileIteratorFactory)) {}
 
-// FEAT-REG-069 (contributed to: the direct-copy branch of the export task; the recompose branch is absent)
+// The direct-copy branch of the export task; the recompose branch is absent
 std::shared_ptr<IRegionProcessTask>
 ExportProviderMbtiles::prepareTask(const ExportMbtilesParams& p,
                                    std::shared_ptr<const geo::IGeometryLonLatPolygon> polygon,

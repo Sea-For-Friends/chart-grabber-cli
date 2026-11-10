@@ -4,12 +4,10 @@
 
 #pragma once
 // Ports: Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas:41-127 and :138-147 (the loader, its six
-// subclasses, the saver base, the BMP and PNG savers) and :195-346, :350-511, :532-556 (their bodies)
-// (docs/specs/bitmap.md §2.5). FreeImage itself is not used: the loaders are QImageReader, the PNG saver
-// is libpng, the BMP saver is hand-written (T-0177). The WebP savers (libwebp) and the refusing GIF and TIFF
-// savers are T-0162 (:129-136, :149-174, :515-528, :560-611), their bodies are in
-// bitmap_tile_free_image_webp.cpp. Feature: FEAT-RND-041 (the loader base shares this id with the PNG saver),
-// FEAT-RND-038 (BMP saver), FEAT-RND-044 (WebP savers), FEAT-RND-039 (GIF saver), FEAT-RND-043 (TIFF saver)
+// subclasses, the saver base, the BMP and PNG savers) and :195-346, :350-511, :532-556 (their bodies).
+// FreeImage itself is not used: the loaders are QImageReader, the PNG saver is libpng, the BMP saver is
+// hand-written. The WebP savers (libwebp) and the refusing GIF and TIFF savers (:129-136, :149-174, :515-528,
+// :560-611) have their bodies in bitmap_tile_free_image_webp.cpp.
 //
 // No state between calls: one object may be used from several threads.
 
@@ -23,12 +21,11 @@
 
 namespace cg::bitmap {
 
-// FEAT-RND-041
 class BitmapTileFreeImageLoader : public IBitmapTileLoader { // TBitmapTileFreeImageLoader
 public:
     explicit BitmapTileFreeImageLoader(std::shared_ptr<const IBitmap32StaticFactory> staticFactory);
 
-    // The bytes are sniffed, the format this loader is registered for is never used (the L row of T-0161).
+    // The bytes are sniffed, the format this loader is registered for is never used (a legacy defect).
     // Returns nullptr when the buffer factory refuses the size (:230-234); throws BitmapCodecError.
     [[nodiscard]] Bitmap32StaticPtr load(const QByteArray& data) const override;
 
@@ -77,7 +74,6 @@ private:
     quint8 bitsPerPixel_; // FBitPerPixel
 };
 
-// FEAT-RND-038
 class BitmapTileFreeImageSaverBmp final : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverBmp
 public:
     BitmapTileFreeImageSaverBmp();
@@ -86,7 +82,6 @@ public:
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 
-// FEAT-RND-041
 class BitmapTileFreeImageSaverPng final : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverPng
 public:
     // compress 0 = no compression, 1..9 = zlib level, else BitmapCodecError; bitsPerPixel 24 or 32
@@ -97,7 +92,6 @@ public:
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 
-// FEAT-RND-044
 class BitmapTileFreeImageSaverWebp final : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverWebp
 public:
     // quality 1..100, else BitmapCodecError("Invalid WebP quality value: <n>") (:566-568)
@@ -107,7 +101,6 @@ public:
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 
-// FEAT-RND-044
 class BitmapTileFreeImageSaverWebpLossless final
     : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverWebpLossless
 public:
@@ -117,21 +110,19 @@ public:
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 
-// FEAT-RND-039
 class BitmapTileFreeImageSaverGif final : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverGif
 public:
     BitmapTileFreeImageSaverGif();
 
-    // Always throws BitmapCodecError("GIF saver is not ported") (the D row of T-0162).
+    // Always throws BitmapCodecError("GIF saver is not ported") (a deviation from legacy).
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 
-// FEAT-RND-043
 class BitmapTileFreeImageSaverTiff final : public BitmapTileFreeImageSaver { // TBitmapTileFreeImageSaverTiff
 public:
     BitmapTileFreeImageSaverTiff(quint32 compressionType, int bitsPerPixel);
 
-    // Always throws BitmapCodecError("TIFF saver is not ported") (the D row of T-0162).
+    // Always throws BitmapCodecError("TIFF saver is not ported") (a deviation from legacy).
     [[nodiscard]] QByteArray save(const Bitmap32StaticPtr& bitmap) const override;
 };
 

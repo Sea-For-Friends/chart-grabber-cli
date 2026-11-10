@@ -11,7 +11,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-207
 class IStringConfigDataElement : public ConfigElement {
 public:
     [[nodiscard]] virtual QString value() const = 0;

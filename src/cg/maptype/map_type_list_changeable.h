@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: i_MapTypeListChangeable.pas (the interface only; u_MapTypeListChangeableActiveBitmapLayers.pas
-//        is a later ticket, spec maptype.md section 2.11.8)
+//        is not ported yet)
 
 #include "cg/core/changeable.h"
 #include "cg/maptype/map_type_list.h"

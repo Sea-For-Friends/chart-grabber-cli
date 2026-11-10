@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (T-0146). Ports MapType/u_MapTypeSetChangeableBySourceSetWithFilter.pas; the ticket
-// docs/backlog/T-0146-*.md is the specification (maptype.md 2.11.8 is an outline).
+// Ports MapType/u_MapTypeSetChangeableBySourceSetWithFilter.pas.
 #include "cg/core/string_by_language.h"
 #include "cg/maptype/map_type_set_changeable_by_source_set_with_filter.h"
 
@@ -202,8 +201,8 @@ template <class T> std::shared_ptr<T> makeFiltered(const std::shared_ptr<TestSou
     return filtered;
 }
 
-// Proof 1. u_MapTypeSetChangeableBySourceSetWithFilter.pas:95 builds from the subclass filter (:118), in
-// source order (:114-121). Source order is given mixed on purpose.
+// u_MapTypeSetChangeableBySourceSetWithFilter.pas:95 builds from the subclass filter (:118), in source
+// order (:114-121). Source order is given mixed on purpose.
 TEST(MapTypeSetChangeableBySourceSetWithFilter, InitialContentIsFilteredInSourceOrderForEachClass) {
     const auto source = std::make_shared<TestSource>(makeSet({
         kmlMap(2),            // kml
@@ -227,7 +226,7 @@ TEST(MapTypeSetChangeableBySourceSetWithFilter, NullSourceGivesEmptyStatic) {
     EXPECT_EQ(makeFiltered<MapTypeSetChangeableBySourceSetWithFilterBitmap>(source)->getStatic(), nullptr);
 }
 
-// Proof 2 (:142-186), bitmap filter.
+// Bitmap filter (:142-186).
 TEST(MapTypeSetChangeableBySourceSetWithFilter, ChangeTable) {
     struct Row {
         const char* name;
@@ -272,8 +271,8 @@ TEST(MapTypeSetChangeableBySourceSetWithFilter, ChangeTable) {
     }
 }
 
-// Proof 3: the remembered source is replaced by every change (:176), so the next change is judged against
-// the previous NEW set. Step 1 is a "0" row (a non-matching map appears), step 2 removes it again and adds a
+// The remembered source is replaced by every change (:176), so the next change is judged against the
+// previous NEW set. Step 1 is a "0" row (a non-matching map appears), step 2 removes it again and adds a
 // matching one.
 TEST(MapTypeSetChangeableBySourceSetWithFilter, TwoStepRowJudgesAgainstTheLatestSource) {
     const auto b1 = bitmapMap(1);
@@ -335,8 +334,8 @@ TEST(MapTypeSetChangeableBySourceSetWithFilter, VectorAndLicenseFiltersDriveChan
     }
 }
 
-// Proof 4: the notification fires after the lock is released (:183-185). A listener calling getStatic() must
-// return and see the NEW static. A hang is a FAIL through the watchdog, not a stuck test run.
+// The notification fires after the lock is released (:183-185). A listener calling getStatic() must return
+// and see the NEW static. A hang is a FAIL through the watchdog, not a stuck test run.
 TEST(MapTypeSetChangeableBySourceSetWithFilter, NotificationIsFiredOutsideTheLock) {
     struct State {
         std::shared_ptr<TestSource> source = std::make_shared<TestSource>(makeSet({bitmapMap(1)}));
@@ -360,8 +359,8 @@ TEST(MapTypeSetChangeableBySourceSetWithFilter, NotificationIsFiredOutsideTheLoc
     EXPECT_EQ(state->seen, (std::vector<QUuid>{id(1), id(2)}));
 }
 
-// Proof 5 (:194, :203, :211-214): the filters. The licence is the DEFAULT-language text (element 0); a null
-// map is out. A null item needs an allowNil source set.
+// The filters (:194, :203, :211-214). The licence is the DEFAULT-language text (element 0); a null map is
+// out. A null item needs an allowNil source set.
 TEST(MapTypeSetChangeableBySourceSetWithFilter, LicenseFilterReadsTheDefaultText) {
     struct Row {
         const char* name;
@@ -403,8 +402,8 @@ TEST(MapTypeSetChangeableBySourceSetWithFilter, DestructorRemovesTheListener) {
     EXPECT_EQ(source->changed().subscriberCount(), 0U);
 }
 
-// Proof 6. TSan: getStatic() on one thread while the source changes on another. The two threads meet at a
-// barrier in the middle of their loops, so both are alive for the second halves (overlap asserted by the
+// TSan: getStatic() on one thread while the source changes on another. The two threads meet at a barrier
+// in the middle of their loops, so both are alive for the second halves (overlap asserted by the
 // barrier); every observed static is one of the two consistent contents.
 TEST(MapTypeSetChangeableBySourceSetWithFilter, GetStaticWhileTheSourceChanges) {
     const auto b1 = bitmapMap(1);

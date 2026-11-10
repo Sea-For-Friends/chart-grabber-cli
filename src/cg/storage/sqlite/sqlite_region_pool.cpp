@@ -16,8 +16,8 @@ struct RegionEntry {
     core::Mutex mutex; // ports FFixSync: held for the whole of every operation on this file
     std::unique_ptr<SqliteRegionHandler> handler;
     bool notFound = false;    // ports FDBNotFound
-    bool fixed = false;       // z1-z11 entry (L-94)
-    QString openError;        // T-0276: why the last open of this file failed (empty: it did not fail)
+    bool fixed = false;       // z1-z11 entry
+    QString openError;        // Why the last open of this file failed (empty: it did not fail)
     bool initialized = false; // ports FOpState >= 2 (fixed entries only)
     bool cachedNil = false;   // fixed entry in state 2 whose open failed or was cancelled: run() returns nil
     bool dead = false;        // erased from the map by the sweep; a waiter must look the entry up again
@@ -146,16 +146,15 @@ SqliteRegionHandler* SqliteRegionPool::handlerLocked(RegionEntry& entry, const Q
         }
     }
     if (fixed) {
-        // Deviation of T-0211 (docs/parity/deviations.md; legacy L-94(a)): legacy leaves the entry in state 0
-        // while FDBNotFound is set (:529-530), so reads find nothing until the next write; here a creating
-        // write that produced a handler initialises it. A failed create stays "not initialized" as in legacy.
+        // A deviation from legacy for a legacy defect: legacy leaves the entry in state 0 while FDBNotFound
+        // is set (:529-530), so reads find nothing until the next write; here a creating write that produced
+        // a handler initialises it. A failed create stays "not initialized" as in legacy.
         entry.initialized = !entry.notFound || entry.handler != nullptr;
         entry.cachedNil = entry.initialized && !entry.handler;
     }
     return entry.handler.get();
 }
 
-// FEAT-STO-018
 bool SqliteRegionPool::run(const QString& dbPath, EntryKind kind, bool forWrite, const std::stop_token& stop,
                            const std::function<void(SqliteRegionHandler&)>& fn, QString* openError) {
     for (;;) {

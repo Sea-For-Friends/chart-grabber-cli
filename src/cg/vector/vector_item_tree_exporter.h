@@ -5,9 +5,9 @@
 #pragma once
 // Ports: Src/Vector/i_VectorItemTreeExporter.pas
 //
-// Exporter interface. Legacy ProcessExport is a procedure; the port returns core::Result<void>
-// as the landed importer does. AOperationID is dropped (as in T-0129, deviation 5): cancel is the
-// std::stop_token that replaces INotifierOperation.
+// Exporter interface. Legacy ProcessExport is a procedure; the port returns core::Result<void> as
+// the importer does. AOperationID is dropped (a deviation from legacy, as for the importer):
+// cancel is the std::stop_token that replaces INotifierOperation.
 
 #include "cg/core/result.h"
 #include "cg/vector/vector_item_tree.h"

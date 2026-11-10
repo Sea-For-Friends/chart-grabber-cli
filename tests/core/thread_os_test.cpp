@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/core/platform/thread_os (new code, T-0335: the Windows branch has no other proof).
+// Tests for src/cg/core/platform/thread_os (new code: the Windows branch has no other proof).
 #include "cg/core/platform/thread_os.h"
 
 #include <gtest/gtest.h>

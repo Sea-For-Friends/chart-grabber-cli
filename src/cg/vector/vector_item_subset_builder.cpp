@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-GEO-037
 #include "cg/vector/vector_item_subset_builder.h"
 
 #include "cg/vector/sort_func.h"
@@ -83,7 +82,7 @@ int compareVectorItems(const VectorDataItemPtr& item1, const VectorDataItemPtr& 
 
 } // namespace
 
-// FEAT-GEO-037 (LV-3, LV-4: reordered hash-descending, neighbours only, literal quicksort)
+// Legacy defects, reproduced: reordered hash-descending, neighbours only, literal quicksort.
 void VectorItemSubsetBuilder::removeDuplicates() {
     if (list_.size() <= 1) {
         return;

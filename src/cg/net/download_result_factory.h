@@ -3,13 +3,13 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_DownloadResultFactory.pas, u_DownloadResultFactory.pas. docs/specs/net.md §2.5. The
-// legacy factory is an interface with 17 methods and exactly one implementation whose only state
-// is nothing: per idioms.md §13 purpose (a) it becomes free functions in cg::net::result, not an
-// interface. The value they add is the message table below, a real contract -- docs/parity texts,
-// .mo translation keys and the tile-error log depend on the exact English strings. [D-9]: the
-// second, textually-inconsistent copy of this table (i_DownloadResultTextProvider.pas) is dropped;
-// there is one table, and messages are translated at construction (tr()), not in a getter.
+// Ports: i_DownloadResultFactory.pas, u_DownloadResultFactory.pas. The legacy factory is an
+// interface with 17 methods and exactly one implementation whose only state is nothing, so it
+// becomes free functions in cg::net::result, not an interface. The value they add is the message
+// table below, a real contract: the .mo translation keys and the tile-error log depend on the
+// exact English strings. The second, textually-inconsistent copy of this table
+// (i_DownloadResultTextProvider.pas) is dropped (a deviation from legacy); there is one table, and
+// messages are translated at construction (tr()), not in a getter.
 
 #include "cg/net/download_result.h"
 

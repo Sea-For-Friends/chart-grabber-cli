@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_ConfigProviderHelpers.pas:451-631 (appearance readers/writers);
-// docs/specs/vector.md §2.9, §7.2. Round trip over the real
-// tests/fixtures/marks/SASPlanet.marks-sections.ini.
+// Ports u_ConfigProviderHelpers.pas:451-631 (appearance readers/writers). Round trip over the
+// real tests/fixtures/marks/SASPlanet.marks-sections.ini.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/vector/appearance_of_mark_factory.h"

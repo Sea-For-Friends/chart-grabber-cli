@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0145: ActiveLayersConfig (u_ActiveLayersConfig.pas). Expectations are literals taken from the Pascal.
+// ActiveLayersConfig (u_ActiveLayersConfig.pas). Expectations are literals taken from the Pascal.
 #include "cg/maptype/active_layers_config.h"
 
 #include <QByteArray>
@@ -63,7 +63,7 @@ TEST(ActiveLayersConfig, ReadSelectsPrefixedKeysOnlyAndAccumulates) {
     EXPECT_TRUE(has(set, kG1));
     EXPECT_TRUE(has(set, kG2));
     EXPECT_TRUE(has(set, kG3));
-    EXPECT_TRUE(has(set, kG4)); // L row: any key with the prefix is read
+    EXPECT_TRUE(has(set, kG4)); // A legacy defect, reproduced: any key with the prefix is read
     EXPECT_FALSE(has(set, kG5));
     EXPECT_EQ(c.notifications, 1); // the whole read is one batch
 
@@ -97,7 +97,7 @@ TEST(ActiveLayersConfig, WriteOfANullSetOnlyDeletes) {
     EXPECT_EQ(ini->file().toBytes().toStdString(), "[S]\r\nKeep=1\r\n");
 }
 
-// D row of T-0145: a null writer returns (legacy: access violation).
+// A deviation from legacy: a null writer returns (legacy: access violation).
 TEST(ActiveLayersConfig, NullWriterIsIgnored) {
     ActiveLayersConfig config;
     config.setLayerGuids(GuidSetStatic::createAndSort({kG1}));

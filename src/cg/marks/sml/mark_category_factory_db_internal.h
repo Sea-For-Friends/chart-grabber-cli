@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: Src/MarksDB/SML/i_MarkCategoryFactoryDbInternal.pas (46): IMarkCategoryFactoryDbInternal and the
-// constant CNotExistCategoryID (docs/specs/marks.md section 2.8.4). Interface and constant only; the class
-// is in mark_category_factory_sml_db_internal.h.
+// constant CNotExistCategoryID. Interface and constant only; the class is in
+// mark_category_factory_sml_db_internal.h.
 
 #include "cg/marks/mark_category.h"
 

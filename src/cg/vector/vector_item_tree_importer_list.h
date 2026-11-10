@@ -5,10 +5,9 @@
 #pragma once
 // Ports: Src/Vector/i_VectorItemTreeImporterList.pas, Src/Vector/u_VectorItemTreeImporterList.pas
 //
-// The importer list: items (value holders) and the static list, looked up by file extension.
-// A nil legacy list (FList = nil) is an empty vector here: count() is 0
-// (u_VectorItemTreeImporterList.pas:116-120). item() outside 0..count()-1 and importerByExt() on an empty
-// list answer null (D rows of T-0141).
+// The importer list: items (value holders) and the static list, looked up by file extension. A nil legacy
+// list (FList = nil) is an empty vector here: count() is 0 (u_VectorItemTreeImporterList.pas:116-120).
+// item() outside 0..count()-1 and importerByExt() on an empty list answer null (deviations from legacy).
 
 #include "cg/core/changeable.h"
 #include "cg/vector/vector_item_tree_importer.h"

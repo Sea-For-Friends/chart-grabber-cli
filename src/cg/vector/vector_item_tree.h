@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/Vector/i_VectorItemTree.pas, u_VectorItemTree.pas
 //
-// FEAT-GEO-037. A named node with an optional item subset and child nodes. No hash, no isEqual.
+// A named node with an optional item subset and child nodes. No hash, no isEqual.
 
 #include "cg/vector/vector_item_subset.h"
 

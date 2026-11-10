@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: T-0264 cli/git_commit.cmake (docs/specs/app-cli.md 2.6): commit precedence and the -dirty scope; no
-// FEAT. The script is run with `cmake -P` on throwaway directories and repositories.
+// cli/git_commit.cmake: commit precedence and the -dirty scope. The script is run with `cmake -P` on
+// throwaway directories and repositories.
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -150,8 +150,8 @@ TEST(GitCommitScript, ArchiveInsideOtherRepositoryIgnoresOuterHead) {
     const QString outer = makeRepo(tmp, QStringLiteral("outer"));
     const QString src = outer + QStringLiteral("/sub");
     write(src + QStringLiteral("/cli/archive_commit.txt"), kStamp + QLatin1Char('\n'));
-    // T-0347: the outer repository is really read by the script (its own top gives its HEAD, also with MSYS
-    // git), so the stamp below wins because SRC is not the top, not because git failed.
+    // The outer repository is really read by the script (its own top gives its HEAD, also with MSYS git),
+    // so the stamp below wins because SRC is not the top, not because git failed.
     const QString outerHead = git(outer, {QStringLiteral("rev-parse"), QStringLiteral("HEAD")}).left(12);
     EXPECT_EQ(script(outer, tmp.path()).out, outerHead);
     EXPECT_EQ(script(src, tmp.path()).out, QStringLiteral("0123456789ab"));

@@ -4,12 +4,12 @@
 
 #pragma once
 // Ports: i_GeometryLonLat.pas, u_GeometryLonLat.pas, u_GeometryLonLatMulti.pas,
-// i_DoublePointsMeta.pas, u_DoublePointsMeta*.pas. docs/specs/geo.md §3.2.
+// i_DoublePointsMeta.pas, u_DoublePointsMeta*.pas.
 //
 // The lon/lat side of the geometry model: point / line / polygon / multi hierarchy, plus the
 // per-vertex metadata sidecar. Concrete classes are built ONLY by GeometryLonLatFactory /
 // GeometryLonLatLineBuilder / GeometryLonLatPolygonBuilder (geometry_factory.h): hash() and
-// bounds() are computed once there and stored, never lazily (docs/specs/geo.md §3.2 point 4).
+// bounds() are computed once there and stored, never lazily.
 
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"
@@ -42,7 +42,6 @@ struct PointsMeta {
 using LonLatPointsPtr = std::shared_ptr<const std::vector<LonLat>>;
 
 // --- the hierarchy --------------------------------------------------------------
-// FEAT-GEO-009
 class IGeometryLonLat {
 public:
     virtual ~IGeometryLonLat() = default;
@@ -68,7 +67,7 @@ class IGeometryLonLatLine : public IGeometryLonLat {}; // marker
 class IGeometryLonLatSingleLine : public IGeometryLonLatLine {
 public:
     [[nodiscard]] virtual std::span<const LonLat> points() const noexcept = 0;
-    [[nodiscard]] virtual const PointsMeta& meta() const noexcept = 0; // only here (§3.2 point 3)
+    [[nodiscard]] virtual const PointsMeta& meta() const noexcept = 0; // only here
 };
 
 class IGeometryLonLatMultiLine : public IGeometryLonLatLine {
@@ -82,8 +81,8 @@ class IGeometryLonLatPolygon : public IGeometryLonLat {}; // marker
 
 // NOTE: a Polygon (i_GeometryLonLat.pas:99) -- keep the inheritance, a bare ring satisfies a
 // dynamic_pointer_cast<IGeometryLonLatPolygon>. Contours are stored OPEN: the closing vertex is
-// not in points(); closure is synthesized by the WKB writer only (§3.7 rule 5). Never "normalise"
-// by appending points()[0].
+// not in points(); closure is synthesized by the WKB writer only. Never "normalise" by appending
+// points()[0].
 class IGeometryLonLatContour : public IGeometryLonLatPolygon {
 public:
     [[nodiscard]] virtual std::span<const LonLat> points() const noexcept = 0;
@@ -163,11 +162,11 @@ private:
     PointsMeta meta_;
 };
 
-// A contour's ring is stored OPEN (§3.2 point 2): points() never includes a closing vertex the
-// caller did not supply. But u_GeometryLonLat.pas:TGeometryLonLatBase.Create(AClosed=True, ...)
-// auto-trims the OPPOSITE case: when the input already ends with a literal repeat of its first
-// point (a caller-supplied closing vertex), the logical count drops by one so the ring is still
-// open. hash() is computed by the caller over the UNTRIMMED buffer (legacy does the same --
+// A contour's ring is stored OPEN: points() never includes a closing vertex the caller did not
+// supply. But u_GeometryLonLat.pas:TGeometryLonLatBase.Create(AClosed=True, ...) auto-trims the
+// OPPOSITE case: when the input already ends with a literal repeat of its first point (a
+// caller-supplied closing vertex), the logical count drops by one so the ring is still open.
+// hash() is computed by the caller over the UNTRIMMED buffer (legacy does the same --
 // CalcHashByBuffer runs before TGeometryLonLatContour.Create, using the original count), so
 // points_ keeps the untrimmed buffer and count_ alone tracks the trim.
 class GeometryLonLatContour final : public IGeometryLonLatContour {

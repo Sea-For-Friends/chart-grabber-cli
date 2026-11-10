@@ -62,8 +62,8 @@ struct ZoomInfo {
     qint64 tilesCount = 0;
 };
 
-// GetZoomInfo :205-241 (FEAT-REG-010). The tile count of the bounding box, not polygon-exact.
-// nullopt when polygon is null or the projected polygon is null.
+// GetZoomInfo :205-241. The tile count of the bounding box, not polygon-exact. nullopt when polygon
+// is null or the projected polygon is null.
 [[nodiscard]] std::optional<ZoomInfo>
 boundingBoxTileCount(quint8 zoom, const maptype::IMapType& map, const geo::IGeometryLonLatPolygon* polygon,
                      const geo::GeometryProjectedFactory& projectedFactory);

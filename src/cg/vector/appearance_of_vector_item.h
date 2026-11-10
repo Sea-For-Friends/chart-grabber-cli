@@ -5,11 +5,11 @@
 #pragma once
 // Ports: Src/Vector/i_AppearanceOfVectorItem.pas
 //
-// The one structural difference from legacy (Tech Lead ruling Q-4, spec vector.md §2.3.2, §5.1
-// note): in Delphi the five facets inherit IAppearance and the implementing classes return a
-// different GetHash through each interface. C++ cannot, so the facets do not derive from
-// IAppearance and the facet hash has the name of the legacy private getter. For a line the
-// common hash is the facet hash: cross-cast to IAppearance. LV-2 (L-127) applies to IsEqual.
+// The one structural difference from legacy: in Delphi the five facets inherit IAppearance and
+// the implementing classes return a different GetHash through each interface. C++ cannot, so
+// the facets do not derive from IAppearance and the facet hash has the name of the legacy
+// private getter. For a line the common hash is the facet hash: cross-cast to IAppearance.
+// IsEqual reproduces a legacy defect (hash only, see appearance_test.cpp).
 
 #include "cg/core/color32.h"
 #include "cg/core/hash.h"

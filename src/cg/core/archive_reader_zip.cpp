@@ -70,7 +70,7 @@ public:
     [[nodiscard]] int itemsCount() const override { return static_cast<int>(items_.size()); }
 
     // TArchiveReadBy7Zip.GetItemByName: the first item with that name (SameText there; exact name
-    // first, then case-insensitive here, D-48). Slashes in itemName are normalised like item names.
+    // first, then case-insensitive here). Slashes in itemName are normalised like item names.
     [[nodiscard]] std::optional<QByteArray> itemByName(const QString& itemName) const override {
         QString wanted = itemName;
         wanted.replace(QLatin1Char('\\'), QLatin1Char('/'));
@@ -91,7 +91,7 @@ public:
 
     // A directory gives nil and an empty name. An item that cannot be extracted (encrypted,
     // unsupported method, damaged data, over the size cap) gives nil with its name -- legacy raised
-    // there (D-63): here it is logged and kept in status().
+    // there: here it is logged and kept in status().
     [[nodiscard]] std::optional<QByteArray> itemByIndex(int itemIndex, QString& itemName) const override {
         const Item& item = items_[static_cast<size_t>(itemIndex)];
         if (item.isDir) {

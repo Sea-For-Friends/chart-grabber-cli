@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: T-0225 (NEW code, no FEAT id): the JavaScript URL builder of *.source.json, ADR-0014, spec
-// map-source-json.md 5.
+// NEW code: the JavaScript URL builder of *.source.json.
 
 #include "cg/maptype/tile_download_request_builder_factory_js.h"
 #include "cg/maptype/tile_download_request_builder_js.h"
@@ -144,7 +143,7 @@ double hexDouble(const QString& text) {
     return std::bit_cast<double>(static_cast<std::uint64_t>(text.mid(2).toULongLong(nullptr, 16)));
 }
 
-// --- the contract of getUrl (spec 5.1)
+// --- the contract of getUrl
 // ----------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, StringReturnIsAGetWithTheConfigHeaders) {
@@ -275,7 +274,7 @@ TEST_F(JsBuilderTest, GetUrlReplacedByANonFunctionAfterTheCheckFailsTheTile) {
     EXPECT_EQ(errorOf(*builder), "function getUrl(tile, ctx) is not defined");
 }
 
-// --- the inputs of getUrl (spec 5.2)
+// --- the inputs of getUrl
 // --------------------------------------------------------------------------
 
 // The four golden tile points of tests/script/golden_url_test.cpp, with the Pascal inputs (GetLLon ..
@@ -405,7 +404,7 @@ TEST_F(JsBuilderTest, ZoomOutsideTheProjectionIsTheListIndexError) {
     }
 }
 
-// --- http (spec 5.2; the Pascal Downloader of :346-357, u_SimpleHttpDownloader.pas:81-124)
+// --- http (the Pascal Downloader of :346-357, u_SimpleHttpDownloader.pas:81-124)
 // ----------------------
 
 TEST_F(JsBuilderTest, HttpIsDefinedOnlyWithAllowHttpAndADownloader) {
@@ -434,7 +433,7 @@ TEST_F(JsBuilderTest, HttpGetAndPostGoThroughTheSlotsDownloaderWithTheLegacyRepl
                     "  return 'u:' + JSON.stringify([a, b, c, d]);\n"
                     "}",
                     Opts().withHttp(true));
-    // the reply object has the three members of the spec (the engine lists them in alphabetical order)
+    // the reply object has its three members (the engine lists them in alphabetical order)
     EXPECT_EQ(urlOf(*builder), R"(u:[{"body":"Тело","headers":"Content-Type: x\r\nX-H: 1","status":200},)"
                                R"({"body":"","headers":"","status":404},)"
                                R"({"body":"posted","headers":"H: 3","status":201},)"
@@ -473,8 +472,7 @@ TEST_F(JsBuilderTest, HttpRefusesFileUrlsWithStatusZeroAndOneWarningPerBuilder) 
     EXPECT_EQ(capture.countContaining("script file reads are disabled"), 2);
 }
 
-// Spec 6.4: one token request for 50 tiles over 4 workers (the lock holds the others back until the token is
-// shared).
+// One token request for 50 tiles over 4 workers (the lock holds the others back until the token is shared).
 TEST_F(JsBuilderTest, TokenExampleFetchesOneTokenFor50TilesOver4Workers) {
     QByteArray code;
     ASSERT_TRUE(fixtureFile(u"example-token.js"_s, code));
@@ -515,7 +513,7 @@ TEST_F(JsBuilderTest, TokenExampleFetchesOneTokenFor50TilesOver4Workers) {
     EXPECT_EQ(headers, std::set<std::string>{"Authorization: Bearer TKN"});
 }
 
-// --- limits (ADR-0014 point 5)
+// --- limits
 // ---------------------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, DefaultScriptTimeIsFiveSeconds) {
@@ -577,7 +575,7 @@ TEST_F(JsBuilderTest, SlowHttpReplyAndWaitForTheLockAreNotScriptTime) {
               250ms); // the wait really overlapped the holder's slow reply, and was longer than the limit
 }
 
-// --- sandbox (ADR-0014 point 4)
+// --- sandbox
 // --------------------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, NoRequireXhrQtConsolePrintOrGcExists) {
@@ -654,7 +652,7 @@ TEST_F(JsBuilderTest, StaticImportAndDynamicImportOfAnExistingFileDisableTheSour
     }
 }
 
-// --- the factory's check (ADR-0014 point 6)
+// --- the factory's check
 // ------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, ScriptThatFailsTheCheckDisablesTheSourceAndNoBuilderRunsIt) {
@@ -710,7 +708,7 @@ TEST_F(JsBuilderTest, TopLevelErrorOfALaterEngineFailsTheTileAndTheNextCallRebui
     EXPECT_EQ(errorOf(*second), "second boot at line 3"); // a failed engine is not kept
 }
 
-// --- shared (spec 5.2)
+// --- shared
 // -----------------------------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, SharedStoreBelongsToTheSourceAndConvertsValuesToStrings) {
@@ -786,7 +784,7 @@ TEST_F(JsLockTest, TimeLimitInsideTheFunctionReleasesTheLock) {
     EXPECT_EQ(urlOf(*first, 4), "u:7"); // and the first builder can take it again itself
 }
 
-// --- the engine and the threads (ADR-0014 point 3)
+// --- the engine and the threads
 // -------------------------------------------------------------
 
 TEST_F(JsBuilderTest, ThreadChangeRebuildsTheEngineKeepsTheStateAndLosesTopLevelVariables) {
@@ -820,7 +818,7 @@ TEST_F(JsBuilderTest, BuilderCreatedAndUsedOnOneThreadIsDestroyedOnAnother) {
     SUCCEED();
 }
 
-// ADR-0014 "a few MiB per engine": the number goes to the log of the run (no assertion).
+// "A few MiB per engine": the number goes to the log of the run (no assertion).
 TEST_F(JsBuilderTest, MemoryOfFourBuildersWithATrivialScriptIsLogged) {
     QFile statm(u"/proc/self/statm"_s);
     if (!statm.open(QIODevice::ReadOnly)) {
@@ -840,11 +838,11 @@ TEST_F(JsBuilderTest, MemoryOfFourBuildersWithATrivialScriptIsLogged) {
     }
     const qint64 growth = residentPages() - before;
     RecordProperty("rss_growth_pages_for_4_builders", std::to_string(growth));
-    std::cout << "T-0225 RSS growth of 4 builders: " << growth
+    std::cout << "RSS growth of 4 builders: " << growth
               << " pages (page = 4096 bytes on x86-64 and arm64 Linux)\n";
 }
 
-// --- the pascal helpers (spec 5.4)
+// --- the pascal helpers
 // ---------------------------------------------------------------------------------
 
 TEST_F(JsBuilderTest, PascalNumericHelpersFollowDelphi) {
@@ -894,7 +892,7 @@ TEST_F(JsBuilderTest, PascalHelpersThrowTheirDocumentedErrors) {
         EXPECT_EQ(eval(std::string(wrapper) + "(function () { " + c.call + "; })"),
                   std::string("u:") + c.expected);
     }
-    // a pattern that does not compile throws an Error with the compile message (R16)
+    // a pattern that does not compile throws an Error with the compile message
     EXPECT_EQ(eval(std::string(wrapper) +
                    "(function () { pascal.regExprGetMatchSubStr('a', '(', 0); }).slice(0, 7)"),
               "u:Error: ");
@@ -910,7 +908,7 @@ TEST_F(JsBuilderTest, PascalRegularExpressionHelpersBindTheTRegExprOnes) {
          R"( pascal.regExprGetMatchSubStr('a12/34b', '(\\d+)/(\\d+)', 3), pascal.regExprGetMatchSubStr('abc', '\\d', 0)].join('|'))",
          "34|12/34||"},
         {R"(pascal.regExprGetMatchSubStr('a\nb', 'a.b', 0) === 'a\nb')",
-         "true"}, // R1: the dot matches a line break
+         "true"}, // The dot matches a line break
         {R"([pascal.regExprReplaceMatchSubStr('a1b22', '\\d+', '#'), pascal.regExprReplaceMatchSubStr('k=v;x=y', '(\\w)=(\\w)', '$2=$1'),)"
          R"( pascal.regExprReplaceMatchSubStr('none', '\\d', 'X')].join('|'))",
          "a#b#|v=k;y=x|none"},

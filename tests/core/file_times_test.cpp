@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-013. Ports the date half of Src/TileStorage/FileSystem/u_FileSystemTools.pas
-// (GetFileDate/SetFileDate) as re-derived for POSIX by docs/specs/storage.md §2.13.3.
+// Ports the date half of Src/TileStorage/FileSystem/u_FileSystemTools.pas
+// (GetFileDate/SetFileDate), re-derived for POSIX.
 #include "cg/core/platform/file_times.h"
 
 #include <QDir>
@@ -38,7 +38,7 @@ TEST(FileTimes, RoundTripSetThenGetReturnsExactSecondsWholeSeconds) {
 
     const auto read = fileMTime(path);
     ASSERT_TRUE(read.has_value());
-    EXPECT_EQ(*read, kSecs); // no legacy 2-second DOS-grid quantisation (deviation D-5)
+    EXPECT_EQ(*read, kSecs); // no legacy 2-second DOS-grid quantisation (a deviation from legacy)
 }
 
 TEST(FileTimes, SetFileMTimeOnMissingFileFails) {
@@ -61,8 +61,8 @@ TEST(FileTimes, FileMTimeOnMissingFileFails) {
     EXPECT_EQ(result.error().code(), cg::core::ErrorCode::IoError);
 }
 
-// T-0335: a name with non-ASCII characters and a space (the Windows port builds wide paths; on POSIX the
-// same test pins that nothing regressed).
+// A name with non-ASCII characters and a space (the Windows port builds wide paths; on POSIX the same
+// test pins that nothing regressed).
 TEST(FileTimes, RoundTripOnANonAsciiPathWithASpace) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

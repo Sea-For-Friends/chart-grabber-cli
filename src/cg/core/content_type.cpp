@@ -39,8 +39,7 @@ void registerExt(ContentTypeRegistry& registry, const QByteArray& key, const Con
     Q_UNUSED(added);
 }
 
-// core.md 2.21.1: the exact table registered by u_ContentTypeManagerSimple.pas. Nothing more,
-// nothing less.
+// The exact table registered by u_ContentTypeManagerSimple.pas. Nothing more, nothing less.
 ContentTypeRegistry buildStandardRegistry() {
     ContentTypeRegistry registry;
 

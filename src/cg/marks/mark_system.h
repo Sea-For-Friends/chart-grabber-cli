@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkSystem.pas (interface, M6b) and u_MarkSystem.pas (class MarkSystem, ticket T-0137; spec
-// docs/specs/marks.md §2.6 MarkSystem paragraph, Rulings A.1-A.2, §2.10).
+// Ports: i_MarkSystem.pas (interface) and u_MarkSystem.pas (class MarkSystem).
 
 #include "cg/core/notifier.h"
 #include "cg/core/path_config.h"
@@ -58,19 +57,16 @@ public:
     [[nodiscard]] virtual MarkSystemImplFactoryListStaticPtr implFactoryList() const = 0;
 };
 
-// FEAT-GEO-034
 // TMarkSystem (u_MarkSystem.pas:56-102). Owns the error notifier, the factory list, the changeable system and
 // the two facades, built in legacy order (:118-184). The application-started and -closing notifiers are
-// std::stop_token (spec ruling A.2). Collaborators are non-null, a precondition (creator:
-// u_GlobalState.pas:777-791). Not parameters: the hash function (core free functions, §2.6) and the
-// performance counters (DV-1).
-// Preconditions: (1) the error notifier is a value member of this object and the changeable system and both
-// facades hold it by reference, so nothing obtained from the system (facades, state, notifier) outlives it;
-// to be checked when GlobalState is ported. (2) deleteCategoryListWithMarks takes a non-null list: legacy
-// dereferences it at once (:197-209) and its only caller, u_MarkDbGUIHelper.pas:456-457, sits inside
-// `if Assigned(VList)`; no guard.
-// Destruction ends and joins the build first (D-57 widened, L-row of T-0137), then releases the facades:
-// legacy releases them while the build can still notify them.
+// std::stop_token. Collaborators are non-null, a precondition (creator: u_GlobalState.pas:777-791). Not
+// parameters: the hash function (core free functions) and the performance counters. Preconditions: (1) the
+// error notifier is a value member of this object and the changeable system and both facades hold it by
+// reference, so nothing obtained from the system (facades, state, notifier) outlives it; to be checked when
+// GlobalState is ported. (2) deleteCategoryListWithMarks takes a non-null list: legacy dereferences it at
+// once (:197-209) and its only caller, u_MarkDbGUIHelper.pas:456-457, sits inside `if Assigned(VList)`; no
+// guard. Destruction ends and joins the build first (a deviation from legacy for a legacy defect), then
+// releases the facades: legacy releases them while the build can still notify them.
 class MarkSystem final : public IMarkSystem {
 public:
     MarkSystem(core::PathConfigPtr basePath,                                  // ABasePath

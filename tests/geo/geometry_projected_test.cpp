@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-013. Ports Test/u_ProjectedPolygonWithRect_Test.pas (14 cases, R01-R14, all
-// legacy constants transcribed verbatim) plus CalcAreaUsesLegacyShoelaceForm, which pins
-// §3.3.1's `(x1+x2)*(y1-y2)` shoelace form (both T-0017C1). T-0017C2 adds GeometryProjectedFactory
-// and GeometryProjectedProvider coverage below (no legacy DUnit test exercises either directly --
-// projected_calc_test.cpp covers projected_calc.h).
+// Ports Test/u_ProjectedPolygonWithRect_Test.pas (14 cases, R01-R14, all legacy constants
+// transcribed verbatim) plus CalcAreaUsesLegacyShoelaceForm, which pins the `(x1+x2)*(y1-y2)`
+// shoelace form. GeometryProjectedFactory and GeometryProjectedProvider coverage is below (no
+// legacy DUnit test exercises either directly -- projected_calc_test.cpp covers projected_calc.h).
 
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/geometry_projected.h"
@@ -55,7 +54,7 @@ ProjectedPointsPtr makePoints(std::vector<DoublePoint> pts) {
 }
 
 // u_GeoFunc.pas:362-375 ProjectedMBRByPoints -- used only to build this test's fixture; the real
-// factory (GeometryProjectedFactory) is T-0017C2.
+// factory is GeometryProjectedFactory.
 DoubleRect mbrByPoints(const std::vector<DoublePoint>& pts) {
     DoubleRect r{pts[0].x(), pts[0].y(), pts[0].x(), pts[0].y()};
     for (std::size_t i = 1; i < pts.size(); ++i) {
@@ -229,10 +228,10 @@ TEST_F(ProjectedPolygonWithRect, R14AroundSecond) {
         {true, false, false, false, true}, {false, false, false, false, false});
 }
 
-// docs/specs/geo.md §3.3.1: `calcArea()` uses the legacy `(x1+x2)*(y1-y2)` shoelace form,
-// starting from the LAST point, not `x1*y2-x2*y1` -- algebraically equal, not the same
-// implementation. This pins the transcribed form with a hand-verified value
-// (u_GeometryProjected.pas:353-371): triangle (0,0)-(4,0)-(0,3), legacy area 6.
+// `calcArea()` uses the legacy `(x1+x2)*(y1-y2)` shoelace form, starting from the LAST
+// point, not `x1*y2-x2*y1` -- algebraically equal, not the same implementation. This pins
+// the transcribed form with a hand-verified value (u_GeometryProjected.pas:353-371):
+// triangle (0,0)-(4,0)-(0,3), legacy area 6.
 TEST(GeometryProjectedContour, CalcAreaUsesLegacyShoelaceForm) {
     const std::vector<DoublePoint> triangle = {{0, 0}, {4, 0}, {0, 3}};
     const GeometryProjectedContour contour(mbrByPoints(triangle), makePoints(triangle));
@@ -240,7 +239,7 @@ TEST(GeometryProjectedContour, CalcAreaUsesLegacyShoelaceForm) {
 }
 
 // =================================================================================================
-// GeometryProjectedFactory / GeometryProjectedProvider (docs/specs/geo.md §3.5.1-§3.5.3, T-0017C2)
+// GeometryProjectedFactory / GeometryProjectedProvider
 // =================================================================================================
 
 namespace {
@@ -277,8 +276,7 @@ cg::geo::GeometryLonLatPtr makeLonLatSinglePolygonWithHole() {
 } // namespace
 
 // The fused EnumToPoints pass (projectRing, geometry_factory.cpp) must agree with an MBR computed
-// independently over the same projected points -- "BoundsComputedInTheSamePassAsPoints"
-// (docs/specs/geo.md §11.2 geometry_projected_test.cpp new-case list).
+// independently over the same projected points -- "BoundsComputedInTheSamePassAsPoints".
 TEST(GeometryProjectedFactory, CreateLineByLonLatLineProjectsEachSubLineWithCorrectBounds) {
     auto setFactory = makeSetFactory();
     const ProjectionPtr projection = atZoom(setFactory, kProjEpsgGoogle, 10);
@@ -325,10 +323,10 @@ TEST(GeometryProjectedFactory, CreatePolygonByLonLatPolygonProjectsOuterAndHoles
     EXPECT_EQ(single->bounds(), single->outerBorder()->bounds());
 }
 
-// The "buffering-path" case: a lon/lat line buffered into a polygon by the already-landed
-// GeometryLonLatFactory::createPolygonByLine (T-0017B, line2Poly/§3.5.2), then run through this
-// ticket's projected polygon factory -- the two halves of geometry_factory.cpp composed exactly
-// as the renderer composes them for a "line with width" mark.
+// The "buffering-path" case: a lon/lat line buffered into a polygon by
+// GeometryLonLatFactory::createPolygonByLine (line2Poly), then run through the projected
+// polygon factory -- the two halves of geometry_factory.cpp composed exactly as the renderer
+// composes them for a "line with width" mark.
 TEST(GeometryProjectedFactory, CreatePolygonByLonLatPolygonAfterBufferingALine) {
     auto setFactory = makeSetFactory();
     const ProjectionPtr projection = atZoom(setFactory, kProjEpsgGoogle, 10);
@@ -387,10 +385,10 @@ TEST(GeometryProjectedProvider, DegeneratePolygonCachesNullptr) {
 
 // =================================================================================================
 // Ports Test/u_VectorItmesFactorySimple_Test.pas, suites TestGeometryProjectedLineBuilderSimple and
-// TestGeometryProjectedPolygonBuilderSimple (T-0040; the LonLat suites are in geometry_lonlat_test.cpp).
-// Legacy enumerates via IEnumDoublePoint; the port reads points() (contours are stored open, as in the
-// LonLat port -- docs/specs/geo.md §3.2 point 2); the legacy closing enumeration is asserted via
-// singleLineStream(points, nullptr, closed=true), the port's IEnumDoublePoint over a contour.
+// TestGeometryProjectedPolygonBuilderSimple (the LonLat suites are in geometry_lonlat_test.cpp). Legacy
+// enumerates via IEnumDoublePoint; the port reads points() (contours are stored open, as in the LonLat
+// port); the legacy closing enumeration is asserted via singleLineStream(points, nullptr, closed=true),
+// the port's IEnumDoublePoint over a contour.
 // =================================================================================================
 
 namespace {

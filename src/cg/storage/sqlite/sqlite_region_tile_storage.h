@@ -7,18 +7,18 @@
 // per-operation dispatch of u_TileStorageSQLiteHelper.pas (:274-528: handler lookup by region file,
 // delete/list/get/rect/save).
 //
-// docs/specs/storage.md §2.16 (intro), §3.1 rule 3 (notify outside every lock). The ITileStorage
-// face of the native `cache_sqlite`: each (x, y, zoom) maps to a region file (region codec +
-// ".sqlitedb"), the operation runs on that file's handler through SqliteRegionPool. Versions are
-// stored (the type is always built versioned, u_TileStorageTypeListSimple.pas:387).
+// The ITileStorage face of the native `cache_sqlite`: each (x, y, zoom) maps to a region file
+// (region codec + ".sqlitedb"), the operation runs on that file's handler through
+// SqliteRegionPool. Versions are stored (the type is always built versioned,
+// u_TileStorageTypeListSimple.pas:387).
 //
-// Idle close (spec §3.1 rule 5): no timer here. As in legacy (the helper registers a TTL listener
-// on the AGCNotifier the storage type was built with, u_TileStorageSQLiteHelper.pas:151-196), the
-// storage subscribes one listener to the application's GC tick (the core::Notifier of the
-// GarbageCollectorThread, handed in through the type's constructor); each tick calls
-// SqliteRegionPool::gcTick(), whose 180 s gate runs sweepIdle() (files idle for kIdleCloseMs). The
-// subscription is dropped in the destructor before the pool goes, and the listener holds only a weak
-// reference to the pool, so a tick in flight cannot touch a dead pool.
+// Idle close: no timer here. As in legacy (the helper registers a TTL listener on the AGCNotifier
+// the storage type was built with, u_TileStorageSQLiteHelper.pas:151-196), the storage subscribes
+// one listener to the application's GC tick (the core::Notifier of the GarbageCollectorThread,
+// handed in through the type's constructor); each tick calls SqliteRegionPool::gcTick(), whose 180 s
+// gate runs sweepIdle() (files idle for kIdleCloseMs). The subscription is dropped in the destructor
+// before the pool goes, and the listener holds only a weak reference to the pool, so a tick in
+// flight cannot touch a dead pool.
 
 #include "cg/core/content_type.h"
 #include "cg/core/notifier.h"
@@ -36,7 +36,7 @@
 
 namespace cg::storage::sqlite {
 
-// FEAT-STO-018. Ports TTileStorageSQLite.
+// Ports TTileStorageSQLite.
 class SqliteRegionTileStorage final : public ITileStorage {
 public:
     // Parameters as FileSystemTileStorage's; `isVersioned` ports AIsVersioned (FUseVersion of the
@@ -70,7 +70,7 @@ public:
     [[nodiscard]] core::Result<bool> saveTile(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr& version,
                                               TileDate loadDate, QByteArrayView contentType,
                                               const QByteArray& data, bool overwrite) override;
-    // The backend-specific form (spec §2.16.3): the flags are not on ITileStorage.
+    // The backend-specific form: the flags are not on ITileStorage.
     [[nodiscard]] core::Result<bool> saveTile(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr& version,
                                               TileDate loadDate, QByteArrayView contentType,
                                               const QByteArray& data, SaveFlags flags);

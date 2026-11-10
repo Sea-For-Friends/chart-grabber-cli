@@ -51,7 +51,7 @@ quint8 ProjectionSetSimple::suitableZoom(const IProjection& other) const {
     // u_ProjectionSetSimple.pas:82-94 (marked unfinished in legacy) reduces to other.zoom() for
     // every set reachable today (all four built-ins share the 256x256 pyramid); the general form
     // below (the nearest-pixelsFloat() level) is implemented anyway so a future non-256 split
-    // code does not silently mis-stitch (docs/specs/geo.md §2.6).
+    // code does not silently mis-stitch.
     if (isProjectionFromThisSet(other)) {
         return other.zoom();
     }

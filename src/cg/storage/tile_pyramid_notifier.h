@@ -5,15 +5,15 @@
 #pragma once
 // Ports: i_NotifierTilePyramidUpdate.pas, u_NotifierTilePyramidUpdate.pas
 //
-// docs/specs/storage.md §2.8 (:531-549). Legacy's notifier lets a listener subscribe to one zoom,
-// one tile-rect-per-zoom, or everything, and only calls listeners whose registered rect contains
-// the changed tile (u_NotifierTilePyramidUpdate.pas TNotifierTileRectUpdateOneZoomSimple) -- a
-// filtering optimization for render-thread invalidation. The spec collapses this to "every
-// subscriber sees every update": the render-side by-rect index is a later ticket's job (not in
-// T-0021D's scope) and can filter on TileUpdate.tile/zoom itself; nothing here re-derives it.
+// Legacy's notifier lets a listener subscribe to one zoom, one tile-rect-per-zoom, or everything,
+// and only calls listeners whose registered rect contains the changed tile
+// (u_NotifierTilePyramidUpdate.pas TNotifierTileRectUpdateOneZoomSimple) -- a filtering
+// optimization for render-thread invalidation. The port collapses this to
+// "every subscriber sees every update": a render-side by-rect index can filter on
+// TileUpdate.tile/zoom itself; nothing here re-derives it.
 //
 // Deviation (already flagged, not re-derived here): the tile coordinate type is geo::PointI, not
-// geo::TilePoint -- same as tile_info.h / tile_name_codec.h (T-0021A).
+// geo::TilePoint -- same as tile_info.h / tile_name_codec.h.
 
 #include "cg/core/notifier.h"
 #include "cg/geo/geo_types.h"
@@ -26,7 +26,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-035 (the notification half; ITileStorage::tileRectInfo/scanTiles cover the rest).
+// The notification half of tile updates (ITileStorage::tileRectInfo/scanTiles cover the rest).
 // Ports the payload of the legacy IListener.Notification(ATileKey) / (nil) calls.
 struct TileUpdate {
     geo::PointI tile;

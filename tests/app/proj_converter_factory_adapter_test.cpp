@@ -49,8 +49,8 @@ TEST(ProjConverterFactoryAdapter, UnknownCodeOrInitStringGivesNull) {
     EXPECT_EQ(adapter->byEpsg(-1), nullptr);
 }
 
-// The text of u_ProjConverterByProj4.pas:143-145 / :167-170 up to the ": <PROJ message>" tail, which the
-// ticket leaves out (geo::IProjConverter has no PROJ message).
+// The text of u_ProjConverterByProj4.pas:143-145 / :167-170 up to the ": <PROJ message>" tail, which is
+// left out (geo::IProjConverter has no PROJ message).
 TEST(ProjConverterFactoryAdapter, FailingLonLat2XYThrowsWithTheTextOfLegacy) {
     const auto conv = makeAdapter()->byEpsg(3857);
     ASSERT_NE(conv, nullptr);

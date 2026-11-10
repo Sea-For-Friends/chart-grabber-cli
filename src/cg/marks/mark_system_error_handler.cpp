@@ -22,8 +22,7 @@ void catchException(core::Notifier& errorNotifier) noexcept { // CatchException,
     } catch (...) {
         message = QStringLiteral("unknown exception");
     }
-    // Deviation D-83 (docs/parity/deviations.md, row "CatchException dialog"): legacy shows an error dialog
-    // here (u_ExceptionManager.pas:44-53); the port logs only.
+    // Deviation: legacy shows an error dialog here (u_ExceptionManager.pas:44-53); the port logs only.
     qCCritical(core::logMarks).noquote() << "Mark system error:" << message; // :38
     errorNotifier.notify();                                                  // :40
 }

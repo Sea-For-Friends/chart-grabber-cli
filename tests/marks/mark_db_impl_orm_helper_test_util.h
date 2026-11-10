@@ -5,7 +5,7 @@
 #pragma once
 // Shared by the tests of the SQLite mark helper (tests/marks/mark_db_impl_orm_helper_*_test.cpp): a temp copy
 // of tests/fixtures/marks/Marks.db3 with the provider and a second plain connection for read-back, the
-// geometry makers and the mark record builder. Hoisted from the write-half test (T-0095) by T-0100.
+// geometry makers and the mark record builder.
 #include "cg/geo/geometry_factory.h"
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"

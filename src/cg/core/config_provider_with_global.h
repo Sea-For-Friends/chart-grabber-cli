@@ -21,7 +21,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-204
 class ConfigProviderWithGlobal final : public IConfigWriter,
                                        public std::enable_shared_from_this<ConfigProviderWithGlobal> {
 public:

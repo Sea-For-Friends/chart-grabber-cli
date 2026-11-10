@@ -8,8 +8,8 @@
 //
 // One lexical token: its kind, source position and decoded payload. Keywords are folded into
 // `Keyword` (kept even for keywords the v1 grammar rejects, e.g. `goto`/`uses`) so the parser can
-// name the exact Pascal keyword in a "not supported" diagnostic instead of a generic "unexpected
-// identifier" (spec 3.4).
+// name the exact Pascal keyword in a "not supported" diagnostic instead of a generic
+// "unexpected identifier".
 
 #include <QByteArray>
 
@@ -48,7 +48,7 @@ enum class TokenKind : std::uint8_t {
     Caret,
 };
 
-// Every keyword the v1 grammar names, whether accepted or explicitly rejected (spec 3.4).
+// Every keyword the v1 grammar names, whether accepted or explicitly rejected.
 enum class Keyword : std::uint8_t {
     None,
     And,

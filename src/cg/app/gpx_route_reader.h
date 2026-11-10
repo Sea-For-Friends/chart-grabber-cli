@@ -3,15 +3,15 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// New code (no legacy unit). Ports: nothing.
-// Inherits: Vector/u_VectorItemTreeImporterXML.pas:162-186, 757-857;
+// New code (no legacy unit). Ports: nothing. Inherits:
+// Vector/u_VectorItemTreeImporterXML.pas:162-186, 757-857;
 // VectorLoaders/u_XmlVectorObjects.pas:356-362, 490-494 (element handling);
-// the closed vsagps parser is replaced (ADR-0009 row 4c).
+// the closed vsagps parser is replaced.
 //
 // Own minimal GPX reader: routes (rte) and tracks (trk) as lines only. Waypoints, metadata and
-// every extension are skipped. Deviation from the mark importer (no register row, the importer
-// is not ported): a part with exactly one point is dropped here (a corridor needs a line); the
-// importer keeps it in the mark.
+// every extension are skipped. Deviation from the mark importer (the importer is not ported):
+// a part with exactly one point is dropped here (a corridor needs a line); the importer keeps
+// it in the mark.
 
 #include "cg/core/result.h"
 #include "cg/geo/geometry_factory.h"
@@ -39,7 +39,6 @@ struct GpxReadResult {
     int droppedParts = 0;         // parts with exactly one point
 };
 
-// FEAT-GEO-019
 [[nodiscard]] core::Result<GpxReadResult> readGpxRoutes(QIODevice& device);
 
 } // namespace cg::app

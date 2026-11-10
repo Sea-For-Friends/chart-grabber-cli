@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-011. Ports ITileRectInfo (i_TileInfoBasic.pas), u_TileRectInfoShort.pas;
-// docs/specs/storage.md §2.5; docs/handoffs/T-0021A.md Rework 1 (T-0021A review finding 2)
+// Ports ITileRectInfo (i_TileInfoBasic.pas), u_TileRectInfoShort.pas.
 #include "cg/storage/tile_rect_info.h"
 
 #include <gtest/gtest.h>
@@ -96,11 +95,11 @@ TEST(TileRectInfo, AtReturnsNullptrOutsideRect) {
 }
 
 TEST(TileRectInfo, AtBoundsCheckHoldsWithItemsSizedExactlyToRectArea) {
-    // The constructor's Q_ASSERT enforces items_.size() >= area (debug-only, T-0021A review's
-    // "Confirmed correct" note); the exact-fit case (no slack) is the one that would trip at()'s
-    // own `idx >= items_.size()` guard first if that guard were ever removed, so pin it here: the
-    // last in-rect tile (index 5, the final element of a 6-item exact-fit vector) still resolves,
-    // and the guard is what makes that safe rather than an out-of-bounds read.
+    // The constructor's Q_ASSERT enforces items_.size() >= area (debug-only); the exact-fit case
+    // (no slack) is the one that would trip at()'s own `idx >= items_.size()` guard first if that
+    // guard were ever removed, so pin it here: the last in-rect tile (index 5, the final element
+    // of a 6-item exact-fit vector) still resolves, and the guard is what makes that safe rather
+    // than an out-of-bounds read.
     const TileRectInfo info(kRect, 0, makeItems(6));         // area == 3*2 == 6, exact fit
     const TileRectInfoEntry* last = info.at(PointI(12, 21)); // index 5, last valid entry
     ASSERT_NE(last, nullptr);

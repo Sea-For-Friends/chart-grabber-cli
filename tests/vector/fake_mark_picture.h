@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Test double of IMarkPicture (docs/specs/vector.md §2.2.1): a name and a hash, no bitmap.
+// Test double of IMarkPicture: a name and a hash, no bitmap.
 
 #include "cg/vector/mark_picture.h"
 

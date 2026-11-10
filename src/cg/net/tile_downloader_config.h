@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: i_TileDownloaderConfig.pas, u_TileDownloaderConfig.pas:102-179,331-410,
-// u_TileDownloaderConfigStatic.pas. docs/specs/net.md §2.16.
+// u_TileDownloaderConfigStatic.pas.
 
 #include "cg/core/config_element_complex.h"
 #include "cg/core/snapshot.h"
@@ -73,9 +73,9 @@ protected:
     void doBeforeChangeNotify() override;
 
 private:
-    void setMaxConnectToServerCountLocked(quint32 v); // the "...Locked()" split (core.md 2.16):
-                                                      // doReadConfig calls this while already
-                                                      // inside the write lock.
+    void setMaxConnectToServerCountLocked(quint32 v); // the "...Locked()" split: doReadConfig
+                                                      // calls this while already inside the
+                                                      // write lock.
 
     std::shared_ptr<InetConfig> inetConfig_; // listened to, not persisted here (see .cpp)
     TileDownloaderSettings zmpDefault_;

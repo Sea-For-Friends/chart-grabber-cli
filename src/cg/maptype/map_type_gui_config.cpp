@@ -101,8 +101,8 @@ MapTypeGuiConfigStaticPtr MapTypeGuiConfig::getStatic() const {
 }
 
 // The children first (MapName, ParentSubMenu), then the own keys. A non-null provider always ends
-// with setChanged(), even when nothing changed. L-153: the Integer from the file is stored in a
-// Word, so only its low 16 bits survive.
+// with setChanged(), even when nothing changed. The Integer from the file is stored in a Word, so
+// only its low 16 bits survive.
 void MapTypeGuiConfig::doReadConfig(const core::IConfigProviderPtr& src) {
     ConfigElementComplex::doReadConfig(src);
     if (!src) {
@@ -115,8 +115,8 @@ void MapTypeGuiConfig::doReadConfig(const core::IConfigProviderPtr& src) {
     setChanged();
 }
 
-// Differs-rule against the raw ZMP values, so a sortIndex of INT_MAX counts as different from a
-// ZMP pnum of -1 (L-151). Order: children, Separator, Enabled, pnum, HotKey.
+// Differs-rule against the raw ZMP values, so a sortIndex of INT_MAX counts as different from a ZMP
+// pnum of -1 (a legacy defect, reproduced). Order: children, Separator, Enabled, pnum, HotKey.
 void MapTypeGuiConfig::doWriteConfig(const core::IConfigWriterPtr& dst) const {
     ConfigElementComplex::doWriteConfig(dst);
     if (!dst) { // defensive; unreachable in legacy (u_MapTypesMainList.pas:503-504 always passes a writer)

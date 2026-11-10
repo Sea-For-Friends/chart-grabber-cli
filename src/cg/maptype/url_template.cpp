@@ -53,8 +53,8 @@ UrlTemplate::UrlTemplate(std::shared_ptr<core::ILanguageManager> languageManager
                          RandomFn random)
     : langManager_(std::move(languageManager)), projectionSet_(std::move(projectionSet)),
       requestBuilderConfig_(std::move(requestBuilderConfig)), random_(std::move(random)) {
-    // Legacy Random is unseeded (first pick always index 0) until Randomize runs; the port is always seeded
-    // (L-136).
+    // Legacy Random is unseeded (first pick always index 0) until Randomize runs; the port is always
+    // seeded.
     if (!random_) {
         random_ = [](qint32 n) { return static_cast<qint32>(QRandomGenerator::global()->bounded(n)); };
     }
@@ -118,7 +118,7 @@ QString UrlTemplate::getBBox(QPoint tile, quint8 zoom) const {
            roundEx(rect.top);
 }
 
-// Legacy picks the host here and nowhere else (L-136); an empty list leaves the old host (L-138).
+// Legacy picks the host here and nowhere else; an empty list leaves the old host.
 void UrlTemplate::parseServerNames(const QString& names) {
     serverNames_.clear();
     if (names.isEmpty()) {
@@ -131,8 +131,7 @@ void UrlTemplate::parseServerNames(const QString& names) {
         while (s < n && names[s] > u' ' && names[s] != u',') {
             ++s;
         }
-        serverNames_.push_back(
-            names.mid(p, s - p)); // an empty name when the text starts with a separator (L-139)
+        serverNames_.push_back(names.mid(p, s - p)); // an empty name when the text starts with a separator
         while (s < n && (names[s] <= u' ' || names[s] == u',')) {
             ++s;
         }
@@ -162,11 +161,11 @@ UrlTemplate::ItemValueType UrlTemplate::tagNameToType(const QString& name) {
     }
     for (const QChar c : name) {
         if (c == u',') {
-            parseServerNames(name); // a comma tag re-parses the server list now (L-141)
+            parseServerNames(name); // a comma tag re-parses the server list now
             return ItemValueType::S;
         }
         if (c == u'+' || c == u'-' || c == u'*' || c == u'/') {
-            return ItemValueType::MathExpression; // an unknown tag with an operator renders "" (L-142)
+            return ItemValueType::MathExpression; // an unknown tag with an operator renders ""
         }
     }
     return ItemValueType::Text; // legacy: Assert(False, 'Unrecognized tag'), a no-op in release; emitted
@@ -245,7 +244,7 @@ QString UrlTemplate::doRender() {
             result += getBBox(tile, zoom);
             break;
         case ItemValueType::TimeStamp:
-            result += QString::number(QDateTime::currentSecsSinceEpoch()); // true UTC, D-7
+            result += QString::number(QDateTime::currentSecsSinceEpoch()); // true UTC
             break;
         case ItemValueType::Ver:
             result += getVersionValue(request);

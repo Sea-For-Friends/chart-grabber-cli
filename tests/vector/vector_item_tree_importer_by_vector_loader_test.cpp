@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (the T-0129 row assigns none). Ports u_VectorItemTreeImporterByVectorLoader.pas;
-// docs/specs/vector.md §2.10.3, §8.1 LV-10, §4.
+// Ports u_VectorItemTreeImporterByVectorLoader.pas.
 #include "cg/vector/html_to_hint_text_converter_stuped.h"
 #include "cg/vector/import_config.h"
 #include "cg/vector/vector_data_factory_simple.h"
@@ -82,8 +81,8 @@ TEST(VectorItemTreeImporterByVectorLoader, HandsWholeFileAndMainInfoFactoryToLoa
     EXPECT_EQ(tree->subTreeItemCount(), 0);
 }
 
-// LV-10 (u_VectorItemTreeImporterByVectorLoader.pas:103): the loader found nothing, the tree is
-// still returned, with null items.
+// A legacy defect (u_VectorItemTreeImporterByVectorLoader.pas:103): the loader found nothing, the
+// tree is still returned, with null items.
 TEST(VectorItemTreeImporterByVectorLoader, LoaderWithNoItemsGivesTreeWithNullItems) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -134,8 +133,8 @@ TEST(VectorItemTreeImporterByVectorLoader, LoaderFailureIsReturnedAndNoTreeIsBui
     EXPECT_EQ(result.error().what(), QStringLiteral("bad line 3"));
 }
 
-// A file that cannot be read is IoError and the loader is never called (spec §4; legacy raises
-// EFOpenError from LoadFromFile, u_VectorItemTreeImporterByVectorLoader.pas:92).
+// A file that cannot be read is IoError and the loader is never called (legacy raises EFOpenError
+// from LoadFromFile, u_VectorItemTreeImporterByVectorLoader.pas:92).
 TEST(VectorItemTreeImporterByVectorLoader, UnreadableFileIsIoErrorAndLoaderIsNotCalled) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

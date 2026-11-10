@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: Src/Bitmap32/i_Bitmap32BufferFactory.pas:32-55 (IBitmap32BufferFactory, IBitmap32StaticFactory)
-// and Src/Bitmap32/u_Bitmap32BufferFactory.pas:37-125 (TBitmap32BufferFactory, without the
-// 256 x 256 object pool: docs/parity/deviations.md, the D row of T-0155).
+// and Src/Bitmap32/u_Bitmap32BufferFactory.pas:37-125 (TBitmap32BufferFactory, without the 256 x 256
+// object pool: a deviation from legacy).
 //
 // The buffer factory forwards buildEmpty to the simple factory (bitmap32_buffer_factory_simple.h) and
 // keeps its own build / buildEmptyClear, as legacy does.

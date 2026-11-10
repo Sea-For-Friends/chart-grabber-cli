@@ -55,8 +55,8 @@ public:
                 vector::AppearanceOfMarkFactoryPtr appearanceOfMarkFactory,
                 vector::HtmlToHintTextConverterPtr hintConverter);
 
-    // Null (deviation D-75, silent: the sibling vector factory throws): geometry has no template to take (not
-    // a point / line / polygon) and no template was given.
+    // Null (deviation, silent: the sibling vector factory throws): geometry has no template to take (not a
+    // point / line / polygon) and no template was given.
     [[nodiscard]] vector::VectorDataItemPtr
     createNewMark(const geo::GeometryLonLatPtr& geometry, const QString& name, const QString& desc,
                   const MarkTemplatePtr& tmpl = nullptr) const override;

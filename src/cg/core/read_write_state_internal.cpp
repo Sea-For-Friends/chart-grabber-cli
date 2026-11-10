@@ -28,7 +28,6 @@ ReadWriteStateStaticPtr ReadWriteStateInternal::getStatic() const {
     return static_;
 }
 
-// FEAT-GEO-033
 void ReadWriteStateInternal::setReadAccess(bool value) {
     bool needNotify = false;
     {

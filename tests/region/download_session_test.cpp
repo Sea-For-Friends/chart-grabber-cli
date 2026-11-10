@@ -3,9 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/download_session (Src/RegionProcess/Download/u_DownloadSession.pas :41-228,
-// :480-663). FEAT-REG-015 (autoCloseAtFinish), FEAT-REG-020 (the two version fields): contribute only.
-// processedFromLastSuccessfulPoint has no getter in legacy; its branches are proven by T-0165 (ticket finding
-// b).
+// :480-663). processedFromLastSuccessfulPoint has no getter in legacy; its branches are proven by the
+// session-file tests.
 #include "cg/geo/geometry_factory.h"
 #include "cg/region/download_session.h"
 

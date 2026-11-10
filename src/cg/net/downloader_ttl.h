@@ -3,16 +3,16 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/Network/u_DownloaderHttpWithTTL.pas. docs/specs/net.md §2.10. FEAT-NET-009.
+// Ports: Src/Network/u_DownloaderHttpWithTTL.pas.
 //
 // Wraps a factory. Builds the real IDownloader on first use, drops it after kHttpClientTtl of
 // idleness (dropping it destroys the curl handle, and with it the connection pool AND the cookie
 // jar -- that is observable behavior), rebuilds on demand. Legacy drives this from a global
 // 1-second INotifierTime tick with a TListenerTTLCheck comparing a stamped last-use time; the
 // port subscribes to the same application tick (cg::core::Notifier driven by the
-// GarbageCollectorThread, T-0048; u_DownloaderHttpWithTTL.pas:87-88) but compares elapsed time
-// directly against kHttpClientTtl rather than porting the "used since last tick" flag dance --
-// equivalent effect (to within one tick), simpler state.
+// GarbageCollectorThread; u_DownloaderHttpWithTTL.pas:87-88) but compares elapsed time directly
+// against kHttpClientTtl rather than porting the "used since last tick" flag dance -- equivalent
+// effect (to within one tick), simpler state.
 //
 // Threads: doRequest() runs on the owner's (worker) thread, onTick() on the GC thread. All state
 // they share (downloader_, lastUse_, everUsed_) is guarded by mutex_.
@@ -60,10 +60,10 @@ private:
 
     SteadyClockFn clock_;
 
-    // Declared LAST deliberately -- do NOT reorder (review: "destructor-order siblings"). Members
-    // are destroyed in reverse declaration order, so tickSub_ is torn down FIRST. A tick that
-    // already copied the slot holds only a weak_ptr and locks it before touching anything, so it
-    // can never reach a half-destroyed TtlDownloader (T-0046 race class).
+    // Declared LAST deliberately -- do NOT reorder. Members are destroyed in reverse declaration
+    // order, so tickSub_ is torn down FIRST. A tick that already copied the slot holds only a
+    // weak_ptr and locks it before touching anything, so it can never reach a half-destroyed
+    // TtlDownloader.
     cg::core::Subscription tickSub_;
 };
 

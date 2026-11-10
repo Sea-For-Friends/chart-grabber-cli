@@ -1,16 +1,10 @@
-# T-0013 slice: lexer + parser + AST + the corpus parse gate.
-# T-0014 slice: value_test.cpp + interpreter_test.cpp.
-# T-0014C1 slice: delphi_format_test.cpp. T-0014C2a slice: regex_compat_test.cpp.
-# T-0015A slice: script_host_fake.cpp (the shared IScriptHost test double, no TEST cases of its
-# own - see script.md §11.1) feeds interpreter_test.cpp's host-binding cases.
-# T-0015C slice: url_script_test.cpp (spec docs/specs/script.md §11.8; two cases needing interface
-# calls - NestedHttpRequestUsesTheFakeHost, GlobalStoreSharedBetweenTwoUrlScriptsOfTheSameMap -
-# move to T-0015E).
-# T-0015E slice: corpus_run_test.cpp - runs (not just parses) all 350 GetUrlScript.txt fixtures
-# through UrlScript, structural checks only; the two moved url_script_test.cpp cases above land
-# here instead.
-# T-0015D slice: golden_url_test.cpp (spec docs/specs/script.md §11.5 - 21 hand-derived golden
-# URLs, tests/fixtures/script-goldens/).
+# Lexer, parser, AST and the corpus parse gate; value_test.cpp + interpreter_test.cpp;
+# delphi_format_test.cpp; regex_compat_test.cpp; script_host_fake.cpp (the shared IScriptHost test
+# double, no TEST cases of its own) feeds interpreter_test.cpp's host-binding cases;
+# url_script_test.cpp; corpus_run_test.cpp runs (not just parses) all 350 GetUrlScript.txt
+# fixtures through UrlScript, structural checks only, and holds the two UrlScript cases that need
+# interface calls; golden_url_test.cpp checks 21 hand-derived golden URLs
+# (tests/fixtures/script-goldens/).
 set(CG_SCRIPT_TEST_SRCS
   lexer_test.cpp
   parser_test.cpp

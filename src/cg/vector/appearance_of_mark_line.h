@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/Vector/u_AppearanceOfMarkLine.pas
 //
-// FEAT-GEO-037 (enabler). The line has no facet hash: its hash() is the IAppearance one.
+// The line has no facet hash: its hash() is the IAppearance one.
 
 #include "cg/vector/appearance.h"
 #include "cg/vector/appearance_of_vector_item.h"
@@ -17,7 +17,7 @@ public:
     AppearanceOfMarkLine(core::HashValue hash, Color32 lineColor, int lineWidth);
 
     [[nodiscard]] core::HashValue hash() const noexcept override;
-    [[nodiscard]] bool isEqual(const IAppearance* value) const override; // hash only (L-126)
+    [[nodiscard]] bool isEqual(const IAppearance* value) const override; // hash only
 
     [[nodiscard]] Color32 lineColor() const override;
     [[nodiscard]] int lineWidth() const override;

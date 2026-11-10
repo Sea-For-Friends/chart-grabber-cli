@@ -1,6 +1,6 @@
-# REMOVE-AFTER: next release. T-0313: python side of tools/lib/env_compat.sh (same names file, same rules).
-# `import env_compat` (tools/lib is put on sys.path by the importer) maps SAS_<X> -> CG_<X> in os.environ in place, so every
-# os.environ read and every child process sees the CG_* names; one stderr warning per process tree.
+# REMOVE-AFTER: next release. Python side of tools/lib/env_compat.sh (same names file, same rules). `import env_compat`
+# (tools/lib is put on sys.path by the importer) maps SAS_<X> -> CG_<X> in os.environ in place, so every os.environ read and
+# every child process sees the CG_* names; one stderr warning per process tree.
 import os
 import sys
 

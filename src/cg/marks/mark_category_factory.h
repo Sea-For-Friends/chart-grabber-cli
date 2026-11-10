@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkCategoryFactory.pas (interface, shared), u_MarkCategoryFactory.pas (MarkCategoryFactory,
-// T-0091)
+// Ports: i_MarkCategoryFactory.pas (interface, shared), u_MarkCategoryFactory.pas (MarkCategoryFactory)
 
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_factory_config.h"

@@ -1,4 +1,4 @@
-; T-0015D golden: Lantmateriet.se.zmp - RoundEx precision 8, trailing literal.
+; Golden: Lantmateriet.se.zmp - RoundEx precision 8, trailing literal.
 ; ResultURL := GetURLBase+RoundEx(GetLLon,8)+','+RoundEx(GetBLat,8)+','+RoundEx(GetRLon,8)+
 ;   ','+RoundEx(GetTLat,8)+'&WIDTH=256&HEIGHT=256'
 ; Same RoundEx algorithm as map16, precision 8 (still < 15-3=12 available decimals, so a

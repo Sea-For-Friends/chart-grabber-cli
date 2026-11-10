@@ -4,9 +4,8 @@
 
 // Ports: Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas:129-136, :149-174 (classes), :515-528, :560-611
 // (constructors) and the 32-bit branch of Save :456-467, :476-491 for WebP. The encoder is libwebp with the
-// parameters of FreeImage's PluginWebP.cpp as listed in docs/specs/bitmap.md §2.5 (from a GitHub copy and
-// from memory, unverified against the shipped DLL). The GIF and TIFF savers refuse.
-// Feature: FEAT-RND-044 (WebP), FEAT-RND-039 (GIF), FEAT-RND-043 (TIFF)
+// parameters of FreeImage's PluginWebP.cpp (from a GitHub copy and from memory, unverified against the
+// shipped DLL). The GIF and TIFF savers refuse.
 
 #include "cg/bitmap/bitmap_codec_error.h"
 #include "cg/bitmap/bitmap_tile_free_image.h"
@@ -59,7 +58,7 @@ struct DataGuard {
 
 // PluginWebP.cpp:475-515 (config, import, encode) and :595-648 (container); flag = quality or kWebpLossless.
 QByteArray encodeWebp(const Bitmap32StaticPtr& bitmap, int flag) {
-    // D row of T-0162: legacy dereferences nil (ABitmap.Size, :391), no handler; see the PNG saver.
+    // A deviation from legacy: legacy dereferences nil (ABitmap.Size, :391), no handler; see the PNG saver.
     if (!bitmap) {
         saveFailed();
     }
@@ -149,7 +148,7 @@ QByteArray BitmapTileFreeImageSaverWebpLossless::save(const Bitmap32StaticPtr& b
 // ---- :515-528 (flag 0, 8 bpp; the 32-to-8 converter is not ported)
 BitmapTileFreeImageSaverGif::BitmapTileFreeImageSaverGif() : BitmapTileFreeImageSaver(0, 8) {}
 
-// not ported: GIF / TIFF savers (docs/specs/bitmap.md §2.5; palette output is group O-3)
+// not ported: GIF / TIFF savers (palette output is not ported either)
 QByteArray BitmapTileFreeImageSaverGif::save(const Bitmap32StaticPtr&) const {
     throw BitmapCodecError("GIF saver is not ported");
 }

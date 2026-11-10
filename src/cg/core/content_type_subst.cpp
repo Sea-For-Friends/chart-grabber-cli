@@ -20,7 +20,7 @@ ContentTypeSubst ContentTypeSubst::fromString(const QString& value) {
     for (const QString& entry : parseDelimitedText(value, u';')) {
         const QStringList parts = parseDelimitedText(entry, u'=');
         if (parts.size() != 2) {
-            continue; // malformed entry, skipped (core.md 2.22)
+            continue; // malformed entry, skipped
         }
         const QString& source = parts.at(0);
         const QString& target = parts.at(1);

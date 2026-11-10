@@ -25,7 +25,7 @@
 
 namespace cg::region {
 
-// T-0356, no legacy counterpart: how one tile was answered against the class "the frame is not served yet".
+// No legacy counterpart: how one tile was answered against the class "the frame is not served yet".
 enum class FrameAnswer : std::uint8_t {
     Other,       // stored, skipped as present, or any answer outside the class (also no HTTP answer)
     Unavailable, // HTTP 5xx or the ban tile: the worker asks for the same tile again
@@ -36,6 +36,13 @@ struct FrameAnswers {
     qint64 unavailableRun = 0; // Unavailable answers in a row (any other answer restarts the count)
     qint64 inClass = 0;        // Unavailable + Missing answers
     qint64 other = 0;          // Other answers
+};
+
+struct RefusalCounts {      // No legacy counterpart; not saved in the session
+    qint64 streak = 0;      // refusals in a row; any other download answer resets it
+    qint64 refused = 0;     // refusals since the run started (every attempt counts, also a retried tile)
+    qint64 notRefused = 0;  // download answers that were not refusals, and tiles skipped as already stored
+    quint32 lastStatus = 0; // HTTP status of the newest refusal
 };
 
 // i_RegionProcessProgressInfoDownload.pas:34-88: what the progress window reads and commands.
@@ -59,11 +66,13 @@ public:
     [[nodiscard]] virtual int sessionAutosaveInterval() const = 0;
     [[nodiscard]] virtual QString sessionAutosavePrefix() const = 0;
     virtual void getWorkerInfo(int& workerIndex, int& workersCount) const = 0;
-    // T-0271, no legacy counterpart: tiles in a row whose download failed with a connection error.
+    // No legacy counterpart: tiles in a row whose download failed with a connection error.
     [[nodiscard]] virtual qint64 connectionErrorStreak() const = 0;
-    // T-0356, no legacy counterpart: the answers of this run against the class "the frame is not served yet".
-    // Default all 0 for readers that never count (test doubles).
+    // No legacy counterpart: the answers of this run against the class "the frame is not served yet". Default
+    // all 0 for readers that never count (test doubles).
     [[nodiscard]] virtual FrameAnswers frameAnswers() const { return {}; }
+    // No legacy counterpart: the refusals (HTTP 401, 403, 451) of this run. Default all 0.
+    [[nodiscard]] virtual RefusalCounts refusalCounts() const { return {}; }
 };
 
 // :90-116: what the worker thread writes. Does not derive from the reader interface, as in legacy.
@@ -82,13 +91,17 @@ public:
     virtual void setTotalToProcess(qint64 value) = 0;
     [[nodiscard]] virtual std::shared_ptr<core::LogRingBuffer> log() const = 0;
     virtual void setZoom(quint8 value) = 0;
-    // T-0271, no legacy counterpart: the server answered (false: streak = 0) or the connection failed (true).
+    // No legacy counterpart: the server answered (false: streak = 0) or the connection failed (true).
     virtual void noteDownloadAnswer(bool connectionError) = 0;
-    // T-0356, no legacy counterpart: a tile was answered (or skipped as present). Default: no counting.
+    // No legacy counterpart: a tile was answered (or skipped as present). Default: no counting.
     virtual void noteFrameAnswer(FrameAnswer /*answer*/) {}
+    // No legacy counterpart: a download answer was a refusal (true, with its HTTP status) or not.
+    virtual void noteRefusal(bool /*refused*/, quint32 /*statusCode*/) {}
+    // A tile was skipped as already stored (or a TNE row): counted as not refused; the streak stays.
+    virtual void noteSkippedPresent() {}
 };
 
-// FEAT-REG-018: progress, pause, resume (contributes; the worker and the UI close it).
+// The progress object of a download: progress, pause and resume.
 //
 // Shared between the download worker (writes through the Internal interface) and the polling
 // caller (reads through the reader interface). ONE read/write lock guards the counters and the
@@ -127,6 +140,7 @@ public:
     void getWorkerInfo(int& workerIndex, int& workersCount) const override;
     [[nodiscard]] qint64 connectionErrorStreak() const override;
     [[nodiscard]] FrameAnswers frameAnswers() const override;
+    [[nodiscard]] RefusalCounts refusalCounts() const override;
 
     // Internal
     [[nodiscard]] bool needPause() const override;
@@ -143,6 +157,8 @@ public:
     void setZoom(quint8 value) override;
     void noteDownloadAnswer(bool connectionError) override;
     void noteFrameAnswer(FrameAnswer answer) override;
+    void noteRefusal(bool refused, quint32 statusCode) override;
+    void noteSkippedPresent() override;
 
 private:
     [[nodiscard]] double now() const;
@@ -157,10 +173,14 @@ private:
     double startTime_;
     qint64 totalInRegion_ = 0;
     int lastSuccessfulSize_ = -1;
-    std::atomic<qint64> connectionErrorStreak_{0}; // T-0271; not saved
-    std::atomic<qint64> unavailableRun_{0};        // T-0356; not saved
-    std::atomic<qint64> inClass_{0};               // T-0356; not saved
-    std::atomic<qint64> other_{0};                 // T-0356; not saved
+    std::atomic<qint64> connectionErrorStreak_{0}; // Not saved
+    std::atomic<qint64> unavailableRun_{0};        // Not saved
+    std::atomic<qint64> inClass_{0};               // Not saved
+    std::atomic<qint64> other_{0};                 // Not saved
+    std::atomic<qint64> refusalStreak_{0};         // Not saved
+    std::atomic<qint64> refused_{0};               // Not saved
+    std::atomic<qint64> notRefused_{0};            // Not saved
+    std::atomic<quint32> lastRefusalStatus_{0};    // Not saved
 };
 
 } // namespace cg::region

@@ -5,7 +5,7 @@
 #pragma once
 // Ports: i_PredicateByBinaryData.pas, u_PredicateByStaticSampleList.pas
 //
-// IPredicateByBinaryData is `Check(data): bool`; here a std::function (core.md assigns the alias to maptype).
+// IPredicateByBinaryData is `Check(data): bool`; here a std::function alias of maptype.
 // TPredicateByStaticSampleList answers "is the data byte-for-byte equal to one of the samples". Samples are
 // indexed by size, then by CRC-32, then compared with CompareMem (u_PredicateByStaticSampleList.pas:58-138);
 // the index only speeds the lookup up, the answer is plain equality with a non-empty sample.

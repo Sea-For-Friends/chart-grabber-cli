@@ -16,10 +16,10 @@ void IdDynArrayObject::add(qint64 id) {
     array_.fastLocateOrAddSorted(id);
 }
 
-// TIDDynArrayObject.AddArray (:323-373). Ids already present are skipped, but the ids of the
-// source are not de-duplicated among themselves (L-157).
+// TIDDynArrayObject.AddArray (:323-373). Ids already present are skipped, but the ids of the source
+// are not de-duplicated among themselves.
 void IdDynArrayObject::addArray(const std::vector<qint64>& array, int startIndex, int count) {
-    // D-66: a negative start is rejected first (no arithmetic on it); legacy reads before the array.
+    // A negative start is rejected first (no arithmetic on it); legacy reads before the array.
     if (startIndex < 0) {
         return;
     }
@@ -27,8 +27,8 @@ void IdDynArrayObject::addArray(const std::vector<qint64>& array, int startIndex
     if (vsize <= 0) {
         return;
     }
-    // D-66: legacy reads AArray[AStartIndex+I] past the array when count runs over its end ; the port limits
-    // the range to the array, as TDynArray.AddArray does itself.
+    // Legacy reads AArray[AStartIndex+I] past the array when count runs over its end; the port limits the
+    // range to the array, as TDynArray.AddArray does itself.
     const int available = static_cast<int>(array.size()) - startIndex;
     vsize = std::min(vsize, available);
     if (vsize <= 0) {

@@ -20,11 +20,11 @@ namespace cg::maptype {
 
 namespace {
 
-// TSimpleHttpDownloader (u_SimpleHttpDownloader.pas) as the script's `Downloader` variable: one per
-// request, bound to the request's inet settings and cancel token. The 'POST iff the body is
-// non-empty' rule lives in net::simpleHttpRequest. Sandbox (user ruling Q-8 2026-10-14; the second D row of
-// T-0194): a file:/// URL is not read (legacy :81-124 passes it to the downloader, which reads the file); the
-// call reports what simpleHttpRequest reports for no server response, status 0 with empty header and body.
+// TSimpleHttpDownloader (u_SimpleHttpDownloader.pas) as the script's `Downloader` variable: one per request,
+// bound to the request's inet settings and cancel token. The 'POST iff the body is non-empty' rule lives in
+// net::simpleHttpRequest. Sandbox (a deviation from legacy): a file:/// URL is not read (legacy :81-124
+// passes it to the downloader, which reads the file); the call reports what simpleHttpRequest reports for no
+// server response, status 0 with empty header and body.
 class ScriptHttpDownloader final : public script::IHttpDownloader {
 public:
     ScriptHttpDownloader(net::IDownloaderPtr downloader, std::shared_ptr<const net::InetSettings> inet,
@@ -214,7 +214,7 @@ QByteArray TileDownloadRequestBuilderPascalScript::templateToUrl(const QByteArra
 
 int TileDownloadRequestBuilderPascalScript::saveToLocalFile(const QString& fullPath,
                                                             const QByteArray& /*data*/) {
-    // Sandbox (Q-8): SaveToLocalFile_P (u_PascalScriptUtils.pas:173-200) wrote the file; now nothing is
+    // Sandbox: SaveToLocalFile_P (u_PascalScriptUtils.pas:173-200) wrote the file; now nothing is
     // written and the script sees the failure result 0.
     if (!saveWarned_.exchange(true)) {
         qCWarning(logMapType).noquote()
@@ -224,7 +224,7 @@ int TileDownloadRequestBuilderPascalScript::saveToLocalFile(const QString& fullP
 }
 
 bool TileDownloadRequestBuilderPascalScript::fileExists(const QString& fullPath) const {
-    // Sandbox (Q-8): SysUtils.FileExists (u_PascalScriptUtils.pas:50, :230) probed the disk; now false.
+    // Sandbox: SysUtils.FileExists (u_PascalScriptUtils.pas:50, :230) probed the disk; now false.
     if (!existsWarned_.exchange(true)) {
         qCWarning(logMapType).noquote()
             << "script file probes are disabled (FileExists \"" + fullPath + "\")";
@@ -237,7 +237,7 @@ void TileDownloadRequestBuilderPascalScript::writeLn(const QByteArray& /*text*/)
 }
 
 qint64 TileDownloadRequestBuilderPascalScript::unixTime() const {
-    return QDateTime::currentSecsSinceEpoch(); // true UTC, D-7 (script.md section 12)
+    return QDateTime::currentSecsSinceEpoch(); // true UTC
 }
 
 qint32 TileDownloadRequestBuilderPascalScript::random(qint32 upperExclusive) {

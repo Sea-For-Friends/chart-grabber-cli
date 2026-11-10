@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generator of the 10-byte x87 literals used by tests/marks/extended80_test.cpp and geometry_sml_test.cpp (T-0109).
+"""Generator of the 10-byte x87 literals used by tests/marks/extended80_test.cpp and geometry_sml_test.cpp.
 Run: python3 -I tools/gen_sml_vectors.py   (prints "value  bytes" in memory order: 8 bytes significand LE, 2 bytes sign+exponent LE).
 Independent of the C++ code: struct for the double bits, integer arithmetic for the widening."""
 import struct

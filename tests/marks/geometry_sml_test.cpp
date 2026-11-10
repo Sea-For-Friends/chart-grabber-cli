@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Tests of the SML geometry blob (t_GeometryPointSML.pas, u_GeometryFromStreamSML.pas,
-// u_GeometryToStreamSML.pas). Every blob is a literal byte vector: record = X (10 bytes) + Y (10 bytes) +
-// Reserved (4 bytes), the values come from an independent script (see docs/handoffs/T-0109.md).
+// u_GeometryToStreamSML.pas). Every blob is a literal byte vector: record = X (10 bytes) + Y (10
+// bytes) + Reserved (4 bytes), the values come from an independent script.
 #include "cg/core/platform/qt_compat.h"
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/geometry_lonlat.h"
@@ -99,8 +99,7 @@ QByteArray blob(const std::string& hex) {
 
 // ---- describing a geometry as text, independent of the code under test ----
 std::string num(double v) {
-    // T-0396: Apple libc++ has std::to_chars for double only from macOS 13.3, so the shortest form comes from
-    // Qt
+    // Apple libc++ has std::to_chars for double only from macOS 13.3, so the shortest form comes from Qt
     const std::string text = QByteArray::number(v, 'g', QLocale::FloatingPointShortest).toStdString();
     return (v == 0.0 && std::signbit(v) && text == "0") ? "-0" : text; // Qt drops the sign of a negative zero
 }
@@ -231,8 +230,8 @@ TEST(GeometrySmlParse, BlobTable) {
         {"unnormal inside a line is a separator",
          rec(kV10, kV20) + rec(kUnnormal, kV10) + rec(kV30, kV40) + rec(kNaN, kNaN), "ML[L(10,20)|L(30,40)]",
          false},
-        // D row: legacy raises out of Parse at :157 when the FIRST or LAST record is an unsupported encoding;
-        // the port folds it into "empty"
+        // A deviation from legacy: legacy raises out of Parse at :157 when the FIRST or LAST record is an
+        // unsupported encoding; the port folds it into "empty"
         {"unnormal first, real last: line, first skipped", rec(kUnnormal, kV10) + recs({kB, kA}),
          "L(30,40;10,20)", false},
         {"unnormal last, real first: line, last dropped as empty", recs({kA, kB}) + rec(kUnnormal, kV10),
@@ -414,7 +413,7 @@ TEST(GeometrySmlSave, NaNCoordinateIsWidenedNotReplaced) {
 
 namespace {
 
-// Test stubs: the geo interfaces are abstract, so states the landed constructors only Q_ASSERT against can
+// Test stubs: the geo interfaces are abstract, so states that the constructors only Q_ASSERT against can
 // be reached (debug and release alike).
 class StubContour final : public g::IGeometryLonLatContour {
 public:
@@ -474,9 +473,10 @@ private:
 
 } // namespace
 
-// D row regression (guards in geometry_to_stream_sml.cpp): empty multi-geometries and a contour without
-// vertices. Legacy: Item[0] of an empty TList (exception, RTL not in the tree) and a closing record built
-// from an uninitialised variable. Port: nothing written / no closing record.
+// Regression test for a deviation from legacy (guards in geometry_to_stream_sml.cpp): empty
+// multi-geometries and a contour without vertices. Legacy: Item[0] of an empty TList (exception, RTL not
+// in the tree) and a closing record built from an uninitialised variable. Port: nothing written / no
+// closing record.
 TEST(GeometrySmlSave, DegenerateGeometryStubs) {
     const StubMultiLine noLines;
     const StubMultiPolygon noPolygons;

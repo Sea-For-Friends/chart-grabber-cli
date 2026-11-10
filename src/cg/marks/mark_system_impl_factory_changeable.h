@@ -3,15 +3,15 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/u_MarkSystemImplFactoryChangeable.pas (260; docs/specs/marks.md §2.6 Ruling A.1). Line
-// numbers in the sources are those of that unit.
+// Ports: Src/MarksDB/u_MarkSystemImplFactoryChangeable.pas. Line numbers in the sources are those of that
+// unit.
 //
 // The list of the mark database backends: a GUID-keyed set of (GUID, caption, factory) elements.
 //
-// Not ported: the SML registration block (:138-157; ticket S6 inserts it above the SQLite3 block when
-// MarkSystemImplFactorySML lands), the MongoDB and DBMS (ODBC) blocks (:181-223; DV-4, U-3), the ZDBC block
+// Not ported: the SML registration block (:138-157; it goes above the SQLite3 block once
+// MarkSystemImplFactorySML is ported), the MongoDB and DBMS (ODBC) blocks (:181-223), the ZDBC block
 // (:227-247; dead code after the `Exit` of :225), the hash function (the core free functions) and the two
-// performance counters (DV-1).
+// performance counters.
 
 #include "cg/core/guid_set.h"
 #include "cg/geo/geometry_factory.h"

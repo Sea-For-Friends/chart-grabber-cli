@@ -2,9 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-031. Ports i_TileStorageAbilities.pas, u_TileStorageAbilities.pas;
-// docs/specs/storage.md §2.3, :242-297 (per-type table, T-0021A review finding 4 / Tech Lead
-// ruling 2026-09-19, T-0021A rework)
+// Ports i_TileStorageAbilities.pas, u_TileStorageAbilities.pas and the per-type table.
 #include "cg/storage/tile_storage_abilities.h"
 
 #include <gtest/gtest.h>
@@ -107,7 +105,7 @@ TEST(TileStorageAbilities, RestrictedByReadWriteOtherIsIdentityWhenNotForced) {
     EXPECT_TRUE(r.allowRead && r.allowScan && r.allowAdd && r.allowDelete && r.allowReplace);
 }
 
-// --- tileStorageTypeAbilities(): the per-type table, storage.md :242-297, one row per legacy
+// --- tileStorageTypeAbilities(): the per-type table, one row per legacy
 // u_TileStorageType*.pas constructor ------------------------------------------------------------
 
 TEST(TileStorageTypeAbilities, FolderSimpleIsReadWriteIgnoredVersionInSeparateFiles) {
@@ -120,8 +118,8 @@ TEST(TileStorageTypeAbilities, FolderSimpleIsReadWriteIgnoredVersionInSeparateFi
 }
 
 TEST(TileStorageTypeAbilities, Sqlite3NativeIsAlwaysMultiVersions) {
-    // u_TileStorageTypeSQLite.pas:87-99; the type list always constructs it with IsVersioned =
-    // True -- this is the load-bearing row the review flagged (finding 4).
+    // u_TileStorageTypeSQLite.pas:87-99; the type list always constructs it with IsVersioned = True --
+    // this is a load-bearing row.
     const auto a = tileStorageTypeAbilities(TileStorageKind::Sqlite3Native);
     EXPECT_EQ(a.base, TileStorageAbilities::readWrite());
     EXPECT_EQ(a.version, VersionSupport::MultiVersions);
@@ -140,7 +138,7 @@ TEST(TileStorageTypeAbilities, SqliteFileIsReadWriteIgnoredVersionOneFile) {
 }
 
 TEST(TileStorageTypeAbilities, OruxMapsIsReadOnly) {
-    // Same ctor, AFormatId = sfOruxMaps -- the other load-bearing row the review flagged.
+    // Same ctor, AFormatId = sfOruxMaps -- the other load-bearing row.
     const auto a = tileStorageTypeAbilities(TileStorageKind::OruxMaps);
     EXPECT_EQ(a.base, TileStorageAbilities::readOnly());
     EXPECT_TRUE(a.base.isReadOnly());

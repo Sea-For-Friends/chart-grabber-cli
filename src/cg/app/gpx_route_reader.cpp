@@ -116,7 +116,7 @@ void Reader::onStart() {
 }
 
 void Reader::onPoint() {
-    // A trkpt outside a trkseg is ignored (see the handoff: legacy keeps it in an aggregator).
+    // A trkpt outside a trkseg is ignored (legacy keeps it in an aggregator).
     geo::LonLat point;
     if (inPart_) {
         if (readPoint(xml_.attributes(), point)) {

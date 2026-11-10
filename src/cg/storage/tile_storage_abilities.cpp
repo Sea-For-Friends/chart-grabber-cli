@@ -24,8 +24,8 @@ TileStorageTypeAbilities tileStorageTypeAbilities(TileStorageKind kind) {
                 StorageClass::InSeparateFiles};
     case TileStorageKind::Sqlite3Native:
         // u_TileStorageTypeSQLite.pas, which u_TileStorageTypeListSimple.pas always constructs with
-        // IsVersioned = True. (T-0333: the BerkeleyDb / BerkeleyDbVersioned kinds that shared this
-        // row were removed with the backend, owner 2026-10-21.)
+        // IsVersioned = True. (The BerkeleyDb / BerkeleyDbVersioned kinds that shared this row were
+        // removed with the backend.)
         return {TileStorageAbilities::readWrite(), VersionSupport::MultiVersions, true, StorageClass::Folder};
     case TileStorageKind::SqliteFile:
         return {TileStorageAbilities::readWrite(), VersionSupport::Ignored, false, StorageClass::OneFile};

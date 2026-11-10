@@ -21,7 +21,7 @@ qint32 IConfigProvider::readInt(QStringView id, qint32 def) const {
 }
 
 bool IConfigProvider::readBool(QStringView id, bool def) const {
-    // Q14: ReadBool is ReadInteger(..., Ord(Default)) <> 0; "True"/"yes" do not parse.
+    // ReadBool is ReadInteger(..., Ord(Default)) <> 0; "True"/"yes" do not parse.
     return readInt(id, def ? 1 : 0) != 0;
 }
 

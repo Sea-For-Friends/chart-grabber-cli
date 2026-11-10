@@ -14,8 +14,8 @@ namespace {
 
 // Free functions have no QObject context for tr(), so translation goes through
 // QCoreApplication::translate with a fixed context string -- the deferred-gettext-getter C++
-// lacks (see [D-9] in download_result_factory.h). With no translators loaded (as in tests) this
-// returns the English source text unchanged.
+// lacks (see download_result_factory.h). With no translators loaded (as in tests) this returns
+// the English source text unchanged.
 constexpr const char* kTrContext = "cg::net::result";
 
 QString dataNotExistsMessage(quint32 status) {
@@ -95,7 +95,7 @@ DownloadResult loadErrorByErrorCode(int errorCode) {
 
 DownloadResult loadErrorByUnknownReason(QString text) {
     DownloadResult r;
-    // ADR-0004: BuildLoadErrorByUnknownReason constructs TDownloadResultUnknownError, not
+    // BuildLoadErrorByUnknownReason constructs TDownloadResultUnknownError, not
     // TDownloadResultLoadError, despite the builder's name -- every curl-level failure ends up
     // UnknownError (isServerExists == false). Caller-supplied text (the curl error string), not
     // translated here.

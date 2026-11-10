@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-REG-014 (split into N parts), FEAT-REG-019 (resume from .sls), FEAT-REG-011, FEAT-REG-012,
-// FEAT-REG-020 (the options reach the worker): contribute only (docs/parity/held-open.md).
+// Covers: the split into N parts, the resume from an .sls file and the options that reach the worker.
 // Ports: Src/RegionProcess/Download/u_ProviderTilesDownload.pas (StartSession :194-272, StartBySLS :274-322,
-// StartProcess :324-379). T-0181, proofs RD-8 4-7.
+// StartProcess :324-379).
 //
 // Rig: a real map set holding a FakeMapType, a recording subsystem (every getRequestTask is logged, every
 // download answers Ok with 5 bytes at once), an empty storage, the real task provider, session, progress
@@ -16,15 +15,15 @@
 // Two workers that pause at the same moment both read the wall clock
 // (RegionProcessProgressInfoDownload::now(), QDateTime::currentDateTime -> glibc time zone code);
 // ThreadSanitizer does not see glibc's tzset_lock, so tools/tsan_suppressions.txt carries a narrow
-// suppression for it (T-0195; report in docs/handoffs/T-0181.md).
+// suppression for it.
 //
 // Geometry (Google/3857, hand-derived in download_task_provider_test.cpp): the rectangle lon -170..-100,
 // lat 30..-10 covers z3 x 0..1, y 3..4 (4 tiles) and z4 x 0..3, y 6..8 (12 tiles); the rectangle lon
 // -170..-160, lat 20..10 covers the one tile (0,3) at z3. Parts of n tiles are n / parts each, the last part
 // takes the remainder (2,2,2,3 for 9 in 4).
 //
-// Not proven (no seam without changing landed code): the child DownloadInfo of a run is private to its worker
-// (the initial count and size of the .sls child, and "one child per worker", cannot be read); the
+// Not proven (no seam without changing the production code): the child DownloadInfo of a run is private to
+// its worker (the initial count and size of the .sls child, and "one child per worker", cannot be read); the
 // cancel-between-begin()-and-the-test branch (:248).
 #include "cg/core/config_provider_ini.h"
 #include "cg/geo/datum.h"
@@ -180,7 +179,7 @@ void cancelAndDestroy(std::vector<DownloadSessionRun>& runs) {
 
 } // namespace
 
-// Proof 4 (StartProcess :340-378): three parts of an area over two zooms. One task provider serves all three
+// StartProcess (:340-378): three parts of an area over two zooms. One task provider serves all three
 // workers: together they request each tile exactly once; the sessions know their index and the count; every
 // run has its own log, notifier, progress object and session; the parent counter holds the sum of the three.
 TEST(ProviderTilesDownload, SplitIntoThreeWorkersCoversEveryTileOnce) {
@@ -239,9 +238,9 @@ TEST(ProviderTilesDownload, SplitIntoThreeWorkersCoversEveryTileOnce) {
     EXPECT_EQ(static_cast<qint64>(w.parentInfo->size()), 5 * downloaded);
 }
 
-// Proof 4 (StartProcess :352-372): each option reaches the session at its own position. Three rows, each
-// flag column has its own pattern, so a swap of two arguments shows in one row. The runs start paused: no
-// tile is touched.
+// StartProcess (:352-372): each option reaches the session at its own position. Three rows, each flag
+// column has its own pattern, so a swap of two arguments shows in one row. The runs start paused: no tile
+// is touched.
 TEST(ProviderTilesDownload, FrameOptionsReachEverySessionAtTheirPosition) {
     struct Row {
         bool ignoreTne, replace, difSize, older, closeOnFinish;
@@ -303,9 +302,9 @@ TEST(ProviderTilesDownload, FrameOptionsReachEverySessionAtTheirPosition) {
     }
 }
 
-// Proof 4 (StartSession :250-268): the session's options reach the worker at their own position. One worker,
-// the first tile of the area is on disk with the date 2024-06-13 12:00. A skip is seen as "the first request
-// is for the second tile"; the size flag is seen in the request the worker makes.
+// StartSession (:250-268): the session's options reach the worker at their own position. One worker, the
+// first tile of the area is on disk with the date 2024-06-13 12:00. A skip is seen as
+// "the first request is for the second tile"; the size flag is seen in the request the worker makes.
 TEST(ProviderTilesDownload, WorkerDecisionsFollowTheSessionOptions) {
     struct Row {
         const char* name;
@@ -393,7 +392,7 @@ TEST(ProviderTilesDownload, WorkerDecisionsFollowTheSessionOptions) {
     }
 }
 
-// Proof 7 (FEAT-REG-013 through StartSession :221-227): a run started paused reports it at once and requests
+// A paused start through StartSession (:221-227): a run started paused reports it at once and requests
 // nothing until resume(); after it the whole area is requested.
 TEST(ProviderTilesDownload, StartPausedRequestsNothingUntilResume) {
     World w;
@@ -415,8 +414,8 @@ TEST(ProviderTilesDownload, StartPausedRequestsNothingUntilResume) {
               (std::vector<Tile>{{3, 0, 3}, {3, 0, 4}, {3, 1, 3}, {3, 1, 4}}));
 }
 
-// Proof 6 (StartSession :214-219): cancelling the notifier of a run ends its worker; the run is destroyed
-// without a hang, the progress object is finished and nothing was requested (the runs were paused).
+// StartSession (:214-219): cancelling the notifier of a run ends its worker; the run is destroyed without
+// a hang, the progress object is finished and nothing was requested (the runs were paused).
 TEST(ProviderTilesDownload, CancelEndsEveryWorkerAndTheRunsDestroyCleanly) {
     World w;
     auto& provider = w.start();
@@ -479,11 +478,11 @@ QString messageOf(const std::function<void()>& call) {
 
 } // namespace
 
-// Proof 5 (StartBySLS :282-321): the resumed run continues after the last processed tile of the file; its
-// session carries the file's counters. Zoom 4 has 12 tiles (0,6)(1,6)(2,6)(3,6)(0,7)(1,7)(2,7)(3,7)(0,8)(1,8)
+// StartBySLS (:282-321): the resumed run continues after the last processed tile of the file; its session
+// carries the file's counters. Zoom 4 has 12 tiles (0,6)(1,6)(2,6)(3,6)(0,7)(1,7)(2,7)(3,7)(0,8)(1,8)
 // (2,8)(3,8); the file says 6 are done and (1,7) was the last. The seek onto (1,7) takes one unit of the
-// budget of 12 - 6 + 1 = 7, so six tiles follow, (3,8) included (the deviation of T-0226 (deviations.md), was
-// LR-2 / L-265).
+// budget of 12 - 6 + 1 = 7, so six tiles follow, (3,8) included (a deviation from legacy that fixes a legacy
+// defect).
 TEST(ProviderTilesDownload, ResumeFromSlsContinuesAfterTheLastProcessedTile) {
     SlsFile file(
         session(kGuidText, kZoom4Keys + kAreaPoints +
@@ -517,7 +516,7 @@ TEST(ProviderTilesDownload, ResumeFromSlsContinuesAfterTheLastProcessedTile) {
     EXPECT_EQ(w.parentInfo->size(), 5u * static_cast<quint64>(mine));
 }
 
-// Proof 5/7: the start-paused argument of StartBySLS reaches the progress object.
+// The start-paused argument of StartBySLS reaches the progress object.
 TEST(ProviderTilesDownload, ResumeFromSlsStartedPausedWaitsForResume) {
     SlsFile file(session(kGuidText, kZoom3Keys + kAreaPoints));
     World w;
@@ -530,7 +529,7 @@ TEST(ProviderTilesDownload, ResumeFromSlsStartedPausedWaitsForResume) {
     EXPECT_TRUE(w.subsystem->requests().empty());
 }
 
-// Proof 5: the errors of Load pass through unchanged, and no worker was started (StartBySLS :294-299).
+// The errors of Load pass through unchanged, and no worker was started (StartBySLS :294-299).
 TEST(ProviderTilesDownload, ResumeFromSlsErrorsKeepTheTextOfLoad) {
     struct Row {
         const char* name;
@@ -557,8 +556,8 @@ TEST(ProviderTilesDownload, ResumeFromSlsErrorsKeepTheTextOfLoad) {
     }
 }
 
-// Proof 5: a file that does not exist is an empty INI (TMemIniFile), so there is no [Session] section and
-// Load raises its own text (u_DownloadSession.pas:359-361).
+// A file that does not exist is an empty INI (TMemIniFile), so there is no [Session] section and Load
+// raises its own text (u_DownloadSession.pas:359-361).
 TEST(ProviderTilesDownload, ResumeFromAMissingFileRaisesNoSlsData) {
     QTemporaryDir dir;
     World w;

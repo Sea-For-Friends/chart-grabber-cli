@@ -2,15 +2,13 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-019, FEAT-STO-020, FEAT-STO-021. Ports
-// u_TileStorageSQLiteFileConnectionBuilder.pas:179-225 (PrepareFileName) and
-// u_TileStorageSQLiteFileConnectionPool.pas:51-104; see docs/specs/storage.md §2.17. Per the
-// ticket's own Tests section, the connection base's full statement plumbing (real flavour SQL:
-// bind/result logic, schema, metadata) is exercised through T-0022C2/C3's tests, once a real
-// flavour exists to drive it -- not here. The three FakeConnection-based tests below (added in
-// the T-0022C1 rework, review findings F2-F4) are the minimum needed to pin insertOrUpdate's
-// rollback-on-metadata-failure, a disabled connection's no-op contract, and fetchRectInfo's
-// partial-result-on-step-error behaviour without a real format's schema.
+// Ports u_TileStorageSQLiteFileConnectionBuilder.pas:179-225 (PrepareFileName) and
+// u_TileStorageSQLiteFileConnectionPool.pas:51-104. The connection base's full statement
+// plumbing (real flavour SQL: bind/result logic, schema, metadata) is exercised through the
+// flavour tests, not here. The three FakeConnection-based tests below are the minimum needed
+// to pin insertOrUpdate's rollback-on-metadata-failure, a disabled connection's no-op
+// contract, and fetchRectInfo's partial-result-on-step-error behaviour without a real format's
+// schema.
 #include "cg/core/content_type.h"
 #include "cg/core/result.h"
 #include "cg/geo/geo_types.h"
@@ -43,11 +41,11 @@ using cg::storage::sqlite::SqliteFileFormat;
 namespace {
 
 // A minimal concrete SqliteFileConnection: enough to satisfy the pure virtual flavour hooks so
-// the pool can be tested without a real MBTiles/RMaps/OruxMaps flavour (T-0022C2/C3/D1). Never
-// initialize()'d -- the pool only needs a distinct, identifiable object per acquire. Also used by
-// F3's disabled-connection test below: an un-initialize()'d connection has isEnabled() == false
-// (default; T-0022C1-review.md F3) and a null db_, so it doubles as the "operation on a
-// not-enabled connection must not touch db_" fixture.
+// the pool can be tested without a real MBTiles/RMaps/OruxMaps flavour. Never initialize()'d --
+// the pool only needs a distinct, identifiable object per acquire. Also used by the
+// disabled-connection test below: an un-initialize()'d connection has isEnabled() == false
+// (default) and a null db_, so it doubles as the "operation on a not-enabled connection must not
+// touch db_" fixture.
 class StubConnection final : public SqliteFileConnection {
 public:
     explicit StubConnection(int id)
@@ -66,7 +64,7 @@ private:
     int id_;
 };
 
-// --- FakeConnection: a tiny real flavour, just enough SQL to drive F2/F4 -----------------------
+// --- FakeConnection: a tiny real flavour for the rollback and step-error tests ---
 //
 // Schema: one table, `tiles(x, y, z, data)`, no uniqueness constraint (the exists-check is done in
 // C++ via FakeTileInfoStmt, same as legacy's IsTileExists). Bind order for every statement is
@@ -156,13 +154,13 @@ protected:
     }
 };
 
-// F4's fixture: forces a genuine sqlite runtime error (SQLITE_TOOBIG, well past the default
-// 1e9-byte length limit) while stepping the row at (1, 0), so a rect scan that visits (0, 0) first
-// collects one real row before the step failure -- proving fetchRectInfo returns what it has so
-// far (legacy-defects L-41) rather than nullptr. Deliberately NO "ORDER BY": with one it, sqlite
-// would materialise a sorter and could evaluate every row's CASE expression up front (on the
-// first step() call) instead of incrementally, one row per step() -- the plain unindexed scan
-// below returns rows in rowid (insertion) order instead, which the test relies on.
+// The fixture of the step-error test: forces a genuine sqlite runtime error (SQLITE_TOOBIG, well
+// past the default 1e9-byte length limit) while stepping the row at (1, 0), so a rect scan that
+// visits (0, 0) first collects one real row before the step failure -- proving fetchRectInfo
+// returns what it has so far (a legacy defect) rather than nullptr. Deliberately NO "ORDER BY":
+// with one it, sqlite would materialise a sorter and could evaluate every row's CASE expression up
+// front (on the first step() call) instead of incrementally, one row per step() -- the plain
+// unindexed scan below returns rows in rowid (insertion) order instead, which the test relies on.
 class PoisonRectInfoStmt final : public cg::storage::sqlite::RectInfoStatement {
 public:
     using RectInfoStatement::RectInfoStatement;
@@ -205,7 +203,7 @@ public:
         rectInfoStmt_ = std::make_unique<PoisonRectInfoStmt>(false, false);
     }
 
-    bool failMetadata = false; // F2: toggled mid-test to force updateMetadata() to fail
+    bool failMetadata = false; // Toggled mid-test to force updateMetadata() to fail
 
 protected:
     [[nodiscard]] cg::core::Result<void> createTables() override {
@@ -234,8 +232,7 @@ QString tempDbPath(const QTemporaryDir& dir) {
 // --- prepareFileName -------------------------------------------------------------
 
 TEST(PrepareFileName, DirectoryWithTrailingSeparator) {
-    // ".../cache_mbtiles/osm/" -> ".../cache_mbtiles/osm/osm.mbtiles" (storage.md §2.17's own
-    // worked example).
+    // ".../cache_mbtiles/osm/" -> ".../cache_mbtiles/osm/osm.mbtiles" (a worked example).
     EXPECT_EQ(prepareFileName(QStringLiteral("/cache/cache_mbtiles/osm/"), SqliteFileFormat::MbTiles),
               QStringLiteral("/cache/cache_mbtiles/osm/osm.mbtiles"));
 }
@@ -266,9 +263,10 @@ TEST(PrepareFileName, PathThatAlreadyHasAnExtensionIsUnchanged) {
     // rules (strip trailing '/', then check for an extension) apply in sequence, not exclusively.
     EXPECT_EQ(prepareFileName(QStringLiteral("/cache/osm.mbtiles/"), SqliteFileFormat::MbTiles),
               QStringLiteral("/cache/osm.mbtiles"));
-    // F6 / D-32 / legacy-defects L-42: legacy's PrepareFileName('') is an access violation
-    // (`Result[High(Result)]` on an empty string, u_TileStorageSQLiteFileConnectionBuilder.pas
-    // :210) -- a sanctioned critical-defect fix (Rule 2). The port returns the input unchanged.
+    // A legacy defect, fixed (a deviation from legacy): legacy's PrepareFileName('') is an
+    // access violation (`Result[High(Result)]` on an empty string,
+    // u_TileStorageSQLiteFileConnectionBuilder.pas :210) -- a crash, so it is fixed. The port
+    // returns the input unchanged.
     EXPECT_EQ(prepareFileName(QString(), SqliteFileFormat::MbTiles), QString());
 }
 
@@ -335,10 +333,10 @@ TEST(SqliteFileConnectionPool, FreeListIsLifo) {
     pool.release(std::move(*second));
 }
 
-// --- SqliteFileConnection: F2/F3/F4 (T-0022C1 rework) ------------------------------------------
+// --- SqliteFileConnection ----------------------------------------------------------------------------
 
 TEST(SqliteFileConnection, OperationsOnDisabledConnectionReturnLegacyValues) {
-    // F3: isEnabled() defaults to false and this connection is never initialize()'d, so db_ stays
+    // isEnabled() defaults to false and this connection is never initialize()'d, so db_ stays
     // null. Every operation must check isEnabled() before touching db_ -- legacy's own FEnabled
     // check on each of these methods (:296-298, :349-351, :408-410, :537-539, :574-576) never
     // dereferences FSQLite3DB either. None of these five calls may crash; each must come back as a
@@ -372,9 +370,10 @@ TEST(SqliteFileConnection, OperationsOnDisabledConnectionReturnLegacyValues) {
 }
 
 TEST(SqliteFileConnection, InsertOrUpdateRollsBackWhenUpdateMetadataFails) {
-    // F2: legacy calls UpdateMetadata inside Insert's own try (:555); both MBTiles ("Invalid zoom
-    // value") and RMaps (RaiseSQLite3Error) can raise there, which is caught by the same
-    // except -- ROLLBACK, Result := False. The tile that InsertTile just wrote must NOT survive.
+    // Legacy calls UpdateMetadata inside Insert's own try (:555); both MBTiles
+    // ("Invalid zoom value") and RMaps (RaiseSQLite3Error) can raise there, which is caught by
+    // the same except -- ROLLBACK, Result := False. The tile that InsertTile just wrote must NOT
+    // survive.
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     FakeConnection conn(tempDbPath(dir));
@@ -407,9 +406,9 @@ TEST(SqliteFileConnection, InsertOrUpdateRollsBackWhenUpdateMetadataFails) {
 }
 
 TEST(SqliteFileConnection, FetchRectInfoReturnsPartialResultOnStepError) {
-    // F4: legacy's `while StepPrepared = SQLITE_ROW` (:368) ends the scan on a step error exactly
+    // Legacy's `while StepPrepared = SQLITE_ROW` (:368) ends the scan on a step error exactly
     // like it ends on DONE, so a failure partway through returns the rows collected so far, not
-    // nullptr (legacy-defects L-41).
+    // nullptr.
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     FakeConnection conn(tempDbPath(dir));

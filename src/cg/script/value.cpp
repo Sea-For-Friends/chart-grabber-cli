@@ -7,7 +7,7 @@
 // see value.h).
 #include "cg/script/value.h"
 
-#include "cg/core/delphi_format.h" // floatToStr (spec 5.4/4.1 N2, moved to core T-0092)
+#include "cg/core/delphi_format.h" // floatToStr (moved to core)
 
 namespace cg::script {
 
@@ -111,12 +111,12 @@ QByteArray Value::toStr() const {
 }
 
 Value Value::wrappedTo(DeclaredType type) const {
-    // PD-2 (T-0031): a slot declared Extended/Double/Single holds a Real (spec 4.3 A1: "Int ->
-    // real widens"). An Int - or an Empty slot read as its zero value - assigned/passed/returned
-    // into such a slot converts to Real before any narrowing, exactly like the Real branch below
-    // narrows an already-Real value. uPSRuntime.pas has no separate "int -> real" opcode: the
-    // RemObjects VM's assignment/parameter-bind/Result-store path calls the same
-    // ConvertToRealAndBack-style coercion this mirrors (see docs/handoffs/T-0015E-review.md PD-2).
+    // A slot declared Extended/Double/Single holds a Real. An Int - or an Empty slot read as its
+    // zero value - assigned/passed/returned into such a slot converts to Real before any
+    // narrowing, exactly like the Real branch below narrows an already-Real value. uPSRuntime.pas
+    // has no separate "int -> real" opcode: the RemObjects VM's
+    // assignment/parameter-bind/Result-store path calls the same ConvertToRealAndBack-style
+    // coercion this mirrors.
     if (type == DeclaredType::Single || type == DeclaredType::Double || type == DeclaredType::Extended) {
         if (kind_ == ValueKind::Int || kind_ == ValueKind::Empty) {
             const long double v =
@@ -142,8 +142,8 @@ Value Value::wrappedTo(DeclaredType type) const {
             break;
         case DeclaredType::ShortInt:
             // Sign extension is deliberate here - Delphi ShortInt is a signed 8-bit range
-            // (-128..127) and N1 wraparound must preserve the sign, not reinterpret the low byte
-            // as unsigned.
+            // (-128..127) and the range wraparound must preserve the sign, not reinterpret the
+            // low byte as unsigned.
             v = static_cast<qint64>(static_cast<qint8>(v)); // NOLINT(bugprone-signed-char-misuse)
             break;
         case DeclaredType::SmallInt:
@@ -156,7 +156,7 @@ Value Value::wrappedTo(DeclaredType type) const {
             v = static_cast<qint32>(v);
             break;
         default:
-            return *this; // Int64, Unknown, everything else: no wrap (spec 4.1 N1)
+            return *this; // Int64, Unknown, everything else: no wrap
         }
         return Value::fromInt(v);
     }
@@ -168,7 +168,7 @@ Value Value::wrappedTo(DeclaredType type) const {
         case DeclaredType::Single:
             return Value::fromReal(static_cast<long double>(static_cast<float>(v)));
         default:
-            return *this; // Extended, Unknown: full long double precision (spec 4.1 N2)
+            return *this; // Extended, Unknown: full long double precision
         }
     }
     return *this;

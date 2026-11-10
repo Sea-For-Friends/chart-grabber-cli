@@ -7,6 +7,7 @@
 
 #include "cg/core/platform/thread_os.h"
 #include "cg/maptype/tile_request_result.h"
+#include "cg/net/http_status.h"
 
 #include <QCoreApplication>
 
@@ -28,7 +29,7 @@ QString tr(const char* text) {
     return QCoreApplication::translate(kTrContext, text);
 }
 
-// E.ClassName + ': ' + E.Message. The Delphi class names cannot occur in the port (spec 12 item 5).
+// E.ClassName + ': ' + E.Message. The Delphi class names cannot occur in the port.
 QString exceptionText(const std::exception& e) {
     int status = 0;
     char* demangled = // NOLINT(cppcoreguidelines-owning-memory): C allocation, freed below
@@ -114,8 +115,7 @@ ThreadDownloadTiles::ThreadDownloadTiles(
       checkTneOlderDate_(checkTneOlderDate), replaceTneOlderDate_(std::move(replaceTneOlderDate)),
       timing_(timing) { // :153-240
     if (!mapType_) {
-        terminated_ =
-            true; // :211-214, unreachable in legacy (u_ProviderTilesDownload.pas:250); no register row
+        terminated_ = true; // :211-214, unreachable in legacy (u_ProviderTilesDownload.pas:250)
         return;
     }
     if (!mapType_->abilities()->useDownload()) {
@@ -148,7 +148,7 @@ ThreadDownloadTiles::ThreadDownloadTiles(
     cancelCallback_.emplace(cancel_, [this] { onAppClosing(); });
 }
 
-ThreadDownloadTiles::~ThreadDownloadTiles() { // :242-267 plus the join (DR-1)
+ThreadDownloadTiles::~ThreadDownloadTiles() { // :242-267 plus the join
     if (taskFinishNotifier_) {
         taskFinishNotifier_->setEnabled(false);
     }
@@ -188,7 +188,7 @@ void ThreadDownloadTiles::processTask(geo::ITileIterator& iterator) { // :274-40
         bool gotoNextTile = false;
         while (!gotoNextTile) {
             finishEvent_->reset();
-            if (progressInfo_->needPause()) { // FEAT-REG-013
+            if (progressInfo_->needPause()) {
                 progressInfo_->setPaused();
                 log(resUserStop_, 10);
                 while (progressInfo_->needPause()) {
@@ -213,14 +213,14 @@ void ThreadDownloadTiles::processTask(geo::ITileIterator& iterator) { // :274-40
             // We are only interested in the tile metadata, so LoadMode::AsIs is used here. A Result error
             // is legacy's raised exception, outside the inner try (:318): execute's handler logs it.
             // *versionForCheck_ is dereferenced as legacy passes it: unreachable in legacy as null
-            // (u_ProviderTilesDownload.pas:222-250); no register row.
+            // (u_ProviderTilesDownload.pas:222-250).
             const auto tileInfo =
                 tileStorage->tileInfoEx(tile, zoom, *versionForCheck_, storage::LoadMode::AsIs);
             if (!tileInfo) {
                 throw std::runtime_error(tileInfo.error().what().toStdString());
             }
 
-            // FEAT-REG-011 (overwrite, by size, by date), FEAT-REG-012 (retry TNE, by date)
+            // Overwrite (by size, by date) and retry of TNE markers (by date)
             if (tileInfo->isExists() || tileInfo->isExistsTne()) {
                 if (tileInfo->isExists()) {
                     if (replaceExistTiles_) {
@@ -256,15 +256,15 @@ void ThreadDownloadTiles::processTask(geo::ITileIterator& iterator) { // :274-40
             }
 
             if (gotoNextTile) {
-                // DEVIATION: the D row of T-0356 (counts only). A tile present in this frame says it is
-                // served; a TNE row of it says it is not served
+                // DEVIATION: counts only. A tile present in this frame says it is served; a TNE row of
+                // it says it is not served
                 progressInfo_->noteFrameAnswer(tileInfo->isExists() ? FrameAnswer::Other
                                                                     : FrameAnswer::Missing);
+                progressInfo_->noteSkippedPresent(); // DEVIATION: counts only
                 progressInfo_->addProcessedTile(tile);
             } else {
                 try { // download tile
-                    // FEAT-REG-020: version for download. Both cancel arguments are the same token
-                    // (:432-433).
+                    // Version for download. Both cancel arguments are the same token (:432-433).
                     const auto requestTask =
                         subsystem->getRequestTask(cancel_, cancel_, taskFinishNotifier_, tile, zoom,
                                                   versionForDownload_, checkExistTileSize_);
@@ -307,7 +307,7 @@ void ThreadDownloadTiles::processTask(geo::ITileIterator& iterator) { // :274-40
 }
 
 void ThreadDownloadTiles::execute() { // :408-456
-    struct Finish { // the `finally`; no finish reason: docs/specs/region-download.md OQ-5, not ruled
+    struct Finish {                   // the `finally`; no finish reason here (legacy records none)
         IRegionProcessProgressInfoDownloadInternal& progress;
         ~Finish() { progress.finish(); }
     } finally{*progressInfo_};
@@ -373,9 +373,13 @@ void ThreadDownloadTiles::prepareStrings() { // :480-498
     resBadMime_ = tr("Server returned unexpected type \"%1\"");
     resTileNotExists_ = tr("Tile is not found!");
     resNoConnectionsToInternet_ = tr("Error connecting to server");
+    resServerRefused_ = tr("Server refused: HTTP %1"); // DEVIATION:
     resFileExistsShort_ = tr("The tile already exists");
     resTneExistsShort_ = tr("The tne already exists");
     resProcessFilesComplete_ = tr("The task is completed!");
+    // DEVIATION: no legacy text
+    resUserAgentSwitched_ =
+        tr("Server refused the default User-Agent (HTTP 403); using %1 for %2 until the end of the run");
 }
 
 bool ThreadDownloadTiles::processResultAndCheckGotoNextTile(
@@ -385,14 +389,23 @@ bool ThreadDownloadTiles::processResultAndCheckGotoNextTile(
     if (withDownload != nullptr) {
         finishEvent_->reset(); // :511, so that the waits below last their full time
         const net::DownloadResult& downloadResult = withDownload->downloadResult();
-        // DEVIATION D-163 (T-0271): the runner stops a run after many connection errors in a row; legacy
+        if (!downloadResult.userAgentSwitchHost.isEmpty()) { // DEVIATION:
+            log(resUserAgentSwitched_.arg(QString::fromLatin1(downloadResult.userAgentSwitchedTo),
+                                          downloadResult.userAgentSwitchHost),
+                0);
+        }
+        // DEVIATION: the runner stops a run after many connection errors in a row; legacy
         // (u_ThreadDownloadTiles.pas:550-563) skips every such tile and finishes. Return values stay legacy.
         progressInfo_->noteDownloadAnswer(downloadResult.kind == net::ResultKind::UnknownError ||
                                           downloadResult.kind == net::ResultKind::NoConnectToServer ||
                                           downloadResult.kind == net::ResultKind::LoadError);
-        // DEVIATION: the D row of T-0356 (counts only; return values stay legacy). The class "the frame is
-        // not served yet": 404 / the empty tile (DataNotExists) is Missing, the ban tile and HTTP 5xx are
-        // Unavailable; a connection that gave no answer (statusCode 0) is not in the class.
+        // DEVIATION: counts and the log text only; return values stay legacy.
+        const bool refused = downloadResult.kind == net::ResultKind::LoadError &&
+                             net::isRefusalStatus(downloadResult.statusCode);
+        progressInfo_->noteRefusal(refused, downloadResult.statusCode);
+        // DEVIATION: counts only; return values stay legacy. The class "the frame is not served yet":
+        // 404 / the empty tile (DataNotExists) is Missing, the ban tile and HTTP 5xx are Unavailable; a
+        // connection that gave no answer (statusCode 0) is not in the class.
         const bool http5xx = downloadResult.kind == net::ResultKind::LoadError &&
                              downloadResult.statusCode >= 500 && downloadResult.statusCode <= 599;
         progressInfo_->noteFrameAnswer(
@@ -441,7 +454,7 @@ bool ThreadDownloadTiles::processResultAndCheckGotoNextTile(
             break;
         }
         if (maptype::isDownloadErrorKind(downloadResult.kind)) {
-            // LR-7: the two branches look exchanged, reproduced
+            // The two branches look exchanged, reproduced
             if (downloadResult.kind == net::ResultKind::NoConnectToServer) {
                 log(downloadResult.text + QStringLiteral("\r\n") +
                         resWaitTime_.arg(timing_.downloadErrorMs / 1000),
@@ -449,8 +462,9 @@ bool ThreadDownloadTiles::processResultAndCheckGotoNextTile(
                 sleepCancelable(timing_.downloadErrorMs);
                 return false;
             }
-            log(resNoConnectionsToInternet_ + QStringLiteral("\r\n") +
-                    resWaitTime_.arg(timing_.downloadErrorMs / 1000),
+            // DEVIATION: only the first line of the text differs.
+            log((refused ? resServerRefused_.arg(downloadResult.statusCode) : resNoConnectionsToInternet_) +
+                    QStringLiteral("\r\n") + resWaitTime_.arg(timing_.downloadErrorMs / 1000),
                 10);
             sleepCancelable(timing_.downloadErrorMs);
             return downloadConfig_->isGoNextTileIfDownloadError();
@@ -458,9 +472,9 @@ bool ThreadDownloadTiles::processResultAndCheckGotoNextTile(
         log(QStringLiteral("Error: Unknown download result!"), 10);
         return false;
     }
-    // DEVIATION D-164 (T-0271, L-269): no download result (a request that failed before one existed) and a
-    // null result count as processed; legacy (u_ThreadDownloadTiles.pas:568-574) writes no log line, the
-    // port writes one unless the request was canceled.
+    // DEVIATION: no download result (a request that failed before one existed) and a null result count as
+    // processed; legacy (u_ThreadDownloadTiles.pas:568-574) writes no log line, the port writes one unless
+    // the request was canceled.
     if (dynamic_cast<const maptype::ITileRequestResultCanceled*>(result.get()) == nullptr) {
         if (const auto* resultError = dynamic_cast<const maptype::ITileRequestResultError*>(result.get())) {
             log(QStringLiteral("Error: ") + resultError->errorText(), 10);

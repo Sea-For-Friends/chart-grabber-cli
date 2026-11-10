@@ -29,8 +29,8 @@ void StorageStateHolder::applyLocked(const std::function<void(StorageState&)>& m
         }
         current_ = next;
     }
-    // Publish + notify outside the lock (spec §3.1 rule 3; also avoids self-deadlock if a
-    // subscriber reads state() from inside its own changed() slot).
+    // Publish + notify outside the lock (also avoids self-deadlock if a subscriber reads state()
+    // from inside its own changed() slot).
     snapshot_.set(std::make_shared<const StorageState>(next));
     fireChanged();
 }

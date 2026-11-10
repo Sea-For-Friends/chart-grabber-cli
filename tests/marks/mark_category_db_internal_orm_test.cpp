@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkCategoryDbInternalORM.pas: isSame / isEqual (docs/specs/marks.md §11.4, proof row T-XXXX-O4).
-// The isSame row-id-only rule is the reproduced legacy behaviour (L-193 in docs/parity/legacy-defects.md).
+// Ports u_MarkCategoryDbInternalORM.pas: isSame / isEqual. The isSame row-id-only rule is the reproduced
+// legacy behaviour.
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mormot/categories/mark_category_db_internal_orm.h"
 #include "cg/vector/category.h"

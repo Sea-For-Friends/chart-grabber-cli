@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Zips one stock ZMP folder, unchanged, into two .zmp files (T-0061, maptype spec OQ-5).
+"""Zips one stock ZMP folder, unchanged, into two .zmp files.
 
   sas.maps/_osm/Gps_tiles.zmp/  ->  zipped/Gps_tiles_deflated.zmp  (every member deflated)
                                     zipped/Gps_tiles_stored.zmp    (every member stored)
@@ -48,6 +48,6 @@ os.makedirs(OUT, exist_ok=True)
 build(os.path.join(OUT, "Gps_tiles_deflated.zmp"), zipfile.ZIP_DEFLATED)
 build(os.path.join(OUT, "Gps_tiles_stored.zmp"), zipfile.ZIP_STORED)
 
-# T-0072: the same stored zip with `UseDwn=0` appended to params.txt (the only change): the set must not read the script.
+# The same stored zip with `UseDwn=0` appended to params.txt (the only change): the set must not read the script.
 os.makedirs(os.path.join(HERE, "zipped_nodwn"), exist_ok=True)
 build(os.path.join(HERE, "zipped_nodwn", "Gps_tiles_nodwn.zmp"), zipfile.ZIP_STORED, b"UseDwn=0\r\n")

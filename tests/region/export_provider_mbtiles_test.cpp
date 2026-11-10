@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/export_provider_mbtiles (Src/RegionProcess/Export/MBTiles/
-// u_ExportProviderMBTiles.pas PrepareTask :188-256, with the getters of fr_ExportMBTiles.pas). T-0183.
-// FEAT-REG-069 (Export to MBTiles) is contributed to, not closed: the recompose path is absent.
+// u_ExportProviderMBTiles.pas PrepareTask :188-256, with the getters of fr_ExportMBTiles.pas). The
+// recompose path is absent.
 //
 // Rig: FakeMapType whose tile storage is a RamTileStorage holding real PNG / JPEG fixture bytes at the
 // tiles (x 1..2, y 1) of zoom 2 (the Google grid: the rectangle lon -80..80, lat 50..-50 covers z2 tiles
@@ -210,7 +210,7 @@ QString meta(const QString& path, const QString& name) {
     return rows.size() == 1 ? rows[0][0] : QStringLiteral("<%1 rows>").arg(rows.size());
 }
 
-// Every tile of zoom 2, read through the landed cache connector.
+// Every tile of zoom 2, read through the cache connector.
 TileMap readBack(const QString& file, const char* mime = "image/png") {
     TileMap result;
     const core::ContentTypeInfo& fileType = *core::ContentTypeRegistry::standard().infoByType(mime);

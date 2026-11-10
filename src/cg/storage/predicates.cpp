@@ -39,17 +39,17 @@ PredicateByTileInfo tileExistsCheckData(std::function<bool(const QByteArray&)> d
 
 PredicateByTileInfo tileOlderThan(const TileDate& cutoff) {
     // Ports TPredicateByTileInfoNotExistOrBeforDate with AIgnoreTNE=False (the legacy class takes
-    // that flag; the spec's single-argument factory does not expose it, so the conservative
-    // default is used -- a TNE record is never "older", only a missing or stale Exists tile is).
+    // that flag; the single-argument factory does not expose it, so the conservative default is
+    // used -- a TNE record is never "older", only a missing or stale Exists tile is).
     return [cutoff](const TileInfo& t) {
         switch (t.type) {
         case TileInfoType::NotExists:
             return true;
         case TileInfoType::Exists:
-            // storage.md §2.4.3: an invalid loadDate is "infinitely old" and must not depend on
-            // QDateTime's own ordering of invalid vs. valid values (that ordering only became
-            // invalid-sorts-first in Qt 6.8; the project's floor is Qt 6.5 -- T-0021A review
-            // finding 3). Check isValid() explicitly instead of just `t.loadDate < cutoff`.
+            // An invalid loadDate is "infinitely old" and must not depend on QDateTime's own
+            // ordering of invalid vs. valid values (that ordering only became
+            // invalid-sorts-first in Qt 6.8; the project also supports older Qt). Check
+            // isValid() explicitly instead of just `t.loadDate < cutoff`.
             return !t.loadDate.isValid() || t.loadDate < cutoff;
         case TileInfoType::TneExists:
         case TileInfoType::Unknown:
@@ -60,8 +60,8 @@ PredicateByTileInfo tileOlderThan(const TileDate& cutoff) {
 }
 
 PredicateByTileInfo tileSizeEquals(quint32 size, bool matchTne) {
-    // Ports TPredicateByTileInfoEqualSize.Check exactly (docs/handoffs/T-0021A.md Rework 1 fixes
-    // an earlier inversion that shipped as `tileSizeDiffers`):
+    // Ports TPredicateByTileInfoEqualSize.Check exactly (an earlier version inverted it as
+    // `tileSizeDiffers`):
     //   titExists    -> FSize = ASize
     //   titTneExists -> FDeleteTNE (matchTne)
     //   otherwise    -> False

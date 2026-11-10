@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/SML/u_MarkCategoryFactorySmlDbInternal.pas (78, class TMarkCategoryFactorySmlDbInternal;
-// docs/specs/marks.md section 2.8.4). It implements IMarkCategoryFactoryDbInternal
+// Ports: Src/MarksDB/SML/u_MarkCategoryFactorySmlDbInternal.pas (78 lines, class
+// TMarkCategoryFactorySmlDbInternal). It implements IMarkCategoryFactoryDbInternal
 // (mark_category_factory_db_internal.h) and stamps the dbId of its database on every category it creates.
 //
 // Unlike the SQLite twin there is one CreateCategory overload: the legacy SML factory has no record overload.

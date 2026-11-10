@@ -1,4 +1,4 @@
-; T-0015D golden: _water/river_kuban.zmp - 'div' on both coordinates; note GetZ is used
+; Golden: _water/river_kuban.zmp - 'div' on both coordinates; note GetZ is used
 ; directly (NOT GetZ-1) - the only one of the 21 that does not decrement zoom.
 ; ResultURL := GetURLBase+'z'+IntToStr(GetZ)+'/'+IntToStr(GetX div 1024)+'/x'+IntToStr(GetX)+
 ;   '/'+IntToStr(GetY div 1024)+'/y'+IntToStr(GetY)+'.jpg'

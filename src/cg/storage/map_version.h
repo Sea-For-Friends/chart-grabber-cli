@@ -23,7 +23,6 @@
 
 namespace cg::storage {
 
-// FEAT-STO-032
 class MapVersionInfo final {
 public:
     MapVersionInfo() = default; // the empty/default version
@@ -34,8 +33,8 @@ public:
     [[nodiscard]] bool isEmpty() const noexcept { return value_.isEmpty(); }
 
     // Ports TMapVersionInfo.IsSame: identity first, then a hash *mismatch* short-circuit (only
-    // when BOTH hashes are non-zero -- kNoHash means "not computed", core.md 2.9), then string
-    // equality. Reproduce the short-circuit: it is what makes interned versions cheap.
+    // when BOTH hashes are non-zero -- kNoHash means "not computed"), then string equality.
+    // Reproduce the short-circuit: it is what makes interned versions cheap.
     [[nodiscard]] bool isSame(const MapVersionInfo& other) const noexcept;
 
 private:
@@ -72,10 +71,10 @@ struct MapVersionRequest {
     MapVersionInfoPtr baseVersion; // may be null
     bool showOtherVersions = false;
 
-    // Ports GetIsValidVersion: showOtherVersions OR baseVersion->isSame(v).
-    // NOTE the legacy null-deref: TMapVersionRequest.GetIsValidVersion dereferences FBaseVersion
-    // unconditionally when FShowOtherVersions is false. The port returns `v == nullptr` in that
-    // case instead of crashing (deviation D-1).
+    // Ports GetIsValidVersion: showOtherVersions OR baseVersion->isSame(v). NOTE the legacy
+    // null-deref: TMapVersionRequest.GetIsValidVersion dereferences FBaseVersion unconditionally
+    // when FShowOtherVersions is false. The port returns `v == nullptr` in that case instead of
+    // crashing (a deviation from legacy).
     [[nodiscard]] bool isValid(const MapVersionInfoPtr& v) const;
 };
 

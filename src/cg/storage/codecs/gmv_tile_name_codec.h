@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_TileFileNameGMV.pas -- the GoogleMV (classic/old) quad-key folder cache (CacheType
-// id 1), default root folder `cache_old`. FEAT-STO-003.
+// Ports: u_TileFileNameGMV.pas -- the GoogleMV (classic/old) quad-key folder cache (CacheType id
+// 1), default root folder `cache_old`.
 
 #include "cg/storage/tile_name_codec.h"
 

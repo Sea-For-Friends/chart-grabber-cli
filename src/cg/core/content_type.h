@@ -36,8 +36,8 @@ class ContentTypeRegistry {
 public:
     ContentTypeRegistry() = default;
 
-    // The built-in table of core.md 2.21.1, built once. Thread-safe to share; immutable after
-    // the caller stops mutating it (the shared standard() instance is never mutated after build).
+    // The built-in content-type table, built once. Thread-safe to share; immutable after the caller
+    // stops mutating it (the shared standard() instance is never mutated after build).
     [[nodiscard]] static const ContentTypeRegistry& standard();
 
     // Registration, for tests and for a future user-extensible table. Duplicate keys are an error
@@ -55,15 +55,15 @@ public:
     [[nodiscard]] bool isVectorType(QByteArrayView mime) const;
     [[nodiscard]] bool isVectorExt(QByteArrayView ext) const;
 
-    // T-0115 (OQ-14). Ports `IContentTypeManager.GetConverter(source, target) <> nil and
-    // converter.GetIsSimpleCopy`, the only converters of the matrix that need no codec and no archive:
-    // `u_ContentTypeManagerSimple.pas` ConverterMatrixUpdateSynonyms (:390-424: two registered type keys
-    // whose canonical types are equal, a key with itself included) and the three fixed copies of
-    // ConverterMatrixUpdateFixed (:305-388: google kml -> wikimapia kml, json <-> geo+json). Both keys are
-    // type keys, matched like infoByType; an unknown key is false (legacy Get answers nil). The other
-    // converters (bitmap <-> bitmap, kml <-> kmz) are NOT here: they need `render` / an archive writer, and
-    // answer false until they are ported. Input data of a simple copy is the output.
-    // The maptype lookup ContentConverters (T-0120) supersedes this for the saver.
+    // Ports `IContentTypeManager.GetConverter(source, target) <> nil and converter.GetIsSimpleCopy`, the
+    // only converters of the matrix that need no codec and no archive: `u_ContentTypeManagerSimple.pas`
+    // ConverterMatrixUpdateSynonyms (:390-424: two registered type keys whose canonical types are equal, a
+    // key with itself included) and the three fixed copies of ConverterMatrixUpdateFixed (:305-388: google
+    // kml -> wikimapia kml, json <-> geo+json). Both keys are type keys, matched like infoByType; an
+    // unknown key is false (legacy Get answers nil). The other converters (bitmap <-> bitmap, kml <-> kmz)
+    // are NOT here: they need `render` / an archive writer, and answer false until they are ported. Input
+    // data of a simple copy is the output. The maptype lookup ContentConverters supersedes this for the
+    // saver.
     [[nodiscard]] bool hasSimpleCopyConverter(QByteArrayView sourceType, QByteArrayView targetType) const;
 
     // Every registered extension key, sorted. Ports GetKnownExtList.

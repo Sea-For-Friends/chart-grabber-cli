@@ -9,7 +9,7 @@
 //
 // Legacy has one IProjConverterFactory; the port has two: geo::ProjConverterFactory (geo/proj_converter.h,
 // returns std::optional) and script::IProjConverterFactory (script/script_host.h, returns plain values).
-// The adapter wraps the first and implements the second. docs/specs/app-cli.md 3.2.
+// The adapter wraps the first and implements the second.
 
 #include "cg/geo/proj_converter.h"
 #include "cg/script/script_host.h"

@@ -10,12 +10,11 @@
 // libarchive, not ported line-by-line): Src/ArchiveReadWrite/u_ArchiveReadWriteSequentialTar.pas,
 // Src/ArchiveReadWrite/u_ArchiveReadWriteSequentialZip.pas.
 //
-// docs/backlog/T-0024-storage-archive.md, docs/specs/storage.md §2.19/§3.5. A sequential,
-// write-XOR-scan tile storage backed by a tar or zip archive (libarchive 3.8.9). Never registered
-// as a cache type (TileStorageKind::Archive is never wired into cache_type.cpp's factory list,
-// exactly as legacy comments out every TTileStorageTypeArchiveTar* registration) -- the only
-// intended construction site is the (not-yet-built) Cache Manager "convert to/from archive" flow
-// (frm_CacheManager.pas:412), out of scope here (ticket Scope out).
+// A sequential, write-XOR-scan tile storage backed by a tar or zip archive (libarchive 3.8.9).
+// Never registered as a cache type (TileStorageKind::Archive is never wired into cache_type.cpp's
+// factory list, exactly as legacy comments out every TTileStorageTypeArchiveTar* registration) --
+// the only intended construction site is the (not-yet-built) Cache Manager
+// "convert to/from archive" flow (frm_CacheManager.pas:412), not ported here.
 //
 // Legacy passes an already-open IArchiveReaderBase/IArchiveWriterBase to
 // TTileStorageArchive.Create (built by frm_CacheManager.CreateSimpleTileStorage:378-396, which
@@ -50,7 +49,7 @@ struct archive;
 
 namespace cg::storage {
 
-// FEAT-STO-027. Ports TTileStorageArchive + the write/scan halves of TTileStorageTypeArchive.
+// Ports TTileStorageArchive + the write/scan halves of TTileStorageTypeArchive.
 class ArchiveTileStorage final : public ITileStorage {
 public:
     enum class Container : std::uint8_t { Tar, Zip };
@@ -70,8 +69,8 @@ public:
 
     // Opens `file` for a single sequential scan (auto-detects tar vs. zip, exactly as libarchive's
     // archive_read_support_format_all does -- legacy's caller already knows which reader class to
-    // build, storage.md §2.19's own signature carries no Container parameter). Returns a scan-only
-    // instance (`scanTiles` is the only working method).
+    // build, so there is no Container parameter). Returns a scan-only instance (`scanTiles` is the
+    // only working method).
     [[nodiscard]] static core::Result<std::shared_ptr<ArchiveTileStorage>>
     openForScan(QString file, ITileNameCodecPtr codec, geo::ProjectionSetPtr projectionSet,
                 MapVersionFactoryPtr mapVersionFactory, TilePyramidNotifierPtr tileNotifier);
@@ -115,7 +114,7 @@ public:
     // entry, every time, unconditionally. Gated only on being a write-mode instance (legacy:
     // `if (FWriter = nil) and (FWriterSeq = nil) then begin Assert(False); Exit; end` -- Result
     // stays False, not an error); `state()->addAccess` is never consulted, matching legacy (its
-    // own `FState` is always nil). A `std::mutex` serialises every call (spec §3.5).
+    // own `FState` is always nil). A `std::mutex` serialises every call.
     [[nodiscard]] core::Result<bool> saveTile(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr& version,
                                               TileDate loadDate, QByteArrayView contentType,
                                               const QByteArray& data, bool overwrite) override;
@@ -132,10 +131,10 @@ public:
 
     // Ports ScanTiles + TEnumTileInfoArchive (u_TileStorageArchive.pas:296-312,334-413): a pull
     // enumerator over the archive's entries in file order, never seeking. Gated on being a
-    // scan-mode instance (spec §3.5 exclusivity; legacy raises when AllowScan is false -- the
-    // port asserts instead, since the two static factories make the wrong-mode case
+    // scan-mode instance (write and scan are exclusive; legacy raises when AllowScan is false --
+    // the port asserts instead, since the two static factories make the wrong-mode case
     // constructor-unreachable from any real caller). Each call wraps the SAME underlying reader
-    // (legacy quirk L-45: TEnumTileInfoArchive.Create never Resets FReaderSeq, so a second
+    // (legacy quirk: TEnumTileInfoArchive.Create never Resets FReaderSeq, so a second
     // ScanTiles() call continues, exhausted, from wherever the first left off -- reproduced).
     [[nodiscard]] core::Result<EnumTileInfoPtr> scanTiles(bool ignoreTne,
                                                           bool ignoreMultiVersionTiles) override;
@@ -147,12 +146,12 @@ private:
 
     struct archive* writer_ = nullptr; // non-null <=> write mode (owned)
     Container writerContainer_ = Container::Tar;
-    std::mutex writeMutex_; // spec §3.5: a single std::mutex serialises saveTile
+    std::mutex writeMutex_; // A single std::mutex serialises saveTile
 
-    // non-null <=> scan mode. shared_ptr, not a borrowed/owned raw pointer (review F8): the scan
-    // enumerator returned by scanTiles() holds its own copy, so archive_read_close/free run only
-    // once nothing needs the reader any more, even if this storage is destroyed before the
-    // enumerator it handed out finishes draining -- the same shared-ownership idiom
+    // non-null <=> scan mode. shared_ptr, not a borrowed/owned raw pointer: the scan enumerator
+    // returned by scanTiles() holds its own copy, so archive_read_close/free run only once
+    // nothing needs the reader any more, even if this storage is destroyed before the enumerator
+    // it handed out finishes draining -- the same shared-ownership idiom
     // RamTileStorage::memCache_ uses for its own long-lived resource.
     std::shared_ptr<struct archive> reader_;
 };

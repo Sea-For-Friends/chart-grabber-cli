@@ -2,12 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-009, FEAT-GEO-010, FEAT-GEO-012. Ports Test/u_VectorItmesFactorySimple_Test.pas
-// (LonLat suites only -- the Projected builder suites need u_GeometryProjectedFactory.pas,
-// T-0017C scope, see docs/handoffs/T-0017A.md) and docs/specs/geo.md §11.2 geometry_lonlat_test.cpp
-// (8 new), plus 1 more added in Rework 1 (docs/handoffs/T-0017A-review.md F2c) -- 15 cases total.
-// Plus 3 more (T-0017B, not in that ticket's 33-case acceptance) for the createLineByStream /
-// createPolygonByLine / createPolygonByLineAndFilter factory methods added by that ticket.
+// Ports Test/u_VectorItmesFactorySimple_Test.pas (LonLat suites only -- the Projected builder
+// suites are in geometry_projected_test.cpp), plus new coverage: 15 cases, and 3 more for the
+// createLineByStream / createPolygonByLine / createPolygonByLineAndFilter factory methods.
 
 #include "cg/core/platform/qt_compat.h"
 #include "cg/geo/geometry_factory.h"
@@ -116,8 +113,8 @@ TEST(GeometryLonLatPolygonBuilder, Simple) {
     auto result = std::dynamic_pointer_cast<const IGeometryLonLatSinglePolygon>(builder.makeStaticAndClear());
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->holeCount(), 0u);
-    // Contours are stored OPEN (docs/specs/geo.md §3.2 point 2): points() is the 3 input points;
-    // the legacy 4th point comes from the closing enumeration, asserted below (T-0040).
+    // Contours are stored OPEN: points() is the 3 input points; the legacy 4th point comes from the
+    // closing enumeration, asserted below.
     ASSERT_EQ(result->outerBorder()->points().size(), 3u);
     EXPECT_EQ(result->outerBorder()->points()[0], (LonLat{0, 1}));
     EXPECT_EQ(result->outerBorder()->points()[1], (LonLat{1, 1}));
@@ -155,7 +152,7 @@ TEST(GeometryLonLatPolygonBuilder, TwoLines) {
     EXPECT_EQ(e1[2], (DoublePoint{1, 1}));
 }
 
-// --- new coverage: docs/specs/geo.md §11.2 geometry_lonlat_test.cpp (8 cases) ------------------
+// --- new coverage (8 cases) ------------------
 
 TEST(GeometryLonLat, ContourIsAlsoAPolygon) {
     // i_GeometryLonLat.pas:99 -- a bare ring satisfies a dynamic_pointer_cast<IGeometryLonLatPolygon>.
@@ -187,8 +184,8 @@ TEST(GeometryLonLat, MetaOnlyOnSingleLine) {
     EXPECT_TRUE(line->meta().hasElevation());
     EXPECT_EQ(line->meta().elevation, (std::vector<double>{1.0, 2.0}));
     EXPECT_FALSE(line->meta().hasTimestamp());
-    // IGeometryLonLatContour and IGeometryLonLatMultiPoint simply have no meta() member at all --
-    // a compile-time guarantee (docs/specs/geo.md §3.2 point 3), not a runtime one.
+    // IGeometryLonLatContour and IGeometryLonLatMultiPoint simply have no meta() member at all -- a
+    // compile-time guarantee, not a runtime one.
 }
 
 TEST(GeometryLonLat, MetaSliceMatchesCopyMeta) {
@@ -251,7 +248,7 @@ TEST(GeometryLonLat, CreateLineSplitsOnSeparator) {
     EXPECT_EQ(result->item(1)->points()[0], (LonLat{2, 2}));
 }
 
-// T-0110: a point with a finite X and a NaN Y is empty, as legacy PointIsEmpty tests X or Y
+// A point with a finite X and a NaN Y is empty, as legacy PointIsEmpty tests X or Y
 // (u_GeoFunc.pas:552), so CreateLonLatLine (u_GeometryLonLatFactory.pas:945) splits the line there.
 TEST(GeometryLonLat, CreateLineSplitsOnPointWithNanYOnly) {
     GeometryLonLatFactory factory;
@@ -265,7 +262,7 @@ TEST(GeometryLonLat, CreateLineSplitsOnPointWithNanYOnly) {
     EXPECT_EQ(result->item(1)->points()[0], (LonLat{2, 2}));
 }
 
-// T-0110: the same split for polygons (CreateLonLatPolygon, u_GeometryLonLatFactory.pas:1063).
+// The same split for polygons (CreateLonLatPolygon, u_GeometryLonLatFactory.pas:1063).
 TEST(GeometryLonLat, CreatePolygonSplitsOnPointWithNanYOnly) {
     GeometryLonLatFactory factory;
     const double nan = std::numeric_limits<double>::quiet_NaN();
@@ -278,12 +275,12 @@ TEST(GeometryLonLat, CreatePolygonSplitsOnPointWithNanYOnly) {
     EXPECT_EQ(result->item(1)->outerBorder()->points()[0], (LonLat{2, 2}));
 }
 
-// --- Rework 1: docs/handoffs/T-0017A-review.md F2c / deviations audit --------------------------
+// --- the hole-before-outer quirk --------------------------
 
 TEST(GeometryLonLatPolygonBuilder, AddHoleBeforeAddOuterBecomesOuter) {
     // u_GeometryLonLatFactory.pas:493-511's FOuterDataExists quirk: a hole added before any outer
-    // silently becomes the first outer instead. Reproduced per Tech Lead ruling (cheap to match
-    // legacy rather than record a deviation).
+    // silently becomes the first outer instead. Reproduced (cheap to match legacy rather than
+    // record a deviation).
     GeometryLonLatFactory factory;
     auto builder = factory.makePolygonBuilder();
     builder.addHole(makePoints({{0, 1}, {1, 1}, {1, 0}}));
@@ -296,10 +293,8 @@ TEST(GeometryLonLatPolygonBuilder, AddHoleBeforeAddOuterBecomesOuter) {
     EXPECT_EQ(result->outerBorder()->points()[2], (LonLat{1, 0}));
 }
 
-// --- T-0017B: createLineByStream / createPolygonByLineAndFilter / createPolygonByLine ----------
-// Not in the ticket's 33-case acceptance (that budget is point_stream_test.cpp only), but these
-// are new non-trivial factory methods -- a minimal smoke test each, per the coding standard's
-// "every new .cpp gets tests" (docs/handoffs/T-0017A-review.md F6 precedent).
+// --- createLineByStream / createPolygonByLineAndFilter / createPolygonByLine ----------
+// New non-trivial factory methods: a minimal smoke test each ("every new .cpp gets tests").
 
 TEST(GeometryLonLatFactoryStream, CreateLineByStreamDrainsAndSplitsOnSeparator) {
     GeometryLonLatFactory factory;
@@ -334,9 +329,9 @@ TEST(GeometryLonLatFactoryStream, CreatePolygonByLineAndFilterAppliesFilterPerSu
 }
 
 TEST(GeometryLonLatFactoryStream, CreatePolygonByLineUsesLine2PolyPerD3) {
-    // D-3 (docs/specs/geo.md §10/§3.5.2): createPolygonByLine always buffers via line2Poly.
-    // Cross-check against point_stream_test.cpp's Line2Poly.TestTwoPoints fixture: the outer
-    // ring is that 5-point sequence with the trailing closing duplicate trimmed away (4 points).
+    // createPolygonByLine always buffers via line2Poly. Cross-check against
+    // point_stream_test.cpp's Line2Poly.TestTwoPoints fixture: the outer ring is that 5-point
+    // sequence with the trailing closing duplicate trimmed away (4 points).
     auto datums = std::make_shared<const DatumFactory>(HashSeed{});
     ProjectionSetFactory setFactory{HashSeed{}, datums};
     ProjectionPtr projection = setFactory.byCode(kProjEpsgGoogle, kTileSplitQuadrate256x256)->zoom(10);

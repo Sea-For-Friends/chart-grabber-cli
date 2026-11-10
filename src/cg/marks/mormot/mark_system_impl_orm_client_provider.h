@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: Src/MarksDB/mORMot/i_MarkSystemImplORMClientProvider.pas (interfaces, TTransactionRec) and
-// u_MarkSystemImplORMClientProvider.pas (SQLite path :150-239, :472-549; docs/specs/marks.md §2.9.3).
+// u_MarkSystemImplORMClientProvider.pas (SQLite path :150-239, :472-549).
 //
 // Not ported: BuildMongoDBClient, BuildDBMSClient (:241-470) and the client types ctMongoDB / ctZDBC /
 // ctODBC; GetRestClientType (one client type: every `if FClientType = ctSQLite3` of the other units is

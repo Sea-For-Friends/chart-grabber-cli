@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-024, FEAT-REG-006 (both contribute, neither closes; docs/parity/held-open.md).
-// Tests ReadPolygon / WritePolygon of Src/ConfigData/u_ConfigProviderHelpers.pas:239-419 (T-0158).
-// No real selection file exists on the box (docs/specs/region-download.md §8.3, OQ-7): the reader tests
-// use INI text written by hand from the key rules of the Pascal (:271-297 key chain, :302-323 loop),
-// NOT produced by writePolygon. Only the round-trip and defect tests go through writePolygon.
+// Tests ReadPolygon / WritePolygon of Src/ConfigData/u_ConfigProviderHelpers.pas:239-419. No real
+// selection file exists on the box: the reader tests use INI text written by hand from the key rules of
+// the Pascal (:271-297 key chain, :302-323 loop), NOT produced by writePolygon. Only the round-trip and
+// defect tests go through writePolygon.
 
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
@@ -129,7 +128,7 @@ QStringList sortedKeys(const IConfigProviderPtr& s) {
 
 } // namespace
 
-// Proof 1: each spelling, each starting index, is found (distinct coordinates per case).
+// Each spelling, each starting index, is found (distinct coordinates per case).
 TEST(ConfigProviderHelpers, ReaderFindsEverySpellingAtIndexZeroAndOne) {
     struct Case {
         const char* lon;
@@ -164,7 +163,7 @@ TEST(ConfigProviderHelpers, ReaderFindsEverySpellingAtIndexZeroAndOne) {
     }
 }
 
-// Proof 1: the order of the key chain (:271-297) decides when several spellings are present.
+// The order of the key chain (:271-297) decides when several spellings are present.
 TEST(ConfigProviderHelpers, ReaderSpellingOrderPointLonThenLLPointThenPointX) {
     const std::vector<Pt> pl{{"1", "2"}, {"3", "4"}, {"5", "6"}};
     const std::vector<Pt> ll{{"11", "12"}, {"13", "14"}, {"15", "16"}};
@@ -184,7 +183,7 @@ TEST(ConfigProviderHelpers, ReaderSpellingOrderPointLonThenLLPointThenPointX) {
               (Shape{{plExpected}}));
 }
 
-// Proof 2: empty / NaN / out-of-range first points.
+// Empty / NaN / out-of-range first points.
 TEST(ConfigProviderHelpers, ReaderRejectsEmptySectionAndNanFirstPoint) {
     const GeometryLonLatFactory factory;
     EXPECT_EQ(readPolygon(*sectionFromText(""), factory), nullptr);
@@ -228,7 +227,7 @@ TEST(ConfigProviderHelpers, ReaderRejectsFirstPointAtOrAbove360ThenTriesNextCand
               (Shape{{Pts{{7, 8}, {9, 10}, {11, 12}}}}));
 }
 
-// Proof 3: separators, missing key, literal comparisons, flush on the finishing pass.
+// Separators, missing key, literal comparisons, flush on the finishing pass.
 TEST(ConfigProviderHelpers, ReaderNanNumberPairOpensHoleAndMissingKeyEndsRead) {
     // Index 7 is absent (reads -10000, |x| > 360): the read ends and the hole is flushed on that pass.
     const QByteArray text =
@@ -282,7 +281,7 @@ TEST(ConfigProviderHelpers, ReaderValueOf360InsideRunIsAppendedAbove360EndsRead)
               (Shape{{Pts{{1, 2}, {3, 4}, {5, 6}}}}));
 }
 
-// Proof 4: round trip. The inputs are values of the Pascal key rules, the expected text is a literal.
+// Round trip. The inputs are values of the Pascal key rules, the expected text is a literal.
 TEST(ConfigProviderHelpers, RoundTripSinglePolygonWithoutHoles) {
     const Pts outer{{10.5, 20.25}, {30.5, 40.25}, {50.5, 60.25}};
     IConfigWriterPtr section = ConfigProviderIni::wrap(std::make_shared<IniFile>())->orCreateSubItem(u"S");
@@ -310,9 +309,8 @@ TEST(ConfigProviderHelpers, RoundTripSinglePolygonWithOneHole) {
     EXPECT_EQ(shapeOf(readPolygon(*section, factory)), (Shape{{outer, hole}}));
 }
 
-// Proof 5: the fixed writer, DEVIATION D-158 (T-0272, L-260; legacy u_ConfigProviderHelpers.pas:363-365,
-// 389-391 writes the separator at startIndex + h / + i). Keys are contiguous, the reader returns the full
-// shape.
+// The fixed writer, DEVIATION, a legacy defect fixed (legacy u_ConfigProviderHelpers.pas:363-365, 389-391
+// writes the separator at startIndex + h / + i). Keys are contiguous, the reader returns the full shape.
 TEST(ConfigProviderHelpers, TwoHolesRoundTrip) {
     const Pts outer{{10.5, 20.25}, {30.5, 40.25}, {50.5, 60.25}};
     const Pts hole1{{11.5, 21.25}, {12.5, 22.25}, {13.5, 23.25}};
@@ -390,7 +388,6 @@ TEST(ConfigProviderHelpers, LegacyWrittenTwoItemLayoutReadsFirstItemOnly) {
         (Shape{{Pts{{10.5, 20.25}, {30.5, 40.25}, {50.5, 60.25}}}}));
 }
 
-// Proof 6.
 TEST(ConfigProviderHelpers, WriteNullPolygonWritesNoKey) {
     IConfigWriterPtr section = ConfigProviderIni::wrap(std::make_shared<IniFile>())->orCreateSubItem(u"S");
     writePolygon(*section, nullptr);

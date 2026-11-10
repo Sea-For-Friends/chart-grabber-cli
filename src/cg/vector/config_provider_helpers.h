@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/ConfigData/u_ConfigProviderHelpers.pas:451-631 -- the appearance part (ReadAppearancePoint/
 // Line/Polygon, WriteAppearancePoint/Line/Polygon). The colour and GUID helpers are in cg::core,
-// ReadPolygon in geo. FEAT-GEO-037
+// ReadPolygon in geo.
 
 #include "cg/core/config_writer.h"
 #include "cg/vector/appearance.h"

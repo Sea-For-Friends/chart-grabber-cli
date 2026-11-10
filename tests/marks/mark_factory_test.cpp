@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkFactory.pas (docs/specs/marks.md section 2.3). Hash expectations are assembled from
-// byte buffers and the raw CityHash primitive, not from the factory.
+// Ports u_MarkFactory.pas. Hash expectations are assembled from byte buffers and the raw CityHash
+// primitive, not from the factory.
 #include "cg/core/hash.h"
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_factory.h"
@@ -307,7 +307,7 @@ TEST(MarkFactory, PrepareMarkLineAndPolygon) {
     const auto lineSrc =
         f.factory.createMark(std::make_shared<FakeLine>(1), q("n"), q("d"), nullptr, f.lineApp);
     const auto lineParamsApp = kAppearances.createLineAppearance(0xFF0000B1U, 9);
-    // ImportLineParams stores isForceLineWidth into isForceLineColor too (L-130): (true,false) forces
+    // ImportLineParams stores isForceLineWidth into isForceLineColor too: (true,false) forces
     // nothing, (false,true) forces both; the first argument is ignored.
     const auto keep = f.factory.prepareMark(
         lineSrc, q("n"), std::make_shared<v::ImportLineParams>(lineParamsApp, true, false), nullptr);

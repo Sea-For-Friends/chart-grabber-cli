@@ -5,13 +5,12 @@
 #pragma once
 // Ports: u_TileStorageTypeInRAM.pas
 //
-// docs/specs/storage.md §2.14 (intro). One instance for the RAM backend: fixed abilities
-// `CTileStorageReadWrite - [tsatScan]` (u_TileStorageTypeInRAM.pas:75) -- advertised exactly as
-// legacy advertises it, even though `RamTileStorage::scanTiles` itself always works (legacy
-// defect L-31, T-0021F3A review: `ScanTiles` has no access check of its own; the type's abilities
-// are the only place "no scan" is enforced) -- plus VersionSupport::Stored,
-// supportsMixedContentTypes == true, StorageClass::InMemory (so applyStorageConfigIni() never
-// looks for a StorageConfig.ini, already landed behaviour). Reused here via the already-landed
+// One instance for the RAM backend: fixed abilities `CTileStorageReadWrite - [tsatScan]`
+// (u_TileStorageTypeInRAM.pas:75) -- advertised exactly as legacy advertises it, even though
+// `RamTileStorage::scanTiles` itself always works (a legacy defect: `ScanTiles` has no access
+// check of its own; the type's abilities are the only place "no scan" is enforced) -- plus
+// VersionSupport::Stored, supportsMixedContentTypes == true, StorageClass::InMemory (so
+// applyStorageConfigIni() never looks for a StorageConfig.ini). Reused here via
 // tileStorageTypeAbilities(TileStorageKind::Ram), which returns the identical row.
 //
 // build() ports BuildStorageInternal (:88-108): narrows abilities and constructs a RamTileStorage
@@ -25,7 +24,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-001, FEAT-STO-026. Ports TTileStorageTypeInRAM.
+// Ports TTileStorageTypeInRAM.
 class RamTileStorageType final : public ITileStorageType {
 public:
     RamTileStorageType(MapVersionFactoryPtr mapVersionFactory, core::PathConfigPtr basePath);

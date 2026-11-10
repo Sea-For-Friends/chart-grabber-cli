@@ -5,8 +5,7 @@
 #pragma once
 // Ports: Src/Network/u_ContentDetecter.pas:60-148 (TryDetectContentTypeByMagic only;
 // TryDetectContentTypeByWinApi is dropped -- no Linux equivalent, and QMimeDatabase would return a
-// different, larger vocabulary the expected-MIME check would then reject [D-13]).
-// FEAT-NET-011.
+// different, larger vocabulary the expected-MIME check would then reject).
 
 #include <QByteArray>
 #include <QByteArrayView>

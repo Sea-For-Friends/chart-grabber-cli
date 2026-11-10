@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_EnumDoublePointClipInternal.pas (the four half-plane primitives) and
-// u_EnumDoublePointWithClip.pas (the clipByRect composition). docs/specs/geo.md §3.4.1.
+// u_EnumDoublePointWithClip.pas (the clipByRect composition).
 #include "cg/geo/point_stream.h"
 
 #include <utility>

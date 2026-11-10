@@ -3,18 +3,17 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/SML/u_MarkId.pas (315, class TMarkId; docs/specs/marks.md section 2.8.4). It implements
-// IMarkId (the interface of mark_id.h in the marks root, landed and not edited here), IMarkSMLInternal
-// (mark_db_sml_internal.h), IVectorDataItemMainInfo and IVectorDataItemWithCategory.
+// Ports: Src/MarksDB/SML/u_MarkId.pas (315 lines, class TMarkId). It implements IMarkId (the interface of
+// mark_id.h in the marks root), IMarkSMLInternal (mark_db_sml_internal.h), IVectorDataItemMainInfo and
+// IVectorDataItemWithCategory.
 //
 // Legacy Assert(AId >= 0) (u_MarkId.pas:111) is not ported: the shipped build has assertions off
-// (SASPlanet.dproj:92).
-// Differences from the SQLite twin (mormot/marks/mark_id_orm.h): the id is an Integer (int); a mark without
-// an SML category has categoryId -1 (kNotExistCategoryId, :122), the twin uses 0; a category counts as an SML
-// category only through IMarkCategorySMLInternal.
-// Callers must pass a non-null converter: hintText() dereferences it without a check, as in MarkIdORM and
-// MarkMainInfo (legacy u_MarkId.pas:158, assertions off). Traced by the reviewer: TMarkId.Create is called
-// only at u_MarkFactorySmlDbInternal.pas:203,287,338 <- u_MarkSystemSml.pas:217 <-
+// (SASPlanet.dproj:92). Differences from the SQLite twin (mormot/marks/mark_id_orm.h): the id is an Integer
+// (int); a mark without an SML category has categoryId -1 (kNotExistCategoryId, :122), the twin uses 0; a
+// category counts as an SML category only through IMarkCategorySMLInternal. Callers must pass a non-null
+// converter: hintText() dereferences it without a check, as in MarkIdORM and MarkMainInfo (legacy
+// u_MarkId.pas:158, assertions off). Traced: TMarkId.Create is called only at
+// u_MarkFactorySmlDbInternal.pas:203,287,338 <- u_MarkSystemSml.pas:217 <-
 // u_MarkSystemImplFactorySML.pas:109,137, whose Assert (:99) comes from u_GlobalState.pas:773,790, where the
 // converter is always created.
 
@@ -85,7 +84,7 @@ private:
     int multiGeometryCount_;
     vector::CategoryPtr category_;
     int categoryId_;
-    // Shared mark object: setVisible is const (IMarkSMLInternal), so the flag is atomic (spec 2.8.4).
+    // Shared mark object: setVisible is const (IMarkSMLInternal), so the flag is atomic.
     mutable std::atomic<bool> visible_;
 };
 

@@ -8,7 +8,7 @@
 //
 // Starts the sessions and worker threads of an area download.
 //
-// Contract of the CALLER (docs/specs/region-download.md section 7):
+// Contract of the CALLER:
 //  - cancel (run.cancelNotifier->cancel()) before destroying a run whose worker has not finished: the
 //    destructor of the thread joins it and would wait for the whole area;
 //  - keep the maps set (and so the map) alive as long as any run exists;
@@ -56,11 +56,10 @@ public:
                           std::shared_ptr<net::DownloadInfo> downloadInfo);
 
     // StartProcess :324-379; reads map and zooms from params, as legacy reads the frame (:333-335).
-    // FEAT-REG-014 (split into N parts)
     [[nodiscard]] std::vector<DownloadSessionRun> startProcess(const PolygonPtr& polygon,
                                                                const TilesDownloadParams& params);
 
-    // StartBySLS :274-322. FEAT-REG-019 (resume from .sls)
+    // StartBySLS :274-322: resume from .sls.
     [[nodiscard]] DownloadSessionRun startBySls(const QString& fileName, bool startPaused);
 
 private:

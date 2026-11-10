@@ -5,7 +5,6 @@
 #pragma once
 // New code (no legacy unit). Inherits: CmdLineArgProcessor/u_CmdLineArgProcessorAPI.pas:67-134 (switch form,
 // help), u_CmdLineArgProcessorHelpers.pas:124-143 (decimal point) Ports: nothing.
-// docs/specs/app-cli.md 3.3, 5.2.
 //
 // The command line and the INI job file of chart-grabber-cli. One option table drives the parser, the job
 // file and helpText(). No map, file-content or network access: everything that needs them is checked by later
@@ -39,7 +38,7 @@ struct Job {
     QString polygonFile, routeFile, routeName;
     double corridorNm = 0;
     std::vector<quint8> zooms;        // 0-based, sorted, unique
-    std::optional<SnapshotTime> time; // --time (T-0283); nullopt = latest
+    std::optional<SnapshotTime> time; // --time; nullopt = latest
     QString out, overlayOut, name, description, attribution;
     bool overwrite = false;
     int threads = 1;
@@ -49,13 +48,13 @@ struct Job {
     int autosaveMin = 5, stallTimeoutSec = 300, saveRetries = 3, assumeTileKb = 20, maxConnectionErrors = 60;
     bool strict = false, allowWebp = false;
     QString proxy, cacheDir;
-    QStringList mapsDirs; // --maps, absolute, in the order given (app-cli.md 1.6.1; T-0291)
+    QStringList mapsDirs; // --maps, absolute, in the order given
     QStringList slsFiles; // resume, as typed
     QString filter;       // sources, probe
     geo::LonLat probeAt{0, 0};
     int probeZoom = 10;
     int verbosity = 0;        // -q = -1, -v = 1
-    bool stopOnStdin = false; // T-0332: --stop-on-stdin
+    bool stopOnStdin = false; // --stop-on-stdin
     bool progress = true;     // progressMode != Off: what the Console takes
     OutputFormat format = OutputFormat::Text;
     ProgressMode progressMode = ProgressMode::Auto;
@@ -67,7 +66,7 @@ struct CliError {
 };
 
 // arguments[0] is the program name, as QCoreApplication::arguments(). Exit code 2 on a usage error, 3 when
-// two areas are given (S-3).
+// two areas are given.
 [[nodiscard]] std::expected<Job, CliError> parseJob(const QStringList& arguments);
 [[nodiscard]] QString helpText();
 // "8-12,14": 0-based items, each N or A-B (A <= B), 0..23; sorted, unique. The error is the message without

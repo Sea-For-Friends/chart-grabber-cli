@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: c_MarkSystem.pas; the constant CMarksSystemInternalURL of Src/Browser/c_InternalBrowser.pas:43
-// (spec marks.md section 1.3: it folds into M1, its users are the two mark-id implementations).
+// (its users are the two mark-id implementations).
 
 #include <QCoreApplication>
 #include <QString>

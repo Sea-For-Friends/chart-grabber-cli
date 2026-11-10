@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (held open). Ports u_MarkCategory.pas, u_MarkCategoryList.pas,
-// u_MarkCategoryTree.pas; docs/specs/marks.md section 2.1. The legacy suite does not reach these rules.
+// Ports u_MarkCategory.pas, u_MarkCategoryList.pas, u_MarkCategoryTree.pas. The legacy suite does not
+// reach these rules.
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_list.h"
 #include "cg/marks/mark_category_tree.h"

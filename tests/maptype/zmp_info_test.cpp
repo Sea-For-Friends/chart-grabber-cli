@@ -2,10 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002 (contributes; held open).
-// Ports u_ZmpInfo.pas, i_ZmpInfo.pas; docs/specs/maptype.md 2.5, 2.6, 4, 7.4, 8.2 (LD-7, LD-8, LD-14), 8.3
-// N-1. Fixtures: real stock ZMPs under tests/fixtures/zmp/sas.maps (the literals below are read off their
-// params.txt) and the hand-made tests/fixtures/zmp/broken/ folders.
+// Ports u_ZmpInfo.pas, i_ZmpInfo.pas. Fixtures: real stock ZMPs under tests/fixtures/zmp/sas.maps (the
+// literals below are read off their params.txt) and the hand-made tests/fixtures/zmp/broken/ folders.
 #include "cg/core/config_provider_folder.h"
 #include "cg/core/config_provider_zip.h"
 #include "cg/core/language_manager.h"
@@ -179,14 +177,15 @@ TEST(ZmpInfo, ScriptedMapWithEmptyTilesAndHotKey_BingSat) {
     ASSERT_EQ(z->emptyTileSamples().size(), 1U); // EmptyTiles/NA.png
     EXPECT_EQ(z->emptyTileSamples()[0], fileBytes(u"Bing/Bing_Sat.zmp/EmptyTiles/NA.png"_s));
     EXPECT_TRUE(z->banTileSamples().empty());
-    // The script is reachable raw through the container (spec 2.2).
+    // The script is reachable raw through the container.
     EXPECT_EQ(z->dataProvider()->binary(u"GetUrlScript.txt"),
               fileBytes(u"Bing/Bing_Sat.zmp/GetUrlScript.txt"_s));
     EXPECT_EQ(z->gui()->bmp24().size(), QSize(24, 24)); // stock 24.bmp; there is no 18.bmp
     EXPECT_EQ(z->gui()->bmp18(), z->gui()->bmp24());
 }
 
-// T-0273 (L-155, D row): a zipped ZMP finds its EmptyTiles folder, so its samples are the folder map's.
+// A deviation from legacy for a legacy defect: a zipped ZMP finds its EmptyTiles folder, so its samples are
+// the folder map's.
 TEST(ZmpInfo, ZippedMapLoadsTheSamplesOfTheFolderMap) {
     CG_SKIP_IF_NO_CORPUS();
     Env env;
@@ -222,7 +221,7 @@ TEST(ZmpInfo, BothIconsAndMagentaKeyColour_2gis) {
         }
     }
     EXPECT_EQ(transparent, 97);
-    // ContentType is spelled with quotes in the file; they are kept (spec 2.2).
+    // ContentType is spelled with quotes in the file; they are kept.
     EXPECT_EQ(z->tileDownloaderConfig()->expectedMimeTypes, "\"image/png\"");
     EXPECT_EQ(z->tileDownloaderConfig()->defaultMimeType, "image/png");
     EXPECT_EQ(z->tileDownloadRequestBuilderConfig()->urlBase, "http://tile.maps.2gis.com/tiles?v=1.3&x=");
@@ -285,13 +284,12 @@ TEST(ZmpInfo, BrokenZmpsGiveTheLegacyTexts) {
               u"Not found \"params.txt\" in zmp"_s);
     EXPECT_EQ(zmpErrorText(env, u"no_params_section.zmp"_s, ZmpError::Kind::ParamsNotFound),
               u"Not found PARAMS section in zmp"_s);
-    for (const QString& name :
-         {u"no_guid.zmp"_s, u"bad_guid_unbraced.zmp"_s, u"zero_guid.zmp"_s}) { // LD-8, N-1
+    for (const QString& name : {u"no_guid.zmp"_s, u"bad_guid_unbraced.zmp"_s, u"zero_guid.zmp"_s}) {
         EXPECT_EQ(zmpErrorText(env, name, ZmpError::Kind::Guid), u"Empty GUID"_s) << name.toStdString();
     }
 }
 
-TEST(ZmpInfo, BadIteratorSubRectSizeIsAnRtlMessageWithoutTheMapName) { // LD-7
+TEST(ZmpInfo, BadIteratorSubRectSizeIsAnRtlMessageWithoutTheMapName) {
     CG_SKIP_IF_NO_FIXTURE(fixtureDir() + u"/zmp/broken"_s);
     Env env;
     try {
@@ -320,7 +318,7 @@ TEST(ZmpInfo, BadIteratorSubRectSizeIsAnRtlMessageWithoutTheMapName) { // LD-7
 }
 
 TEST(ZmpInfo,
-     UnknownExtensionIsRejectedAtCreation) { // OQ-3, D-74; legacy keeps a nil content type and crashes later
+     UnknownExtensionIsRejectedAtCreation) { // Legacy keeps a nil content type and crashes later
     CG_SKIP_IF_NO_FIXTURE(fixtureDir() + u"/zmp/broken"_s);
     Env env;
     const QString text = zmpErrorText(env, u"unknown_ext.zmp"_s, ZmpError::Kind::UnknownContentType);
@@ -366,7 +364,7 @@ TEST(ZmpInfo, DefaultIconAndPngFallback) {
     EXPECT_EQ(env.load(named.dir.path())->gui()->bmp18().size(), QSize(5, 6));
 }
 
-TEST(ZmpInfo, InfoPageChain) { // spec 2.5.4; an empty file counts as absent
+TEST(ZmpInfo, InfoPageChain) { // An empty file counts as absent
     Env env;
     TempZmp tmp;
     tmp.add(u"info.txt"_s, "general");
@@ -383,7 +381,7 @@ TEST(ZmpInfo, InfoPageChain) { // spec 2.5.4; an empty file counts as absent
     EXPECT_EQ(env.load(tmp.dir.path())->gui()->infoUrl()->getString(kEn), u"/index.html"_s);
 }
 
-TEST(ZmpInfo, ScriptKeepsItsBomThroughTheContainer) { // LD-14
+TEST(ZmpInfo, ScriptKeepsItsBomThroughTheContainer) {
     Env env;
     TempZmp tmp;
     tmp.add(u"GetUrlScript.txt"_s, "\xEF\xBB\xBF"
@@ -429,8 +427,8 @@ TEST(ZmpInfo, VectorAppearanceAllThreeSubItems) {
     ASSERT_TRUE(line);
     EXPECT_EQ(line->lineAppearance()->lineColor(), 0xA6FF0000U);
     EXPECT_EQ(line->lineAppearance()->lineWidth(), 3);
-    // LV-1 (L-130): TImportLineParams stores the width flag in both slots (u_ImportConfig.pas:231), so the
-    // absent colour flag (default True) is overwritten by IsForceLineWidth=0.
+    // TImportLineParams stores the width flag in both slots (u_ImportConfig.pas:231), so the absent colour
+    // flag (default True) is overwritten by IsForceLineWidth=0.
     EXPECT_FALSE(line->isForceLineWidth());
     EXPECT_FALSE(line->isForceLineColor());
     const auto poly = z->polyParams();
@@ -439,7 +437,8 @@ TEST(ZmpInfo, VectorAppearanceAllThreeSubItems) {
     EXPECT_EQ(poly->borderAppearance()->lineWidth(), 5);
     EXPECT_EQ(poly->fillAppearance()->fillColor(), 0x55667788U);
     EXPECT_FALSE(poly->isForceFillColor());
-    EXPECT_TRUE(poly->isForceLineWidth()); // absent -> True; LV-1 copies it into the colour slot too
+    EXPECT_TRUE(poly->isForceLineWidth()); // absent -> True; a legacy defect copies it into the colour slot
+                                           // too
     EXPECT_TRUE(poly->isForceLineColor());
 }
 
@@ -503,8 +502,8 @@ TEST(ZmpInfo, VectorAppearanceLineOnlyAndNone) {
     ASSERT_TRUE(z->lineParams());
     EXPECT_EQ(z->lineParams()->lineAppearance()->lineWidth(), 7);
     EXPECT_EQ(z->lineParams()->lineAppearance()->lineColor(),
-              0xFFFFFFFFU); // built-in default (vector.md 2.9)
-    // IsForceLineColor=0 is lost to the absent IsForceLineWidth (default True): LV-1 again.
+              0xFFFFFFFFU); // built-in default
+    // IsForceLineColor=0 is lost to the absent IsForceLineWidth (default True): the same legacy defect.
     EXPECT_TRUE(z->lineParams()->isForceLineColor());
     EXPECT_TRUE(z->lineParams()->isForceLineWidth());
 
@@ -538,7 +537,7 @@ TEST(ZmpInfo, VectorAppearanceLineOnlyAndNone) {
     }
 }
 
-// FEAT-NET-002 corpus sweep: every stock ZMP loads, or fails with one of the legacy texts.
+// Corpus sweep: every stock ZMP loads, or fails with one of the legacy texts.
 TEST(ZmpInfo, CorpusSweep) {
     CG_SKIP_IF_NO_CORPUS();
     Env env;

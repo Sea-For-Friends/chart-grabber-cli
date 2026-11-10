@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-GEO-037: colour config helpers (u_ConfigProviderHelpers.pas ReadColor32 / WriteColor32) and
+// Colour config helpers (u_ConfigProviderHelpers.pas ReadColor32 / WriteColor32) and
 // core/color32.h. Expectations are derived by hand from the Pascal.
 
 #include "cg/core/color32.h"
@@ -70,8 +70,8 @@ TEST(ReadColor32, Table) {
         {"CAlfa=128\n", 0x80223344U},        // alpha only: colour of the default
         {"C=255\nCAlfa=300\n", 0xFFFF0000U}, // alpha clamped to 255
         {"C=16711680\nCAlfa=-5\n", 0x000000FFU}, // TColor 0xFF0000 = blue, alpha clamped to 0
-        {"C=-16777201\n", 0x110F0000U}, // D-55 : negative TColor = raw low 24 bits (legacy: GetSysColor)
-        {"C=abc\nCAlfa=x\n", kDef},     // unparsable integers -> StrToIntDef defaults
+        {"C=-16777201\n", 0x110F0000U},          // Negative TColor = raw low 24 bits (legacy: GetSysColor)
+        {"C=abc\nCAlfa=x\n", kDef},              // unparsable integers -> StrToIntDef defaults
     };
     for (const Row& row : rows) {
         EXPECT_EQ(readFrom(row.body, kDef), row.expected) << row.body;

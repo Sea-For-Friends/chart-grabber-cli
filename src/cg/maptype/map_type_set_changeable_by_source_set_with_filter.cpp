@@ -32,7 +32,7 @@ void MapTypeSetChangeableBySourceSetWithFilter::subscribe() {
             self->onActiveMapsSetChange();
         }
     });
-    // :94-95, under the write lock (legacy does this without CS: legacy-defects row of T-0146).
+    // :94-95, under the write lock (legacy does this without CS: a legacy defect).
     const core::WriteLock lock(mutex_);
     prevSourceSetStatic_ = sourceSet_->getStatic();
     static_ = createStatic();

@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT (core idiom); docs/specs/core.md 2.2, test plan 7.2
 #include "cg/core/snapshot.h"
 
 #include <gtest/gtest.h>

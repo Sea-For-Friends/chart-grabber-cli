@@ -26,7 +26,7 @@ QVariantList fail(const QString& message) {
     return {false, message};
 }
 
-// ECMAScript ToInt32: the 32-bit integer a JavaScript number is truncated to (spec 5.4: div, mod, random).
+// ECMAScript ToInt32: the 32-bit integer a JavaScript number is truncated to (div, mod, random).
 qint32 toInt32(double d) {
     if (!std::isfinite(d)) {
         return 0;
@@ -103,7 +103,7 @@ void JsBridge::sharedSet(const QString& key, const QString& value) {
 }
 
 QVariantList JsBridge::lockBegin() {
-    if (lockHeld_) { // the lock is non-recursive, as Pascal's (ADR-0014)
+    if (lockHeld_) { // the lock is non-recursive, as Pascal's
         return fail(QStringLiteral("shared.locked is not re-entrant"));
     }
     clock_->pause(); // waiting for another worker's token fetch is not script time
@@ -117,7 +117,7 @@ void JsBridge::lockEnd() {
     releaseLock();
 }
 
-// The helpers below are thin bindings of the ones the Pascal path uses (spec 5.4).
+// The helpers below are thin bindings of the ones the Pascal path uses.
 QVariantList JsBridge::round(double x) {
     if (!std::isfinite(x) || std::fabs(x) >= 9.2e18) { // the cast to qint64 would be undefined
         return fail(QStringLiteral("pascal.round: argument out of range"));
@@ -148,7 +148,7 @@ QVariantList JsBridge::mod(double a, double b) {
 QVariantList JsBridge::regExprGetMatchSubStr(const QString& s, const QString& re, double index) {
     const QByteArray pattern = re.toUtf8();
     const script::CompiledRegex compiled = script::compileTRegExpr(pattern);
-    if (!compiled.ok) { // R16
+    if (!compiled.ok) {
         return fail(compiled.error);
     }
     return ok(QString::fromUtf8(script::tRegExprMatch(s.toUtf8(), pattern, toInt32(index))));
@@ -157,7 +157,7 @@ QVariantList JsBridge::regExprGetMatchSubStr(const QString& s, const QString& re
 QVariantList JsBridge::regExprReplaceMatchSubStr(const QString& s, const QString& re, const QString& repl) {
     const QByteArray pattern = re.toUtf8();
     const script::CompiledRegex compiled = script::compileTRegExpr(pattern);
-    if (!compiled.ok) { // R16
+    if (!compiled.ok) {
         return fail(compiled.error);
     }
     return ok(QString::fromUtf8(script::tRegExprReplace(s.toUtf8(), pattern, repl.toUtf8())));

@@ -1,4 +1,4 @@
-; T-0015D golden: ESRI/ArcGIS.Imagery.zmp - the minimal script.
+; Golden: ESRI/ArcGIS.Imagery.zmp - the minimal script.
 ; ResultURL := GetURLBase + IntToStr(GetZ-1) + '/' + IntToStr(GetY) + '/' + IntToStr(GetX)
 ; Straight IntToStr/concatenation, no arithmetic beyond GetZ-1.
 

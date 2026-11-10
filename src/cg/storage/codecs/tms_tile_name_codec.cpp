@@ -18,7 +18,7 @@ int flippedY(quint8 zoom, int y) {
 }
 } // namespace
 
-// FEAT-STO-010. u_TileFileNameTMS.pas:65-75 GetTileFileName. (!) X first, Y last (flipped).
+// u_TileFileNameTMS.pas:65-75 GetTileFileName. (!) X first, Y last (flipped).
 QString TmsTileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     return QStringLiteral("%1/%2/%3").arg(int(zoom)).arg(xy.x()).arg(flippedY(zoom, xy.y()));
 }

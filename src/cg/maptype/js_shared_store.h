@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (NEW code, ADR-0014). The `shared` store of a JavaScript source, one per factory, modelled
-// on u_PascalScriptGlobal.pas: a script-visible non-recursive lock (shared.locked) and an item lock that only
+// Ports: nothing (NEW code). The `shared` store of a JavaScript source, one per factory, modelled on
+// u_PascalScriptGlobal.pas: a script-visible non-recursive lock (shared.locked) and an item lock that only
 // guards the map and is never held across a call.
 
 #include "cg/core/sync.h"

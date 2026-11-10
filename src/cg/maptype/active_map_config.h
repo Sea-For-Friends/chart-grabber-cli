@@ -35,7 +35,7 @@ protected:
     void doWriteConfig(const core::IConfigWriterPtr& dst) const override;
 
 private:
-    void setMainMapGuidLocked(const QUuid& mapGuid); // the "...Locked()" split of core.md 2.16
+    void setMainMapGuidLocked(const QUuid& mapGuid); // the "...Locked()" split
 
     bool isAllowZeroGuid_;
     QUuid mainMapGuid_;

@@ -1,4 +1,4 @@
-; T-0015D golden: _other/Water_resources.zmp - plain, three uses of GetZ-1.
+; Golden: _other/Water_resources.zmp - plain, three uses of GetZ-1.
 ; ResultURL := GetURLBase+'/z'+IntToStr(GetZ-1)+'/row'+IntToStr(GetY)+'/'+IntToStr(GetZ-1)+
 ;   '_'+IntToStr(GetX)+'-'+IntToStr(GetY)+'.gif'
 

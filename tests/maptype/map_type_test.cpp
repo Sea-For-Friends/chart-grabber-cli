@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MapType.pas:1-506, :555-683, :790-835 (no FEAT id: prerequisite of R-12 MapTypesMainList;
-// docs/specs/maptype.md 2.11.6, ticket T-0140). Real objects: the 514 stock ZMPs
-// (tests/fixtures/zmp/sas.maps) with the stock Maps.ini (written by legacy), a real
+// Ports u_MapType.pas:1-506, :555-683, :790-835 (MapTypesMainList builds on it). Real objects: the 514 stock
+// ZMPs (tests/fixtures/zmp/sas.maps) with the stock Maps.ini (written by legacy), a real
 // TileStorageTypeListSimple, TileStorageOfMapType and TileDownloadSubsystem. Scripted: one storage type that
 // wraps the real folder storage and answers the abilities, tileFileName and listVersions the test names
 // (getTileShowName / nextVersion), and a fake transport (the destruction and wiring tests). Expected values
@@ -64,7 +63,7 @@ using namespace cg::maptype;
 
 namespace {
 
-// docs/specs/net.md 7.0: no test may reach the real network (read once, on the first CurlDownloader call).
+// No test may reach the real network (read once, on the first CurlDownloader call).
 struct ForceNoExternalNetwork {
     ForceNoExternalNetwork() { qputenv("CG_NET_NO_EXTERNAL_NETWORK", "1"); }
 };
@@ -398,11 +397,11 @@ Params scripted() {
 // --- the corpus
 // ---------------------------------------------------------------------------------------------
 
-// Proofs 1, 2 and the stock half of 3: a MapType for each of the 514 stock ZMPs, built from its own Maps.ini
-// section, against a real storage type list. Literal counts come from the fixtures: `Ext=.kml` + the
-// wikimapia MainStorageContentType in 2 params.txt (Wikimapia/Wiki.zmp,
-// _broken_maps/Panoramio/Panoramio_KML.zmp), every other map a bitmap type (512); `CacheType=5` in 4
-// (GoogleEarth), `=8` in 1 (GeoCacher), `=9` in 14 (RAM).
+// The stock corpus: a MapType for each of the 514 stock ZMPs, built from its own Maps.ini section, against a
+// real storage type list. Literal counts come from the fixtures: `Ext=.kml` + the wikimapia
+// MainStorageContentType in 2 params.txt (Wikimapia/Wiki.zmp, _broken_maps/Panoramio/Panoramio_KML.zmp),
+// every other map a bitmap type (512); `CacheType=5` in 4 (GoogleEarth), `=8` in 1 (GeoCacher), `=9` in 14
+// (RAM).
 TEST(MapTypeCorpus, All514StockZmpsConstructAndKeepTheirKindStorageAndStockSection) {
     CG_SKIP_IF_NO_CORPUS();
     Rig rig;
@@ -554,7 +553,7 @@ TEST(MapTypeGetters, TheZmpAndItsProjectionSetsAreTheMapsOwnAndEveryConfigIsTher
     EXPECT_NE(map->layerDrawConfig(), nullptr);
     EXPECT_NE(map->tileDownloaderConfig(), nullptr);
     EXPECT_NE(map->tileDownloadRequestBuilderConfig(), nullptr);
-    EXPECT_EQ(map->cacheBitmap(), nullptr); // bitmap half: T-0148
+    EXPECT_EQ(map->cacheBitmap(), nullptr); // bitmap half: not ported yet
     EXPECT_EQ(map->cacheVector(), nullptr);
 }
 
@@ -564,7 +563,7 @@ TEST(MapTypeGetters, TheZmpAndItsProjectionSetsAreTheMapsOwnAndEveryConfigIsTher
 constexpr auto kChandracomp = "_Space/sky_chandracomp.zmp";
 
 // An untouched map written into an empty INI is the first section of the stock extract (the first stock map);
-// the ZMP's own pnum is "not set" (L-151), so the main list's renumbering is what the test does by hand.
+// the ZMP's own pnum is "not set", so the main list's renumbering is what the test does by hand.
 TEST(MapTypeSaveConfig, AnUntouchedStockMapWritesTheStockSectionOfTheLegacyFile) {
     CG_SKIP_IF_NO_CORPUS();
     Rig rig;
@@ -689,8 +688,8 @@ TEST(MapTypeMemCache, AVersionChangeClearsTheCacheAndAnUnchangedVersionDoesNot) 
 }
 
 TEST(MapTypeMemCache, EveryGcTickRunsTheTtlSweepUnlessTheStrategyIsNever) {
-    // D row 2 of T-0140: the owner drives clearExpired() from the GC notifier. clearExpired fires
-    // clearedByTtl() on every call, except for the strategy Never (3), which returns at once.
+    // A deviation from legacy: the owner drives clearExpired() from the GC notifier. clearExpired
+    // fires clearedByTtl() on every call, except for the strategy Never (3), which returns at once.
     Rig rig;
     for (const auto& [strategy, expectedTicks] : {std::pair{"1", 2}, std::pair{"3", 0}}) {
         SCOPED_TRACE(strategy);
@@ -732,7 +731,7 @@ TEST(MapTypeShortFolderName, TheLastFolderOfTheNameInCacheWithOrWithoutTrailingS
     }
 }
 
-// Deviation (D row of T-0140): ':' is a drive delimiter for Delphi, an ordinary character here.
+// A deviation from legacy: ':' is a drive delimiter for Delphi, an ordinary character here.
 TEST(MapTypeShortFolderName, ColonIsAnOrdinaryCharacterNotADriveDelimiter) {
     Rig rig;
     const auto a = rig.make(rig.zmp({{"CacheType", "9"}, {"NameInCache", "a:b"}}));
@@ -896,8 +895,8 @@ TEST(MapTypeNextVersion, AStorageWithoutMultipleVersionsIsNotAskedAndKeepsTheVer
 }
 
 TEST(MapTypeNextVersion, AnEmptyListOrAFailedCallOrNoListKeepsTheVersion) {
-    // Legacy reads Item[0] / Item[-1] of an empty list (L row of T-0140); the port keeps the version (D row
-    // 1).
+    // Legacy reads Item[0] / Item[-1] of an empty list (a legacy defect); the port keeps the version (a
+    // deviation from legacy).
     VersionRig r;
     r.script->versions = storage::MapVersionList{std::make_shared<std::vector<storage::MapVersionInfoPtr>>()};
     EXPECT_EQ(r.step("A", 1), u"A"_s);
@@ -951,7 +950,7 @@ TEST(MapTypeInList, APlainMapIsListedWithItsOwnGuiConfigAndOrderedByItsStoredNum
     EXPECT_EQ(*list.orderedMapGuidList(), (std::vector<QUuid>{alphaZmp->guid(), zetaZmp->guid()}));
 }
 
-// --- the subsystem is the map's own and goes with it (3.1 R1-R4)
+// --- the subsystem is the map's own and goes with it
 // --------------------------------------------
 
 // A tile downloaded through the map's subsystem lands in the map's storage: the subsystem got the map's
@@ -982,7 +981,7 @@ TEST(MapTypeDownload, ATileDownloadedThroughTheMapIsStoredInTheMapsStorage) {
     EXPECT_TRUE(info->isExists());
 }
 
-// R1 under the sanitizers: the map is destroyed while a transfer is in flight. The fake transport holds the
+// Under the sanitizers: the map is destroyed while a transfer is in flight. The fake transport holds the
 // transfer until its stop token fires, so the stop can only come from the destruction; the worker is joined
 // before the map's storage and configs go (the destructor returns only after it), the task is finished
 // exactly once, nothing is stored, and the saver has unsubscribed from the storage state by then.

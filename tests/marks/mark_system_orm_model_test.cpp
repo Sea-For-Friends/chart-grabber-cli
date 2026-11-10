@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (held open). Ports no legacy test (there is none): the schema a fresh
-// bootstrap writes against the real Marks.db3 written by Windows SAS.Planet
-// (tests/fixtures/marks/Marks.db3), docs/specs/marks.md §2.9.1 and §2.9.3 steps B-9...B-12.
+// Ports no legacy test (there is none): the schema a fresh bootstrap writes against the real
+// Marks.db3 written by Windows SAS.Planet (tests/fixtures/marks/Marks.db3).
 #include "cg/marks/mormot/mark_system_orm_model.h"
 #include "cg/marks/mormot/system_nocase.h"
 #include "cg/storage/sqlite/sqlite_db.h"
@@ -47,8 +46,8 @@ QStringList rows(SqliteDb& db, QByteArrayView sql) {
 
 const QByteArrayView kMaster = "SELECT type,name,tbl_name,rootpage,sql FROM sqlite_master ORDER BY rowid";
 
-// What the connection provider does around the model calls (steps B-3...B-8): page size for a
-// new file, the collation, WAL.
+// What the connection provider does around the model calls: page size for a new file, the
+// collation, WAL.
 SqliteDb openAsLegacy(const QString& path, bool isNew) {
     auto db =
         SqliteDb::open(path, isNew ? SqliteDb::OpenMode::ReadWriteCreate : SqliteDb::OpenMode::ReadWrite);
@@ -85,7 +84,7 @@ TEST(MarkSystemOrmModel, EmptyDatabaseGetsTheSchemaOfTheWindowsFile) {
     ASSERT_TRUE(statements.has_value()) << statements.error().what().toStdString();
     EXPECT_EQ(*statements, 13); // BEGIN, 10 x CREATE [VIRTUAL] TABLE, IndexMarkMetamMark, COMMIT
     createMissingIndexesSqlite3(fresh);
-    // The fixture holds the default user (step B-14, statement S-02) and nothing else.
+    // The fixture holds the default user (written by the connection bootstrap) and nothing else.
     ASSERT_TRUE(fresh.exec("INSERT INTO User (uName) VALUES ('sasgis')").has_value());
 
     const QStringList expected = rows(fixture, kMaster);
@@ -117,16 +116,16 @@ TEST(MarkSystemOrmModel, CompleteDatabaseIsLeftUnchanged) {
 
     const auto statements = createMissingTablesSqlite3(db);
     ASSERT_TRUE(statements.has_value()) << statements.error().what().toStdString();
-    EXPECT_EQ(*statements, 0);       // B-9, B-10: nothing missing -> no transaction, no B-11
-    createMissingIndexesSqlite3(db); // B-12: ten IF NOT EXISTS requests that find their index
+    EXPECT_EQ(*statements, 0);       // Nothing missing -> no transaction, no table initialisation
+    createMissingIndexesSqlite3(db); // Ten IF NOT EXISTS requests that find their index
 
     EXPECT_EQ(rows(db, kMaster), masterBefore);
     EXPECT_EQ(rows(db, "PRAGMA schema_version"), cookieBefore);
     EXPECT_EQ(rows(db, "PRAGMA integrity_check"), QStringList{QStringLiteral("ok")});
 }
 
-// B-10: an existing table that lacks a model column gets it by ALTER TABLE, inside the transaction
-// that creates the nine missing tables.
+// An existing table that lacks a model column gets it by ALTER TABLE, inside the transaction that
+// creates the nine missing tables.
 TEST(MarkSystemOrmModel, ExistingTableGetsItsMissingColumn) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());

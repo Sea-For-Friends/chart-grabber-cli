@@ -4,11 +4,10 @@
 
 #pragma once
 // Ports: Src/MarksDB/mORMot/Marks/i_MarkFactoryDbInternalORM.pas (65) and
-// Src/MarksDB/mORMot/Marks/u_MarkFactoryDbInternalORM.pas (485, class TMarkFactoryDbInternalORM;
-// docs/specs/marks.md section 2.9.10). The interface is IMarkFactoryDbInternalORM; the class
+// Src/MarksDB/mORMot/Marks/u_MarkFactoryDbInternalORM.pas (485 lines, class
+// TMarkFactoryDbInternalORM). The interface is IMarkFactoryDbInternalORM; the class
 // MarkFactoryDbInternalORM is declared next to it because the mark system implementation constructs it
-// directly (legacy u_MarkSystemImplORM.pas:166). Its .cpp is mark_factory_db_internal_orm.cpp (ticket
-// T-0083).
+// directly (legacy u_MarkSystemImplORM.pas:166). Its .cpp is mark_factory_db_internal_orm.cpp.
 //
 // Colours are TColor32 (quint32) and scales are Integer (qint32), as in OrmMarkRec.
 //

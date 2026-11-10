@@ -2,16 +2,13 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-005, FEAT-GEO-006, FEAT-GEO-007; docs/specs/geo.md:2178-2238 (§6.4), test plan
-// §11.2 ("coord_transformer_test.cpp (14)"). No legacy DUnit test exists for u_CoordTransformer.pas
-// or Proj4.UTM.pas/Proj4.GaussKruger.pas (Test/ has none), so every case here is derived by hand
-// from the ported zone/band/digraph arithmetic, or from `cs2cs` (PROJ 9.8.1) run with the exact
-// legacy init strings under test (oracle command recorded per case). This file is exactly the
-// Architect's §11.2 list (14 named cases) plus one extra case (WiringRoundTripThrough...) proving
-// the actual T-0019B2 deliverable -- the wiring into coord_to_string.cpp/coord_from_string.cpp --
-// works end to end, per the ticket's explicit round-trip requirement.
+// No legacy DUnit test exists for u_CoordTransformer.pas or Proj4.UTM.pas/Proj4.GaussKruger.pas
+// (Test/ has none), so every case here is derived by hand from the ported zone/band/digraph
+// arithmetic, or from `cs2cs` (PROJ 9.8.1) run with the exact legacy init strings under test
+// (oracle command recorded per case). One extra case (WiringRoundTripThrough...) proves the wiring
+// into coord_to_string.cpp/coord_from_string.cpp works end to end.
 //
-// "The first six" (spec §11.2) are pure zone/band arithmetic and run without PROJ -- see
+// The first six tests below are pure zone/band arithmetic and run without PROJ -- see
 // coord_transformer.cpp's wgs84ToUtm/wgs84ToUps: Zone/Band/IsNorth are written before the PROJ leg
 // is attempted, mirroring legacy's own mutate-the-out-param-in-place semantics
 // (geodetic_wgs84_to_utm, Proj4.UTM.pas:145-155). Every other case needs a real PROJ transform and
@@ -54,7 +51,7 @@ protected:
 
 } // namespace
 
-// --- pure zone/band arithmetic -- no PROJ needed (spec §11.2 "the first six") -------------------
+// --- pure zone/band arithmetic -- no PROJ needed -------------------
 
 TEST(CoordTransformer, UtmZoneFromLongitude) {
     // wgs84_long_to_utm_zone, Proj4.UTM.pas:75-81. lat=10 keeps the band well clear of the
@@ -159,11 +156,11 @@ TEST(CoordTransformer, UpsNorthAbove84) {
 // --- everything below needs a real PROJ transform -------------------------------------------------
 
 TEST_F(CoordTransformerProjTest, UpsSouthBelowMinus80) {
-    // D-9 anchor (spec §6.4 "legacy bug, fixed here"): lat = -80.5 -> south, lat = 85 -> north --
-    // both branches agree on these inputs whether the switch constant is legacy's `80` or the
-    // port's `-80` (only unreachable inputs would ever distinguish them), so this pins the
-    // reachable behavior, not the bug itself.
-    // Oracle: `echo "10.0 -80.5" | cs2cs -f "%.9f" +proj=longlat +datum=WGS84 +no_defs +type=crs
+    // Anchor of a legacy bug fixed here (a deviation from legacy): lat = -80.5 -> south,
+    // lat = 85 -> north -- both branches agree on these inputs whether the switch constant is
+    // legacy's `80` or the port's `-80` (only unreachable inputs would ever distinguish them), so
+    // this pins the reachable behavior, not the bug itself. Oracle:
+    // `echo "10.0 -80.5" | cs2cs -f "%.9f" +proj=longlat +datum=WGS84 +no_defs +type=crs
     //  +to +proj=stere +lat_0=-90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84
     //  +units=m +no_defs +type=crs` (PROJ 9.8.1).
     UtmCoord south;
@@ -209,9 +206,9 @@ TEST_F(CoordTransformerProjTest, MgrsDigraphTables) {
 }
 
 TEST_F(CoordTransformerProjTest, MgrsTruncatesNotRounds) {
-    // Same UTM-37N point as MgrsDigraphTables: easting 404050.944491686 -- Trunc gives 404050
-    // (-> mod-100000 4050); a naive round would give 404051 (-> 4051). Trunc, not rounding, is the
-    // legacy behavior (spec §6.4: "trunc(utm.x) % 100000 -- truncation, not rounding").
+    // Same UTM-37N point as MgrsDigraphTables: easting 404050.944491686 -- Trunc gives 404050 (->
+    // mod-100000 4050); a naive round would give 404051 (-> 4051). Trunc, not rounding, is the
+    // legacy behavior.
     MgrsCoord mgrs;
     ASSERT_TRUE(CoordTransformer::wgs84ToMgrs(LonLat{37.5, 55.0}, mgrs));
     EXPECT_EQ(mgrs.x, 4050);
@@ -296,8 +293,8 @@ TEST_F(CoordTransformerProjTest, Gsk2011UsesTheLegacyTowgs84) {
     EXPECT_NEAR(geog.lat, 55.000001371, 1e-7);
 }
 
-// --- T-0019B2's actual deliverable: the wiring through both consumer classes, end to end (not in
-// spec §11.2's list, which tests CoordTransformer in isolation; ticket-required coverage) --------
+// --- the wiring through both consumer classes, end to end (beyond
+// the cases above, which test CoordTransformer in isolation) --------
 
 TEST_F(CoordTransformerProjTest, WiringRoundTripThroughCoordToStringAndCoordFromString) {
     struct Row {

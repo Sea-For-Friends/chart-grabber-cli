@@ -22,7 +22,6 @@ public:
     virtual void setWriteAccess(bool value) = 0;
 };
 
-// FEAT-GEO-033
 class ReadWriteStateInternal final : public IReadWriteStateInternal {
 public:
     ReadWriteStateInternal(bool readAccess, bool writeAccess);

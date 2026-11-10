@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_ZmpInfo.pas (IZmpInfoGUI, IZmpInfo; the proxy interfaces :139-161 are runtime, spec 2.14),
+// Ports: i_ZmpInfo.pas (IZmpInfoGUI, IZmpInfo; the proxy interfaces :139-161 are runtime),
 //        u_ZmpInfo.pas (TZmpInfoGUI, TZmpInfo, EZmp*), including LoadVectorAppearanceConfig (:1001-1062).
 //
 // One map definition loaded from its config provider (the ZMP container). Immutable after
@@ -84,7 +84,7 @@ public:
 using IZmpInfoPtr = std::shared_ptr<const IZmpInfo>;
 
 // EZmpError and its three subclasses (u_ZmpInfo.pas:213-216), plus UnknownContentType: the
-// OQ-3 rejection, which legacy does not have (D-74 in the handoff).
+// rejection, which legacy does not have.
 class ZmpError : public std::runtime_error {
 public:
     enum class Kind : std::uint8_t { IniNotFound, ParamsNotFound, Guid, UnknownContentType };
@@ -133,12 +133,11 @@ private:
     bool enabled_ = true;
 };
 
-// FEAT-NET-002
 class ZmpInfo final : public IZmpInfo { // TZmpInfo, u_ZmpInfo.pas:100-207
 public:
-    // Throws ZmpError (u_ZmpInfo.pas:585-624, 833-839; UnknownContentType is the OQ-3 addition) or
-    // std::runtime_error (IteratorSubRectSize, LD-7).
-    // `markPictureList` may be null (readAppearancePoint then finds no picture).
+    // Throws ZmpError (u_ZmpInfo.pas:585-624, 833-839; UnknownContentType is an addition of the
+    // port) or std::runtime_error (IteratorSubRectSize, a legacy defect). `markPictureList` may be
+    // null (readAppearancePoint then finds no picture).
     ZmpInfo(const ZmpConfig& zmpConfig, const core::ILanguageManager& languageManager,
             const geo::ProjectionSetFactory& projectionSetFactory,
             const core::ContentTypeRegistry& contentTypes,

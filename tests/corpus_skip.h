@@ -3,11 +3,11 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// T-0321: the private map catalogue (tests/fixtures/zmp/sas.maps and the CSVs derived from it) is not part of
-// the public tree. A test that reads it calls CG_SKIP_IF_NO_CORPUS() first (each test module's fixture
-// header defines that macro over its own fixtures-dir function); it must stand directly in a TEST body or a
-// SetUp (GTEST_SKIP returns from a void function). The one reason string below is what the public-tree
-// simulation counts.
+// The private map catalogue (tests/fixtures/zmp/sas.maps and the CSVs derived from it) is not part of the
+// public tree. A test that reads it calls CG_SKIP_IF_NO_CORPUS() first (each test module's fixture header
+// defines that macro over its own fixtures-dir function); it must stand directly in a TEST body or a SetUp
+// (GTEST_SKIP returns from a void function). The one reason string below is what the public-tree simulation
+// counts.
 
 #include <QByteArray>
 #include <QFileInfo>
@@ -15,9 +15,9 @@
 
 #include <gtest/gtest.h>
 
-// T-0370: in the private checkout every fixture exists, so a missing one must never turn into a silent skip.
-// tools/validate.sh exports CG_REQUIRE_FIXTURES=1 there (PUBLIC=0): the macros below then FAIL with the same
-// message instead of skipping. In an exported (public) tree the variable is unset and the tests skip.
+// In the private checkout every fixture exists, so a missing one must never turn into a silent skip.
+// The internal gate exports CG_REQUIRE_FIXTURES=1 there: the macros below then FAIL with the same message
+// instead of skipping. The public tools/validate.sh never sets it, so in a public tree the tests skip.
 [[nodiscard]] inline bool cgRequireFixtures() {
     return qgetenv("CG_REQUIRE_FIXTURES") == QByteArrayLiteral("1");
 }
@@ -37,10 +37,10 @@
         }                                                                                                    \
     } while (false)
 
-// T-0370: third-party fixtures the owner has not yet cleared for publication (Marks.db3, the stock .zmp
-// samples, the legacy test data, opencpn_foo.gpx) are left out of the public tree
-// (tools/public-manifest.txt). A test that reads one calls CG_SKIP_IF_NO_FIXTURE(<path of that file>) first,
-// under the same placement rule as above.
+// Third-party fixtures the owner has not yet cleared for publication (Marks.db3, the stock .zmp samples, the
+// legacy test data, opencpn_foo.gpx) are left out of the public tree (tools/public-manifest.txt). A test
+// that reads one calls CG_SKIP_IF_NO_FIXTURE(<path of that file>) first, under the same placement rule as
+// above.
 #define CG_SKIP_IF_NO_FIXTURE(path)                                                                          \
     do {                                                                                                     \
         if (!QFileInfo::exists(path)) {                                                                      \

@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001, FEAT-GEO-002. Ports Test/u_ProjectionType_Test.pas (3 cases); docs/specs/
-// geo.md §11.1 item 2, §11.2 projection_type_test.cpp (17 new).
+// Ports Test/u_ProjectionType_Test.pas (3 cases), plus new coverage.
 #include "cg/geo/proj_converter.h"
 #include "cg/geo/projection_type.h"
 #include "cg/geo/projection_type_factory.h"
@@ -140,16 +139,16 @@ TEST(ProjectionType, EllipsoidInverseKeepsFirstGuessOnNaN) {
 }
 
 TEST(ProjectionType, EllipsoidForwardInverseRoundTripBelow1e9Degrees) {
-    // ADR-0006 D-11, restated by the T-0016 review/ruling in the units the legacy stopping
-    // constant is actually in: round-trip error < 1e-9 RADIANS (≡ 5.73e-8 degrees), not < 1e-9
-    // degrees as the test's own name suggests. The legacy stopping rule is "|Zum1 - Zu| < 1e-9" on
-    // the RADIAN step size (§2.2.3 rule 1, u_ProjectionTypeMercatorOnEllipsoid.pas:110), which
-    // bounds how much the iterate moved on its last step, not the true remaining error. A
-    // brute-force sweep at this exact grid (lat -85..85 step 0.01, lon -180..180 step 1; see
-    // docs/handoffs/T-0016.md) measures a worst-case round-trip error of ~2.84e-8 degrees at
-    // lat=-0.11 -- comfortably under the 5.73e-8-degree bound the stopping rule actually provides,
-    // in both `double` and `long double` (EllipsoidForwardDoubleAgreesWithLongDoubleWithinD11Bound
-    // below). This gate keeps the empirically verified `< 6e-8` degrees tolerance.
+    // The precision bound, in the units the legacy stopping constant is actually in: round-trip
+    // error < 1e-9 RADIANS (≡ 5.73e-8 degrees), not < 1e-9 degrees as the test's own name
+    // suggests. The legacy stopping rule is "|Zum1 - Zu| < 1e-9" on the RADIAN step size
+    // (u_ProjectionTypeMercatorOnEllipsoid.pas:110), which bounds how much the iterate moved on
+    // its last step, not the true remaining error. A brute-force sweep at this exact grid (lat
+    // -85..85 step 0.01, lon -180..180 step 1) measures a worst-case round-trip error of ~2.84e-8
+    // degrees at lat=-0.11 -- comfortably under the 5.73e-8-degree bound the stopping rule
+    // actually provides, in both `double` and `long double`
+    // (EllipsoidForwardDoubleAgreesWithLongDoubleWithinD11Bound below). This gate keeps the
+    // empirically verified `< 6e-8` degrees tolerance.
     constexpr double kGateTolerance = 6e-8;
     ProjectionTypeFactory factory = makeFactory();
     const auto yandex = factory.byCode(3395);
@@ -166,7 +165,7 @@ TEST(ProjectionType, EllipsoidForwardInverseRoundTripBelow1e9Degrees) {
 namespace {
 // Pure-`double` reimplementation of ellipsoidForward (src/cg/geo/projection_type.cpp), matching
 // its formula exactly, used only to measure whether that function's arithmetic precision changes
-// the round-trip result (T-0016 review finding 3 / Q-B). Not a production code path.
+// the round-trip result. Not a production code path.
 DoublePoint ellipsoidForwardDouble(LonLat p, double e) noexcept {
     const double rx = 0.5 + p.lon / 360.0;
     const double z = std::sin(p.lat * std::numbers::pi / 180.0);
@@ -176,13 +175,12 @@ DoublePoint ellipsoidForwardDouble(LonLat p, double e) noexcept {
 } // namespace
 
 TEST(ProjectionType, EllipsoidForwardDoubleAgreesWithLongDoubleWithinD11Bound) {
-    // T-0016 review finding 3 / Q-B: ellipsoidForward was written in `long double`, but ADR-0006
-    // D-11 permits that only in the ellipsoidal INVERSE (deviation 6). This sweeps the D-11 grid's
-    // latitudes feeding BOTH a `double`-only forward (ellipsoidForwardDouble above) and the
-    // production forward through the same (unchanged, `long double`) inverse, and asserts the two
-    // round trips agree to well inside the D-11 bound (1e-9 radians, ~5.73e-8 degrees) -- in fact
-    // to under 1e-9 degrees, per the review's sweep. Longitude does not enter the ellipsoid math
-    // (finding 11), so one representative longitude is enough.
+    // The forward uses `double`; `long double` is used only in the ellipsoidal INVERSE (a
+    // deviation from legacy). This sweeps the grid's latitudes feeding BOTH a `double`-only
+    // forward (ellipsoidForwardDouble above) and the production forward through the same
+    // (unchanged, `long double`) inverse, and asserts the two round trips agree to well inside the
+    // bound (1e-9 radians, ~5.73e-8 degrees) -- in fact to under 1e-9 degrees. Longitude does not
+    // enter the ellipsoid math, so one representative longitude is enough.
     ProjectionTypeFactory factory = makeFactory();
     const auto yandex = factory.byCode(3395);
     const double a = yandex->datum()->radiusA();
@@ -209,8 +207,8 @@ TEST(ProjectionType, LonLat2MetrUsesRadiusA) {
 }
 
 TEST(ProjectionType, Metr2LonLatIsNotTheInverse) {
-    // Pins the legacy sign defect at u_ProjectionTypeBase.pas:322: `x * mul - 0.5` where `+ 0.5`
-    // is the inverse of LonLat2Metr (docs/specs/geo.md §13 Q-3). Reproduced, not fixed.
+    // Pins the legacy sign defect at u_ProjectionTypeBase.pas:322: `x * mul - 0.5` where `+ 0.5` is
+    // the inverse of LonLat2Metr. Reproduced, not fixed.
     ProjectionTypeFactory factory = makeFactory();
     const auto google = factory.byCode(3857);
     const LonLat original{20.0, 30.0};
@@ -245,11 +243,10 @@ TEST(ProjectionType, ValidateClampsBeforeForward) {
 }
 
 TEST(ProjectionType, NativeAgreesWithProjWithin1e7) {
-    // ADR-0006 "Harder": the built-in Mercator (u_ProjectionTypeMercatorOnSphere.pas, used for
-    // every tile index) and PROJ's EPSG:3857 (custom-CRS display/import only) are two different
-    // code paths that happen to compute the same formula; this pins them agreeing to within 1e-7
-    // degrees round-trip, so a future PROJ change to 3857's definition is caught here rather than
-    // in a rendered tile.
+    // The built-in Mercator (u_ProjectionTypeMercatorOnSphere.pas, used for every tile index) and
+    // PROJ's EPSG:3857 (custom-CRS display/import only) are two different code paths that happen
+    // to compute the same formula; this pins them agreeing to within 1e-7 degrees round-trip, so
+    // a future PROJ change to 3857's definition is caught here rather than in a rendered tile.
     ProjConverterFactory projFactory;
     if (!projFactory.isAvailable()) {
         GTEST_SKIP() << "PROJ not available (not built with PROJ, or proj.db not found)";

@@ -5,8 +5,8 @@
 #pragma once
 // Ports: i_BuildInfo.pas, u_BuildInfo.pas
 //
-// Build-system smoke test target, extended (T-0002B) to carry the data the About dialog needs.
-// FEAT-UI-194 (the About dialog itself) is a `ui` ticket; this only supplies the data.
+// Build-system smoke test target, extended to carry the data the About dialog needs. The About
+// dialog itself belongs to `ui`; this only supplies the data.
 
 namespace cg::core {
 

@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: i_GUIDListStatic.pas (IGUIDSetStatic), u_GUIDListStatic.pas (TGUIDSetStatic).
-// IGUIDListStatic / TGUIDListStatic (ordered list) are not ported (idioms.md: std::vector<QUuid>).
+// IGUIDListStatic / TGUIDListStatic (ordered list) are not ported (std::vector<QUuid>).
 //
 // Immutable set of GUIDs in ascending compareGuids order (guid_set.h), no duplicates. Legacy returns
 // nil for an empty set; so do the factories (null pointer).
@@ -18,7 +18,6 @@
 
 namespace cg::core {
 
-// FEAT-GEO-033, FEAT-GEO-034
 class IGuidSetStatic {
 public:
     virtual ~IGuidSetStatic() = default;

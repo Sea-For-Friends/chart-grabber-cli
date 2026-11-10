@@ -5,8 +5,8 @@
 #pragma once
 // Ports: i_StorageStateProxy.pas, u_StorageStateProxy.pas
 //
-// docs/specs/storage.md §2.22.2. The state a TileStorageOfMapType publishes: it follows the state
-// of the current target and answers "no access at all" while there is none.
+// The state a TileStorageOfMapType publishes: it follows the state of the current target and
+// answers "no access at all" while there is none.
 
 #include "cg/core/changeable.h"
 #include "cg/core/sync.h"

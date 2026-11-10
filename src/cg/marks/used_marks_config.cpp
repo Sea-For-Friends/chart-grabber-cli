@@ -4,7 +4,7 @@
 
 #include "cg/marks/used_marks_config.h"
 
-// Ports u_UsedMarksConfig.pas (T-0147): constructor :65-71, CreateStatic :73-84, DoReadConfig :86-95,
+// Ports u_UsedMarksConfig.pas: constructor :65-71, CreateStatic :73-84, DoReadConfig :86-95,
 // DoWriteConfig :97-103, getters :105-133, GetStatic :135-138, setters :140-177.
 
 namespace cg::marks {

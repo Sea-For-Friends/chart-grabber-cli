@@ -12,10 +12,10 @@
 #include <stdexcept>
 #include <utility>
 
-// Ports u_MarkNameGenerator.pas (T-0091). The format element is a child added with all four flags on
+// Ports u_MarkNameGenerator.pas. The format element is a child added with all four flags on
 // (u_MarkNameGenerator.pas:65, Add(item, BasicUseProvider)), as maptype/map_type_gui_config.cpp does.
 // The 'Name' sub-item slot (u_MarkTemplateConfigBase.pas:67, all four flags off) belongs to the owner,
-// TMarkTemplateConfigBase (M2b), not to the generator.
+// TMarkTemplateConfigBase, not to the generator.
 
 using namespace Qt::StringLiterals;
 

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of T-0155: Src/Bitmap32/u_Bitmap32BufferFactorySimple.pas (size rule :141-147, Build :111-128,
+// Tests of Src/Bitmap32/u_Bitmap32BufferFactorySimple.pas (size rule :141-147, Build :111-128,
 // BuildEmptyClear :150-158), u_Bitmap32BufferFactory.pas (:82-124), u_Bitmap32StaticFactory.pas (:61-106),
 // u_Bitmap32Static.pas (:55-81).
 #include "cg/bitmap/bitmap32_buffer_factory.h"
@@ -50,7 +50,7 @@ public:
 
 } // namespace
 
-// Proof 1: u_Bitmap32BufferFactorySimple.pas:141-147.
+// u_Bitmap32BufferFactorySimple.pas:141-147.
 TEST(Bitmap32BufferFactory, SizeRuleRejectsOutOfRange) {
     struct Case {
         int x;
@@ -106,7 +106,6 @@ TEST(Bitmap32BufferFactory, BuildWithoutDataGivesBufferOfAskedSize) {
     }
 }
 
-// Proof 2.
 TEST(Bitmap32BufferFactory, BuildCopiesEveryValueWithoutAliasing) {
     for (const auto& f : bufferFactories()) {
         std::vector<Color32> source = {0x00000001U, 0x11000002U, 0x22000003U,
@@ -139,7 +138,7 @@ TEST(Bitmap32BufferFactory, BuildEmptyClearFillsEveryValue) {
     }
 }
 
-// Proof 3: u_Bitmap32StaticFactory.pas:94-106, hash over x * y * SizeOf(TColor32) bytes.
+// u_Bitmap32StaticFactory.pas:94-106, hash over x * y * SizeOf(TColor32) bytes.
 TEST(Bitmap32StaticFactory, HashIsCityHash64OfPixelBytes) {
     const Bitmap32StaticFactory factory(std::make_shared<Bitmap32BufferFactory>());
     const Color32 pixels[6] = {0x11223344U, 0xAABBCCDDU, 0x01020304U, 0xF0E0D0C0U, 0x05060708U, 0x99887766U};
@@ -188,14 +187,13 @@ TEST(Bitmap32StaticFactory, NullBufferGivesNullStatic) {
     EXPECT_EQ(refusing.build(QPoint(1, 1), pixels), nullptr);
 }
 
-// Proof 4.
 TEST(Bitmap32StaticFactory, BufferFactoryIsTheOneGiven) {
     const auto given = std::make_shared<Bitmap32BufferFactory>();
     const Bitmap32StaticFactory factory(given);
     EXPECT_EQ(factory.bufferFactory(), given);
 }
 
-// Proof 5: the static owns the buffer (TBitmap32Static keeps FBuffer, u_Bitmap32Static.pas:55-66).
+// The static owns the buffer (TBitmap32Static keeps FBuffer, u_Bitmap32Static.pas:55-66).
 TEST(Bitmap32Static, KeepsBufferAliveAfterOtherReferencesAreDropped) {
     Bitmap32StaticPtr bitmap;
     std::weak_ptr<TrackedBuffer> watch;

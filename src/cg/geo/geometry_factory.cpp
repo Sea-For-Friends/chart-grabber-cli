@@ -132,11 +132,10 @@ void GeometryLonLatPolygonBuilder::addOuterContour(GeometryLonLatContourPtr oute
 
 void GeometryLonLatPolygonBuilder::addHoleContour(GeometryLonLatContourPtr hole) {
     // u_GeometryLonLatFactory.pas:493-511: a hole added before any outer becomes the first outer
-    // instead (a memory-reuse quirk of the FOuterDataExists flag). Reproduced per Tech Lead ruling
-    // (review F2c/deviations audit: cheap to match, so match rather than record a deviation) --
-    // this builder's documented contract (docs/specs/geo.md §3.5 "addHole attaches to the LAST
-    // addOuter") never exercises it in acceptance tests, but a caller that does hit it now gets
-    // legacy's answer instead of an assert.
+    // instead (a memory-reuse quirk of the FOuterDataExists flag). Reproduced, because it is cheap
+    // to match and so is matched rather than recorded as a deviation -- this builder's documented
+    // contract ("addHole attaches to the LAST addOuter") never exercises it in acceptance tests,
+    // but a caller that does hit it now gets legacy's answer instead of an assert.
     if (!pendingOuter_) {
         addOuterContour(std::move(hole));
         return;
@@ -489,7 +488,7 @@ GeometryLonLatPtr GeometryLonLatFactory::createPolygonByLine(const IGeometryLonL
 }
 
 // =================================================================================================
-// The projected factory (u_GeometryProjectedFactory.pas, docs/specs/geo.md §3.5.1, T-0017C2)
+// The projected factory (u_GeometryProjectedFactory.pas)
 // =================================================================================================
 
 namespace {
@@ -506,9 +505,9 @@ namespace {
 }
 
 // EnumToPoints (u_GeometryProjectedFactory.pas:308-325): ONE pass drains the stream into
-// `scratch` (cleared first) *and* accumulates the bounding box -- keep the fusion (spec §3.5.1:
-// "two passes would be simpler and measurably slower on the render path"). Returns false (and
-// leaves scratch empty) when the stream yields nothing, matching EnumToPoints' `Result := nil`.
+// `scratch` (cleared first) *and* accumulates the bounding box -- keep the fusion. Returns
+// false (and leaves scratch empty) when the stream yields nothing, matching EnumToPoints'
+// `Result := nil`.
 [[nodiscard]] bool enumToPoints(IPointStream& stream, std::vector<DoublePoint>& scratch, DoubleRect& bounds) {
     scratch.clear();
     DoublePoint p;
@@ -597,7 +596,7 @@ void GeometryProjectedPolygonBuilder::addHoleContour(GeometryProjectedContourPtr
     // TGeometryProjectedPolygonBuilder.AddHole (u_GeometryProjectedFactory.pas:204-222): a hole
     // added before any outer becomes the first outer instead -- same FPoints-reuse quirk as
     // GeometryLonLatPolygonBuilder::addHoleContour (u_GeometryLonLatFactory.pas:493-511), kept
-    // for the same reason (cheap to match, never hit by this ticket's acceptance tests).
+    // for the same reason (cheap to match, never hit by the acceptance tests).
     if (!pendingOuter_) {
         addOuterContour(std::move(hole));
         return;
@@ -750,7 +749,7 @@ GeometryProjectedFactory::createPolygonByLonLatPolygon(const IProjection& projec
 }
 
 // =================================================================================================
-// The per-frame cache (u_GeometryProjectedProvider.pas, docs/specs/geo.md §3.5.3, T-0017C2)
+// The per-frame cache (u_GeometryProjectedProvider.pas)
 // =================================================================================================
 
 namespace {
@@ -768,8 +767,8 @@ constexpr core::HashValue kProjectedPolygonHashSeed = 0x5af2a0463bf6e921ULL;
 
 } // namespace
 
-// Tech Lead ruling T-0017C2 (docs/parity/deviations.md D-16): bounded FIFO/clear-oldest eviction,
-// legacy's total capacity (kCacheCapacity). Caller holds no lock; this takes the write lock alone.
+// Bounded FIFO/clear-oldest eviction, legacy's total capacity (kCacheCapacity). Caller holds no
+// lock; this takes the write lock alone.
 void GeometryProjectedProvider::insertBounded(core::HashValue key, GeometryProjectedPtr value) {
     core::WriteLock lock(mutex_);
     if (cache_.contains(key)) {
@@ -801,7 +800,7 @@ GeometryProjectedProvider::projectedPath(const ProjectionPtr& projection,
 
     // TGeometryProjectedProvider.CreateByKey (u_GeometryProjectedProvider.pas:110-146): validate
     // the LonLat bounds for this projection's type, then test the *projected* extent -- computed
-    // outside the lock, per the Tech Lead's threading table (§8.1).
+    // outside the lock.
     LonLatRect bounds = line->bounds();
     projection->projectionType()->validateLonLatRect(bounds);
     const DoubleRect pixelRect = projection->lonLatRect2PixelRectFloat(bounds);

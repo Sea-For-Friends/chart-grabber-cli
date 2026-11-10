@@ -5,7 +5,6 @@
 #pragma once
 // Ports: Src/ConfigData/u_ConfigProviderHelpers.pas -- ReadColor32 (:155-181), WriteColor32 (:183-190).
 // (ReadGUID/WriteGUID are IConfigProvider::readUuid / IConfigWriter::writeUuid.)
-// Feature: FEAT-GEO-037
 
 #include "cg/core/color32.h"
 #include "cg/core/config_writer.h"

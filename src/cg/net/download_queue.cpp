@@ -4,7 +4,6 @@
 
 // Ports: Src/Network/u_TileDownloaderWithQueue.pas:64-94, Src/u_InterfaceQueue.pas:78-185,
 // Src/Network/u_TileRequestProcessorPool.pas:95-190, Src/Network/u_TileDownloaderList.pas:186-215.
-// docs/specs/net.md §2.15. FEAT-NET-010, FEAT-NET-015.
 #include "cg/net/download_queue.h"
 
 #include "cg/core/log.h"
@@ -111,10 +110,10 @@ void DownloadQueue::workerLoop(Slot& slot, const std::stop_token& stop) {
             return;
         }
         // Legacy lets the exception end this thread (u_TileRequestQueueProcessorThread.pas:111-119,
-        // `finally SetFinished(nil)`, no `except`; L-200) and a map whose workers all died stalls.
-        // The port logs and goes on with the next job (D-87, docs/specs/net.md §2.15). The job is already
-        // out of the ring (pull() did the bookkeeping), the slot's run lock is a scoped guard inside
-        // RetryDownloader::run and is released by unwinding, so nothing is half-updated here.
+        // `finally SetFinished(nil)`, no `except`) and a map whose workers all died stalls. The port logs
+        // and goes on with the next job. The job is already out of the ring (pull() did the bookkeeping),
+        // the slot's run lock is a scoped guard inside RetryDownloader::run and is released by unwinding,
+        // so nothing is half-updated here.
         try {
             (*job)(*slot.loop, slot.state.get(), stop);
         } catch (const std::exception& e) {
@@ -197,7 +196,7 @@ DownloadQueue::TakenWorkers DownloadQueue::takeWorkersLocked(bool dropSlots) {
 void DownloadQueue::joinWorkers(TakenWorkers& taken) {
     // Joined outside the lock: a slow (but cooperatively cancelling) in-flight request must not
     // stall a concurrent push()'s initWorkersIfNeeded() from reading workersInitialized_. Legacy
-    // only flags the threads (Terminate) and never waits: D-71 (T-0048).
+    // only flags the threads (Terminate) and never waits.
     for (auto& thread : taken.threads) {
         thread.join();
     }
@@ -243,7 +242,7 @@ void DownloadQueue::onTick() {
     // workersMutex_ stays held from the emptiness check to the hand-over of the workers: a push that
     // lands in between either was seen above, or finds the worker set gone in initWorkersIfNeeded()
     // and builds a new one. Legacy releases the window (IsEmpty, then TerminateDownloaders) and can
-    // strand the job: L-169 / D-72 (T-0048).
+    // strand the job (a legacy defect, fixed here as a deviation from legacy).
     TakenWorkers taken = takeWorkersLocked(/*dropSlots=*/false); // threads only, as legacy
     lock.unlock();
     joinWorkers(taken);

@@ -9,11 +9,11 @@
 // and the owner of the menu-order list (MapTypeGuiConfigList). A plain class in legacy (:62), so here.
 //
 // Constructor arguments of legacy (:84-92) that are not taken: the four resampler configs and
-// APerfCounterList (:69-73; the resamplers come with the bitmap ticket).
-// loadMaps arguments of legacy (:108-128) that are not declared, at their legacy positions:
-// AMainMemCacheConfig (:111), AHashFunction (:114), ADownloaderThreadConfig (:119), ABitmap32StaticFactory
-// (:121), AProjectionSetFactory (:123), AInvisibleBrowser (:124) -- MapType takes none of them
-// (map_type.h). AMapVersionFactoryList (:110) is the already built simple version factory.
+// APerfCounterList (:69-73; the resamplers come with the bitmap half). loadMaps arguments of legacy
+// (:108-128) that are not declared, at their legacy positions: AMainMemCacheConfig (:111), AHashFunction
+// (:114), ADownloaderThreadConfig (:119), ABitmap32StaticFactory (:121), AProjectionSetFactory (:123),
+// AInvisibleBrowser (:124) -- MapType takes none of them (map_type.h). AMapVersionFactoryList (:110) is
+// the already built simple version factory.
 
 #include "cg/core/config_provider.h"
 #include "cg/core/config_writer.h"
@@ -52,7 +52,6 @@ public:
 
     // :241-410. `showError` is called once per map that failed to build, with the exception's message.
     // MapTypesNoMapsError: no map was built; std::runtime_error: no non-layer map was built.
-    // FEAT-NET-001 (contributes; held open)
     void loadMaps(const std::shared_ptr<core::ILanguageManager>& languageManager,
                   const storage::MapVersionFactoryPtr& simpleVersionFactory,
                   const std::shared_ptr<storage::GlobalCacheConfig>& globalCacheConfig,
@@ -67,7 +66,7 @@ public:
                   const core::IConfigProviderPtr& mapsListConfig,
                   const std::function<void(const QString&)>& showError);
 
-    // :483-507. FEAT-NET-030 (contributes; held open)
+    // :483-507.
     void saveMaps(const core::IConfigWriterPtr& localMapsConfig,
                   const core::IConfigWriterPtr& mapsListConfig) const;
 

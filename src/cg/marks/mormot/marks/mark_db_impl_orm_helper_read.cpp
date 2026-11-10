@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMHelper.pas :1012-1174 (ReadMarkSQL), :1349-1644 (the four
-// _FillPrepare* functions) and :1646-1751 (GetMarkRecArray); docs/specs/marks.md §2.9.8 R-1, R-2; statements
-// S-30 ... S-36, S-3A ... S-3F. The line numbers in the comments are those of that unit.
+// _FillPrepare* functions) and :1646-1751 (GetMarkRecArray). The line numbers in the comments are those of
+// that unit.
 #include "cg/geo/wkb.h"
 #include "cg/marks/mormot/mark_system_orm_statement.h"
 #include "cg/marks/mormot/mark_system_orm_tools.h"
@@ -26,7 +26,7 @@ OrmGeoType geoTypeOf(const SqliteStmt& row, int column) {
     return static_cast<OrmGeoType>(static_cast<quint8>(row.columnInt64(column)));
 }
 
-// One row of S-30 / S-31 (a TOrmMark with the fields that were asked for).
+// One row of the mark reads (a TOrmMark with the fields that were asked for).
 struct MarkMainRow {
     bool found = false;
     qint64 id = 0;
@@ -65,7 +65,7 @@ bool MarkDbImplORMHelper::readMarkSql(OrmMarkRec& markRec, qint64 markId, qint64
                 markRec.geoType = cached->geoType;
                 markRec.geoCount = cached->geoCount;
             } else {
-                // get main params from db: S-30
+                // get main params from db
                 MarkMainRow row;
                 runStatement(provider_,
                              "SELECT RowID,mName,mDesc,mGeoType,mGeoCount FROM Mark WHERE RowID=? LIMIT 1",
@@ -105,7 +105,7 @@ bool MarkDbImplORMHelper::readMarkSql(OrmMarkRec& markRec, qint64 markId, qint64
         return false;
     }
     if (!where.isEmpty()) {
-        // get all from db: S-31 / S-32
+        // get all from db
         MarkMainRow row;
         runStatement(provider_,
                      "SELECT RowID,mCategory,mImage,mAppearance,mName,mDesc,mGeoType,mGeoCount FROM Mark "
@@ -152,16 +152,13 @@ bool MarkDbImplORMHelper::readMarkSql(OrmMarkRec& markRec, qint64 markId, qint64
     } else {
         // read from db
         geo::PointsMeta meta; // empty = legacy nil (geometryMetaFromBlob; parseWkb drops an empty meta)
-        // S-33
         const qint64 metaId =
             selectRowId(provider_, "SELECT RowID FROM MarkMeta WHERE mMark=? LIMIT 1", {id});
         if (metaId > 0) {
-            // S-34
             runStatement(provider_, "SELECT mMeta FROM MarkMeta WHERE RowID=?", {metaId},
                          [&](const SqliteStmt& r) { meta = geometryMetaFromBlob(r.columnBlob(0)); });
         }
 
-        // S-35
         bool blobFound = false;
         QByteArray pointsBlob;
         runStatement(provider_, "SELECT mGeoWKB FROM Mark WHERE RowID=?", {id}, [&](const SqliteStmt& r) {
@@ -182,7 +179,7 @@ bool MarkDbImplORMHelper::readMarkSql(OrmMarkRec& markRec, qint64 markId, qint64
         markRec.visible = viewItem->visible;
     } else {
         if (!cache_.markViewCache->isPrepared()) {
-            // read from db: S-36
+            // read from db
             qint64 viewId = 0;
             bool viewVisible = false;
             runStatement(
@@ -224,7 +221,6 @@ int MarkDbImplORMHelper::fillPrepareMarkIdIndex(qint64 categoryId) {
         if (cache_.markIdByCategoryIndex->find(categoryId, known, knownCount)) {
             return knownCount;
         }
-        // S-3A
         listed = runStatement(provider_, "SELECT RowID,mImage,mAppearance FROM Mark WHERE mCategory=?",
                               {categoryId}, [&](const SqliteStmt& r) {
                                   OrmMarkIdIndexRec item;
@@ -238,7 +234,6 @@ int MarkDbImplORMHelper::fillPrepareMarkIdIndex(qint64 categoryId) {
         if (cache_.markIdIndex->isPrepared()) {
             return cache_.markIdIndex->count();
         }
-        // S-3B
         listed =
             runStatement(provider_, "SELECT RowID,mImage,mAppearance,mCategory FROM Mark ORDER BY mCategory",
                          {}, [&](const SqliteStmt& r) {
@@ -269,10 +264,9 @@ int MarkDbImplORMHelper::fillPrepareMarkIdIndex(qint64 categoryId) {
     }
     if (!byCategory) {
         // The groups of equal category go to the by-category index when the category changes. Legacy never
-        // flushes the LAST group after the loop (new legacy defect found by T-0105, row numbered by the Tech
-        // Lead): the highest category of the table is not registered here. The `else` of :1437
-        // (Assert(False, 'List not ordered by Category!')) is off in the shipped build and cannot be reached
-        // after the sort.
+        // flushes the LAST group after the loop (a legacy defect, reproduced): the highest category of the
+        // table is not registered here. The `else` of :1437 (Assert(False, 'List not ordered by Category!'))
+        // is off in the shipped build and cannot be reached after the sort.
         int k = 0;
         qint64 currentCategory = 0;
         for (int i = 0; i < count; ++i) {
@@ -309,7 +303,6 @@ void MarkDbImplORMHelper::fillPrepareMarkIdCache(qint64 categoryId) {
         if (cache_.markCache->isCategoryPrepared(categoryId)) {
             return;
         }
-        // S-3C
         sql = "SELECT RowID,mName,mDesc,mGeoType,mGeoCount FROM Mark WHERE mCategory=?";
         args = {categoryId};
     } else {
@@ -347,7 +340,6 @@ void MarkDbImplORMHelper::fillPrepareMarkGeometryCache(qint64 categoryId) {
         if (cache_.markGeometryCache->isCategoryPrepared(categoryId)) {
             return;
         }
-        // S-3D, S-3E
         marksSql = "SELECT RowID,mGeoWKB FROM Mark WHERE mCategory=?";
         metaSql = "SELECT A.mMark,A.mMeta FROM MarkMeta A WHERE A.mMark IN (SELECT B.RowID FROM Mark B WHERE "
                   "B.mCategory=?)";
@@ -403,7 +395,6 @@ void MarkDbImplORMHelper::fillPrepareMarkViewCache(qint64 categoryId) {
         if (cache_.markViewCache->isCategoryPrepared(categoryId)) {
             return;
         }
-        // S-3F
         sql = "SELECT RowID,mvMark,mvVisible FROM MarkView WHERE mvCategory=? AND mvUser=?";
         args = {categoryId, userId_};
     } else {
@@ -461,7 +452,7 @@ int MarkDbImplORMHelper::getMarkRecArray(qint64 categoryId, bool includeHidden, 
         if (includeGeometry) {
             geo::GeometryLonLatPtr geometry;
             if (!cache_.markGeometryCache->find(indexRec.id, geometry)) {
-                return false; // Assert(False); Exit (:1691): the mark is left out (L-158, fixed: D-88)
+                return false; // Assert(False); Exit (:1691): the mark is left out
             }
             markRec.geometry = geometry;
         }

@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (T-0335, Windows port). Two rename semantics, named for what the caller needs:
-// POSIX rename(2) replaces an existing target; the Windows C runtime rename and QFile::rename fail when the
-// target exists. A caller must say which behaviour it wants.
+// Ports: nothing (Windows port). Two rename semantics, named for what the caller needs: POSIX rename(2)
+// replaces an existing target; the Windows C runtime rename and QFile::rename fail when the target exists.
+// A caller must say which behaviour it wants.
 
 #include <QByteArray>
 #include <QString>

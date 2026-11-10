@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_MarkLineTemplateConfig.pas (TMarkLineTemplateConfig, T-0098)
+// Ports: u_MarkLineTemplateConfig.pas (TMarkLineTemplateConfig)
 
 #include "cg/marks/mark_factory_config.h"
 #include "cg/marks/mark_template_config_base.h"

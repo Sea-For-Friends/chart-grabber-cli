@@ -21,7 +21,7 @@ namespace cg::core {
 Q_LOGGING_CATEGORY(logCore, "cg.core")
 Q_LOGGING_CATEGORY(logConfig, "cg.config")
 Q_LOGGING_CATEGORY(logStorage, "cg.storage")
-// T-0216: debug off by default -- with it on, libcurl's verbose trace (headers, binary TLS bytes) floods the
+// Debug off by default -- with it on, libcurl's verbose trace (headers, binary TLS bytes) floods the
 // terminal; legacy has no such trace (no CURLOPT_VERBOSE in the Pascal sources). Switch on with
 // QT_LOGGING_RULES="cg.net.debug=true"; a rule beats this default severity.
 Q_LOGGING_CATEGORY(logNet, "cg.net", QtInfoMsg)
@@ -38,8 +38,7 @@ struct LogState {
     QMutex mutex;
     QFile file;
     QtMessageHandler previousHandler = nullptr;
-    // Written by setMinimumLevel() and read by handler() on arbitrary threads (spec §3 "Log
-    // (statics): thread-safe"; §2.7 "qCDebug/qCWarning are callable from any thread").
+    // Written by setMinimumLevel() and read by handler() on arbitrary threads.
     std::atomic<QtMsgType> minimumLevel{QtDebugMsg};
     std::shared_ptr<LogRingBuffer> ring;
     bool installed = false;
@@ -80,15 +79,15 @@ void handler(QtMsgType type, const QMessageLogContext& context, const QString& m
     if (severity(type) < severity(log.minimumLevel.load(std::memory_order_relaxed))) {
         return;
     }
-    // T-0025/T-0002B: formatLine() must run under log.mutex, not just the file write. It calls
+    // formatLine() must run under log.mutex, not just the file write. It calls
     // QDateTime::currentDateTime().toString(), which goes through the C library's local-time
     // machinery (tzset/localtime); that machinery keeps process-wide state that is not safe under
     // concurrent first-touch, so two logger threads formatting a line at the same time raced on it
     // under ThreadSanitizer (malloc/free of the same buffer, log.cpp:74). Serializing formatting
     // alongside the file write removes the concurrent access without touching Qt/libc internals.
-    // CORE-LOG-1 (T-0103): the stderr write is inside the mutex and is ONE write of the whole
-    // line including its '\n' (stderr is unbuffered: one fwrite is one write(2)), so two threads
-    // can neither interleave partial lines nor reach an unsynchronised sink.
+    // The stderr write is inside the mutex and is ONE write of the whole line including its '\n'
+    // (stderr is unbuffered: one fwrite is one write(2)), so two threads can neither interleave
+    // partial lines nor reach an unsynchronised sink.
     QString line;
     std::shared_ptr<LogRingBuffer> ring;
     {
@@ -133,8 +132,7 @@ Result<void> Log::install(const QString& logDir, bool truncateOnStart) {
         }
     }
     if (!log.installed) {
-        platform::prepareOutputStream(
-            stderr); // T-0335: Windows text mode would write "\r\n"; no-op elsewhere
+        platform::prepareOutputStream(stderr); // Windows text mode would write "\r\n"; no-op elsewhere
         log.previousHandler = qInstallMessageHandler(handler);
         log.installed = true;
     }

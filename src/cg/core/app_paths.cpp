@@ -23,7 +23,7 @@ namespace cg::core {
 
 namespace {
 
-// T-0311 (a): the settings file and the old per-user directory name (D rows of this ticket).
+// The settings file and the old per-user directory name (deviations from legacy).
 constexpr QLatin1StringView kIniName{"chart-grabber.conf"};
 constexpr QLatin1StringView kLegacyIniName{"SASPlanet.ini"};
 constexpr QLatin1StringView kLegacyDirName{"SAS.Planet"};
@@ -50,10 +50,10 @@ LegacyMove moveLegacyDir(QString& dir, const QString& legacyDir, QString& note) 
     return LegacyMove::FellBack;
 }
 
-// T-0360: the tile cache and AutoSave lived in the roaming data folder on Windows. Moved once, like
-// moveLegacyDir. On Windows the settings directory is the same local directory, so "the new directory exists"
-// is not enough to refuse: it is occupied only when it holds something besides the settings file. An occupied
-// directory is never merged: it is kept and the note says so.
+// The tile cache and AutoSave lived in the roaming data folder on Windows. Moved once, like moveLegacyDir. On
+// Windows the settings directory is the same local directory, so "the new directory exists" is not enough to
+// refuse: it is occupied only when it holds something besides the settings file. An occupied directory is
+// never merged: it is kept and the note says so.
 void moveRoamingDir(const QString& dir, const QString& roamingDir, QString& note) {
     if (roamingDir.isEmpty() || QDir::cleanPath(roamingDir) == QDir::cleanPath(dir) ||
         !QFileInfo(roamingDir).isDir()) {
@@ -73,16 +73,16 @@ void moveRoamingDir(const QString& dir, const QString& roamingDir, QString& note
         if (platform::renamePath(roamingDir, dir)) {
             note += QStringLiteral("moved %1 to %2").arg(roamingDir, dir);
         } else {
-            // errno is read right after the failing call (T-0362).
+            // errno is read right after the failing call.
             const int err = errno;
             note += QStringLiteral("cannot move %1 to %2 (%3); the cache starts empty")
                         .arg(roamingDir, dir, QString::fromLocal8Bit(std::strerror(err)));
         }
         return;
     }
-    // Only the settings file is there: move the children one by one, the directory itself stays.
-    // T-0362: a failure partway leaves the data split between the two folders, and a name found in both
-    // is skipped; the note names them.
+    // Only the settings file is there: move the children one by one, the directory itself stays. A
+    // failure partway leaves the data split between the two folders, and a name found in both is
+    // skipped; the note names them.
     QStringList movedNames;
     QStringList skippedNames;
     QStringList leftNames;
@@ -131,8 +131,8 @@ QString AppPaths::explicitDataDirArgument(const QStringList& arguments, bool* pr
             explicitDataDir = arg.mid(kDataDirPrefix.size());
             sawDataDirFlag = true;
         } else if (arg == kDataDirFlag) {
-            // T-0360: the space form "--datadir DIR", as parseJob (QCommandLineParser) accepts it; a missing
-            // value is the same error as an empty one.
+            // The space form "--datadir DIR", as parseJob (QCommandLineParser) accepts it; a missing value
+            // is the same error as an empty one.
             explicitDataDir = i + 1 < arguments.size() ? arguments.at(i + 1) : QString();
             sawDataDirFlag = true;
             ++i;
@@ -150,13 +150,13 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
     paths.applicationDir =
         applicationDirOverride.isEmpty() ? QCoreApplication::applicationDirPath() : applicationDirOverride;
 
-    // ADR-0011: "--datadir" is an explicit override (legacy CLI switches preserved), independent
-    // of the portable-vs-XDG auto-detection below, and takes precedence over "--portable".
+    // "--datadir" is an explicit override (legacy CLI switches preserved), independent of the
+    // portable-vs-XDG auto-detection below, and takes precedence over "--portable".
     bool sawDataDirFlag = false;
     const QString explicitDataDir = explicitDataDirArgument(arguments, &sawDataDirFlag);
 
     if (sawDataDirFlag) {
-        // finding 7: reject an empty override rather than silently falling through to auto-detect.
+        // Reject an empty override rather than silently falling through to auto-detect.
         if (explicitDataDir.isEmpty()) {
             return fail(ErrorCode::ParseError, QStringLiteral("--datadir= requires a non-empty path"));
         }
@@ -177,14 +177,14 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
             paths.cacheDir = paths.applicationDir;
         } else {
             // Tile caches are user data, not a cache in the XDG sense: ~/.cache is routinely wiped
-            // and would destroy hundreds of GB of downloaded tiles (ADR-0011).
+            // and would destroy hundreds of GB of downloaded tiles.
             paths.configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-            // T-0360: the local (not roaming) data location; on Linux it is the same directory as
+            // The local (not roaming) data location; on Linux it is the same directory as
             // AppDataLocation.
             paths.dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
 
-            // T-0311 (a): the directories were called SAS.Planet before; both moves are reported by
-            // one stderr line.
+            // The directories were called SAS.Planet before; both moves are reported by one stderr
+            // line.
             QString note;
             const auto legacyOf = [](const QString& dir) {
                 return QFileInfo(dir).absolutePath() + QLatin1Char('/') + kLegacyDirName;
@@ -196,8 +196,8 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
                 // The settings file inside the moved directory gets the new name, atomically.
                 const QString oldIni = QDir(paths.configDir).filePath(kLegacyIniName);
                 const QString newIni = QDir(paths.configDir).filePath(kIniName);
-                // newIni is absent (checked here): a rename that refuses an existing target loses nothing
-                // (T-0335).
+                // newIni is absent (checked here): a rename that refuses an existing target loses
+                // nothing.
                 if (QFileInfo::exists(oldIni) && !QFileInfo::exists(newIni) &&
                     !platform::renamePath(oldIni, newIni)) {
                     note += QStringLiteral("; cannot rename %1 (%2); it is still read")
@@ -207,8 +207,8 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
             } else if (configMove == LegacyMove::FellBack) {
                 paths.legacyIni = true;
             }
-            // T-0360: Windows only (AppDataLocation is the roaming folder there; on Linux it equals dataDir
-            // and nothing is moved).
+            // Windows only (AppDataLocation is the roaming folder there; on Linux it equals dataDir and
+            // nothing is moved).
             const QString roamingDataDir =
                 roamingDataDirOverride.isEmpty()
                     ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
@@ -236,9 +236,9 @@ Result<AppPaths> AppPaths::detect(const QStringList& arguments, const QString& a
 }
 
 QString AppPaths::mainConfigFilePath() const {
-    // D-6: a constant, not the legacy first-dot-of-the-exe-name derivation (u_SASMainConfigProvider.pas:83);
-    // T-0311 (a): "chart-grabber.conf" instead of "SASPlanet.ini". The old name is read only in a
-    // directory that came from the old SAS.Planet directory and could not be renamed.
+    // A constant, not the legacy first-dot-of-the-exe-name derivation (u_SASMainConfigProvider.pas:83);
+    // "chart-grabber.conf" instead of "SASPlanet.ini". The old name is read only in a directory that came
+    // from the old SAS.Planet directory and could not be renamed.
     if (legacyIni && !QFileInfo::exists(QDir(configDir).filePath(kIniName))) {
         return QDir(configDir).filePath(kLegacyIniName);
     }

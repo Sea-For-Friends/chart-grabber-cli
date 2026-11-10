@@ -5,9 +5,8 @@
 #pragma once
 // Ports: nothing.
 //
-// The module's QLoggingCategory (core.md §2.7: one category per module). cg::core::log.h has no
-// logMapType and this ticket's module lock forbids adding it there; declared locally like
-// cg::geo::logGeo.
+// The module's QLoggingCategory (one category per module). cg::core::log.h has no logMapType;
+// declared locally like cg::geo::logGeo.
 
 #include <QLoggingCategory>
 

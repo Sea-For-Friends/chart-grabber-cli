@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_TileFileNameES.pas -- the EarthSlicer (ES) 3-tier folder cache (CacheType id 3),
-// default root folder `cache_es`. FEAT-STO-004.
+// Ports: u_TileFileNameES.pas -- the EarthSlicer (ES) 3-tier folder cache (CacheType id 3), default
+// root folder `cache_es`.
 
 #include "cg/storage/tile_name_codec.h"
 

@@ -3,17 +3,16 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_ProjectedCalc.pas (32 methods), u_ProjectedCalc.pas. docs/specs/geo.md §3.6.
+// Ports: i_ProjectedCalc.pas (32 methods), u_ProjectedCalc.pas.
 //
 // Nine free functions replace legacy's hand-devirtualised 32-method interface. Seven of them are
-// pure delegation to the virtuals geometry_projected.h/.cpp (T-0017C1) already implements on
+// pure delegation to the virtuals geometry_projected.h/.cpp already implements on
 // IGeometryProjectedLine / IGeometryProjectedPolygon (isPointOnPath, isRectIntersectPath,
 // isPointInPolygon, isPointOnBorder, isRectIntersectPolygon, isRectIntersectBorder, calcArea):
 // legacy's TProjectedCalc re-derives the identical formula by hand in u_ProjectedCalc.pas instead
 // of calling the object's own method (verified operator-for-operator against
 // TGeometryProjectedLine.IsPointOnPath/.IsRectIntersectPath and
-// TGeometryProjectedContour/TGeometryProjectedPolygonWithHoles' predicates -- the C1 review
-// already cross-checked geometry_projected.cpp against those same legacy bodies). Two functions
+// TGeometryProjectedContour/TGeometryProjectedPolygonWithHoles' predicates). Two functions
 // (calcLineLength, calcPolygonPerimeter) have no matching virtual anywhere in geometry_projected.h
 // and are genuine new arithmetic here, a plain Euclidean walk.
 //
@@ -32,7 +31,6 @@
 
 namespace cg::geo {
 
-// FEAT-GEO-013
 [[nodiscard]] bool isPointOnLine(const IGeometryProjectedLine& line, DoublePoint point, double dist);
 [[nodiscard]] bool isRectIntersectLine(const IGeometryProjectedLine& line, const DoubleRect& rect);
 [[nodiscard]] double calcLineLength(const IGeometryProjectedLine& line);

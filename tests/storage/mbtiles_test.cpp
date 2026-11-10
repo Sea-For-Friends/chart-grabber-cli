@@ -2,10 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-019 (MBTiles flavour). Ports
-// Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionMBTiles.pas; see
-// docs/specs/storage.md §2.17.1. No legacy DUnit exists for this unit (ticket's own Tests
-// section) -- this is the ticket's minimal list: two tiles written to a freshly created file
+// Ports Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionMBTiles.pas. No legacy DUnit
+// exists for this unit; this is a minimal list: two tiles written to a freshly created file
 // (schema, flipped tile_row, metadata byte-for-byte), a foreign-looking `scheme = xyz` file read
 // back unflipped, read-back plus delete, and the `format` metadata's MIME fallback for a content
 // type outside png/jpg/webp/pbf. One process per case (ctest), each on its own QTemporaryDir --
@@ -178,7 +176,7 @@ TEST(MbtilesConnection, WritesTwoTilesFlippedRowsAndMetadataMatchingSpec) {
     EXPECT_EQ(rawRows[1].row, (1 << zoom) - xyA.y() - 1);
     EXPECT_EQ(rawRows[1].data, dataA);
 
-    // --- metadata: name/description/format/scheme/crs (§2.17.1) ---
+    // --- metadata: name/description/format/scheme/crs ---
     const QHash<QString, QString> metadata = readMetadata(path);
     EXPECT_EQ(metadata.value(QStringLiteral("name")), QFileInfo(path).completeBaseName());
     EXPECT_EQ(metadata.value(QStringLiteral("description")),
@@ -236,10 +234,10 @@ TEST(MbtilesConnection, WritesTwoTilesFlippedRowsAndMetadataMatchingSpec) {
     EXPECT_EQ(readB->type, TileInfoType::Exists);
     EXPECT_EQ(readB->data, dataB);
 
-    // --- bonus (ticket's Tests section): if the sqlite3 CLI is present, cross-check the schema
-    // text and metadata rows through it too. Review finding 5: this is wrapped in an `if` (not
-    // GTEST_SKIP()) so the CLI's absence only skips this bonus block, not the whole test -- every
-    // assertion above still runs and is reported as PASSED, not SKIPPED.
+    // --- extra: if the sqlite3 CLI is present, cross-check the schema
+    // text and metadata rows through it too. This is wrapped in an `if` (not GTEST_SKIP()) so the
+    // CLI's absence only skips this bonus block, not the whole test -- every assertion above
+    // still runs and is reported as PASSED, not SKIPPED.
     if (sqlite3CliAvailable()) {
         const QString schema = runSqlite3Cli(path, QStringLiteral(".schema"));
         EXPECT_TRUE(schema.contains(QStringLiteral("CREATE TABLE metadata (name text, value text)")));
@@ -282,8 +280,8 @@ TEST(MbtilesConnection, SchemeXyzReadsUnflipped) {
                         .has_value());
         ASSERT_TRUE(db->exec(QByteArrayView("INSERT INTO metadata (name, value) VALUES ('format', 'png')"))
                         .has_value());
-        // A negative `minzoom`, as a foreign/corrupt file could have (MB:407-409) -- review finding
-        // 2's vector, extended into this test since it already builds the file by hand.
+        // A negative `minzoom`, as a foreign/corrupt file could have (MB:407-409) -- extended into
+        // this test since it already builds the file by hand.
         ASSERT_TRUE(db->exec(QByteArrayView("INSERT INTO metadata (name, value) VALUES ('minzoom', '-1')"))
                         .has_value());
         // A row at (zoom=2, column=1, row=2) -- in an XYZ (not inverted) file, tile_row IS the y
@@ -317,12 +315,12 @@ TEST(MbtilesConnection, SchemeXyzReadsUnflipped) {
     ASSERT_TRUE(wrongRow.has_value());
     EXPECT_EQ(wrongRow->type, TileInfoType::NotExists);
 
-    // Review finding 2: `center`'s zoom is written through GetCenterStr's `ACenterZoom: Byte`
-    // parameter (MB:311, :437); the file's `minzoom` (-1, seeded above) feeds minZoom_, so the
-    // write below must truncate it to a Byte ("...,255"), not write "...,-1". A fresh tile forces
-    // updateMetadata() to reconcile bounds/minzoom/maxzoom against the DB and rewrite `center`
-    // (no prior `bounds`/`center`/`maxzoom` row exists, so isLonLatRectEmpty/TryStrToInt-failure
-    // both trigger the reconciliation unconditionally).
+    // `center`'s zoom is written through GetCenterStr's `ACenterZoom: Byte` parameter (MB:311,
+    // :437); the file's `minzoom` (-1, seeded above) feeds minZoom_, so the write below must
+    // truncate it to a Byte ("...,255"), not write "...,-1". A fresh tile forces updateMetadata()
+    // to reconcile bounds/minzoom/maxzoom against the DB and rewrite `center` (no prior
+    // `bounds`/`center`/`maxzoom` row exists, so isLonLatRectEmpty/TryStrToInt-failure both
+    // trigger the reconciliation unconditionally).
     auto inserted = conn->insertOrUpdate(PointI(3, 3), 2, QByteArrayLiteral("new-xyz-tile"),
                                          /*overwrite=*/false);
     ASSERT_TRUE(inserted.has_value());
@@ -332,7 +330,7 @@ TEST(MbtilesConnection, SchemeXyzReadsUnflipped) {
         << "center=" << center.toStdString(); // truncated Byte(-1) == 255, not "-1"
 }
 
-// --- InvertY: legacy's masked-shift + unsigned-wrap formula, not UB (review finding 1) --------
+// --- InvertY: legacy's masked-shift + unsigned-wrap formula, not UB --------
 
 TEST(MbtilesConnection, InvertYMatchesLegacyMaskedShiftAndWrap) {
     QTemporaryDir dir;
@@ -458,13 +456,13 @@ TEST(MbtilesConnection, FormatMetadataMapping) {
     }
 }
 
-// --- §7.5 item 5: a real .mbtiles written by a foreign (non-SAS.Planet) tool ----------------
+// --- A real .mbtiles written by a foreign (non-SAS.Planet) tool ----------------
 
 TEST(MbtilesConnection, ForeignMbtilesFile) {
     const QString path = cgStorageFixture(QStringLiteral("cache/foreign/sample.mbtiles"));
     if (!QFileInfo::exists(path)) {
         GTEST_SKIP() << "missing fixture: " << path.toStdString()
-                     << " (docs/specs/storage.md §7.5 item 5: an .mbtiles written by a native "
+                     << " (an .mbtiles written by a native "
                         "MBTiles tool, not by SAS.Planet -- requested from the user, see "
                         "tests/fixtures/cache/README.md)";
     }

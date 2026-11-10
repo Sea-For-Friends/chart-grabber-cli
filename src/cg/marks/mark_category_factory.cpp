@@ -7,9 +7,9 @@
 #include <stdexcept>
 #include <utility>
 
-// Ports u_MarkCategoryFactory.pas (T-0091). The legacy reads the default name and both scales under one
-// read lock (:78-90). Here each getter takes its own lock: the config's lock is not re-entrant, so the
-// three reads cannot share one guard. A writer between them is the only difference (UI thread only today).
+// Ports u_MarkCategoryFactory.pas. The legacy reads the default name and both scales under one read lock
+// (:78-90). Here each getter takes its own lock: the config's lock is not re-entrant, so the three reads
+// cannot share one guard. A writer between them is the only difference (UI thread only today).
 
 using namespace Qt::StringLiterals;
 

@@ -4,8 +4,8 @@
 
 #pragma once
 // Test helper: resolves tests/fixtures. The CMake build passes CG_FIXTURES_DIR as a compile
-// definition (docs/specs/core.md 7); the tools/nocmake_build.sh fallback passes no definitions,
-// so the directory is found by walking up from the working directory instead.
+// definition; the tools/nocmake_build.sh fallback passes no definitions, so the directory is
+// found by walking up from the working directory instead.
 
 #include <QCoreApplication>
 #include <QDir>
@@ -46,6 +46,6 @@ inline void cgEnsureCoreApplication() {
     static const QCoreApplication app(argc, argv);
 }
 
-// T-0321: skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
+// Skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
 #include "../corpus_skip.h"
 #define CG_SKIP_IF_NO_CORPUS() CG_SKIP_IF_NO_CORPUS_IN(cgFixturesDir())

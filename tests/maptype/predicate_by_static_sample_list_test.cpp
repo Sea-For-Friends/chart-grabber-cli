@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_PredicateByStaticSampleList.pas (docs/specs/maptype.md 2.13.4). Expected values are literals
-// derived from the Pascal; the 8-byte pair below was found by a script (python zlib.crc32): both strings have
-// CRC-32 0x3892fd9c, so they land in one size+hash bucket and only the byte comparison tells them apart.
+// Ports u_PredicateByStaticSampleList.pas. Expected values are literals derived from the Pascal; the 8-byte
+// pair below was found by a script (python zlib.crc32): both strings have CRC-32 0x3892fd9c, so they land in
+// one size+hash bucket and only the byte comparison tells them apart.
 #include "cg/maptype/predicate_by_static_sample_list.h"
 
 #include <gtest/gtest.h>

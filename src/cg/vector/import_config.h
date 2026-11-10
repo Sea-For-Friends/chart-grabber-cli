@@ -5,11 +5,10 @@
 #pragma once
 // Ports: Src/Vector/i_ImportConfig.pas, u_ImportConfig.pas
 //
-// FEAT-GEO-037 (enabler). Plain value holders; no hash and no IsEqual exist in legacy.
-// The params constructors cross-cast the appearance once. A null appearance gives null facets;
-// an appearance of the wrong kind throws std::invalid_argument (legacy: Assert in debug,
-// EIntfCastError from `as` in release; L-131).
-// ImportLineParams and ImportPolyParams store isForceLineWidth into isForceLineColor too (L-130).
+// Plain value holders; no hash and no IsEqual exist in legacy. The params constructors cross-cast
+// the appearance once. A null appearance gives null facets; an appearance of the wrong kind
+// throws std::invalid_argument (legacy: Assert in debug, EIntfCastError from `as` in release).
+// ImportLineParams and ImportPolyParams store isForceLineWidth into isForceLineColor too.
 
 #include "cg/vector/appearance.h"
 #include "cg/vector/appearance_of_vector_item.h"
@@ -155,8 +154,7 @@ private:
     bool isIgnoreMarkIfExistsWithSameNameInCategory_;
 };
 
-class ImportConfig
-    : public IImportConfig { // TImportConfig; not final: JpegWithExifImportConfig derives (§2.12)
+class ImportConfig : public IImportConfig { // TImportConfig; not final: JpegWithExifImportConfig derives
 public:
     ImportConfig(CategoryPtr rootCategory, ImportCategoryParamsPtr categoryParams,
                  ImportPointParamsPtr pointParams, ImportLineParamsPtr lineParams,

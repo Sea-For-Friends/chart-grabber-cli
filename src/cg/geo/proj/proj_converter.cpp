@@ -3,11 +3,10 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_ProjConverterByProj4.pas, u_ProjConverterFactory.pas, Proj4.Defines.pas
-// (Proj4ArgsByEpsg). The only translation unit in the project allowed to #include <proj.h>
-// (docs/specs/geo.md §7.1, ADR-0006 decision 3); tools/validate.sh's PROJ-LEAK grep enforces it.
+// (Proj4ArgsByEpsg). The only translation unit in the project allowed to #include <proj.h>;
+// tools/validate.sh's PROJ-LEAK grep enforces it.
 //
-// docs/specs/geo.md §7.3 numbers the PROJ-9 rules this file has to get right; each is called out
-// by number below.
+// The PROJ-9 rules this file has to get right are numbered; each is called out by number below.
 
 #include "cg/geo/proj_converter.h"
 
@@ -66,8 +65,8 @@ QByteArray proj4ArgsByEpsg(int epsg) {
     if (epsg >= 32701 && epsg <= 32760) {
         return QString(QLatin1String(kUtmSouthFmt)).arg(epsg - 32700).toLatin1();
     }
-    return QByteArray(); // legacy's "+init=epsg:<n>" fallback is dead under PROJ 9 (decision 5);
-                         // the caller falls through to "EPSG:<n>" via proj.db instead.
+    return QByteArray(); // legacy's "+init=epsg:<n>" fallback is dead under PROJ 9; the caller
+                         // falls through to "EPSG:<n>" via proj.db instead.
 }
 
 #if CG_HAVE_PROJ
@@ -78,9 +77,9 @@ namespace {
 // proj.db fallback (byEpsg for a code proj4ArgsByEpsg doesn't know) can pick a grid/ballpark
 // pipeline instead of our explicit +towgs84 -- every other string in proj4_defines.h is either a
 // plain ellipsoid/sphere or carries its own +towgs84, so this is the only path that needs it.
-// (proj_coordoperation_get_accuracy() rejects the PJ* proj_create_crs_to_crs() returns -- "Object
-// is not a CoordinateOperation" on every pipeline tested, UTM included -- so it cannot drive this
-// decision; deviation recorded as D-15 in docs/parity/deviations.md.)
+// (proj_coordoperation_get_accuracy() rejects the PJ* proj_create_crs_to_crs() returns --
+// "Object is not a CoordinateOperation" on every pipeline tested, UTM included -- so it cannot
+// drive this decision; a deviation from legacy.)
 void logProjDbFallbackOnce(const QByteArray& key) {
     static std::mutex logMutex;
     static std::unordered_set<QByteArray> logged;
@@ -104,12 +103,12 @@ void logProjDbFallbackOnce(const QByteArray& key) {
 // let a thread's stale entry for the old key silently answer a lookup for the new converter at the
 // same address, transforming through the wrong CRS. Keying on the init string instead makes a hit
 // correct by construction: the same string always builds the same PJ*, so sharing it across
-// ProjConverterImpl instances that carry that string is exactly what we want, and a freed-then-
-// reused address can never alias a different CRS's cache entry.
-// T-0376: a relocated Linux CLI keeps proj.db next to the exe (Windows: libproj already looks in
-// its own directory). An explicit PROJ_DATA / PROJ_LIB always wins; otherwise PROJ's own lookup.
+// ProjConverterImpl instances that carry that string is exactly what we want, and a
+// freed-then-reused address can never alias a different CRS's cache entry. A relocated Linux CLI
+// keeps proj.db next to the exe (Windows: libproj already looks in its own directory). An explicit
+// PROJ_DATA / PROJ_LIB always wins; otherwise PROJ's own lookup.
 void applyBundledProjData(PJ_CONTEXT* ctx) {
-    // Empty where the directory is unknown (Windows), then nothing changes (T-0396: platform::executableDir).
+    // Empty where the directory is unknown (Windows), then nothing changes (platform::executableDir).
     const QString exeDir = cg::core::platform::executableDir();
     if (exeDir.isEmpty()) {
         return;

@@ -2,13 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: nothing of its own (T-0105 has no feature id; contributes to the held-open SQLite mark database).
 // Ports no legacy test (there is none): the read half of u_MarkDbImplORMHelper.pas, ReadMarkSQL :1012-1174,
-// the four _FillPrepare* functions :1349-1644 and GetMarkRecArray :1646-1751 (docs/specs/marks.md §2.9.8 R-1,
-// R-2; statements S-30 ... S-36, S-3A ... S-3F), against a copy of tests/fixtures/marks/Marks.db3 filled by
-// the write half. Expected values are literals (the table kMarks) or plain-SQL read-backs on a second
-// connection, never read through the helper's own caches (the caches are inspected only to pin what a path
-// fills).
+// the four _FillPrepare* functions :1349-1644 and GetMarkRecArray :1646-1751, against a copy of
+// tests/fixtures/marks/Marks.db3 filled by the write half. Expected values are literals (the table kMarks) or
+// plain-SQL read-backs on a second connection, never read through the helper's own caches (the caches are
+// inspected only to pin what a path fills).
 #include "cg/geo/geometry_factory.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"
 #include "cg/marks/mormot/marks/mark_db_impl_orm_helper.h"
@@ -392,7 +390,7 @@ TEST(MarkDbImplORMHelperRead, PreparedCachesAnswerWithoutTheDatabaseAndAColdHelp
               QString::fromUtf8("3/7/0/1/2/1/3/1/Poly|;5/7/1/2/3/1/1/1/pt5|"));
 }
 
-// ---- R-1: reading one mark
+// ---- Reading one mark
 // ---------------------------------------------------------------------------------
 
 TEST(MarkDbImplORMHelperRead, ColdReadByIdFillsTheIndexMarkGeometryViewImageAndAppearanceCaches) {
@@ -474,7 +472,7 @@ TEST(MarkDbImplORMHelperRead, DanglingIndexEntryIsPurgedAndTheSideTablesOfTheMar
     EXPECT_EQ(env.rows("SELECT RowID FROM MarkFTS WHERE RowID=3").size(), 0);
     EXPECT_EQ(env.rows("SELECT RowID FROM MarkRTree WHERE RowID=3").size(), 0);
     EXPECT_EQ(joined(env.views()), QStringLiteral("1|1|1|9|0;3|1|5|7|1;4|99|2|7|0")); // mark 3's row is gone
-    // L-212: the by-category list is cleaned for the category of the NEXT index row (mark 5, category 7)
+    // The by-category list is cleaned for the category of the NEXT index row (mark 5, category 7)
     int count = 0;
     const auto* ids = byCategory(helper, 7, count);
     ASSERT_NE(ids, nullptr);
@@ -491,7 +489,7 @@ TEST(MarkDbImplORMHelperRead, PurgeOfTheLastIndexRowLeavesTheStaleIdInItsCategor
     seedSix(env);
     auto helper = env.helper();
     ASSERT_EQ(Access::fillPrepareMarkIdIndex(helper, 7), 3);
-    env.exec("DELETE FROM Mark WHERE ID=5"); // the last row of the id index (L-212: category 0 is cleaned)
+    env.exec("DELETE FROM Mark WHERE ID=5"); // the last row of the id index (category 0 is cleaned)
     OrmMarkRec r;
     EXPECT_FALSE(helper.readMarkSql(r, 5, 0, {}));
     int count = 0;
@@ -550,7 +548,7 @@ TEST(MarkDbImplORMHelperRead, WholeTablePreparedViewCacheSkipsTheSqlLookupOfAMar
     env.exec("INSERT INTO MarkView (mvUser,mvMark,mvCategory,mvVisible) VALUES (1,4,9,0)"); // hides mark 4
     OrmMarkRec stale;
     ASSERT_TRUE(helper.readMarkSql(stale, 4, 0, {}));
-    EXPECT_TRUE(stale.visible); // legacy: IsPrepared and no row -> no S-36, visible by default
+    EXPECT_TRUE(stale.visible); // legacy: IsPrepared and no row -> no view read, visible by default
     EXPECT_EQ(stale.viewId, 0);
     auto cold = env.helper();
     OrmMarkRec fresh;
@@ -596,7 +594,7 @@ TEST(MarkDbImplORMHelperRead, DanglingPictureIdMakesAListWithAppearanceAndAReadT
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Env env;
     seedSix(env);
-    env.exec("UPDATE Mark SET mImage=99 WHERE ID=1"); // L-213: an id of a row that is not there
+    env.exec("UPDATE Mark SET mImage=99 WHERE ID=1"); // An id of a row that is not there
     auto helper = env.helper();
     const std::vector<OrmMarkRec> plain = listOf(helper, 9, true, false, false);
     ASSERT_EQ(plain.size(), 2U);
@@ -612,7 +610,7 @@ TEST(MarkDbImplORMHelperRead, DanglingPictureIdMakesAListWithAppearanceAndAReadT
     EXPECT_THROW(std::ignore = helper.readMarkSql(r, 1, 0, {}), MarkSystemORMError);
 }
 
-// ---- R-2: the fill-prepare functions
+// ---- The fill-prepare functions
 // ------------------------------------------------------------------------
 
 TEST(MarkDbImplORMHelperRead, IdIndexFillByCategoryCountsAndCachesAndIsNotAskedTwice) {
@@ -663,7 +661,7 @@ TEST(MarkDbImplORMHelperRead, IdIndexWholeTableFillRegistersAllButTheLastCategor
     EXPECT_EQ((*nine)[1], 4);
     // legacy never flushes the last group after its loop: category 11 (the highest) is not registered
     EXPECT_EQ(byCategory(helper, 11, count), nullptr);
-    // ... so asking for it goes to SQL (S-3A) and still gets the mark
+    // ... so asking for it goes to SQL and still gets the mark
     EXPECT_EQ(Access::fillPrepareMarkIdIndex(helper, 11), 1);
     EXPECT_EQ(idsOf(listOf(helper, 11, true, false, false)), QStringLiteral("6"));
     // the whole table is not asked twice
@@ -755,7 +753,7 @@ TEST(MarkDbImplORMHelperRead, ViewCacheFillTakesTheRowsOfTheCurrentUserOnly) {
     EXPECT_EQ(cache.markViewCache->find(2), nullptr);
 }
 
-// ---- L-158 / D-88 at helper level
+// ---- the legacy-defect fix at helper level
 // ----------------------------------------------------------------------------
 
 TEST(MarkDbImplORMHelperRead, ListWithGeometryAfterTheGeometryCacheResetItselfStillReturnsEveryMark) {
@@ -770,7 +768,7 @@ TEST(MarkDbImplORMHelperRead, ListWithGeometryAfterTheGeometryCacheResetItselfSt
     ASSERT_EQ(describeAll(listOf(helper, 9, true, true, true), true, true), expectedText({1, 4}, true, true));
     GeometryLonLatPtr g;
     ASSERT_FALSE(Access::cache(helper).markGeometryCache->find(2, g));
-    // legacy: category 7 still counts as prepared, nothing refills it and the list is empty; fixed (D-88)
+    // legacy: category 7 still counts as prepared, nothing refills it and the list is empty; fixed
     EXPECT_FALSE(Access::cache(helper).markGeometryCache->isCategoryPrepared(7));
     EXPECT_EQ(describeAll(listOf(helper, 7, true, true, true), true, true),
               expectedText({2, 3, 5}, true, true));
@@ -817,7 +815,7 @@ TEST(MarkDbImplORMHelperRead, ListsComeInAscendingMarkIdWhateverTheInsertionOrde
     EXPECT_EQ(idsOf(listOf(helper, 0, true, false, false)), QStringLiteral("1,2,3,4,5,6,7"));
 }
 
-// ---- review round: malformed meta, category 0 walk, S-35 without a row, NULL visibility
+// ---- malformed meta, category 0 walk, the view read without a row, NULL visibility
 // ----------------------
 
 TEST(MarkDbImplORMHelperRead, MalformedMetaRowLoadsTheMarkWithoutMetaInReadAndInAListWithGeometry) {

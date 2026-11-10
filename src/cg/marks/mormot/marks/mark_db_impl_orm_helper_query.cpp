@@ -4,8 +4,7 @@
 
 // Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMHelper.pas :1753-1819 (_GetMarkIDArrayByRectSQL), :1968-2070
 // (GetMarkRecArrayByRect), :2072-2106 (_GetMarkRecArrayByTextSQLite3), :2159-2269 (GetMarkRecArrayByText) and
-// :2271-2279 (SetReadOnly); docs/specs/marks.md 2.9.9; statements S-41, S-43. The line numbers in the
-// comments are those of that unit.
+// :2271-2279 (SetReadOnly). The line numbers in the comments are those of that unit.
 #include "cg/marks/mormot/mark_system_orm_statement.h"
 #include "cg/marks/mormot/mark_system_orm_tools.h"
 #include "cg/marks/mormot/marks/mark_db_impl_orm_helper.h"
@@ -26,8 +25,7 @@ constexpr std::size_t kMaxCategoryArrayLen = 128; // cMaxArrayLen (:1976)
 } // namespace
 
 // :1753-1819. The statement is the legacy text; the four rectangle values are spliced as numeric literals
-// (mORMot's :(15 significant digits): inline parameter, spec 2.9.2); the category and the three limits are
-// bound.
+// (mORMot's :(15 significant digits): inline parameter); the category and the three limits are bound.
 int MarkDbImplORMHelper::getMarkIdArrayByRectSql(const std::vector<qint64>& categoryIds,
                                                  const geo::DoubleRect& rect, quint32 lonSize,
                                                  quint32 latSize, bool receiveCategoryId,
@@ -126,8 +124,8 @@ int MarkDbImplORMHelper::getMarkRecArrayByRect(std::vector<qint64>& categoryIds,
 
 // :2072-2106. `SELECT RowID FROM MarkFTS WHERE mName MATCH <text>{ LIMIT n}` (FtsMatch,
 // orm/mormot.orm.rest.pas :1279-1284 -> OneFieldValues -> SqlFromSelect, db/mormot.db.core.pas:2716). Legacy
-// concatenates the text between quotes; the port binds it (spec 2.9.9 D-fix, LC-10 / DV-7). A statement
-// SQLite rejects gives no ids.
+// concatenates the text between quotes; the port binds it (a deviation from legacy that fixes a legacy
+// defect). A statement SQLite rejects gives no ids.
 int MarkDbImplORMHelper::getMarkRecArrayByTextSqlite3(const QString& search, int maxCount,
                                                       bool searchInDescription, std::vector<qint64>& nameIds,
                                                       std::vector<qint64>& descIds) {
@@ -176,7 +174,7 @@ int MarkDbImplORMHelper::getMarkRecArrayByText(const QString& text, int maxCount
         return merged;
     };
 
-    // D-97: AnsiLowerCase is QString::toLower
+    // AnsiLowerCase is QString::toLower
     const QString search = text.toLower();
 
     std::vector<qint64> nameIds;

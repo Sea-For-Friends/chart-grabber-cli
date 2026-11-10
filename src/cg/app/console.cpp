@@ -85,7 +85,7 @@ void Console::log(const QString& line) {
 }
 
 void Console::progress(const QString& line) {
-    if (!progress_ || records_ || verbosity_ < 0) { // -q: errors and results only (app-cli.md 1.2)
+    if (!progress_ || records_ || verbosity_ < 0) { // -q: errors and results only
         return;
     }
     const std::scoped_lock lock(mutex_);
@@ -102,9 +102,9 @@ void Console::progress(const QString& line) {
     }
     const qint64 now = nowMs_();
     if (printedAny_ && now - lastPrintedMs_ < kProgressIntervalMs) {
-        pending_ = (line == lastLine_) ? QString()
-                                       : line; // T-0267: never repeat the printed line; kept for endProgress:
-                                               // the run may end inside the 30 s window (T-0266)
+        pending_ =
+            (line == lastLine_) ? QString() : line; // Never repeat the printed line; kept for endProgress:
+                                                    // the run may end inside the 30 s window
         return;
     }
     put(err_, line + QStringLiteral("\n"));
@@ -130,7 +130,7 @@ void Console::progressRecord(const QString& line) {
 void Console::endProgress() {
     const std::scoped_lock lock(mutex_);
     endProgressLocked();
-    if (!pending_.isEmpty()) { // non-terminal only: a terminal never sets pending_ (T-0266)
+    if (!pending_.isEmpty()) { // non-terminal only: a terminal never sets pending_
         put(err_, pending_ + QStringLiteral("\n"));
         std::fflush(err_);
         lastPrintedMs_ = nowMs_();

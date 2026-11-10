@@ -1,7 +1,7 @@
-; T-0015D golden: Wikimapia/Wiki.zmp - RoundEx precision 5 on lon/lat, bbox order L,B,R,T.
+; Golden: Wikimapia/Wiki.zmp - RoundEx precision 5 on lon/lat, bbox order L,B,R,T.
 ; ResultURL := GetURLBase+RoundEx(GetLLon,5)+','+RoundEx(GetBLat,5)+','+RoundEx(GetRLon,5)+
 ;   ','+RoundEx(GetTLat,5)
-; RoundEx(v,Digits) = FloatToStrF(v,ffFixed,Precision:=15,Digits) (spec F25): round v to
+; RoundEx(v,Digits) = FloatToStrF(v,ffFixed,Precision:=15,Digits): round v to
 ; min(Digits, 15-<int-digit-count>) decimals, half-away-from-zero, then zero-pad the display
 ; to exactly Digits decimals. Here every |v|<=180 has <=3 integer digits, so
 ; 15-3=12 > 5 = Digits: a plain round-half-away-from-zero to 5 decimals, no padding visible.

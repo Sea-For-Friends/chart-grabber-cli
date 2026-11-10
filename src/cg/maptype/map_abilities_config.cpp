@@ -55,7 +55,7 @@ void MapAbilitiesConfig::setUseDownloadLocked(bool v) {
     }
 }
 
-// A non-null provider always ends with setChanged(), even when nothing changed (spec §2.7.1).
+// A non-null provider always ends with setChanged(), even when nothing changed.
 void MapAbilitiesConfig::doReadConfig(const core::IConfigProviderPtr& src) {
     if (!src) {
         return;

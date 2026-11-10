@@ -5,25 +5,24 @@
 #pragma once
 // Ports: Src/Network/u_TileDownloaderWithQueue.pas:64-94, Src/u_InterfaceQueue.pas:78-185,
 // Src/Network/u_TileRequestProcessorPool.pas:95-190, Src/Network/u_TileDownloaderList.pas:186-215.
-// docs/specs/net.md §2.15. FEAT-NET-010, FEAT-NET-015.
 //
 // One DownloadQueue per map: a bounded ring buffer (capacity 256, u_TileDownloadSubsystem.pas:381)
 // plus a lazily-created worker set sized off TileDownloaderConfig::maxConnectToServerCount(),
 // 1..64, or 0 while the map's downloading is disabled ("workerCount() == 0" is legal: the queue
 // still accepts jobs, it just runs none, u_TileDownloaderList.pas:197-210). Workers are dedicated,
-// never-shared OS threads, never a QThreadPool (ADR-0004 §Threading: a pool would scatter one
-// map's connections, each of which caches a persistent curl handle, across arbitrary threads).
-// Each worker is a plain std::thread rather than QThread -- verified (a minimal, application-code-
-// free QThread::create()+start()+wait()+destroy loop reproduces it identically) that this system's
+// never-shared OS threads, never a QThreadPool (a pool would scatter one map's connections, each of
+// which caches a persistent curl handle, across arbitrary threads). Each worker is a plain
+// std::thread rather than QThread -- verified (a minimal, application-code-free
+// QThread::create()+start()+wait()+destroy loop reproduces it identically) that this system's
 // prebuilt, non-TSan-instrumented Qt does not give ThreadSanitizer a real join: QThread::wait()
 // returns without the underlying native thread's exit ever becoming visible to TSan's thread
-// registry, so reusing that native thread id for the next generation's worker (exactly what the
-// 60 s idle teardown + recreate-on-demand contract requires) deterministically aborts the TSan
-// build ("CHECK failed: sanitizer_thread_registry.cpp:186"), regardless of how much real time
-// separates the teardown from the recreate. The equivalent std::thread create/join/destroy loop is
-// clean under the same TSan build. ADR-0004's actual target is QThreadPool's arbitrary-thread
-// scheduling, not the QThread class specifically; std::thread keeps the same one-thread-per-worker,
-// never-shared property. Recorded as a deviation, docs/parity/deviations.md. Each worker owns one
+// registry, so reusing that native thread id for the next generation's worker (exactly what the 60
+// s idle teardown + recreate-on-demand contract requires) deterministically aborts the TSan build
+// ("CHECK failed: sanitizer_thread_registry.cpp:186"), regardless of how much real time separates
+// the teardown from the recreate. The equivalent std::thread create/join/destroy loop is clean
+// under the same TSan build. The design rule targets QThreadPool's arbitrary-thread scheduling, not
+// the QThread class specifically; std::thread keeps the same one-thread-per-worker, never-shared
+// property. Recorded as a deviation from legacy. Each worker owns one
 // RetryDownloader-over-TtlDownloader-over-`factory` chain, assembled here the way
 // TTileDownloaderList.CreateDownloader assembled TDownloaderHttpWithTTL + TTileDownloaderSimple.
 
@@ -48,26 +47,25 @@ inline constexpr int kQueueCapacity = 256;                             // u_Tile
 inline constexpr std::chrono::milliseconds kWorkerIdleTimeout{60'000}; // u_TileRequestProcessorPool.pas:106
 
 // Must be owned by a std::shared_ptr and subscribe() called once after construction: the GC-tick and
-// config slots hold only a weak reference, so a tick racing the destructor is safe (T-0046 race
-// class). Ticks run on the application GC thread (T-0048); every member onTick() touches is guarded
-// by workersMutex_ (+ queueMutex_ for the emptiness check), the same locks push() takes.
-// For the app: create with make_shared AND call subscribe() once (an unsubscribed queue never trims
-// its workers); the notifier must outlive the queue; a job must never hold the last shared_ptr to its
-// own queue (the destructor would join the worker thread it runs on).
+// config slots hold only a weak reference, so a tick racing the destructor is safe. Ticks run on the
+// application GC thread; every member onTick() touches is guarded by workersMutex_ (+ queueMutex_ for
+// the emptiness check), the same locks push() takes. For the app: create with make_shared AND call
+// subscribe() once (an unsubscribed queue never trims its workers); the notifier must outlive the
+// queue; a job must never hold the last shared_ptr to its own queue (the destructor would join the
+// worker thread it runs on).
 class DownloadQueue final : public std::enable_shared_from_this<DownloadQueue> {
 public:
-    // The job gets its slot's retry loop and the slot's state (opaque to net: whatever the
-    // SlotStateFactory made from the slot's downloader -- maptype's builder + LastResponseInfo,
-    // u_TileDownloaderList.pas: 146-168; nullptr without a factory). Two slots never share a state object; it
+    // The job gets its slot's retry loop and the slot's state (opaque to net: whatever the SlotStateFactory
+    // made from the slot's downloader -- maptype's builder + LastResponseInfo,
+    // u_TileDownloaderList.pas:146-168; nullptr without a factory). Two slots never share a state object; it
     // lives as long as the slot: it survives the idle trim (threads only are dropped) and is destroyed on a
     // config change or shutdown. `stop` is the HARD cancel (worker generation / app closing); the job brings
-    // its own soft cancel (per task) to RetryDownloader::run. A Job must not throw. If the
-    // contract is broken, workerLoop catches the exception (std::exception or anything else), logs it
-    // with qCCritical and serves the next job; the slot, its run lock and the queue stay intact. Legacy
-    // ends that worker thread instead (D-87, docs/specs/net.md §2.15) but its `finally` still calls
-    // SetFinished(nil) (u_TileRequestQueueProcessorThread.pas:118); the catch here cannot, the job is
-    // opaque, so finishing the task on EVERY path (a null result when the body did not complete) is the
-    // job's duty -- otherwise the task's waiter is never notified.
+    // its own soft cancel (per task) to RetryDownloader::run. A Job must not throw. If the contract is
+    // broken, workerLoop catches the exception (std::exception or anything else), logs it with qCCritical and
+    // serves the next job; the slot, its run lock and the queue stay intact. Legacy ends that worker thread
+    // instead but its `finally` still calls SetFinished(nil) (u_TileRequestQueueProcessorThread.pas:118); the
+    // catch here cannot, the job is opaque, so finishing the task on EVERY path (a null result when the body
+    // did not complete) is the job's duty -- otherwise the task's waiter is never notified.
     using Job = std::function<void(RetryDownloader&, void* slotState, std::stop_token)>;
     using SlotState = std::shared_ptr<void>;
     // Called once per slot, under workersMutex_, with the slot's TtlDownloader -- the very object the slot's

@@ -138,7 +138,7 @@ namespace {
 
 // Ports TEnumTileInfoBySQLiteFile. It owns one connection made lazily on the first next() and
 // freed when the scan ends. Legacy lets MakeNewConnection / FetchNext raise out of Next(); here
-// the error is stored, the scan ends (next() == false) and status() returns it (D-45).
+// the error is stored, the scan ends (next() == false) and status() returns it.
 class SqliteFileEnumerator final : public IEnumTileInfo {
 public:
     SqliteFileEnumerator(std::shared_ptr<SqliteFileConnectionBuilder> builder,
@@ -231,7 +231,7 @@ QString SqliteFileTileStorage::tileFileName(geo::PointI, quint8, const MapVersio
     return fileName_;
 }
 
-// FEAT-STO-019, FEAT-STO-020, FEAT-STO-021 (read path of every flavour).
+// The read path of every flavour.
 core::Result<TileInfo> SqliteFileTileStorage::tileInfo(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr&,
                                                        LoadMode mode) const {
     // u_TileStorageSQLiteFile.pas:GetTileInfo checks ReadAccess BEFORE the mem-cache (the opposite
@@ -269,7 +269,7 @@ core::Result<TileInfo> SqliteFileTileStorage::tileInfoEx(geo::PointI xy, quint8 
 
 core::Result<MapVersionList> SqliteFileTileStorage::listVersions(geo::PointI, quint8,
                                                                  const MapVersionRequest&) const {
-    return MapVersionList{}; // FEAT-STO-032 default
+    return MapVersionList{}; // The default
 }
 
 core::Result<TileRectInfoPtr> SqliteFileTileStorage::tileRectInfo(geo::RectI rect, quint8 zoom,
@@ -345,7 +345,7 @@ core::Result<bool> SqliteFileTileStorage::saveTile(geo::PointI xy, quint8 zoom,
             info.contentType = mainContentType_.type;
             memCache_->add(xy, zoom, nullptr, std::move(info));
         }
-        base_->notifyTileUpdate(xy, zoom, nullptr); // outside the lock -- spec §3.1 rule 3
+        base_->notifyTileUpdate(xy, zoom, nullptr); // outside the lock
     }
     return saved;
 }

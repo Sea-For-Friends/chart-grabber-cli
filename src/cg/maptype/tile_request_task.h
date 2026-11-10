@@ -12,11 +12,10 @@
 // is the job's duty, not the task's.
 //
 // Cancel. Legacy hands out INotifierOneOperation (soft) and INotifierOperation + OperationID (hard).
-// Each becomes one std::stop_token held by value (docs/architecture/idioms.md section 8, marks.md
-// Ruling A.2: pure "fire once" signals the consumer only listens to and tests); the task never
-// requests a stop itself. A default-constructed token means "never cancelled" (as in
-// tile_download_request_builder.h). The finish notification is NOT a stop_token: it carries the result
-// and may repeat, so it stays an interface with a callback.
+// Each becomes one std::stop_token held by value (pure "fire once" signals the consumer only listens
+// to and tests); the task never requests a stop itself. A default-constructed token means
+// "never cancelled" (as in tile_download_request_builder.h). The finish notification is NOT a
+// stop_token: it carries the result and may repeat, so it stays an interface with a callback.
 //   soft  - the work not yet started is dropped; a transfer in flight may finish and be saved.
 //   hard  - also aborts the transfer in flight (net::RetryDownloader::run(..., soft, hard)).
 

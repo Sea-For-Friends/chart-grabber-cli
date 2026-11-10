@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/export_task_abstract (Src/RegionProcess/Export/u_ExportTaskAbstract.pas :53-102).
-// T-0172 (E4 of docs/specs/region-export.md). No FEAT tag: shared base unit.
+// A shared base unit.
 //
 // The zoom filter is observed through a derived class that exposes zooms_ (protected, as FZooms :37).
 // Expected values are literals derived by hand from the loop of :74-93.

@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# Sourced by tools/validate.sh and tools/nocmake_build.sh (T-0090). Single place for the build-cache and
-# load settings, so the nocmake fallback and the cmake presets behave the same.
+# Sourced by tools/validate.sh and tools/nocmake_build.sh. Single place for the build-cache and load
+# settings, so the nocmake fallback and the cmake presets behave the same.
 #   CG_NO_CACHE=1  control configuration: compilation cache off, no precompiled headers, build dirs wiped by
 #                   validate.sh (`tools/validate.sh --no-cache`). Slow, trusted.
 # Exports: CG_ROOT (physical worktree root), CG_CCACHE (launcher word or empty), CG_PCH (1/0).
-# T-0124: gate priority. Everything the gate starts (compile, link, tidy, tests, ccache) inherits the priority
-# of the script process, so it is lowered once here, before any child exists. Switch (first match wins):
+# Gate priority. Everything the gate starts (compile, link, tidy, tests, ccache) inherits the priority of the
+# script process, so it is lowered once here, before any child exists. Switch (first match wins):
 #   CG_GATE_PRIORITY=medium|low|normal    environment, one run
 #   ${XDG_CONFIG_HOME:-$HOME/.config}/chart-grabber-core/gate-priority   file with `medium`, `low` or `normal`, read at every gate start
-#   built-in default: medium (T-0230, owner ruling 2026-10-15; was low). Unknown value -> medium plus one warning.
+#   built-in default: medium (was low). Unknown value -> medium plus one warning.
 #   medium: SCHED_BATCH (inherited), nice 10 (ananicy-cpp resets it to -4 within a second, measured with ps; the policy
 #           stays), ionice best-effort 7. low: nice 19, ionice idle, SCHED_IDLE (see below). normal: nothing changes.
-source "$(dirname "${BASH_SOURCE[0]}")/lib/env_compat.sh"   # T-0313: SAS_* -> CG_* (REMOVE-AFTER: next release)
+source "$(dirname "${BASH_SOURCE[0]}")/lib/env_compat.sh"   # SAS_* -> CG_* (REMOVE-AFTER: next release)
 if [[ -z "${CG_GATE_PRIORITY_DONE:-}" ]]; then
   _cg_prio="${CG_GATE_PRIORITY:-}"
   if [[ -z "$_cg_prio" ]]; then
     _cg_pf="${XDG_CONFIG_HOME:-$HOME/.config}/chart-grabber-core/gate-priority"
     [[ -f "$_cg_pf" && -r "$_cg_pf" ]] && _cg_prio=$(tr -d '[:space:]' < "$_cg_pf" 2>/dev/null)
-    # REMOVE-AFTER: next release. T-0313: the file used to live in ~/.config/sas-planet-qt/; read it when the new one is absent.
+    # REMOVE-AFTER: next release. The file used to live in ~/.config/sas-planet-qt/; read it when the new one is absent.
     _cg_old="${XDG_CONFIG_HOME:-$HOME/.config}/sas-planet-qt/gate-priority"  # rename-keep
     [[ -z "$_cg_prio" && ! -e "$_cg_pf" && -f "$_cg_old" && -r "$_cg_old" ]] && _cg_prio=$(tr -d '[:space:]' < "$_cg_old" 2>/dev/null)
   fi
@@ -68,19 +68,19 @@ fi
 [[ "${CG_NO_PCH:-0}" == "1" ]] && CG_PCH=0
 export CG_ROOT CG_CCACHE CG_PCH
 
-# Load-aware parallelism (T-0090). Several gates share the machine; each one limits itself to the cores and
-# stops starting new work while the 1-minute load average is above CG_LOAD_LIMIT (off by default; the
-# average lags, and a gate's own 20 workers already put it near the core count, so a lower limit starves the gate),
-# the same rule as `ninja -l` / `make -l` / `ctest --test-load`.
+# Load-aware parallelism. Several gates share the machine; each one limits itself to the cores and stops starting
+# new work while the 1-minute load average is above CG_LOAD_LIMIT (off by default; the average lags, and a gate's
+# own 20 workers already put it near the core count, so a lower limit starves the gate), the same rule as
+# `ninja -l` / `make -l` / `ctest --test-load`.
 #   CG_JOBS        max parallel jobs of this gate (default: number of cores)
 #   CG_LOAD_LIMIT  load average above which no new job is started. Default: off (1000000). Measured with four
 #                   concurrent cold scoped gates: limit 1.5 x cores 221 s, no limit 179 s (old scripts 255 s), so
 #                   the limit costs wall time and is opt-in, e.g. CG_LOAD_LIMIT=30. CG_JOBS (cores) still caps each gate.
-# T-0097: tests log to stderr, never to the system journal. Without a terminal on stderr (ctest, nocmake capture)
-# Qt routes messages to journald; libsystemd creates its socket lazily on the first send, and two free-running
-# test threads logging concurrently race inside sd_journal_sendv (socket vs sendmsg, third-party; TSan-visible
-# only when each test is its own process, i.e. under ctest). Forcing the console handler removes the race
-# and keeps the journal clean. The shipped application is not affected by this setting.
+# Tests log to stderr, never to the system journal. Without a terminal on stderr (ctest, nocmake capture) Qt
+# routes messages to journald; libsystemd creates its socket lazily on the first send, and two free-running test
+# threads logging concurrently race inside sd_journal_sendv (socket vs sendmsg, third-party; TSan-visible only
+# when each test is its own process, i.e. under ctest). Forcing the console handler removes the race and keeps
+# the journal clean. The shipped application is not affected by this setting.
 export QT_LOGGING_TO_CONSOLE=1
 
 CG_NPROC=$(nproc)
@@ -95,9 +95,9 @@ cg_wait_load() {
 }
 export -f cg_wait_load
 
-# T-0251: cg_module_deps "<modules>" prints the transitive closure of the modules the given ones link (one name per
-# word, without the given ones), derived from the `target_link_libraries(cg_<m> ...)` blocks of
-# src/cg/<m>/CMakeLists.txt (comments stripped; cg_warnings and the module itself ignored). No second list to maintain.
+# cg_module_deps "<modules>" prints the transitive closure of the modules the given ones link (one name per word,
+# without the given ones), derived from the `target_link_libraries(cg_<m> ...)` blocks of src/cg/<m>/CMakeLists.txt
+# (comments stripped; cg_warnings and the module itself ignored). No second list to maintain.
 cg_module_deps() {
   local todo="$1" seen=" $1 " out="" m d
   while [[ -n "${todo// /}" ]]; do

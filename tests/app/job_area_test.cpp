@@ -4,9 +4,9 @@
 
 // Tests for src/cg/app/job_area (new code; inherits MainForm/frm_Main.pas:7624-7636 and the ports of
 // u_EnumDoublePointLine2Poly.pas:269-286, u_GeometryLonLatFactory.pas:1123-1150,
-// u_ConfigProviderHelpers.pas:239-419). No FEAT tag (T-0188: Features none). Expected values are literals:
-// the Pascal passes the selection-shadow RADIUS to the filter; the port halves the total width (Q-5), so the
-// corridor of widthNm is 2 * radius = widthNm * 1852 metres wide.
+// u_ConfigProviderHelpers.pas:239-419). Expected values are literals: the Pascal passes the selection-shadow
+// RADIUS to the filter; the port halves the total width, so the corridor of widthNm is
+// 2 * radius = widthNm * 1852 metres wide.
 #include "cg/app/job_area.h"
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
@@ -118,7 +118,7 @@ bool inside(const std::vector<LonLat>& ring, LonLat p) {
 
 } // namespace
 
-// ---- Proof 1: rectangle ------------------------------------------------------------------------
+// ---- Rectangle ------------------------------------------------------------------------
 
 TEST(JobArea, RectangleBoundsEqualTheBox) {
     Rig rig;
@@ -181,7 +181,7 @@ TEST(JobArea, RectangleRefusesEachValueOutsideItsRangeNamingIt) {
     }
 }
 
-// ---- Proof 2: .hlg -----------------------------------------------------------------------------
+// ---- .hlg -----------------------------------------------------------------------------
 
 namespace {
 
@@ -237,7 +237,7 @@ TEST(JobArea, PolygonFileWithAnEmptySectionIsRefused) {
     EXPECT_EQ(area.error().message, QStringLiteral("no polygon in %1").arg(path));
 }
 
-// ---- Proof 3: corridor width -------------------------------------------------------------------
+// ---- Corridor width -------------------------------------------------------------------
 
 namespace {
 
@@ -303,7 +303,7 @@ TEST(JobArea, CorridorIsTheTotalWidthAcrossTheMiddleOfTheLeg) {
     }
 }
 
-// ---- Proof 4: legs and parts -------------------------------------------------------------------
+// ---- Legs and parts -------------------------------------------------------------------
 
 TEST(JobArea, ThreeLegRouteGivesOneSinglePolygonContainingEveryRoutePoint) {
     Rig rig;
@@ -340,7 +340,7 @@ TEST(JobArea, TrackWithTwoSegmentsGivesATwoPartPolygonAndTheWarning) {
                                 "(legacy .sls format)")}));
 }
 
-// ---- Proof 5: route choice ---------------------------------------------------------------------
+// ---- Route choice ---------------------------------------------------------------------
 
 namespace {
 
@@ -382,7 +382,7 @@ TEST(JobArea, RouteNameMatchesNonAsciiExactly) {
 }
 
 TEST(JobArea, RouteNameIsCaseSensitive) {
-    // Documented rule (ticket: "exact, case-sensitive match on name").
+    // Documented rule: an exact, case-sensitive match on the name.
     Rig rig;
     QTemporaryDir dir;
     const QString file = writeFile(dir, QStringLiteral("r.gpx"), twoRoutesAndATrack());
@@ -426,7 +426,7 @@ TEST(JobArea, WithoutANameAFileWithOnlyTracksTakesTheFirstTrack) {
     EXPECT_NEAR(centreLon(outerOf(*area)), 5.1, 0.01);
 }
 
-// ---- Proof 6: skipped points, and the other refusals -------------------------------------------
+// ---- Skipped points, and the other refusals -------------------------------------------
 
 TEST(JobArea, SkippedPointsGiveExactlyOneWarningWithBothCounts) {
     Rig rig;

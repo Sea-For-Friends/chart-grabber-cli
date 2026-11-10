@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/region/zoom_array_func (Src/RegionProcess/u_ZoomArrayFunc.pas). FEAT-REG-004 (text form).
+// Tests for src/cg/region/zoom_array_func (Src/RegionProcess/u_ZoomArrayFunc.pas).
 #include "cg/region/zoom_array_func.h"
 
 #include <gtest/gtest.h>

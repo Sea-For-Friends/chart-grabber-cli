@@ -2,12 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-019, FEAT-STO-020, FEAT-STO-021. Ports
-// Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFile.pas (+ the builder's format dispatch, the scan
-// enumerator and the storage type); see docs/specs/storage.md §2.17. No legacy DUnit exists
-// (ticket's Tests section): one save / read / rect / scan / delete round-trip through ITileStorage
-// on an MBTiles file and on an RMaps file, and an OruxMaps storage refusing a save. Each case has
-// its own QTemporaryDir.
+// Ports Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFile.pas (+ the builder's format dispatch,
+// the scan enumerator and the storage type). No legacy DUnit exists: one
+// save / read / rect / scan / delete round-trip through ITileStorage on an MBTiles file and on an
+// RMaps file, and an OruxMaps storage refusing a save. Each case has its own QTemporaryDir.
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"
@@ -168,9 +166,9 @@ TEST(SqliteFileTileStorage, NoReadAccessAnswersUnknownEvenWithTheTileInTheMemCac
     EXPECT_EQ(infoEx->type, cg::storage::TileInfoType::Unknown);
 }
 
-// FEAT-STO-019, FEAT-STO-029 (D-45): a read-only storage over a missing file fails to open, as
-// legacy's `File not found` raise (u_TileStorageSQLiteFileConnection.pas:207); the scan reports it
-// through status() and convertCache returns it instead of finishing with no tiles.
+// A read-only storage over a missing file fails to open, as legacy's `File not found` raise
+// (u_TileStorageSQLiteFileConnection.pas:207); the scan reports it through status() and
+// convertCache returns it instead of finishing with no tiles.
 TEST(SqliteFileTileStorage, ScanOfMissingReadOnlyFileReportsError) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -202,25 +200,25 @@ TEST(SqliteFileTileStorage, ScanOfMissingReadOnlyFileReportsError) {
     const ITileStoragePtr dest =
         build(SqliteFileFormat::RMaps, QDir(dir.path()).filePath(QStringLiteral("d.sqlitedb")));
     ASSERT_NE(dest, nullptr);
-    // A fresh source: the test spent the first open above, and the builder latches a failed open (L-98).
+    // A fresh source: the test spent the first open above, and the builder latches a failed open.
     const ITileStoragePtr fresh = buildSource();
     ASSERT_NE(fresh, nullptr);
     auto converted = cg::storage::convertCache(*fresh, *dest, {}, std::stop_token{});
     ASSERT_FALSE(converted.has_value());
     EXPECT_TRUE(converted.error().what().contains(QStringLiteral("File not found")));
-    // 2nd attempt on the same storage: legacy's latch text (L-98), through the same channel.
+    // 2nd attempt on the same storage: legacy's latch text, through the same channel.
     converted = cg::storage::convertCache(*fresh, *dest, {}, std::stop_token{});
     ASSERT_FALSE(converted.has_value());
     EXPECT_TRUE(converted.error().what().contains(QStringLiteral("Can't open file")));
     EXPECT_TRUE(converted.error().what().contains(QStringLiteral("as RMaps (SQLite3) database!")));
-    // 3rd and later: legacy dereferences a nil enumerator (L-114, D-47); the port returns an error.
+    // 3rd and later: legacy dereferences a nil enumerator; the port returns an error.
     converted = cg::storage::convertCache(*fresh, *dest, {}, std::stop_token{});
     ASSERT_FALSE(converted.has_value());
     EXPECT_TRUE(
         converted.error().what().contains(QStringLiteral("source storage does not support scanning")));
 }
 
-// T-0117: stateChangeable() is the SQLite-file storage's own state holder.
+// stateChangeable() is the SQLite-file storage's own state holder.
 TEST(SqliteFileTileStorage, StateChangeableIsOwnHolder) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -230,9 +228,9 @@ TEST(SqliteFileTileStorage, StateChangeableIsOwnHolder) {
     cg::storage::test::expectStateChangeableIsOwn(*storage, true);
 }
 
-// T-0117: the legacy route that changes this storage's state -- a latched failed open disables all
-// access (u_TileStorageSQLiteFileConnectionBuilder.pas:118-122, see make() in sqlite_file_tile_storage.cpp)
-// -- reaches a subscriber of stateChangeable() once per real transition, with the new snapshot. A read-only
+// The legacy route that changes this storage's state -- a latched failed open disables all access
+// (u_TileStorageSQLiteFileConnectionBuilder.pas:118-122, see make() in sqlite_file_tile_storage.cpp) --
+// reaches a subscriber of stateChangeable() once per real transition, with the new snapshot. A read-only
 // storage starts with read + scan, so there are two transitions (add/delete/replace are no-ops).
 TEST(SqliteFileTileStorage, FailedOpenNotifiesStateSubscriberPerTransition) {
     QTemporaryDir dir;

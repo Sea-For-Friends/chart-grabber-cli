@@ -5,16 +5,14 @@
 #pragma once
 // Ports: u_StringConfigDataElementWithDefByGetText.pas
 //
-// Default text = gettext translation of a message id. The translation call is the ui i18n seam
-// (open question OQ-9 / T-0043 handoff): here it is QCoreApplication::translate("gettext", id),
-// which returns the id itself while no translator is installed -- legacy's result for an
-// untranslated string.
+// Default text = gettext translation of a message id. The translation call is the ui i18n seam:
+// here it is QCoreApplication::translate("gettext", id), which returns the id itself while no
+// translator is installed -- legacy's result for an untranslated string.
 
 #include "cg/core/string_config_data_element_with_def_base.h"
 
 namespace cg::core {
 
-// FEAT-UI-207
 class StringConfigDataElementWithDefByGetText final : public StringConfigDataElementWithDefBase {
 public:
     ~StringConfigDataElementWithDefByGetText() override;

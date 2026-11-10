@@ -57,8 +57,8 @@ private:
     std::vector<QByteArray> samples_;
 };
 
-// Spec section 2: "Comments are not allowed". QJsonDocument skips /* */ and // silently, so a '/'
-// outside a string is refused before parsing.
+// The format allows no comments. QJsonDocument skips /* */ and // silently, so a '/' outside a
+// string is refused before parsing.
 bool hasComment(const QByteArray& json) {
     bool inString = false;
     for (qsizetype i = 0; i < json.size(); ++i) {
@@ -471,7 +471,7 @@ private:
             {u"item", u"SnapshotItem"},
             {u"timeField", u"SnapshotTimeField"},
             {u"versionField", u"SnapshotVersionField"},
-            {u"pick", u"SnapshotPick"}}; // T-0337
+            {u"pick", u"SnapshotPick"}};
         if (!v.isObject()) {
             fail(QStringLiteral("snapshot"), QStringLiteral("must be an object"));
             return;

@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of T-0160: Src/BitmapTileSaveLoad/u_BitmapTileLibJpeg.pas (TLibJpegTileLoader :117-157,
+// Tests of Src/BitmapTileSaveLoad/u_BitmapTileLibJpeg.pas (TLibJpegTileLoader :117-157,
 // TLibJpegTileSaver :207-254), Includes/LibJpeg/LibJpegRead.pas (:146, :237-290), LibJpegWrite.pas
 // (:194-204, :277), LibJpegErrorHandler.pas (:17-40: a warning is an error), LibJpegInOutDataManager.pas
 // (:80-98: fake EOI without a warning).
-// FEAT-RND-042
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"
 #include "cg/bitmap/bitmap32_static_factory.h"
 #include "cg/bitmap/bitmap_codec_error.h"
@@ -220,7 +219,7 @@ QByteArray hugeHeader() {
 
 } // namespace
 
-// Proof 1: the loader equals libjpeg with JCS_EXT_BGRA and defaults; alpha FF (LibJpegRead.pas:252).
+// The loader equals libjpeg with JCS_EXT_BGRA and defaults; alpha FF (LibJpegRead.pas:252).
 TEST(LibJpegLoader, FixtureEqualsDirectLibjpegDecode) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     const QByteArray data = readFixture("test.jpg");
@@ -243,8 +242,8 @@ TEST(LibJpegLoader, FixtureEqualsDirectLibjpegDecode) {
     EXPECT_TRUE(varied);
 }
 
-// Proof 2: cut inside the entropy-coded data; libjpeg-turbo warns (OUTPUT [120]) and the warning fails
-// the load (LibJpegErrorHandler.pas:30-40).
+// Cut inside the entropy-coded data; libjpeg-turbo warns (OUTPUT [120]) and the warning fails the load
+// (LibJpegErrorHandler.pas:30-40).
 TEST(LibJpegLoader, TruncatedFileThrowsLibjpegText) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     CG_SKIP_LONGJMP_UNDER_TSAN();
@@ -253,8 +252,8 @@ TEST(LibJpegLoader, TruncatedFileThrowsLibjpegText) {
     EXPECT_TRUE(msg.rfind("OUTPUT [", 0) == 0 || msg.rfind("ERROR [", 0) == 0) << msg;
 }
 
-// Proof 2: the final FF D9 is missing; the own source manager hands out the EOI without a warning
-// (LibJpegInOutDataManager.pas:80-98), so the load succeeds and equals the intact file.
+// The final end-of-image marker is missing; the own source manager hands out the EOI without a
+// warning (LibJpegInOutDataManager.pas:80-98), so the load succeeds and equals the intact file.
 TEST(LibJpegLoader, MissingFinalEoiLoads) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     const QByteArray data = readFixture("test.jpg");
@@ -268,9 +267,9 @@ TEST(LibJpegLoader, MissingFinalEoiLoads) {
     EXPECT_EQ(std::memcmp(whole->data(), cut->data(), 256U * 256U * 4U), 0);
 }
 
-// Proof 2: 16 extraneous bytes before the final EOI make libjpeg-turbo warn ("Corrupt JPEG data: 16
-// extraneous bytes before marker 0xd9"; up to 4 bytes are absorbed by the Huffman bit buffer and give no
-// warning); the warning fails the load.
+// 16 extraneous bytes before the final EOI make libjpeg-turbo warn ("Corrupt JPEG data: 16 extraneous
+// bytes before marker 0xd9"; up to 4 bytes are absorbed by the Huffman bit buffer and give no warning);
+// the warning fails the load.
 TEST(LibJpegLoader, GarbageBeforeEoiThrows) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     CG_SKIP_LONGJMP_UNDER_TSAN();
@@ -281,7 +280,7 @@ TEST(LibJpegLoader, GarbageBeforeEoiThrows) {
     EXPECT_NE(msg.find("extraneous"), std::string::npos) << msg;
 }
 
-// Proof 2: not a JPEG at all (an ERROR of the library, LibJpegErrorHandler.pas:17-28).
+// Not a JPEG at all (an ERROR of the library, LibJpegErrorHandler.pas:17-28).
 TEST(LibJpegLoader, PngThrowsErrorText) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     CG_SKIP_LONGJMP_UNDER_TSAN();
@@ -290,9 +289,9 @@ TEST(LibJpegLoader, PngThrowsErrorText) {
     EXPECT_NE(msg.find("Not a JPEG file"), std::string::npos) << msg;
 }
 
-// T-0176 (the D row of T-0176): a JPEG with restart intervals whose first RST marker is wrong. Legacy calls a
-// nil resync_to_restart (LibJpegRead.pas:224-229); the port resyncs inside libjpeg, which warns, and the
-// warning fails the load with a BitmapCodecError.
+// A deviation from legacy: a JPEG with restart intervals whose first RST marker is wrong. Legacy calls a nil
+// resync_to_restart (LibJpegRead.pas:224-229); the port resyncs inside libjpeg, which warns, and the warning
+// fails the load with a BitmapCodecError.
 TEST(LibJpegLoader, WrongRestartMarkerThrows) {
     CG_SKIP_LONGJMP_UNDER_TSAN();
     std::vector<std::uint8_t> raw(64U * 64U * 3U);
@@ -331,12 +330,12 @@ TEST(LibJpegLoader, WrongRestartMarkerThrows) {
     EXPECT_FALSE(msg.empty());
 }
 
-// Proof 5: 65500 x 65500 is refused by the buffer factory (x * y >= 2^28): nullptr, no allocation.
+// 65500 x 65500 is refused by the buffer factory (x * y >= 2^28): nullptr, no allocation.
 TEST(LibJpegLoader, OversizeFrameGivesNullptr) {
     EXPECT_EQ(makeLoader().load(hugeHeader()), nullptr);
 }
 
-// Proof 3: structure of the saver output (LibJpegWrite.pas:194-204, :277; library defaults).
+// Structure of the saver output (LibJpegWrite.pas:194-204, :277; library defaults).
 TEST(LibJpegSaver, OutputStructure) {
     const QByteArray out = LibJpegTileSaver(85).save(makeBitmap(64, 48, false));
     const Parsed p = parse(out);
@@ -360,7 +359,7 @@ TEST(LibJpegSaver, OutputStructure) {
     EXPECT_EQ(p.sof, QByteArray(reinterpret_cast<const char*>(sof), sizeof(sof)));
 }
 
-// Proof 3: quality 85 and 75 give the tables of jpeg_set_quality(q, TRUE) and differ from each other.
+// Quality 85 and 75 give the tables of jpeg_set_quality(q, TRUE) and differ from each other.
 TEST(LibJpegSaver, QuantTablesFollowQuality) {
     const auto bmp = makeBitmap(64, 48, false);
     const Parsed p85 = parse(LibJpegTileSaver(85).save(bmp));
@@ -372,7 +371,7 @@ TEST(LibJpegSaver, QuantTablesFollowQuality) {
     EXPECT_NE(p85.dqt, p75.dqt);
 }
 
-// Proof 3: quality 100 and 1 are accepted; 0 is clamped to 1 by the library (passed as is).
+// Quality 100 and 1 are accepted; 0 is clamped to 1 by the library (passed as is).
 TEST(LibJpegSaver, ExtremeQualities) {
     const auto bmp = makeBitmap(64, 48, false);
     const QByteArray q100 = LibJpegTileSaver(100).save(bmp);
@@ -386,7 +385,7 @@ TEST(LibJpegSaver, ExtremeQualities) {
     EXPECT_TRUE(makeLoader().load(q1));
 }
 
-// Proof 4: round trip of a smooth gradient at quality 100 (BGRA order and alpha FF).
+// Round trip of a smooth gradient at quality 100 (BGRA order and alpha FF).
 TEST(LibJpegSaver, RoundTripWithinThree) {
     const auto src = makeBitmap(64, 64, true);
     const auto back = makeLoader().load(LibJpegTileSaver(100).save(src));
@@ -404,20 +403,20 @@ TEST(LibJpegSaver, RoundTripWithinThree) {
     }
 }
 
-// Proof 4: the alpha of the source is ignored.
+// The alpha of the source is ignored.
 TEST(LibJpegSaver, SourceAlphaIgnored) {
     const QByteArray opaque = LibJpegTileSaver(85).save(makeBitmap(32, 32, false, 0xFF000000U));
     const QByteArray half = LibJpegTileSaver(85).save(makeBitmap(32, 32, false, 0x80000000U));
     EXPECT_EQ(opaque, half);
 }
 
-// D row of T-0160: a null bitmap is a BitmapCodecError (legacy: access violation).
+// A deviation from legacy: a null bitmap is a BitmapCodecError (legacy: access violation).
 TEST(LibJpegSaver, NullBitmapThrows) {
     EXPECT_THROW((void)LibJpegTileSaver(85).save(nullptr), BitmapCodecError);
 }
 
-// Proof 6: one loader and one saver used from four threads each; results are equal. The latch makes
-// all eight start together; with --tsan this also shows that the objects hold no state.
+// One loader and one saver used from four threads each; results are equal. The latch makes all
+// eight start together; with --tsan this also shows that the objects hold no state.
 TEST(LibJpegThreads, SharedObjectsGiveEqualResults) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     const QByteArray data = readFixture("test.jpg");

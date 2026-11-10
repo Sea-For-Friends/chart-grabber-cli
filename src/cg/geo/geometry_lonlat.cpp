@@ -29,7 +29,7 @@ namespace {
 // The shape every u_GeometryLonLat*.pas IsSameGeometry shares: identity, an early mismatch on a
 // hash both sides have computed, a type-dispatching downcast, then a structural body. Six classes
 // use this (point/multipoint/line/contour/multiline/multipolygon), so it earns being a helper
-// rather than six hand copies (CHARTER.md §6 "Lean": no abstraction without two users).
+// rather than six hand copies (no abstraction without two users).
 template <class Interface, class Body>
 bool sameGeometryImpl(core::HashValue selfHash, const IGeometryLonLat* self, const IGeometryLonLat& other,
                       Body&& body) {
@@ -81,7 +81,7 @@ bool GeometryLonLatMultiPoint::isSameGeometry(const IGeometryLonLat& other) cons
                 return false;
             }
             if (hash_ != core::kNoHash && o.hash() != core::kNoHash) {
-                return true; // sameGeometryImpl already ruled out a mismatch
+                return true; // sameGeometryImpl already excluded a mismatch
             }
             if (!(bounds_ == o.bounds())) {
                 return false;

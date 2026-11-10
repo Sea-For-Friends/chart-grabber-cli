@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/app/job_checks (new code; inherits fr_ExportMBTiles.pas:550-573 (texts), :375-418 (via
-// region::directTilesCopy); fr_TilesDownload.pas:428-431 (via region::allowDownload)). No FEAT tag (T-0189:
-// Features none).
+// region::directTilesCopy); fr_TilesDownload.pas:428-431 (via region::allowDownload)).
 #include "cg/app/app_context.h"
 #include "cg/app/job_checks.h"
 #include "cg/core/content_type.h"
@@ -138,12 +137,12 @@ QList<Spec> specs() {
         {EsriLike, u"esri.zmp"_s, u"Esri Like"_s, "image/jpeg; image/png", ".jpg", ""},
         // the response list names WebP, the tiles are stored as PNG
         {ResponseWebp, u"respwebp.zmp"_s, u"Response WebP"_s, "image/webp", ".png", ""},
-        // T-0222: the License text of the ZMP
+        // The License text of the ZMP
         {Licensed, u"lic.zmp"_s, u"Lic Map"_s, png, ".png", "License=Лицензия CC-BY-SA\r\n"},
         {LicensedLayer, u"liclayer.zmp"_s, u"Lic Layer"_s, jpg, ".jpg",
          "asLayer=1\r\nLicense=Credit EMODnet\r\n"},
         {LicenseApostrophe, u"licapos.zmp"_s, u"Lic Apos"_s, png, ".png", "License=Joe's data\r\n"},
-        // T-0245: MaxZoom (0-based)
+        // MaxZoom (0-based)
         {MaxTwo, u"max2.zmp"_s, u"Max Two"_s, png, ".png", "MaxZoom=2\r\n"},
         {MaxTwoLayer, u"max2layer.zmp"_s, u"Max Layer"_s, jpg, ".jpg", "asLayer=1\r\nMaxZoom=2\r\n"},
         {MaxBad24, u"max24.zmp"_s, u"Max 24"_s, png, ".png", "MaxZoom=24\r\n"},
@@ -176,8 +175,8 @@ protected:
         ASSERT_TRUE(root_->isValid());
         const QString maps = root_->filePath(u"Maps"_s);
         ASSERT_TRUE(QDir().mkpath(maps));
-        // T-0340: "dupfile.zmp" and "DupFile.zmp" are one file on a case-insensitive folder (NTFS): the
-        // second map is not written there, and the tests that need both are skipped
+        // "dupfile.zmp" and "DupFile.zmp" are one file on a case-insensitive folder (NTFS): the second
+        // map is not written there, and the tests that need both are skipped
         caseSensitive_ = cg::core::platform::directoryIsCaseSensitive(maps);
         for (const Spec& s : specs()) {
             if (s.n == DupFileUpper && !caseSensitive_) {
@@ -245,7 +244,7 @@ std::unique_ptr<AppContext> JobChecksTest::app_;
 
 } // namespace
 
-// ---- Proof 1: findSource (app-cli.md 1.4) ----
+// ---- findSource ----
 
 TEST_F(JobChecksTest, RuleOneGuidWithBracesWithoutBracesAndLowerCase) {
     const auto maps = app_->fullMapsSet();
@@ -334,9 +333,9 @@ TEST_F(JobChecksTest, NothingMatches) {
               u"no map source matches \"nosuchmap\"; run \"chart-grabber-cli sources\""_s);
 }
 
-// ---- Proof 2: the refusals ----
+// ---- The refusals ----
 
-// S-1: u_MapTypesMainList.pas:378-379 MapTypesNoMapsError; loadMaps returns NotFound, the set stays null.
+// u_MapTypesMainList.pas:378-379 MapTypesNoMapsError; loadMaps returns NotFound, the set stays null.
 TEST_F(JobChecksTest, S1NoMapLoaded) {
     AppOptions o;
     o.arguments = {u"--datadir="_s + outFile(u"data"_s)};
@@ -355,7 +354,8 @@ TEST_F(JobChecksTest, S1NoMapLoaded) {
     EXPECT_TRUE(resolveJob(j, **empty, nullptr).has_value());
 }
 
-// S-1 over two --maps folders (T-0291): every folder is named, quoted, `, `-separated, in the order given.
+// The "no maps" error over two --maps folders: every folder is named, quoted, `, `-separated, in the order
+// given.
 TEST_F(JobChecksTest, S1NamesEveryMapsFolder) {
     AppOptions o;
     o.arguments = {u"--datadir="_s + outFile(u"data"_s)};
@@ -373,7 +373,7 @@ TEST_F(JobChecksTest, S1NamesEveryMapsFolder) {
         QStringLiteral("no map source is loaded from \"%1\", \"%2\"").arg(o.mapsDirs[0], o.mapsDirs[1]));
 }
 
-// S-3: fr_ExportMBTiles.pas:554-570 (the order: file, zoom, source).
+// fr_ExportMBTiles.pas:554-570 (the order: file, zoom, source).
 TEST_F(JobChecksTest, S3TheThreeFrameTextsInTheirOrder) {
     Job j;
     j.command = Command::Export;
@@ -390,7 +390,7 @@ TEST_F(JobChecksTest, S3TheThreeFrameTextsInTheirOrder) {
 }
 
 TEST_F(JobChecksTest, S4NotBitmapTiles) {
-    // Vector Map is also EPSG:4326 and not PNG / JPEG / WebP: S-4 is reported first
+    // Vector Map is also EPSG:4326 and not PNG / JPEG / WebP: the not-bitmap refusal is reported first
     expectRefused(resolve(exportJob(Kml)), u"\"Vector Map\" does not hold bitmap tiles"_s);
     Job j = exportJob(Kml);
     j.source.clear();
@@ -426,8 +426,8 @@ TEST_F(JobChecksTest, S6WebpOnlyWithTheFlag) {
     expectRefused(resolve(j), text);
 }
 
-// Tech Lead ruling: the judgement is by the type the tiles are stored with (Ext / storage content type), not
-// by the response types of the ZMP.
+// The judgement is by the type the tiles are stored with (Ext / storage content type), not by the response
+// types of the ZMP.
 TEST_F(JobChecksTest, FormatIsJudgedByTheStorageTypeNotByTheResponseList) {
     for (const int n : {BingLike, EsriLike, ResponseWebp}) {
         const Outcome o = resolve(exportJob(n));
@@ -458,8 +458,8 @@ TEST_F(JobChecksTest, ExportRefusalsApplyToEveryCommandThatNamesASource) {
     }
 }
 
-// T-0275 (D row, L-44): no shipped backend fails its build, so the facade is built over a type that throws or
-// answers an error, as tests/storage/tile_storage_of_map_type_test.cpp does.
+// A deviation from legacy for a legacy defect: no shipped backend fails its build, so the facade is built
+// over a type that throws or answers an error, as tests/storage/tile_storage_of_map_type_test.cpp does.
 namespace {
 class FailingType final : public cg::storage::ITileStorageType {
 public:
@@ -521,8 +521,8 @@ TEST(JobChecksCacheBuild, FailedFacadeIsRefusedWithPathAndCause) {
     }
 }
 
-// T-0275: the real way a build fails. A ZMP with CacheType=9, an empty NameInCache (RAM is kept) and
-// UseMemCache=0 makes RamTileStorage throw; every command that resolves the source is refused with the cause.
+// The real way a build fails. A ZMP with CacheType=9, an empty NameInCache (RAM is kept) and UseMemCache=0
+// makes RamTileStorage throw; every command that resolves the source is refused with the cause.
 TEST(JobChecksCacheBuild, RamMapWithoutMemCacheIsRefusedByEveryCommand) {
     cg::maptype::test::ensureGuiApp();
     QTemporaryDir root;
@@ -608,7 +608,7 @@ TEST_F(JobChecksTest, CleanJobsPassWithoutReason) {
         ASSERT_EQ(o.result->size(), 1U);
         EXPECT_FALSE((*o.result)[0].asOverlay);
         EXPECT_EQ((*o.result)[0].map->zmp()->guid(), QUuid::fromString(guid(Png)));
-        EXPECT_EQ((*o.result)[0].zooms, (std::vector<quint8>{5})); // T-0245: no key, the job's list
+        EXPECT_EQ((*o.result)[0].zooms, (std::vector<quint8>{5})); // No key, the job's list
     }
     EXPECT_FALSE(refusalForDownload(*map(Png)).has_value());
 }
@@ -684,7 +684,7 @@ TEST_F(JobChecksTest, S11DerivedNameLosesTheApostropheWithAWarning) {
     EXPECT_EQ(o.warnings, QStringList{u"the apostrophe is removed from the name of \"Bob's Map\""_s});
 }
 
-// T-0222: legacy leaves the attribution edit empty (fr_ExportMBTiles.dfm edtAttr has no Text); the CLI
+// Legacy leaves the attribution edit empty (fr_ExportMBTiles.dfm edtAttr has no Text); the CLI
 // defaults it to the License text of the source, each output file its own.
 TEST_F(JobChecksTest, AttributionDefaultsToTheLicenseTextPerSource) {
     Job j = exportJob(Licensed);
@@ -731,7 +731,7 @@ TEST_F(JobChecksTest, MetadataNames) {
     EXPECT_EQ((*resolve(plain).result)[0].name, u"Plain PNG"_s);
 }
 
-// ---- Proof 3: output names (app-cli.md 1.5) ----
+// ---- Output names ----
 
 TEST_F(JobChecksTest, OutDirectoryGivesTheZmpStem) {
     Job j = exportJob(Png);
@@ -745,7 +745,7 @@ TEST_F(JobChecksTest, OutDirectoryGivesTheZmpStem) {
     EXPECT_EQ((*resolve(j).result)[0].outFile, outFile(u"given.mbtiles"_s));
 }
 
-// T-0362: a *.source.json source gives <name>.mbtiles in a directory, like a .zmp (not
+// A *.source.json source gives <name>.mbtiles in a directory, like a .zmp (not
 // <name>.source.json.mbtiles). Its own context: the shared one holds only ZMP folders.
 TEST_F(JobChecksTest, OutDirectoryGivesTheSourceJsonStem) {
     QTemporaryDir tmp;
@@ -809,7 +809,7 @@ TEST_F(JobChecksTest, OverlayOnlyJobUsesOut) {
     EXPECT_EQ((*resolve(j).result)[0].outFile, outFile(u"jpglayer.mbtiles"_s));
 }
 
-// ---- Proof 4: the slot warnings (app-cli.md 1.4) ----
+// ---- The slot warnings ----
 
 TEST_F(JobChecksTest, SourceNamingALayerAndOverlayNamingAMapAreAcceptedWithAWarningEach) {
     Job j = exportJob(JpgLayer);
@@ -841,7 +841,7 @@ TEST_F(JobChecksTest, UnknownOverlayIsRefusedLikeASource) {
     expectRefused(resolve(j), u"no map source matches \"nosuchmap\"; run \"chart-grabber-cli sources\""_s);
 }
 
-// ---- Proof 5: agreement with region::directTilesCopy ----
+// ---- Agreement with region::directTilesCopy ----
 
 TEST_F(JobChecksTest, NoStructuralReasonExactlyWhenDirectTilesCopyAgrees) {
     // The expected value is a literal per fixture: stored as PNG / JPEG / WebP, bitmap, EPSG:3857.
@@ -897,8 +897,8 @@ TEST_F(JobChecksTest, NoStructuralReasonExactlyWhenDirectTilesCopyAgrees) {
     }
 }
 
-// T-0220 (app-cli.md 1.6.2, test 9): termsOfUseUrl reads the key of [PARAMS], trimmed.
-// ---- T-0245: MaxZoom (weather-sources.md 6; project key, legacy has none: deviation row) ----
+// termsOfUseUrl reads the key of [PARAMS], trimmed.
+// ---- MaxZoom (a project key, legacy has none: a deviation from legacy) ----
 
 TEST_F(JobChecksTest, MaxZoomSkipsTheZoomsAboveItWithOneWarning) {
     Job j = exportJob(MaxTwo);
@@ -981,7 +981,7 @@ TEST(TermsOfUseUrl, KeyPresentGivesTheTrimmedUrlAbsentEmptyOrBlankGiveNothing) {
     EXPECT_FALSE(cg::app::termsOfUseUrl(*map(4)).has_value());
 }
 
-// T-0285 (app-cli.md 1.6.5): navigationWarning reads the key of [PARAMS]; only 1 / true (any case, trimmed).
+// navigationWarning reads the key of [PARAMS]; only 1 / true (any case, trimmed).
 TEST(NavigationWarning, OneAndTrueAnyCaseTrimmedAreTrueEverythingElseFalse) {
     cg::maptype::test::ensureGuiApp();
     QTemporaryDir root;
@@ -1013,9 +1013,8 @@ TEST(NavigationWarning, OneAndTrueAnyCaseTrimmedAreTrueEverythingElseFalse) {
     }
 }
 
-// T-0277 (app-cli.md 1.7 S-16; legacy L-18): the bounding tile rectangle of the area at a chosen zoom must
-// hold at most 2^31-1 tiles. The whole world (Web Mercator, template ZMP `Png`) holds 2^30 tiles at zoom 15
-// and 2^32 at 16.
+// A legacy defect: the bounding tile rectangle of the area at a chosen zoom must hold at most 2^31-1 tiles.
+// The whole world (Web Mercator, template ZMP `Png`) holds 2^30 tiles at zoom 15 and 2^32 at 16.
 TEST_F(JobChecksTest, AreaSizeRefusesOnlyTheZoomWhoseBoundingTileRectangleExceedsTheLegacyCount) {
     const auto world = app_->lonLatFactory()->createPolygonByRect(
         cg::geo::LonLatRect{-180, 85.0511287798, 180, -85.0511287798});

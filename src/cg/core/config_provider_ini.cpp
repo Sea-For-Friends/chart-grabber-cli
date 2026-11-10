@@ -37,11 +37,11 @@ IConfigWriterPtr ConfigProviderIni::orCreateSubItem(QStringView id) {
 }
 
 QVariant ConfigProviderIni::value(QStringView) const {
-    return {}; // Q25
+    return {};
 }
 
 QByteArray ConfigProviderIni::binary(QStringView) const {
-    return {}; // Q25
+    return {};
 }
 
 QStringList ConfigProviderIni::subItemNames() const {
@@ -49,7 +49,7 @@ QStringList ConfigProviderIni::subItemNames() const {
 }
 
 QStringList ConfigProviderIni::valueNames() const {
-    return {}; // Q25
+    return {};
 }
 
 void ConfigProviderIni::deleteSubItem(QStringView id) {

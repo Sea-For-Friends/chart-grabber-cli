@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-008; docs/specs/geo.md:2087-2164 (§6.3). No legacy DUnit test exists for the
-// parser (only u_CoordToStringConverter_Test.pas, ported for coord_to_string in T-0019A1) -- per
-// the "port, don't multiply" test policy this file is one table-driven acceptance test and one
-// table-driven rejection test, hand-derived by replaying u_CoordFromStringParser.pas's Edit2Digit
-// scanner (and, for the zone/MGRS rows, _GetZoneParts / str_to_mgrs) by hand.
+// No legacy DUnit test exists for the parser (only u_CoordToStringConverter_Test.pas, ported for
+// coord_to_string), so this file is one table-driven acceptance test and one table-driven
+// rejection test, hand-derived by replaying u_CoordFromStringParser.pas's Edit2Digit scanner
+// (and, for the zone/MGRS rows, _GetZoneParts / str_to_mgrs) by hand.
 #include "cg/geo/coord_from_string.h"
 
 #include <gtest/gtest.h>
@@ -28,7 +27,7 @@ CoordRepresentationSettings settingsFor(CoordSysType type) {
 
 } // namespace
 
-// --- accepted geographic formats (Wgs84), one row per format family (§6.3.1) --------------------
+// --- accepted geographic formats (Wgs84), one row per format family --------------------
 //
 // Values are exact fractions (e.g. 30.0/60.0) rather than pre-rounded decimal literals so the
 // expectation matches the parser's own arithmetic bit-for-bit; EXPECT_NEAR's epsilon only guards
@@ -44,7 +43,7 @@ TEST(CoordFromString, AcceptedGeographicFormats) {
         double expectedLat;
     };
     const std::vector<Row> rows = {
-        // The §6.3.1 trap, pinned deliberately: str2r("") == 0, no component loop runs at all.
+        // The empty-string trap, pinned deliberately: str2r("") == 0, no component loop runs at all.
         {"EmptyStringParsesAsZeroAndSucceeds", QStringLiteral(""), QStringLiteral(""), 0.0, 0.0},
         // Decimal degrees; also exercises '.' as the decimal separator.
         {"SingleNumberIsDecimalDegrees/DotDecimalSeparator", QStringLiteral("37.1234"),
@@ -60,23 +59,23 @@ TEST(CoordFromString, AcceptedGeographicFormats) {
         // resulting token ("-37.5") parses as a signed number on its own.
         {"HemisphereLetterAsPrefix", QStringLiteral("W37.5"), QStringLiteral("N55.5"), -37.5, 55.5},
         // Suffix hemisphere letters only work when a separator symbol (here "'") isolates the sign
-        // into its own (subsequently ignored, §6.3.1 point 6) trailing component -- the running
-        // total was already forced negative by the point-8 sign-flip after the first component. A
-        // *bare* decimal-degree suffix ("37.5W", no separator) is a different, broken case: the
-        // '-' glues onto the end of "37.5", the combined token fails to parse and silently
-        // degrades to 0 (see BothSeparatorsYieldZero below for the same str2r failure mode).
+        // into its own (subsequently ignored) trailing component -- the running total was already
+        // forced negative by the sign flip after the first component. A *bare* decimal-degree
+        // suffix ("37.5W", no separator) is a different, broken case: the '-' glues onto the end
+        // of "37.5", the combined token fails to parse and silently degrades to 0 (see
+        // BothSeparatorsYieldZero below for the same str2r failure mode).
         {"HemisphereLetterAsSuffix", QStringLiteral(u"37°30'W"), QStringLiteral(u"55°15'N"), -37.5,
          55.0 + 15.0 / 60.0},
-        // Cyrillic hemisphere letters (spec §6.3.1 point 2): B (U+0412) -> '+' east, Ю (U+042E) ->
-        // '-' south/west's counterpart. Upper-casing is ASCII-only (matches legacy
-        // SysUtils.UpperCase), so this only works for the already-uppercase Cyrillic letters --
-        // lowercase ю/з/в/с are NOT rewritten to signs (see the two rows below).
+        // Cyrillic hemisphere letters: B (U+0412) -> '+' east, Ю (U+042E) -> '-' south/west's
+        // counterpart. Upper-casing is ASCII-only (matches legacy SysUtils.UpperCase), so this
+        // only works for the already-uppercase Cyrillic letters -- lowercase ю/з/в/с are NOT
+        // rewritten to signs (see the two rows below).
         {"CyrillicHemisphereLetters", QStringLiteral(u"В12.5"), QStringLiteral(u"Ю34.5"), 12.5, -34.5},
         // Lowercase Cyrillic Ю (U+044E) is not one of the four uppercase sign letters and ASCII-only
         // upper-casing does not touch it, so it falls into the "not allowed" branch like any other
         // stray character and acts as a separator that gets squeezed away -- legacy gives 55.5 here
-        // (review finding 1; QString::toUpper() would instead rewrite it to '-', giving "55.5-",
-        // which str2r cannot parse -> 0).
+        // (QString::toUpper() would instead rewrite it to '-', giving "55.5-", which str2r cannot
+        // parse -> 0).
         {"LowercaseCyrillicYuIsNotASignLetter", QStringLiteral("0"), QStringLiteral(u"55.5ю"), 0.0, 55.5},
         // Same for lowercase З (U+0437): it is not the uppercase '-' letter, so it is squeezed away
         // as a leading separator and the number parses on its own, positive -- legacy gives +37.5
@@ -102,7 +101,7 @@ TEST(CoordFromString, AcceptedGeographicFormats) {
     }
 }
 
-// --- rejections: out of range, ambiguous hemisphere, empty/too-short (§6.3.1-§6.3.3) -------------
+// --- rejections: out of range, ambiguous hemisphere, empty/too-short -------------
 TEST(CoordFromString, RejectedInputs) {
     {
         const CoordFromStringParser parser(settingsFor(CoordSysType::Wgs84));
@@ -125,16 +124,13 @@ TEST(CoordFromString, RejectedInputs) {
         }
     }
 
-    // UTM / Gauss-Kruger / MGRS: the text grammar and range checks are validated here (§6.3.2,
-    // §6.3.3), but the projected/grid -> WGS84 transform itself is T-0019B2 (coord_transformer.h,
-    // not yet ported), so every one of these overloads returns false unconditionally in this
-    // slice, on top of any grammar rejection -- both reasons are observably "false" until B2
-    // lands. These rows pin the zone/length validation branches themselves (they must not throw or
-    // mis-parse), not a same-vs-different-reason distinction the return value can't expose yet.
+    // UTM / Gauss-Kruger / MGRS: the text grammar and range checks are validated here. These rows
+    // pin the zone/length validation branches themselves (they must not throw or mis-parse); the
+    // projected/grid -> WGS84 transform is coord_transformer_test.cpp's.
     {
-        // D-25 (a)/(b)/(d), reliability audit 2026-09-28 (L-24): zone-parsing paths where legacy
-        // raises an unhandled exception (overflow) or truncates an AnsiChar (Cyrillic byte
-        // aliasing) -- the port must fail cleanly (false, no throw) on all of them.
+        // A deviation from legacy for a legacy defect: zone-parsing paths where legacy raises an
+        // unhandled exception (overflow) or truncates an AnsiChar (Cyrillic byte aliasing) --
+        // the port must fail cleanly (false, no throw) on all of them.
         const CoordFromStringParser utm(settingsFor(CoordSysType::Utm));
         struct Row {
             const char* name;
@@ -142,7 +138,7 @@ TEST(CoordFromString, RejectedInputs) {
         };
         const std::vector<Row> rows = {
             // Zone letter is neither 'N' nor 'S' (the MGRS band letter is explicitly not accepted
-            // here, §6.3.2) -- an "ambiguous hemisphere" zone suffix.
+            // here) -- an "ambiguous hemisphere" zone suffix.
             {"AmbiguousHemisphereLetterFails", QStringLiteral("37X")},
             // (d) legacy's AnsiChar(VZoneLetter) in ['N','S'] truncates U+044E (Cyrillic ю) to its
             // low byte 0x4E = 'N' and accepts it as north; the port compares the full QChar and
@@ -178,9 +174,9 @@ TEST(CoordFromString, RejectedInputs) {
         LonLat out{};
         EXPECT_FALSE(mgrs.tryStrToCoord(QStringLiteral(""), out));
         EXPECT_FALSE(mgrs.tryStrToCoord(QStringLiteral("37UPB1234"), out));
-        // D-25 (c), reliability audit 2026-09-28 (L-24): a pathologically long easting/northing
-        // digit tail overflows legacy's StrToInt (`Proj4.UTM.pas:419,423`, unhandled exception);
-        // the port's toInt() ok-flag failure is a clean rejection instead.
+        // The same deviation: a pathologically long easting/northing digit tail overflows
+        // legacy's StrToInt (`Proj4.UTM.pas:419,423`, unhandled exception); the port's toInt()
+        // ok-flag failure is a clean rejection instead.
         EXPECT_FALSE(mgrs.tryStrToCoord(QStringLiteral("37UPB12345678901234567890"), out));
     }
 }

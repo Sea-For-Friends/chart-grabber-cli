@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Shared by the per-storage "StateChangeable" tests (T-0117): one check that a storage's
-// stateChangeable() is the holder behind its own state(), driven through the interface.
+// Shared by the per-storage "StateChangeable" tests: one check that a storage's stateChangeable()
+// is the holder behind its own state(), driven through the interface.
 #include "cg/storage/tile_storage.h"
 
 #include <gtest/gtest.h>

@@ -9,7 +9,7 @@
 //        u_FileNameIteratorInFolderByMask(List).pas.
 //
 // Legacy builds a lazy iterator out of the three; the only user (TZmpInfoSet) drains it into a list,
-// so the port is one function that returns that list (spec maptype.md 2.3).
+// so the port is one function that returns that list.
 
 #include <QString>
 #include <QStringList>

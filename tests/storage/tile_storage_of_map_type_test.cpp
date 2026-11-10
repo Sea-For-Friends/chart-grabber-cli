@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_TileStorageOfMapType.pas; docs/specs/storage.md §2.22.3-§2.22.6 (ticket T-0138, P-4d).
-// Covers: FEAT-STO-001. Real folder / RAM backends in a QTemporaryDir; one scripted storage type for the
-// failed-build and race cases. No legacy DUnit exists.
+// Ports u_TileStorageOfMapType.pas. Real folder / RAM backends in a QTemporaryDir; one scripted storage
+// type for the failed-build and race cases. No legacy DUnit exists.
 #include "cg/core/content_type.h"
 #include "cg/core/path_config.h"
 #include "cg/geo/datum.h"
@@ -153,7 +152,7 @@ public:
                                             const QString& path,
                                             std::shared_ptr<TileInfoMemCache> cache) override {
         ++builds;
-        oldGoneAtBuild = last.expired(); // B1: before the new backend is made
+        oldGoneAtBuild = last.expired(); // Before the new backend is made
         switch (mode) {
         case Mode::Error:
             return cg::core::fail(ErrorCode::IoError, QStringLiteral("scripted"));
@@ -288,9 +287,9 @@ int countJpg(const QString& root) {
 
 } // namespace
 
-// T-0352 (option C): the facade records nothing by default, whatever the version (a static map with
-// Version=RUS or 2.33.0 refuses identical saves on every --overwrite run); only after the run switched the
-// record on (a snapshot source) a refused save with data is recorded, with the size and CRC-32 of the data.
+// The facade records nothing by default, whatever the version (a static map with Version=RUS or 2.33.0
+// refuses identical saves on every --overwrite run); only after the run switched the record on (a snapshot
+// source) a refused save with data is recorded, with the size and CRC-32 of the data.
 TEST(TileStorageOfMapType, RefusedSavesAreRecordedOnlyWhenTheRunSwitchedItOn) {
     Rig r;
     r.start(CacheTypeId::Ram);
@@ -399,7 +398,7 @@ TEST(TileStorageOfMapType, PermissionsDoNotRebuildButANameDoes) {
     r.start(CacheTypeId::Ram);
     ASSERT_TRUE(r.save());
     ASSERT_TRUE(r.wrapper->state()->addAccess);
-    r.config->setAllowAdd(false); // L-c1: reaches the listener, never the live backend
+    r.config->setAllowAdd(false); // Reaches the listener, never the live backend
     EXPECT_EQ(r.counts.full, 0);
     EXPECT_EQ(r.typeOf(), TileInfoType::Exists);
     EXPECT_TRUE(r.wrapper->state()->addAccess);
@@ -480,7 +479,7 @@ TEST(TileStorageOfMapType, FailedBuildIsRememberedUntilCodeOrPathChanges) {
         EXPECT_FALSE(r.inMemCache());
         expectNoAccess(r.wrapper->state());
         EXPECT_EQ(r.typeOf(), TileInfoType::Unknown);
-        r.config->setAllowAdd(false); // L-c2: no retry
+        r.config->setAllowAdd(false); // No retry
         EXPECT_EQ(r.scripted->builds, 1);
         EXPECT_EQ(r.counts.full, 0);
         r.config->setNameInCache(QStringLiteral("again"));
@@ -489,7 +488,7 @@ TEST(TileStorageOfMapType, FailedBuildIsRememberedUntilCodeOrPathChanges) {
     }
 }
 
-// T-0275 (D row, L-44): the cause of a failed build is kept until the next build.
+// A deviation from legacy for a legacy defect: the cause of a failed build is kept until the next build.
 TEST(TileStorageOfMapType, BuildErrorHoldsPathAndCauseUntilAGoodBuild) {
     for (const auto mode : {ScriptedType::Mode::Error, ScriptedType::Mode::Throw}) {
         Rig r;
@@ -501,7 +500,7 @@ TEST(TileStorageOfMapType, BuildErrorHoldsPathAndCauseUntilAGoodBuild) {
         EXPECT_TRUE(r.wrapper->path().endsWith(QStringLiteral("Город/sat/")));
         EXPECT_TRUE(failed->contains(QStringLiteral("scripted")));
         EXPECT_TRUE(failed->contains(QStringLiteral("cache type")));
-        r.config->setAllowAdd(false); // L-c2: no rebuild, the cause stays
+        r.config->setAllowAdd(false); // No rebuild, the cause stays
         EXPECT_EQ(r.wrapper->buildError(), failed);
         r.scripted->mode = ScriptedType::Mode::Ram;
         r.config->setNameInCache(QStringLiteral("again"));
@@ -519,8 +518,8 @@ TEST(TileStorageOfMapType, BuildErrorIsEmptyWhenNothingFailed) {
     EXPECT_FALSE(nullBackend.wrapper->buildError().has_value());
 }
 
-// T-0333 (owner 2026-10-21): the cache types 6 and 61 have no backend any more. A map that asks for them gets
-// no storage and a build error naming BerkeleyDB; the other unregistered types (GoogleEarth 5) stay silent.
+// The cache types 6 and 61 have no backend any more. A map that asks for them gets no storage and a build
+// error naming BerkeleyDB; the other unregistered types (GoogleEarth 5) stay silent.
 TEST(TileStorageOfMapType, RemovedBerkeleyDbTypesGiveAClearBuildErrorOthersStaySilent) {
     struct Row {
         CacheTypeId type;
@@ -559,8 +558,8 @@ TEST(TileStorageOfMapType, FailureAfterAWorkingBackendFiresOneUpdateAndDropsTheB
 }
 
 TEST(TileStorageOfMapType, FullUpdateRunsAfterTheStorageLockIsReleased) {
-    // L-c3: the state notification is inside the write lock, the full update outside it, so a full-update
-    // slot may call the wrapper (a state slot must not).
+    // The state notification is inside the write lock, the full update outside it, so a full-update slot
+    // may call the wrapper (a state slot must not).
     Rig r;
     r.start(CacheTypeId::Sas);
     std::vector<char> order;
@@ -578,7 +577,7 @@ TEST(TileStorageOfMapType, FullUpdateRunsAfterTheStorageLockIsReleased) {
 }
 
 TEST(TileStorageOfMapType, OldBackendIsGoneBeforeTheNextIsBuilt) {
-    // B1 (legacy :268): the old backend is destroyed first; the proxy keeps its target weakly for that
+    // Legacy :268: the old backend is destroyed first; the proxy keeps its target weakly for that
     // reason.
     Rig r;
     r.start(CacheTypeId::Bdb);

@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_SortFunc.pas:465-509 (SortInterfaceListByCompareFunction);
-// docs/specs/vector.md §2.6.3, §7.2.
+// Ports u_SortFunc.pas:465-509 (SortInterfaceListByCompareFunction).
 #include "cg/vector/sort_func.h"
 
 #include <gtest/gtest.h>
@@ -36,8 +35,8 @@ std::string tags(const std::vector<Entry>& list) {
 
 } // namespace
 
-// The expected strings are derived by hand from the Pascal (see docs/handoffs/T-0057.md); a stable
-// sort gives "BDAC" and "ABC" resp. "AB", so these inputs separate the literal port from a library sort.
+// The expected strings are derived by hand from the Pascal; a stable sort gives "BDAC" and "ABC" resp.
+// "AB", so these inputs separate the literal port from a library sort.
 TEST(SortFunc, LiteralQuickSortExchangesAreReproduced) {
     struct Case {
         const char* name;

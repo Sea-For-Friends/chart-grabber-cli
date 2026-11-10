@@ -4,7 +4,6 @@
 
 #pragma once
 // Ports: u_GeometryFromStreamSML.pas (TGeometryFromStreamSML.Parse and its helpers).
-// docs/specs/marks.md 2.8.3.
 
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/geometry_lonlat.h"

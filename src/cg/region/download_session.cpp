@@ -84,12 +84,10 @@ maptype::IMapTypePtr DownloadSession::mapType() const {
     return mapType_;
 }
 
-// FEAT-REG-020
 maptype::MapVersionRequestPtr DownloadSession::versionForCheck() const {
     return versionForCheck_;
 }
 
-// FEAT-REG-020
 storage::MapVersionInfoPtr DownloadSession::versionForDownload() const {
     return versionForDownload_;
 }
@@ -201,12 +199,10 @@ void DownloadSession::setElapsedTime(double value) {
     elapsedTime_ = value;
 }
 
-// FEAT-REG-015
 bool DownloadSession::autoCloseAtFinish() const {
     return autoCloseAtFinish_;
 }
 
-// FEAT-REG-015
 void DownloadSession::setAutoCloseAtFinish(bool value) {
     autoCloseAtFinish_ = value;
 }

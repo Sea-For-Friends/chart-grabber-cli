@@ -1,4 +1,4 @@
-; T-0015D golden: Maps.by.zmp - TDoublePoint records, Assigned(DefProjConverter), RoundEx 9,
+; Golden: Maps.by.zmp - TDoublePoint records, Assigned(DefProjConverter), RoundEx 9,
 ; and the else branch.
 ; TL.X:=GetLLon; TL.Y:=GetTLat; BR.X:=GetRLon; BR.Y:=GetBLat;
 ; if Assigned(DefProjConverter) then begin
@@ -6,7 +6,7 @@
 ;   ResultURL := B+RoundEx(M.X,9)+','+RoundEx(N.Y,9)+','+RoundEx(N.X,9)+','+RoundEx(M.Y,9);
 ; end else ResultURL := 'invalid_url';
 ; The [P1]..[P4] sections use the test's IdentityProjConverter (LonLat2XY/xy2LonLat both the
-; identity function), per the ticket's instruction, so M.X=GetLLon, N.Y=GetBLat, N.X=GetRLon,
+; identity function), so M.X=GetLLon, N.Y=GetBLat, N.X=GetRLon,
 ; M.Y=GetTLat - the same L,B,R,T shape as maps 16/17, RoundEx precision 9.
 ; [NilConverter] uses DefProjConverter=nullptr, asserting the else branch.
 

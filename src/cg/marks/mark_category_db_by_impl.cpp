@@ -86,7 +86,7 @@ MarkCategoryDbByImpl::MarkCategoryDbByImpl(std::shared_ptr<IMarkSystemImplChange
       errorNotifier_(errorNotifier) {
     implChangeListener_ = markSystemImpl_->changed().subscribe([this] { onImplChange(); }); // :128
     onDbImplChange(); // :129 legacy calls OnDBImplChange, not OnImplChange: an already open backend is
-                      // not subscribed (L-194, both constructors)
+                      // not subscribed (both constructors)
 }
 
 template <class R, class F> R MarkCategoryDbByImpl::call(R empty, F&& body) const {
@@ -198,8 +198,7 @@ void MarkCategoryDbByImpl::forceCreateSubCategories(IMarkCategoryDBImpl& db,
     if (!newCategory) {
         return;
     }
-    // Empty parts are kept, as in the port's other SplitString callers (map_coverage_info.cpp); see
-    // the ticket's open questions.
+    // Empty parts are kept, as in the port's other SplitString callers (map_coverage_info.cpp).
     const QStringList parts = newCategory->name().split(u'\\', Qt::KeepEmptyParts);
     if (parts.size() <= 1) {
         return;

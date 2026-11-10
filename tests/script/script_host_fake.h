@@ -3,24 +3,22 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing (test double). See docs/specs/script.md §11.1.
+// Ports: nothing (test double).
 //
-// T-0015A: the shared test double for `IScriptHost` (script_host.h), used by interpreter_test.cpp
-// to reach the 7 host-backed builtins (Random/RandomRange/FileExists/GetUnixTime/
-// SaveToLocalFile/WriteLn/TemplateToUrl). Deliberately minimal, per the ticket's scope: a seeded
-// LCG for `random()` (the exact Delphi generator, spec 5.3 F1), a frozen `unixTime()`,
-// `writeLn`/`fileExists`/`saveToLocalFile` that record every call, and a `templateToUrl` that
-// substitutes only `{x}`/`{y}`/`{z}` (the full `{x}/{y}/{z}/{-y}/{q}/{bbox}/{s}/...` engine, spec
-// 5.5, belongs to `maptype`, FEAT-NET-004).
+// The shared test double for `IScriptHost` (script_host.h), used by interpreter_test.cpp to reach
+// the 7 host-backed builtins (Random/RandomRange/FileExists/GetUnixTime/SaveToLocalFile/WriteLn/
+// TemplateToUrl). Deliberately minimal: a seeded LCG for `random()` (the exact Delphi generator),
+// a frozen `unixTime()`, `writeLn`/`fileExists`/`saveToLocalFile` that record every call, and a
+// `templateToUrl` that substitutes only `{x}`/`{y}`/`{z}` (the full
+// `{x}/{y}/{z}/{-y}/{q}/{bbox}/{s}/...` engine belongs to `maptype`).
 //
-// T-0015B: the 7 script-visible interface fakes (ICoordConverter, IProjConverter,
-// IProjConverterFactory, IHttpDownloader, IScriptGlobal, IScriptLogger, IScriptTileCache) below -
-// deliberately minimal, only what interpreter_test.cpp's method-call dispatch tests need (ticket
-// Scope). None of these ports a legacy *implementation* (Scope (out): "the real implementations of
-// the interfaces (maptype, storage, net)" arrive with later tickets) - their formulas/storage are
-// this test double's own, internally-consistent choices, not a legacy port, except where a
-// docstring says otherwise (the spec-mandated "empty write is dropped" and "nil result on an
-// unknown code" rules).
+// The 7 script-visible interface fakes (ICoordConverter, IProjConverter, IProjConverterFactory,
+// IHttpDownloader, IScriptGlobal, IScriptLogger, IScriptTileCache) below - deliberately minimal,
+// only what interpreter_test.cpp's method-call dispatch tests need. None of these ports a legacy
+// *implementation* (the real implementations of the interfaces live in maptype, storage and
+// net) - their formulas/storage are this test double's own, internally-consistent choices, not a
+// legacy port, except where a docstring says otherwise (the legacy "empty write is dropped" and
+// "nil result on an unknown code" rules).
 
 #include "cg/script/script_host.h"
 #include "cg/script/value.h"
@@ -44,8 +42,8 @@ public:
         QByteArray data;
     };
 
-    // `seed` is System.Random's RandSeed at construction (spec 5.3 F1) - the golden-URL harness
-    // and this ticket's tests pass a fixed value so a run is reproducible.
+    // `seed` is System.Random's RandSeed at construction - the golden-URL harness and these tests
+    // pass a fixed value so a run is reproducible.
     explicit FakeScriptHost(quint32 seed = 1) : randSeed_(seed) {}
 
     [[nodiscard]] QByteArray templateToUrl(const QByteArray& tmpl) const override;
@@ -79,10 +77,10 @@ private:
     mutable QList<QString> fileExistsCalls_;
 };
 
-// --- ICoordConverter (spec 2.7/5.6, ticket: "a spherical Mercator with R = 6378137") ---------------
+// --- ICoordConverter ---------------
 // A standard slippy-map tiling (256px tiles, spherical Web Mercator) - self-consistent, not a
-// legacy port (Scope (out)). zoom 0, pixel (128,128) is the tiling's centre, i.e. lon/lat (0,0) -
-// the clean round-trip point interpreter_test.cpp uses.
+// legacy port. zoom 0, pixel (128,128) is the tiling's centre, i.e. lon/lat (0,0) - the clean
+// round-trip point interpreter_test.cpp uses.
 class FakeCoordConverter : public ICoordConverter {
 public:
     [[nodiscard]] DoublePoint pos2LonLat(Point xy, quint8 zoom) const override;
@@ -108,7 +106,7 @@ public:
     }
 };
 
-// spec 5.6/script_host.h: both methods return nullptr for an unknown code/init-string - the script
+// As script_host.h says, both methods return nullptr for an unknown code/init-string - the script
 // sees nil, Assigned() is False. `kKnownEpsg`/`kKnownInitString` are this fake's only "known" cases.
 class FakeProjConverterFactory : public IProjConverterFactory {
 public:
@@ -124,7 +122,7 @@ public:
     }
 };
 
-// --- IHttpDownloader (ticket: "a queue of canned replies") -----------------------------------------
+// --- IHttpDownloader (a queue of canned replies) -----------------------------------------
 class FakeHttpDownloader : public IHttpDownloader {
 public:
     struct Reply {
@@ -152,11 +150,10 @@ private:
 };
 
 // --- IScriptGlobal -----------------------------------------------------------------------------
-// spec 5.6: SetVar/GetVar/Exists do no locking of their own (the script brackets them with its own
+// SetVar/GetVar/Exists do no locking of their own (the script brackets them with its own
 // Lock/Unlock); the …TS variants self-lock. This fake is only ever driven single-threaded by
 // interpreter_test.cpp, so `lockDepth_`/`lockReadDepth_` just record nesting for inspection - real
-// mutual exclusion is a later ticket's production `IScriptGlobal` (maptype), out of this ticket's
-// scope.
+// mutual exclusion is the production `IScriptGlobal`'s job (maptype).
 class FakeScriptGlobal : public IScriptGlobal {
 public:
     void setVar(int varId, const Value& v) override { items_.insert(varId, v); }
@@ -184,7 +181,7 @@ private:
 // --- IScriptLogger -------------------------------------------------------------------------------
 class FakeScriptLogger : public IScriptLogger {
 public:
-    // spec 5.6: "an empty string is silently dropped before the lock" - legacy
+    // "an empty string is silently dropped before the lock" - legacy
     // (u_PascalScriptLogger.pas:121-127) does this inside the implementation itself, not at the
     // interpreter's dispatch site (interpreter.cpp always forwards unconditionally), so it belongs
     // here.
@@ -201,9 +198,9 @@ private:
 
 // --- IScriptTileCache ----------------------------------------------------------------------------
 // An in-memory store keyed by (x, y, zoom, version) - enough for a Write-then-Read round-trip of
-// the TTileInfo layout (spec 5.2); does not reproduce the storage-layer nuances of
+// the TTileInfo layout; does not reproduce the storage-layer nuances of
 // u_PascalScriptTileCache.pas (partial TNE re-query on a data miss, "" as "default version", ...)
-// since the real ITileStorage binding is Scope (out).
+// since the real ITileStorage binding lives in storage.
 class FakeScriptTileCache : public IScriptTileCache {
 public:
     [[nodiscard]] TileInfo read(int x, int y, int zoom, const QByteArray& version,

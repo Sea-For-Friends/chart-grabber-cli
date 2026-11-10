@@ -89,7 +89,7 @@ static uint32 UNALIGNED_LOAD32(const char *p) {
 
 #elif defined(__MINGW32__)
 
-// T-0335 (local change, not upstream): MinGW has no <byteswap.h>; the GCC builtins do the same.
+// Local change, not upstream: MinGW has no <byteswap.h>; the GCC builtins do the same.
 #define bswap_32(x) __builtin_bswap32(x)
 #define bswap_64(x) __builtin_bswap64(x)
 

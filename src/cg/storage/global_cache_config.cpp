@@ -13,8 +13,8 @@ namespace cg::storage {
 
 namespace {
 
-// Ports u_GlobalCacheConfig.pas:255-286 (SetDefCache's `if AValue in [...]` whitelist), verbatim
-// -- see the header comment for the legacy-vs-spec mismatch this reproduces.
+// Ports u_GlobalCacheConfig.pas:255-286 (SetDefCache's `if AValue in [...]` whitelist), verbatim --
+// see the header comment for the legacy whitelist this reproduces.
 bool isValidDefCache(CacheTypeId id) {
     switch (id) {
     case CacheTypeId::Gmv:

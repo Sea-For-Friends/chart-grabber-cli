@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-001, FEAT-GEO-003. New coverage only (no legacy DUnit suite for the factory);
-// docs/specs/geo.md §11.2 projection_type_factory_test.cpp (18 new), §2.4.
+// New coverage only (no legacy DUnit suite for the factory).
 #include "cg/geo/projection_type_factory.h"
 
 #include <QHash>

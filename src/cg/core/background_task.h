@@ -14,13 +14,12 @@
 //  * stopExecute() cancels the running call through its stop_token (the next call gets a fresh,
 //    uncancelled one) and drops a not-yet-consumed wake-up; a remembered request survives;
 //  * terminate() = stopExecute() + the thread ends after the current call returns; so does the
-//    application-closing token (legacy INotifierOneOperation, idioms section 8).
-// An exception leaving the procedure is logged and the thread carries on.
-// Destruction contract (D-57, legacy L-145): the destructor terminates and BLOCKS until the running
-// procedure has returned, so the procedure may safely use its owner. Never destroy the task from its
-// own procedure (or a listener fired by it): that is a fatal error with a named message.
-// The thread priority of IThreadConfig is not applied on Linux (D-60); the config argument is kept
-// for the legacy signature only.
+//    application-closing token (legacy INotifierOneOperation).
+// An exception leaving the procedure is logged and the thread carries on. Destruction contract
+// (legacy): the destructor terminates and BLOCKS until the running procedure has returned, so the
+// procedure may safely use its owner. Never destroy the task from its own procedure (or a listener
+// fired by it): that is a fatal error with a named message. The thread priority of IThreadConfig is
+// not applied on Linux; the config argument is kept for the legacy signature only.
 
 #include "cg/core/notifier.h"
 #include "cg/core/operation_notifier.h"
@@ -51,7 +50,6 @@ public:
 // Ports TBackgroundTaskExecuteEvent; the (OperationID, CancelNotifier) pair is one stop_token.
 using BackgroundTaskExecuteEvent = std::function<void(std::stop_token)>;
 
-// FEAT-GEO-033, FEAT-GEO-034
 class BackgroundTask final : public IBackgroundTask {
 public:
     // appClosing: pass the application-closing token (an empty token never fires).

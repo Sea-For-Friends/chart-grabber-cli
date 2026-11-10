@@ -6,9 +6,9 @@
 // Ports: i_PredicateByTileInfo.pas, u_PredicateByTileInfoBase.pas (7 of its 9 subclasses --
 //        see predicates.cpp), i_PredicateByTileRequest.pas
 //
-// core.md §1.2 rules that the Src/Predicate aliases live in the module owning the argument type.
-// `PredicateByBinaryData` stays in `maptype`, as core.md says; tileExistsCheckData below takes the
-// data-check callback inline (a bare std::function) rather than naming that type from here.
+// The Src/Predicate aliases live in the module owning the argument type. `PredicateByBinaryData`
+// stays in `maptype`; tileExistsCheckData below takes the data-check callback inline (a bare
+// std::function) rather than naming that type from here.
 
 #include "cg/geo/geo_types.h"
 #include "cg/storage/map_version.h"
@@ -27,9 +27,8 @@ using PredicateByTileInfo = std::function<bool(const TileInfo&)>;
 // Ports i_PredicateByTileRequest.pas.
 using PredicateByTileRequest = std::function<bool(geo::PointI, quint8 zoom, const MapVersionInfoPtr&)>;
 
-// storage.md §2.21 names four of these; Tech Lead ruling 2026-09-19 (T-0021A rework) adds the
-// three other LIVE legacy predicates used by fr_DeleteTiles.pas -- legacy wins over the spec list
-// (protocol rule 5). The two remaining legacy subclasses (NotExistsTNE, NotExistsTileOrTNE) have
+// Besides four general ones, these are the three other LIVE legacy predicates used by
+// fr_DeleteTiles.pas. The two remaining legacy subclasses (NotExistsTNE, NotExistsTileOrTNE) have
 // no call site anywhere in the legacy tree and stay unported.
 [[nodiscard]] PredicateByTileInfo tileExists();      // ports TPredicateByTileInfoExistsTile
 [[nodiscard]] PredicateByTileInfo tileNotExists();   // ports TPredicateByTileInfoNotExistsTile
@@ -43,12 +42,12 @@ using PredicateByTileRequest = std::function<bool(geo::PointI, quint8 zoom, cons
 
 // Ports TPredicateByTileInfoNotExistOrBeforDate. AIgnoreTNE is not exposed (kept at legacy's own
 // default, False): TPredicateByTileInfoNotExistOrBeforDate is never instantiated anywhere in the
-// legacy tree, so no call site contradicts the choice (T-0021A review, D-4).
+// legacy tree, so no call site contradicts the choice.
 [[nodiscard]] PredicateByTileInfo tileOlderThan(const TileDate& cutoff);
 
 // Ports TPredicateByTileInfoEqualSize (Check: FSize = ASize, exact legacy semantics -- NOT
-// "differs"; see docs/handoffs/T-0021A.md Rework 1). `matchTne` ports ADeleteTNE and is exposed
-// because legacy call sites pass both False (fr_DeleteTiles.pas:144,166) and True (:154).
+// "differs"). `matchTne` ports ADeleteTNE and is exposed because legacy call sites pass both
+// False (fr_DeleteTiles.pas:144,166) and True (:154).
 [[nodiscard]] PredicateByTileInfo tileSizeEquals(quint32 size, bool matchTne = false);
 
 } // namespace cg::storage

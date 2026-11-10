@@ -27,8 +27,8 @@ public:
                  const std::shared_ptr<net::LastResponseInfo>& lastResponseInfo,
                  const std::stop_token& cancel) override;
 
-    // Port extension (T-0366): the creation of buildRequest without a request, so that the factory's check of
-    // a script runs when a verdict is asked for, not at the first tile.
+    // Port extension: the creation of buildRequest without a request, so that the factory's check of a script
+    // runs when a verdict is asked for, not at the first tile.
     void load();
 
 private:

@@ -9,38 +9,36 @@
 // (TVersionColMode already ported as sqlite_region_sql.h's VersionColMode; TTBColInfo below as
 // ColumnInfo), t_TileStorageSQLite.pas (TSaveTileFlag/TSaveTileFlags below as SaveFlag/SaveFlags).
 //
-// docs/specs/storage.md §2.16 (the native cache_sqlite), §2.16.2 "Column discovery", §2.16.3 "The
-// statements". One instance per OPEN region file (one .sqlitedb, one 256x256 tile region at one
-// zoom) -- NOT the pooling/lazy-open/idle-close layer, which is T-0022B5's SqliteRegionFileMap.
-// Non-virtual: this ticket (T-0022B2) defines only the constructor and column discovery below;
-// T-0022B3 defines tileInfo/listTileVersions/listVersions (sqlite_region_handler_read.cpp) and
-// T-0022B4 defines saveTile/deleteTile/tileRectInfo (sqlite_region_handler_write.cpp) as member
-// functions of this SAME class, in their own translation units -- private members are visible to
-// them without any accessor because C++ access control is per-class, not per-file.
+// The native cache_sqlite format: column discovery and the statements. One instance per OPEN
+// region file (one .sqlitedb, one 256x256 tile region at one zoom) -- NOT the
+// pooling/lazy-open/idle-close layer, which is SqliteRegionPool. Non-virtual: the constructor and
+// column discovery are defined in sqlite_region_handler.cpp,
+// tileInfo/listTileVersions/listVersions in sqlite_region_handler_read.cpp and
+// saveTile/deleteTile/tileRectInfo in sqlite_region_handler_write.cpp, all member functions of
+// this SAME class in their own translation units -- private members are visible to them without
+// any accessor because C++ access control is per-class, not per-file.
 //
 // Design notes (verified against legacy, not guessed):
-// - No `zoom` parameter anywhere, including tileRectInfo's (T-0022B2 review finding 1): table `t`
-//   has no z column, and stamping the accumulated `TileRectInfoEntry` items with a zoom is B5's job
-//   once it builds the final `TileRectInfo` from the shared accumulator (see tileRectInfo's comment
-//   below). GetTileInfo/GetListOfTileVersions/GetSQL_DeleteTile/SaveTile/GetTileRectInfo's
-//   AZoom/SZoom/DZoom/DestZoom parameters are declared in legacy's interfaces but never read in
+// - No `zoom` parameter anywhere, including tileRectInfo's: table `t` has no z column, and stamping
+//   the accumulated `TileRectInfoEntry` items with a zoom is the pool's job once it builds the
+//   final `TileRectInfo` from the shared accumulator (see tileRectInfo's comment below).
+//   GetTileInfo/GetListOfTileVersions/GetSQL_DeleteTile/SaveTile/GetTileRectInfo's AZoom/SZoom/
+//   DZoom/DestZoom parameters are declared in legacy's interfaces but never read in
 //   u_TileStorageSQLiteHandler.pas (grep confirms it): the physical region file already IS one
 //   zoom, so nothing here needs to know which one.
 // - `FSingleVersionOnly` (legacy constructor parameter ASingleVersionOnly) is assigned to a field
 //   and never read anywhere else in the unit -- dropped.
-// - deleteTile DOES take a version (unlike the spec §2.16.3 table's "all versions" shorthand for
-//   the delete row): GetSQL_DeleteTile (u_TileStorageSQLiteHandler.pas:854-881) adds
-//   `AND <VersionFieldIsEqual predicate>` whenever the table has a version column, exactly like
-//   every other operation. Flagged in the T-0022B2 handoff as a spec/legacy disagreement; legacy's
-//   code wins per project rule.
-// - The per-file mutex of spec §3.3/D-10 is NOT a member here (ticket Scope out): this class is as
-//   thread-unsafe as the SqliteDb it wraps; T-0022B5's file map owns one core::Mutex per open
-//   handler and holds it for the whole of every call into these methods.
-// - A read-only-opened handler (see the constructor, T-0022B2.cpp) skips the session/established
-//   SQL and column discovery entirely, exactly as legacy's Create does (the `if AIsReadOnly ...
-//   else begin ... end` branch, u_TileStorageSQLiteHandler.pas:372-392) -- columnInfo() stays at
-//   ColumnInfo{} (columnCount 0, hasVersion false) for such a handler. This looks surprising but
-//   is legacy behaviour, reproduced; see docs/handoffs/T-0022B2.md "Legacy defects noticed".
+// - deleteTile DOES take a version (it does not delete "all versions"): GetSQL_DeleteTile
+//   (u_TileStorageSQLiteHandler.pas:854-881) adds `AND <VersionFieldIsEqual predicate>` whenever
+//   the table has a version column, exactly like every other operation. Legacy's code wins.
+// - The per-file mutex is NOT a member here: this class is as thread-unsafe as the SqliteDb it
+//   wraps; the pool (SqliteRegionPool) owns one core::Mutex per open handler and holds it for the
+//   whole of every call into these methods.
+// - A read-only-opened handler (see the constructor, sqlite_region_handler.cpp) skips the
+//   session/established SQL and column discovery entirely, exactly as legacy's Create does (the
+//   `if AIsReadOnly ... else begin ... end` branch, u_TileStorageSQLiteHandler.pas:372-392) --
+//   columnInfo() stays at ColumnInfo{} (columnCount 0, hasVersion false) for such a handler.
+//   This looks surprising but is legacy behaviour, reproduced.
 
 #include "cg/core/result.h"
 #include "cg/geo/geo_types.h"
@@ -64,18 +62,16 @@
 
 namespace cg::storage::sqlite {
 
-// Ports TSaveTileFlag/TSaveTileFlags (t_TileStorageSQLite.pas:47-51). spec §2.16.3.
+// Ports TSaveTileFlag/TSaveTileFlags (t_TileStorageSQLite.pas:47-51).
 enum class SaveFlag : quint8 { KeepExisting = 1, SkipIfSameAsPrev = 2 };
 Q_DECLARE_FLAGS(SaveFlags, SaveFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(SaveFlags)
 
-// FEAT-STO-018.
 class SqliteRegionHandler final {
 public:
-    // Ports TTBColInfo (t_TileStorageSQLiteHandler.pas:29-38), discovered once by the constructor
-    // (§2.16.2). `versionMode` is meaningful only when `hasVersion` is true -- legacy's third
-    // TVersionColMode value, vcm_None, becomes `hasVersion == false` here (T-0022B1 handoff, "What
-    // T-0022B2 must know").
+    // Ports TTBColInfo (t_TileStorageSQLiteHandler.pas:29-38), discovered once by the constructor.
+    // `versionMode` is meaningful only when `hasVersion` is true -- legacy's third TVersionColMode
+    // value, vcm_None, becomes `hasVersion == false` here.
     struct ColumnInfo {
         int columnCount = 0;
         bool hasVersion = false;
@@ -104,13 +100,13 @@ public:
     [[nodiscard]] const ColumnInfo& columnInfo() const noexcept { return columnInfo_; }
     [[nodiscard]] const QString& dbFilename() const noexcept { return dbFilename_; }
 
-    // T-0276: the text of the failure that left isOpened() false (empty when it opened). Legacy only logs it.
+    // The text of the failure that left isOpened() false (empty when it opened). Legacy only logs it.
     [[nodiscard]] const QString& openError() const noexcept { return openError_; }
 
-    // Exposed for T-0022B3/B4's member functions and for tests; nullptr when !isOpened().
+    // Exposed for the read and write member functions and for tests; nullptr when !isOpened().
     [[nodiscard]] SqliteDb* db() noexcept { return db_.get(); }
 
-    // --- T-0022B3 (sqlite_region_handler_read.cpp): declared here, defined there. ---
+    // --- sqlite_region_handler_read.cpp: declared here, defined there. ---
 
     // Ports GetTileInfo (u_TileStorageSQLiteHandlerComplex, :949-1039). `useOtherVersions` ports
     // AUseOtherVersions (VersionFieldIsEqualOrMax's "this version, or the newest").
@@ -119,8 +115,7 @@ public:
 
     // Ports GetListOfTileVersions (:773-816): the versions this ONE tile (x,y) has, newest first.
     // `stop` ports AOper's per-row poll (CallbackSelectVersions, :730-735): legacy checks
-    // IsOperationCancelled before adding EACH row and, once cancelled, adds no more. T-0022B3
-    // correction (this comment previously said the partial list was kept -- it is not):
+    // IsOperationCancelled before adding EACH row and, once cancelled, adds no more.
     // TSelectTileVersions.GetMapVersionInfoStatic (:243-250) returns nil whenever `Cancelled` is
     // set, UNCONDITIONALLY, discarding every row collected before the cancellation was observed --
     // `if not Cancelled and (ListOfVersions.Count > 0) then ... else Result := nil`. The port
@@ -128,20 +123,17 @@ public:
     // yields an empty `MapVersionList` (nullptr), the same value an empty-from-the-start result
     // would. This is success with an all-or-nothing result, never a core::Result error -- matching
     // legacy's own try/except, which logs (c_Log_GetVer) and swallows a genuine query failure the
-    // same way, also to nil.
-    // T-0022B3 fix: `stop` is `const std::stop_token&`, not by value as first declared -- this
-    // method (unlike ITileStorage::tileRectInfo's identically-shaped `stop` parameter) is not a
-    // virtual override, so clang-tidy's performance-unnecessary-value-param fires on it (the body
-    // only ever reads `stop`, never moves/copies it). Same convention already used for a similar
-    // spec-vs-clang-tidy conflict in proxy_config.h's normalizeAddress -- a parameter-passing
-    // detail, no behavior change. B4's `tileRectInfo` has the identical `std::stop_token stop` by
-    // value and, being non-virtual too, will likely need the same fix -- flagged in the handoff.
+    // same way, also to nil. `stop` is `const std::stop_token&`, not by value -- this method
+    // (unlike ITileStorage::tileRectInfo's identically-shaped `stop` parameter) is not a virtual
+    // override, so clang-tidy's performance-unnecessary-value-param fires on it (the body only
+    // ever reads `stop`, never moves/copies it). Same convention as proxy_config.h's
+    // normalizeAddress -- a parameter-passing detail, no behavior change.
     [[nodiscard]] core::Result<MapVersionList> listTileVersions(geo::PointI xy, const std::stop_token& stop);
 
     // Ports GetListOfVersions (:817-853): every distinct version anywhere in this region file.
     [[nodiscard]] core::Result<MapVersionList> listVersions();
 
-    // --- T-0022B4 (sqlite_region_handler_write.cpp): declared here, defined there. ---
+    // --- sqlite_region_handler_write.cpp: declared here, defined there. ---
 
     // Ports SaveTile (:1075-1229, TNE at :1196-1204). Legacy decides "tile does not exist" (TNE)
     // from the DATA alone -- `VIsTne := (Size = 0) or (Body = nil)` (:1117) -- NOT from
@@ -153,13 +145,12 @@ public:
                                               TileDate loadDate, QByteArrayView contentType,
                                               const QByteArray& data, SaveFlags flags);
 
-    // Ports DeleteTile (:401-425) / GetSQL_DeleteTile (:854-881). Takes `version` because legacy's
-    // SQL DOES filter by it when the table has a version column -- see the header comment above.
-    // The T-0022B2 review walked the exact SQL legacy emits (GetSQL_DeleteTile + ParseSQLiteDBVersion/
-    // VersionFieldIsEqual, u_TileStorageSQLiteFunc.pas); B4 must reproduce all three forms:
+    // Ports DeleteTile (:401-425) / GetSQL_DeleteTile (:854-881). Takes `version` because legacy's SQL
+    // DOES filter by it when the table has a version column -- see the header comment above. The exact
+    // SQL legacy emits (GetSQL_DeleteTile + ParseSQLiteDBVersion/VersionFieldIsEqual,
+    // u_TileStorageSQLiteFunc.pas) has three forms, all reproduced:
     //   1. No `v` column: `DELETE FROM t WHERE x=X AND y=Y` -- deletes every version of the tile
-    //      (the ONLY "all versions" case; spec §2.16.3's old "delete = all versions" summary was
-    //      wrong for the other two forms and has been corrected).
+    //      (the ONLY "all versions" case).
     //   2. `v` column, a real version given (useVersionFieldInDb and a non-empty StoreString): adds
     //      `AND <predicate>` where the predicate depends on the column's declared type and whether
     //      the version string parses as an integer (TryStrToInt64, first char not in `x X $`):
@@ -171,24 +162,23 @@ public:
     //      (RequestedVersionIsInt is True for the default, which picks the cast branch).
     [[nodiscard]] core::Result<bool> deleteTile(geo::PointI xy, const MapVersionInfoPtr& version);
 
-    // Ports GetTileRectInfo (:444-469) / GetSQL_TileRectInfo (:882-943), REWORKED per the T-0022B2
-    // review (finding 1): legacy fills ONE caller-owned `TTileInfoShortEnumData.RectItems` array,
-    // sized for the WHOLE destination rect and shared across every region file the caller (B5)
-    // covers (`u_TileStorageSQLiteHelper.pas:405-406, :444-484`), ORing each file's "not cancelled"
-    // result -- a fresh result per file would force B5 to invent a merge that legacy does not have.
+    // Ports GetTileRectInfo (:444-469) / GetSQL_TileRectInfo (:882-943): legacy fills ONE
+    // caller-owned `TTileInfoShortEnumData.RectItems` array, sized for the WHOLE destination rect and
+    // shared across every region file the caller (the pool) covers
+    // (`u_TileStorageSQLiteHelper.pas:405-406, :444-484`), ORing each file's "not cancelled" result --
+    // a fresh result per file would force the caller to invent a merge that legacy does not have.
     // `destRect`/`items` port that: `items` is indexed exactly like TileRectInfo::indexOf (row-major,
     // `(x - destRect.left) + (y - destRect.top) * destRect.width()`; tile_rect_info.h), already sized
-    // by the caller to `destRect`'s area, and every entry this file has data for is written in place
-    // -- entries this file has nothing for are left untouched, so B5 can call this once per covered
-    // region file over the SAME `items` and then hand it to `TileRectInfo`'s constructor. `version`
-    // ports `AEnumData.RectVersionInfo`: legacy adds the version predicate (or, with
+    // by the caller to `destRect`'s area, and every entry this file has data for is written in place --
+    // entries this file has nothing for are left untouched, so the caller can call this once per
+    // covered region file over the SAME `items` and then hand it to `TileRectInfo`'s constructor.
+    // `version` ports `AEnumData.RectVersionInfo`: legacy adds the version predicate (or, with
     // `useOtherVersions`, an `ORDER BY ... DESC` for "newest") whenever the table has a version
     // column and `!useOtherVersions` (`GetSQL_TileRectInfo :914-934`) -- needed to build that
-    // predicate at all, which the pre-review header (no version parameter) could not do. `zoom` is
-    // dropped: it only stamped the returned `TileRectInfo`, which is now B5's job once every covered
-    // file has been folded into `items`. Returns `!cancelled` (`stop`, polled per tile, spec §3.1
-    // rule 4); like legacy's `GetTileRectInfo`, any SQL exception is logged under `GetMap` and
-    // swallowed (`:462-465`) -- never a core::Result error.
+    // predicate at all. `zoom` is dropped: it only stamped the returned `TileRectInfo`, which is the
+    // caller's job once every covered file has been folded into `items`. Returns `!cancelled`
+    // (`stop`, polled per tile); like legacy's `GetTileRectInfo`, any SQL exception is logged under
+    // `GetMap` and swallowed (`:462-465`) -- never a core::Result error.
     [[nodiscard]] bool tileRectInfo(geo::RectI destRect, const MapVersionInfoPtr& version,
                                     bool useOtherVersions, std::vector<TileRectInfoEntry>& items,
                                     const std::stop_token& stop);

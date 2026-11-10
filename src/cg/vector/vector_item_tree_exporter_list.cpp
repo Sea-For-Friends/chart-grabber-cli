@@ -45,8 +45,8 @@ int VectorItemTreeExporterListStatic::count() const {
 }
 
 VectorItemTreeExporterListItemPtr VectorItemTreeExporterListStatic::item(int index) const {
-    // Legacy GetItem (:134-139) has no range check and no nil guard; both are answered with null here.
-    // D row of T-0141.
+    // Legacy GetItem (:134-139) has no range check and no nil guard; both are answered with null here
+    // (a deviation from legacy).
     if (index < 0 || index >= count()) {
         return nullptr;
     }

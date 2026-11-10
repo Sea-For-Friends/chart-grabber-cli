@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkCategoryFactoryConfig.pas  (interface, shared), u_MarkCategoryFactoryConfig.pas
-// (MarkCategoryFactoryConfig, T-0091)
+// Ports: i_MarkCategoryFactoryConfig.pas (interface, shared), u_MarkCategoryFactoryConfig.pas
+// (MarkCategoryFactoryConfig)
 //
 // The settings of new categories: the default name (a language-dependent string, stored as DefaultName)
 // and the zoom range (AfterScale 3, BeforeScale 23). Persisted in the [MarkNewCategory] section. The legacy

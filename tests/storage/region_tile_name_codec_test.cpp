@@ -3,11 +3,10 @@
 // SAS.Planet development team; modified.
 
 // Ports u_TileFileNameSQLite.pas, u_TileFileNameBerkeleyDB.pas (byte-identical, one codec class).
-// docs/specs/storage.md §2.10.2. Hand-derived from the Pascal directly (not fixture-driven, per
-// docs/backlog/T-0021C's own scope note): the region formula maps a 256x256 tile BLOCK, so a
-// generated tilePath() does not round-trip back to the original (x, y) the way the other nine
-// folder codecs do -- reusing tools/gen_cache_fixtures.py's per-tile TILES table would not
-// exercise anything the formula doesn't already make obvious by hand.
+// Hand-derived from the Pascal directly (not fixture-driven): the region formula maps a 256x256
+// tile BLOCK, so a generated tilePath() does not round-trip back to the original (x, y) the way
+// the other nine folder codecs do -- reusing tools/gen_cache_fixtures.py's per-tile TILES table
+// would not exercise anything the formula doesn't already make obvious by hand.
 #include "cg/storage/codecs/region_tile_name_codec.h"
 
 #include <QFile>
@@ -99,9 +98,9 @@ TEST(RegionTileNameCodec, ParseRejectsAddExtMangledInput) {
 // --- the extension-concatenation assertion ------------------------------------------------------
 
 TEST(RegionTileNameCodec, ExtensionMustBeConcatenatedNotAddExted) {
-    // storage.md §2.10.2: the base name already contains a '.' (the {X>>8}.{Y>>8} separator), so
-    // real callers (u_TileStorageSQLiteHelper.pas:238-240, u_TileStorageBerkeleyDB.pas:634)
-    // concatenate the extension directly and never call addExt()/ChangeFileExt on this codec.
+    // The base name already contains a '.' (the {X>>8}.{Y>>8} separator), so real callers
+    // (u_TileStorageSQLiteHelper.pas:238-240, u_TileStorageBerkeleyDB.pas:634) concatenate the
+    // extension directly and never call addExt()/ChangeFileExt on this codec.
     const RegionTileNameCodec codec;
     const QString base = codec.tilePath(PointI(0, 0), 0); // "z1/0/0/0.0"
     EXPECT_EQ(base + QStringLiteral(".sqlitedb"), QStringLiteral("z1/0/0/0.0.sqlitedb"));

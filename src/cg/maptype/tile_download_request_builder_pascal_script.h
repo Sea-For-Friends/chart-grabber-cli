@@ -11,10 +11,9 @@
 // One instance per (map, download slot). The base class lock is held for the whole buildRequest, like
 // the legacy Lock/Unlock; it also serialises the UrlTemplate, which is not thread-safe.
 //
-// Script sandbox (user ruling Q-8, 2026-10-14; the two D rows of T-0194 in docs/parity/deviations.md): a
-// script cannot write or probe files and cannot read a file:/// URL through its Downloader. SaveToLocalFile
-// returns 0, FileExists returns false, DoHttpRequest to a file:/// URL answers status 0; each logs once per
-// builder.
+// Script sandbox (two deviations from legacy): a script cannot write or probe files and cannot read a
+// file:/// URL through its Downloader. SaveToLocalFile returns 0, FileExists returns false, DoHttpRequest
+// to a file:/// URL answers status 0; each logs once per builder.
 
 #include "cg/core/language_manager.h"
 #include "cg/core/notifier.h"

@@ -3,11 +3,11 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkId.pas  (u_MarkId.pas, the SML implementation, is a later ticket)
+// Ports: i_MarkId.pas (u_MarkId.pas, the SML implementation, is not ported yet)
 //
-// MarkList / MarkIdList stand for legacy IInterfaceListStatic holding IVectorDataItem / IMarkId
-// (spec marks.md section 2 preamble); a null pointer is "no list". They live here because every
-// header that needs them already includes this one.
+// MarkList / MarkIdList stand for legacy IInterfaceListStatic holding
+// IVectorDataItem / IMarkId; a null pointer is "no list". They live here because every header
+// that needs them already includes this one.
 
 #include "cg/vector/category.h"
 #include "cg/vector/vector_data_item_simple.h"
@@ -32,7 +32,7 @@ public:
     [[nodiscard]] virtual QString name() const = 0;
     [[nodiscard]] virtual int multiGeometryCount() const = 0;
     [[nodiscard]] virtual MarkIdType markType() const = 0;
-    // Raw pointers, as the landed vector::IVectorDataItem::isEqual / ICategory::isSame.
+    // Raw pointers, as vector::IVectorDataItem::isEqual / ICategory::isSame.
     [[nodiscard]] virtual bool isSameId(const IMarkId* markId) const = 0;
     [[nodiscard]] virtual bool isSameMark(const vector::IVectorDataItem* mark) const = 0;
 };
@@ -42,19 +42,18 @@ using ArrayOfMarkId = std::vector<MarkIdPtr>; // TArrayOfMarkId (used by the GUI
 using MarkList = std::shared_ptr<const std::vector<vector::VectorDataItemPtr>>;
 using MarkIdList = std::shared_ptr<const std::vector<MarkIdPtr>>;
 
-// One element read out of a legacy IInterfaceListStatic whose elements are IVectorDataItem or
-// IMarkId (spec marks.md section 2 preamble, decision C3). A null pointer in either alternative is nil.
+// One element read out of a legacy IInterfaceListStatic whose elements are IVectorDataItem or IMarkId.
+// A null pointer in either alternative is nil.
 using MarkOrId = std::variant<vector::VectorDataItemPtr, MarkIdPtr>;
 
 // One legacy IInterfaceListStatic ARGUMENT that holds marks or mark ids (never both). The converting
 // constructors are implicit on purpose: call sites stay literal translations of the Pascal line.
 class MarkOrIdList {
 public:
-    MarkOrIdList() = default;       // nil
-    MarkOrIdList(std::nullptr_t) {} // NOLINT(google-explicit-constructor): spec marks.md C3 rule 1
-    MarkOrIdList(MarkList marks)
-        : list_(std::move(marks)) {}                        // NOLINT(google-explicit-constructor): C3 rule 1
-    MarkOrIdList(MarkIdList ids) : list_(std::move(ids)) {} // NOLINT(google-explicit-constructor): C3 rule 1
+    MarkOrIdList() = default;                                 // nil
+    MarkOrIdList(std::nullptr_t) {}                           // NOLINT(google-explicit-constructor): implicit
+    MarkOrIdList(MarkList marks) : list_(std::move(marks)) {} // NOLINT(google-explicit-constructor): implicit
+    MarkOrIdList(MarkIdList ids) : list_(std::move(ids)) {}   // NOLINT(google-explicit-constructor): implicit
 
     // Assigned(AList): false for nil of either kind.
     [[nodiscard]] explicit operator bool() const {

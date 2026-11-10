@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: u_CoordFromStringParser.pas, the str2r half of u_GeoToStrFunc.pas. docs/specs/geo.md
-// :2087-2164 (§6.3). FEAT-GEO-008.
+// Ports: u_CoordFromStringParser.pas, the str2r half of u_GeoToStrFunc.pas.
 //
 // str2r on raw X/Y text (the UTM/Gauss-Kruger overload, u_CoordFromStringParser.pas:197-198):
 // QString::toDouble trims leading/trailing whitespace and accepts "inf"/"nan" (case-insensitive,
@@ -11,9 +10,8 @@
 // trims whitespace and recognises TFormatSettings' NaNSymbol/Infinity symbols, which for the
 // default English locale legacy ships with are "NAN"/"INF"/"-INF" -- the same tokens. No Delphi
 // runtime is available in this repo to confirm the exact RTL version's grammar byte-for-byte (same
-// limitation noted for FormatFloat's rounding-tie convention, docs/handoffs/T-0019A1.md); reusing
-// str2r here (rather than a second, stricter parser) is the best-effort match, flagged in
-// docs/handoffs/T-0019B2.md.
+// limitation noted for FormatFloat's rounding-tie convention); reusing str2r here (rather than a
+// second, stricter parser) is the best-effort match.
 #include "cg/geo/coord_from_string.h"
 
 #include <QChar>
@@ -39,8 +37,7 @@ bool isAllowedScanChar(QChar c) {
 
 // Legacy SysUtils.UpperCase converts only the 7-bit ASCII letters a..z; QString::toUpper() follows
 // full Unicode and would also rewrite non-ASCII letters (e.g. lowercase Cyrillic, German ß), which
-// changes the grammar (see docs/handoffs/T-0019B1-review.md finding 1). Reused at every UpperCase
-// call site (Edit2Digit x2, str_to_mgrs).
+// changes the grammar. Reused at every UpperCase call site (Edit2Digit x2, str_to_mgrs).
 QString toUpperAscii(const QString& s) {
     QString result = s;
     for (QChar& c : result) {
@@ -75,11 +72,11 @@ double str2r(const QString& token) {
     return ok ? value : 0.0;
 }
 
-// Edit2Digit, u_CoordFromStringParser.pas:75-150 (the geographic scanner, §6.3.1). `i` mirrors the
-// Pascal source's own 1-based, mutating-string index exactly (including the i=0 access the first
-// branch's `dec(i)` can produce for a leading invalid character) via a sentinel out-of-range
-// QChar that can never equal a digit, space or comma -- matching what that out-of-bounds Delphi
-// string access reads in practice (the UnicodeString header, never literally a space).
+// Edit2Digit, u_CoordFromStringParser.pas:75-150 (the geographic scanner). `i` mirrors the Pascal
+// source's own 1-based, mutating-string index exactly (including the i=0 access the first branch's
+// `dec(i)` can produce for a leading invalid character) via a sentinel out-of-range QChar that can
+// never equal a digit, space or comma -- matching what that out-of-bounds Delphi string access
+// reads in practice (the UnicodeString header, never literally a space).
 bool edit2Digit(const QString& input, bool isLat, double& result) {
     result = 0.0;
 
@@ -162,9 +159,9 @@ bool edit2Digit(const QString& input, bool isLat, double& result) {
     return ok;
 }
 
-// _GetZoneParts, u_CoordFromStringParser.pas:212-238 (§6.3.2). Spaces stripped, upper-cased,
-// leading digits are the zone number, the next character is the (unvalidated -- range-checked by
-// the caller) zone letter.
+// _GetZoneParts, u_CoordFromStringParser.pas:212-238. Spaces stripped, upper-cased, leading
+// digits are the zone number, the next character is the (unvalidated -- range-checked by the
+// caller) zone letter.
 void zoneParts(const QString& zone, int& zoneNumber, QChar& zoneLetter, bool& zoneNumberOverflow) {
     QString text = zone;
     text.remove(QLatin1Char(' '));
@@ -180,11 +177,10 @@ void zoneParts(const QString& zone, int& zoneNumber, QChar& zoneLetter, bool& zo
     if (i > 0) {
         bool digitsOk = false;
         zoneNumber = text.left(i).toInt(&digitsOk);
-        // D-25 (docs/parity/deviations.md): legacy's StrToInt raises on overflow (unhandled --
-        // TryStrToCoord(AX,AY,AZone) has no try/except, unlike Edit2Digit); the port fails cleanly
-        // instead of crashing. No valid zone (1..60 / 0..60) is anywhere near this range, so no
-        // acceptance/rejection outcome changes for any zone digit string that isn't already
-        // pathological.
+        // Legacy's StrToInt raises on overflow (unhandled -- TryStrToCoord(AX,AY,AZone) has no
+        // try/except, unlike Edit2Digit); the port fails cleanly instead of crashing. No valid
+        // zone (1..60 / 0..60) is anywhere near this range, so no acceptance/rejection outcome
+        // changes for any zone digit string that isn't already pathological.
         zoneNumberOverflow = !digitsOk;
     }
 
@@ -271,7 +267,7 @@ bool CoordFromStringParser::tryStrToCoord(const QString& s, LonLat& out) const {
         return false;
     }
 
-    // str_to_mgrs, Proj4.UTM.pas:368-432 (§6.3.3).
+    // str_to_mgrs, Proj4.UTM.pas:368-432.
     QString text = toUpperAscii(s);
     text.remove(QLatin1Char(' '));
     const qsizetype len = text.size();
@@ -310,8 +306,7 @@ bool CoordFromStringParser::tryStrToCoord(const QString& s, LonLat& out) const {
     // Legacy splits the remaining digits with integer division (floor for easting, the remainder --
     // ceil -- for northing): `Copy(VStr, 1+I, (VLen-I) div 2)` then `Copy(VStr, 1+I)` (rest of
     // string). Its final `Result := I = VLen` is a tautology given the digit-scan loop above
-    // already succeeded, so an ODD digit tail is *not* rejected in legacy despite what §6.3.3's
-    // prose says -- legacy wins; see docs/handoffs/T-0019B1.md "legacy-vs-spec conflicts".
+    // already succeeded, so an ODD digit tail is *not* rejected in legacy -- legacy wins.
     const qsizetype eastingLen = digitsLen / 2;
     const QString eastingStr = text.mid(prefixLen, eastingLen);
     const QString northingStr = text.mid(prefixLen + eastingLen);
@@ -319,9 +314,8 @@ bool CoordFromStringParser::tryStrToCoord(const QString& s, LonLat& out) const {
     bool northingOk = false;
     const int easting = eastingStr.toInt(&eastingOk);
     const int northing = northingStr.toInt(&northingOk);
-    // D-25 (docs/parity/deviations.md): legacy's StrToInt raises on overflow, unhandled here either
-    // (Proj4.UTM.pas:419,423); the port fails cleanly instead of converting a garbage 0 (B1 review
-    // finding, "For slice B2").
+    // Legacy's StrToInt raises on overflow, unhandled here either (Proj4.UTM.pas:419,423); the port
+    // fails cleanly instead of converting a garbage 0.
     if (!eastingOk || !northingOk) {
         return false;
     }

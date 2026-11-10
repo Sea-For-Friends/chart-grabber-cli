@@ -6,8 +6,8 @@
 // Ports: i_UsedMarksConfig.pas (IUsedMarksConfigStatic), u_UsedMarksConfigStatic.pas (TUsedMarksConfigStatic)
 //
 // The immutable snapshot of the used-marks settings: the three flags that decide which marks a marks layer
-// shows (spec marks.md section 2.11.5). UsedMarksConfig rebuilds it before every change notification and
-// publishes it through core::Snapshot, so readers take it without the element's lock.
+// shows. UsedMarksConfig rebuilds it before every change notification and publishes it through
+// core::Snapshot, so readers take it without the element's lock.
 
 #include <memory>
 

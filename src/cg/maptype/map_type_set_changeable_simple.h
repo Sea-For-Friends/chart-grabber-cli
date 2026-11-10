@@ -7,7 +7,7 @@
 //        IMapTypeSetChangeableSimpleInternal, which collapses into setStatic)
 //
 // Holder of the full map set. setStatic NEVER notifies, as in legacy: the body has no
-// DoChangeNotify call (u_MapTypeSetChangeableSimple.pas:76-92); see docs/parity/legacy-defects.md.
+// DoChangeNotify call (u_MapTypeSetChangeableSimple.pas:76-92)
 
 #include "cg/core/snapshot.h"
 #include "cg/maptype/map_type_set_changeable.h"

@@ -18,7 +18,6 @@ ReadWriteStateStaticPtr ReadWriteStateInternalByOther::getStatic() const {
     return other_ ? other_->getStatic() : default_;
 }
 
-// FEAT-GEO-033
 void ReadWriteStateInternalByOther::setOther(const ReadWriteStateChangeablePtr& state) {
     bool needNotify = false;
     {

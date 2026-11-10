@@ -23,7 +23,7 @@ const std::uint8_t* recordAt(QByteArrayView blob, std::size_t index) noexcept {
 
 // |value| < 360 on the 80-bit value itself, as the Win32 build compares the Extended before narrowing
 // (u_GeometryFromStreamSML.pas:82, :109). On Win64 the compare is on the rounded Double, so [360 - 2^-55,
-// 360) would be out of range there (open question 1). Only called for values that are not NaN.
+// 360) would be out of range there. Only called for values that are not NaN.
 bool isInsideLimit(const std::uint8_t* ext) noexcept {
     const Extended80Parts p = unpackExtended80(ext);
     if (p.exponent == 0) {
@@ -56,11 +56,11 @@ std::optional<LonLat> toPoint(const std::uint8_t* rec) noexcept {
     return LonLat{extended80ToDouble(x), extended80ToDouble(y)};
 }
 
-// SMLPointToDoublePointEx (:92-123). X NaN with a non-NaN Y is the hole marker (YIsValid true).
-// X in range with Y NaN: ASSUMPTION (open question 2). On Win32 an ordered x87 compare of a NaN raises when
-// the invalid-operation exception is unmasked (Delphi default) and the try/except returns "empty". On Win64
-// the compare runs on a Double after the conversion and whether it raises depends on generated code that is
-// not in the tree; if it does not, the legacy record is VALID with Y = NaN. The port returns "empty".
+// SMLPointToDoublePointEx (:92-123). X NaN with a non-NaN Y is the hole marker (YIsValid true). X in range
+// with Y NaN: ASSUMPTION. On Win32 an ordered x87 compare of a NaN raises when the invalid-operation
+// exception is unmasked (Delphi default) and the try/except returns "empty". On Win64 the compare runs on a
+// Double after the conversion and whether it raises depends on generated code that is not in the tree; if
+// it does not, the legacy record is VALID with Y = NaN. The port returns "empty".
 Decoded toPointEx(const std::uint8_t* rec) noexcept {
     const std::uint8_t* x = rec;
     const std::uint8_t* y = rec + kExtended80Size;

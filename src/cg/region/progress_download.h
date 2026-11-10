@@ -40,9 +40,7 @@ public:
                      std::function<void(int ms)> sleep = {});
     ~ProgressDownload(); // :251-261
 
-    // FEAT-REG-016
-    void checkSessionAutosave(); // :472-577
-    // FEAT-REG-017
+    void checkSessionAutosave();                     // :472-577
     void saveSession(const QString& targetFileName); // DoSaveSession :451-470
     void close();                                    // FormClose :586-595: cancel + delete the .bk
     [[nodiscard]] QString sessionFileName() const;   // the newest autosave file, empty if none

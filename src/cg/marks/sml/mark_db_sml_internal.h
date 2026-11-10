@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: Src/MarksDB/SML/i_MarkDbSmlInternal.pas (71): the three SML-internal interfaces
-// IMarkSMLInternal, IMarkCategorySMLInternal and IMarkDbSmlInternal (docs/specs/marks.md section 2.8.4).
-// Interfaces only; the classes are in mark_id.h, mark_category_sml_db_internal.h and the S5 mark db.
+// IMarkSMLInternal, IMarkCategorySMLInternal and IMarkDbSmlInternal. Interfaces only; the classes are in
+// mark_id.h, mark_category_sml_db_internal.h and the SML mark db.
 //
 // IMarkSMLInternal is the view of an SML mark object that its database uses to find its row (id, database
 // identity, category id, name, visibility). IMarkCategorySMLInternal is the same view of an SML category.

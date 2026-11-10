@@ -21,9 +21,9 @@ namespace {
 
 constexpr int kEmptyZoom = 255; // ports CEmptyZoomValue (:129)
 
-// Ports InvertY (MB:131-134), used for both Y and (never, for MBTiles) Z: `Result := (1 shl Z) -
-// Y - 1`. Reproduced bit-for-bit, including its two well-defined-in-Delphi/UB-in-C++ behaviors
-// (review finding 1, legacy-defects.md L-47): the compiled `SHL r32, CL` instruction masks the
+// Ports InvertY (MB:131-134), used for both Y and (never, for MBTiles) Z:
+// `Result := (1 shl Z) - Y - 1`. Reproduced bit-for-bit, including its two
+// well-defined-in-Delphi/UB-in-C++ behaviors: the compiled `SHL r32, CL` instruction masks the
 // shift count to 5 bits, and Delphi's overflow checks are off, so the subtraction wraps as
 // unsigned 32-bit arithmetic. Reachable when the enumeration path
 // (MbtilesEnumTilesStatement::result) feeds a `zoom_level` >= 31 straight from a foreign or
@@ -125,12 +125,11 @@ QByteArray formatString(const core::ContentTypeInfo& mainContentType) {
 }
 
 // Ports TMetadataConnectionStatementMBTiles.ExecUpsert (:686-703). Unlike the base's seven leaf
-// statement types (F1/F3's "a CACHED prepare failure degrades to a silent `false`"), this
-// statement raises unconditionally on ANY CheckPrepared failure -- fresh or cached -- because it
-// is not one of the flavour hooks that rework special-cased; it is MBTiles' own private helper,
-// calling RaiseSQLite3Error itself exactly like legacy's ExecUpsert does. Used both by CreateTables
-// (a fresh local statement, matching legacy's local VMetadataStmt) and by doUpdateMetadata (the
-// member metadataUpsertStmt_).
+// statement types (where a CACHED prepare failure degrades to a silent `false`), this statement
+// raises unconditionally on ANY CheckPrepared failure -- fresh or cached -- because it is not one
+// of the special-cased flavour hooks; it is MBTiles' own private helper, calling RaiseSQLite3Error
+// itself exactly like legacy's ExecUpsert does. Used both by CreateTables (a fresh local statement,
+// matching legacy's local VMetadataStmt) and by doUpdateMetadata (the member metadataUpsertStmt_).
 core::Result<void> execUpsert(ConnectionStatement& stmt, sqlite::SqliteDb& db, const QString& name,
                               const QString& value) {
     auto prepared = stmt.ensurePrepared(db);
@@ -419,8 +418,8 @@ core::Result<std::unique_ptr<MbtilesConnection>>
 MbtilesConnection::open(bool isReadOnly, QString fileName, core::ContentTypeInfo mainContentType,
                         const core::ContentTypeRegistry& contentTypeManager,
                         geo::ProjectionSetPtr projectionSet, SqliteFileInfoPtr existingInfo) {
-    // ConstructKey{} (review finding 4): only open() can name `ConstructKey` (private), so this is
-    // the only call site in the codebase that can construct a MbtilesConnection.
+    // ConstructKey{}: only open() can name `ConstructKey` (private), so this is the only call site
+    // in the codebase that can construct a MbtilesConnection.
     auto connection = std::make_unique<MbtilesConnection>(ConstructKey{}, isReadOnly, std::move(fileName),
                                                           std::move(mainContentType), contentTypeManager,
                                                           std::move(projectionSet));
@@ -456,8 +455,8 @@ core::Result<void> MbtilesConnection::createTables() {
     if (auto r = execUpsert(upsert, db(), QStringLiteral("name"), name); !r) {
         return r;
     }
-    // D row A, T-0311: legacy writes 'Created by SAS.Planet'
-    // (u_TileStorageSQLiteFileConnectionMBTiles.pas:275).
+    // A deviation from legacy: legacy writes 'Created by SAS.Planet'
+    // (u_TileStorageSQLiteFileConnectionMBTiles.pas:275); the port writes its own name.
     if (auto r = execUpsert(upsert, db(), QStringLiteral("description"),
                             QStringLiteral("Created by chart-grabber-cli ") +
                                 QLatin1String(core::versionString()));
@@ -635,7 +634,7 @@ core::Result<void> MbtilesConnection::updateMetadata(geo::PointI xy, quint8 zoom
     if (doUpdateCenter) {
         // MB:311 declares GetCenterStr's zoom parameter `ACenterZoom: Byte`; MB:437 passes
         // FMinZoom (Integer) into it, so a negative minZoom_ (a foreign/corrupt file's `minzoom`
-        // row, MB:407-409) is truncated to a Byte -- e.g. -1 becomes 255 (review finding 2).
+        // row, MB:407-409) is truncated to a Byte -- e.g. -1 becomes 255.
         const QString centerStr = centerToStr(bounds_, static_cast<quint8>(minZoom_));
         if (centerStr != str[1]) {
             if (auto r = doUpdateMetadata(QStringLiteral("center"), centerStr); !r) {

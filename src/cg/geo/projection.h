@@ -5,9 +5,9 @@
 #pragma once
 // Ports: i_Projection.pas (all 60 members), u_ProjectionBasic256x256.pas (1,910 lines)
 //
-// One IProjection = one projection type at one zoom, over the legacy 256x256 tile pyramid
-// (24 levels, 0..23). Every pixel/tile/relative/lon-lat conversion the app makes goes through
-// this interface. Immutable snapshot, no locks (docs/specs/geo.md §8.1).
+// One IProjection = one projection type at one zoom, over the legacy 256x256 tile pyramid (24
+// levels, 0..23). Every pixel/tile/relative/lon-lat conversion the app makes goes through
+// this interface. Immutable snapshot, no locks.
 
 #include "cg/core/hash.h"
 #include "cg/geo/geo_types.h"
@@ -107,8 +107,8 @@ public:
 using ProjectionPtr = std::shared_ptr<const IProjection>;
 
 // u_ProjectionBasic256x256.pas. `zoom < 24` and `tileSplitCode == 1` are the only two
-// Q_ASSERT-worthy programmer errors here (docs/specs/geo.md §8.2); every coordinate is clamped,
-// never asserted, because real maps do reach out-of-range paths through rounding (§2.5.3).
+// Q_ASSERT-worthy programmer errors here; every coordinate is clamped, never asserted, because
+// real maps do reach out-of-range paths through rounding.
 class ProjectionBasic256x256 final : public IProjection {
 public:
     ProjectionBasic256x256(core::HashValue hash, ProjectionTypePtr projectionType, quint8 zoom);
@@ -189,8 +189,8 @@ public:
 
 private:
     // "Internal" family (u_ProjectionBasic256x256.pas, private, `inline`): clamp silently, log
-    // qCDebug (never Q_ASSERT -- §2.5.3), used by every public conversion above. Unlike the public
-    // Validate* family they never cycle-wrap.
+    // qCDebug (never Q_ASSERT), used by every public conversion above. Unlike the public Validate*
+    // family they never cycle-wrap.
     void internalValidatePixelPos(PointI& p) const;
     void internalValidatePixelPosFloat(DoublePoint& p) const;
     void internalValidatePixelRect(RectI& r) const;

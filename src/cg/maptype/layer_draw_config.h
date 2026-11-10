@@ -5,8 +5,8 @@
 #pragma once
 // Ports: i_LayerDrawConfig.pas, u_LayerDrawConfig.pas
 //
-// Draw order of a layer map (spec maptype.md §2.7.2). Legacy takes the whole IZmpInfo and only
-// reads its LayerZOrder; the port takes that integer, since ZmpInfo does not exist yet.
+// Draw order of a layer map. Legacy takes the whole IZmpInfo and only reads its LayerZOrder; the
+// port takes that integer, since ZmpInfo does not exist yet.
 
 #include "cg/core/config_element.h"
 
@@ -14,7 +14,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class LayerDrawConfig final : public core::ConfigElement {
 public:
     explicit LayerDrawConfig(qint32 layerZOrderDefault);

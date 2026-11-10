@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports no legacy test (there is none): u_MarkDbImplORM.pas :1-750 (docs/specs/marks.md §2.9.10, §2.9.2,
-// §2.9.12) against a copy of tests/fixtures/marks/Marks.db3. Expected values are literals read back with
-// plain SQL on a second connection (WAL), never through the unit's own caches. This ticket implements no
-// feature (Features: — in its header).
+// Ports no legacy test (there is none): u_MarkDbImplORM.pas :1-750 against a copy of
+// tests/fixtures/marks/Marks.db3. Expected values are literals read back with plain SQL on a second
+// connection (WAL), never through the unit's own caches.
 //
 // The transaction object is wrapped in the shared SpyTransaction (mark_test_util.h): it records start /
 // commit / rollback, counts the BEGINs (a start() whose record is `isInternal` is the call that executes
@@ -84,7 +83,7 @@ private:
     tu::SpyTransaction tx_;
 };
 
-// An item whose geometry is null (legacy allows it; the landed VectorDataItem does not).
+// An item whose geometry is null (legacy allows it; VectorDataItem does not).
 class NoGeometryItem final : public v::IVectorDataItem {
 public:
     explicit NoGeometryItem(v::VectorDataItemMainInfoPtr info) : info_(std::move(info)) {}
@@ -184,7 +183,7 @@ v::VectorDataItemPtr internalItem(qint64 id, quintptr dbId, const v::CategoryPtr
 } // namespace
 
 // ---------------------------------------------------------------------------------------------------------------
-// ormMarkRecFromMark (:409-529): the appearance mapping of §2.9.2, one table
+// ormMarkRecFromMark (:409-529): the appearance mapping, one table
 // ---------------------------------------------------------------------------------------------------------------
 
 namespace {
@@ -702,7 +701,7 @@ TEST(MarkDbImplORM, UpdateMarkListOldListOfMarkIds) {
     const m::MarkList stored = rig.db->updateMarkList(
         nullptr, list({rig.newPoint(QStringLiteral("a"), town), rig.newPoint(QStringLiteral("b"), town)}));
     ASSERT_TRUE(stored);
-    // the old list holds mark ids (decision C3): the id comes from the IMarkInternalORM of the id object
+    // the old list holds mark ids: the id comes from the IMarkInternalORM of the id object
     auto ids = std::make_shared<std::vector<m::MarkIdPtr>>();
     for (const auto& item : *stored) {
         ids->push_back(std::dynamic_pointer_cast<const m::IMarkId>(item->mainInfo()));
@@ -712,7 +711,7 @@ TEST(MarkDbImplORM, UpdateMarkListOldListOfMarkIds) {
                                           list({rig.newPoint(QStringLiteral("A"), town), (*stored)[1]}))),
               "1:A,2:b");
     EXPECT_EQ(markNames(rig), (QStringList{"1|1|A", "2|1|b"}));
-    // new list nil: delete by id (W-4), no result
+    // new list nil: delete by id, no result
     rig.notifications = 0;
     EXPECT_EQ(show(rig.db->updateMarkList(m::MarkOrIdList(m::MarkIdList(ids)), nullptr)), "<nil>");
     EXPECT_TRUE(markNames(rig).isEmpty());
@@ -833,7 +832,7 @@ TEST(MarkDbImplORM, UpdateMarkListCommitsEveryThousandItems) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // threads: only proves that ThreadSanitizer is quiet while two threads use the readers and a writer (every
-// public method takes the write lock, §2.9.12); it asserts no ordering.
+// public method takes the write lock); it asserts no ordering.
 // ---------------------------------------------------------------------------------------------------------------
 
 TEST(MarkDbImplORM, ConcurrentCallsAreSerialised) {
@@ -863,7 +862,7 @@ TEST(MarkDbImplORM, ConcurrentCallsAreSerialised) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// :752-1214 (T-0125, O17): id lists, subsets, visibility, text search. One populated database:
+// :752-1214: id lists, subsets, visibility, text search. One populated database:
 //   mark 1 "Город"     category 1 "Город"  point (10,10)  description "Описание"
 //   mark 2 "Улица"     category 1          point (20,20)  HIDDEN
 //   mark 3 "Alpha one" category 2 "Улица"  point (30,30)
@@ -1039,7 +1038,7 @@ TEST(MarkDbImplORM, MarkSubsetMarksAreFullMarks) {
 }
 
 // :806-837: Capacity := VCount on a builder that already holds marks; a capacity below the count raises
-// EListError in every build (TList.SetCapacity), and the landed builder does the same.
+// EListError in every build (TList.SetCapacity), and the builder does the same.
 TEST(MarkDbImplORM, MarkSubsetByCategoryListWithALaterSmallerCategoryThrowsLikeLegacy) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Populated p;
@@ -1065,7 +1064,7 @@ struct RectRow {
 };
 } // namespace
 
-// :911-982, spec 2.9.9
+// :911-982
 TEST(MarkDbImplORM, MarkSubsetsInARectangle) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     const g::DoubleRect world{0, 50, 50, 0};
@@ -1113,7 +1112,7 @@ TEST(MarkDbImplORM, MarkSubsetsInARectangle) {
          {},
          true,
          {kAlpha}},
-        // spec 2.9.9: nothing left -> empty id list -> every mark
+        // Nothing left -> empty id list -> every mark
         {"list of foreign entries only: every mark",
          world,
          [](Populated&) { return categories({tu::smlCategory(5, kDbId), tu::smlCategory(6, kDbId)}); },
@@ -1166,8 +1165,8 @@ TEST(MarkDbImplORM, VisibilityGetters) {
     EXPECT_FALSE(p.db->markVisibleById((*ids)[1]));
 }
 
-// §2.9.12: the two getters take no lock (:988-1010). Latches only; the overlap is asserted: the getters
-// return while another thread holds the write lock, and that thread is still inside it when they return.
+// The two getters take no lock (:988-1010). Latches only; the overlap is asserted: the getters return
+// while another thread holds the write lock, and that thread is still inside it when they return.
 TEST(MarkDbImplORM, VisibilityGettersNeedNoLock) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Populated p;
@@ -1209,7 +1208,7 @@ TEST(MarkDbImplORM, SetAllMarksInCategoryVisible) {
     EXPECT_EQ(p.views(), (QStringList{"1|1|0", "2|1|0"}));
     EXPECT_EQ(p.notifications, 1);
     p.db->setAllMarksInCategoryVisible(p.a, true);
-    EXPECT_EQ(p.views(), (QStringList{"1|1|1", "2|1|1"})); // the rows survive (LC-19)
+    EXPECT_EQ(p.views(), (QStringList{"1|1|1", "2|1|1"})); // the rows survive
     EXPECT_EQ(p.notifications, 2);
     // a category that is not of this backend, without an id, absent: nothing
     p.db->setAllMarksInCategoryVisible(std::make_shared<const v::Category>(kTown), false);
@@ -1315,7 +1314,7 @@ TEST(MarkDbImplORM, SetMarkVisibleByIdListUsesOneTransaction) {
     p.db->setMarkVisibleByIdList(nullptr, true);
     p.db->setMarkVisibleByIdList(idList({}), true);
     EXPECT_TRUE(p.spy().events.isEmpty());
-    // marks (not ids) are skipped by the probe (spec C3 / LC-20): nothing changes, but the transaction runs
+    // marks (not ids) are skipped by the probe: nothing changes, but the transaction runs
     p.db->setMarkVisibleByIdList(list({p.m1, p.m2}), true);
     EXPECT_EQ(p.spy().begins, 1);
     EXPECT_EQ(p.views(), (QStringList{"1|1|0", "2|1|0", "3|2|1", "4|3|1"}));
@@ -1420,7 +1419,7 @@ TEST(MarkDbImplORM, FindMarksByNameDescriptionAndMaxCount) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     const FindRow rows[] = {
         {"name", QString::fromUtf8("город"), 0, true, false, {kTown}},
-        // the text is lower-cased with AnsiLowerCase (D-97) before MATCH
+        // the text is lower-cased with AnsiLowerCase before MATCH
         {"upper-case Cyrillic", QString::fromUtf8("ГОРОД"), 0, true, false, {kTown}},
         {"hidden mark found", QString::fromUtf8("улица"), 0, true, false, {kStreet}},
         {"hidden mark dropped", QString::fromUtf8("улица"), 0, false, false, {}},

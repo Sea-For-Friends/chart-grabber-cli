@@ -5,9 +5,7 @@
 #pragma once
 // Ports: u_GeometryFunc.pas:734-1016 (CalcTileCountIn*, TryProjectedPolygonToTileRect,
 // SplitProjectedPolygon), i_TileIteratorFactory.pas, u_TileIteratorFactory.pas,
-// i_TileIteratorDataProvider.pas, u_TileIteratorDataProvider.pas. docs/specs/geo.md §4.3.
-//
-// FEAT-GEO-015
+// i_TileIteratorDataProvider.pas, u_TileIteratorDataProvider.pas.
 
 #include "cg/core/sync.h"
 #include "cg/geo/geo_types.h"
@@ -39,7 +37,7 @@ class GeometryProjectedFactory;
 
 // u_GeometryFunc.pas:802-823. A plain sum over parts for a multi-polygon -- double-counts tiles
 // shared by overlapping parts, because TileIteratorByPolygon (tile_iterator.h) emits each tile
-// once. Legacy behavior, kept; docs/parity/deviations.md D-5.
+// once. Legacy behavior, kept.
 [[nodiscard]] qint64 calcTileCountInProjectedPolygon(const IProjection& projection,
                                                      const IGeometryProjectedPolygon& polygon);
 
@@ -53,7 +51,7 @@ class GeometryProjectedFactory;
 
 struct PolygonSplit {
     std::vector<PointI> startPoints;
-    std::vector<qint64> tilesCount; // D-6: qint64 throughout; legacy's TIntegerDynArray is 32-bit.
+    std::vector<qint64> tilesCount; // qint64 throughout; legacy's TIntegerDynArray is 32-bit.
 };
 
 // u_GeometryFunc.pas:950-1016. Brute force by design: runs the whole iteration once (through the
@@ -84,9 +82,10 @@ private:
 
 // Ports ITileIteratorDataProvider / TTileIteratorDataProvider (u_TileIteratorDataProvider.pas):
 // the "split this region across N workers" object region/net consume. tilesTotal() is lazy and
-// memoised (GetTilesTotal); the per-part split is lazy and memoised together (GetStartPoint /
-// GetTilesToProcess / GetPartsCount all trigger the one _DoPrepareSplit). Thread-safe (§8): a
-// shared_mutex stands in for legacy's IReadWriteSync, guarding the same two memoised computations.
+// memoised (GetTilesTotal); the per-part split is lazy and memoised together
+// (GetStartPoint / GetTilesToProcess / GetPartsCount all trigger the one _DoPrepareSplit).
+// Thread-safe: a shared_mutex stands in for legacy's IReadWriteSync, guarding the same two
+// memoised computations.
 class TileIteratorDataProvider {
 public:
     TileIteratorDataProvider(ProjectionPtr projection,

@@ -155,7 +155,7 @@ using TablesInfo = QHash<QString, QStringList>;
 }
 
 // Ports TryParseSasGisJson (:376-389). SO() of text that is not JSON is nil in legacy and the next
-// call on it raises; that is an error Result here (L-103).
+// call on it raises; that is an error Result here.
 [[nodiscard]] core::Result<void> parseSasGisJson(const QString& json, SqliteFileMetadata& metadata) {
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &parseError);
@@ -178,7 +178,6 @@ using TablesInfo = QHash<QString, QStringList>;
 
 } // namespace
 
-// FEAT-STO-022
 core::Result<std::optional<SqliteFileFormat>> detectSqliteFileFormat(const QString& path) {
     auto db = SqliteDb::open(path, SqliteDb::OpenMode::ReadOnly);
     if (!db) {

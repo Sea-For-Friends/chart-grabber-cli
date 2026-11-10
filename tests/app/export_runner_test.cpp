@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/app/export_runner (new code; inherits RegionProcess/u_ExportProviderAbstract.pas:182-202
-// and the cancel/close behaviour of Export/MBTiles/u_ExportTaskToMBTiles.pas:220-278). T-0192.
-// No FEAT tag: FEAT-REG-069 is T-0172 / T-0183's.
+// and the cancel/close behaviour of Export/MBTiles/u_ExportTaskToMBTiles.pas:220-278). The export task
+// itself has its own tests.
 //
 // Rig: one real AppContext (tile-iterator factory), maps over a RamTileStorage holding the fixture PNG at the
 // z2 tiles (1,1) (2,1) (1,2) of the area lon -80..80, lat 50..-50 (z2 tiles x 1..2, y 1..2 = 4 tiles, one
@@ -279,12 +279,12 @@ protected:
         s.asOverlay = overlay;
         s.outFile = out_;
         s.name = QStringLiteral("Карта");
-        s.attribution = QStringLiteral("Автор"); // T-0222: resolveJob derives it, the runner writes it
-        s.zooms = {2};                           // T-0245: the effective list, as job().zooms
+        s.attribution = QStringLiteral("Автор"); // resolveJob derives it, the runner writes it
+        s.zooms = {2};                           // The effective list, as job().zooms
         return s;
     }
 
-    // T-0249: a map that answers a name (sourceName), for the snapshot description default.
+    // A map that answers a name (sourceName), for the snapshot description default.
     static std::shared_ptr<region::test::FakeMapType> named(std::shared_ptr<region::test::FakeMapType> map,
                                                             const QString& name) {
         static QTemporaryDir languageDir;
@@ -365,8 +365,8 @@ private:
 
 } // namespace
 
-// Proof 1: out exists, only out is left, the row count is the stored tiles of the job zooms (3 of the 4 tiles
-// of the area; the z3 tile is outside job.zooms), a base layer with the job texts.
+// Out exists, only out is left, the row count is the stored tiles of the job zooms (3 of the 4 tiles of the
+// area; the z3 tile is outside job.zooms), a base layer with the job texts.
 TEST_F(ExportRunnerTest, SuccessRenamesThePartFileAndCountsTheStoredTiles) {
     const ExportResult r = run(source(makeMap({{1, 1}, {2, 1}, {1, 2}})), job());
     ASSERT_EQ(r.outcome, ExportOutcome::Written) << qPrintable(r.error);
@@ -380,10 +380,10 @@ TEST_F(ExportRunnerTest, SuccessRenamesThePartFileAndCountsTheStoredTiles) {
     EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='description'"),
               QStringLiteral("Описание"));
     EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='attribution'"), QStringLiteral("Автор"));
-    EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='scheme'"), QStringLiteral("tms")); // C-4
+    EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='scheme'"), QStringLiteral("tms"));
 }
 
-// T-0245: the zooms exported are the ones of the resolved source, not job.zooms (job: z2; source: z3 only).
+// The zooms exported are the ones of the resolved source, not job.zooms (job: z2; source: z3 only).
 TEST_F(ExportRunnerTest, ExportsTheZoomsOfTheResolvedSource) {
     ResolvedSource s = source(makeMap({{1, 1}, {2, 1}, {1, 2}}));
     s.zooms = {3};
@@ -393,7 +393,7 @@ TEST_F(ExportRunnerTest, ExportsTheZoomsOfTheResolvedSource) {
     EXPECT_EQ(scalar(out_, "SELECT max(zoom_level) FROM tiles"), QStringLiteral("3"));
 }
 
-// T-0222: the runner writes the attribution of the source, not of the job; an empty one stays empty.
+// The runner writes the attribution of the source, not of the job; an empty one stays empty.
 TEST_F(ExportRunnerTest, AttributionIsTheOneOfTheResolvedSource) {
     Job j = job();
     j.attribution = QStringLiteral("Job text"); // not read by the runner
@@ -420,8 +420,8 @@ TEST_F(ExportRunnerTest, EmptyAttributionIsWrittenEmpty) {
     EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='attribution'"), QString());
 }
 
-// T-0203: with --progress=lines the export writes `phase export` first and ends with permille 1000 after the
-// written file; every record is a whole `progress export` line with a permille in 0..1000.
+// With --progress=lines the export writes `phase export` first and ends with permille 1000 after the written
+// file; every record is a whole `progress export` line with a permille in 0..1000.
 TEST_F(ExportRunnerTest, LinesModeWritesThePhaseThenProgressEndingWith1000) {
     Stream out;
     Stream err;
@@ -464,7 +464,6 @@ TEST_F(ExportRunnerTest, AnOverlaySourceIsWrittenAsAnOverlayLayer) {
     EXPECT_EQ(scalar(out_, "SELECT value FROM metadata WHERE name='type'"), QStringLiteral("overlay"));
 }
 
-// Proof 2 (C-10)
 TEST_F(ExportRunnerTest, AnEmptyResultIsReportedAndLeavesNoFile) {
     const ExportResult r = run(source(makeMap({})), job());
     EXPECT_EQ(r.outcome, ExportOutcome::Empty);
@@ -473,7 +472,7 @@ TEST_F(ExportRunnerTest, AnEmptyResultIsReportedAndLeavesNoFile) {
     EXPECT_TRUE(files().isEmpty()) << qPrintable(files().join(','));
 }
 
-// Proof 3 and 5 (old out untouched): the termination fires at the 2nd lookup. The hook runs on the export
+// The old output stays untouched: the termination fires at the 2nd lookup. The hook runs on the export
 // thread and waits for the console clock, which only the calling thread's progress line reaches, after
 // request_stop().
 TEST_F(ExportRunnerTest, ATerminationDuringTheExportStopsTheTaskAndDeletesEveryFile) {
@@ -506,12 +505,12 @@ TEST_F(ExportRunnerTest, ATerminationDuringTheExportStopsTheTaskAndDeletesEveryF
     EXPECT_EQ(storage_->calls(), 2); // the task saw the stop before the 3rd lookup
     EXPECT_EQ(files(), QStringList{QStringLiteral("o.mbtiles")});
     EXPECT_EQ(readFile(out_), QByteArray("OLD"));
-    // The progress line only (T-0267): the interrupted run keeps its reached ratio (no 100 block finished),
-    // and the final line equal to the printed one is not repeated.
+    // The progress line only: the interrupted run keeps its reached ratio (no 100 block finished), and the
+    // final line equal to the printed one is not repeated.
     EXPECT_EQ(err.text(), QByteArray("Карта  export  0%\n"));
 }
 
-// T-0267: the task refreshes the ratio every 100 tiles only; a completed export ends with 100%, once.
+// The task refreshes the ratio every 100 tiles only; a completed export ends with 100%, once.
 TEST_F(ExportRunnerTest, NonTerminalFinalLineOfACompletedExportIs100) {
     Stream out;
     Stream err;
@@ -522,7 +521,6 @@ TEST_F(ExportRunnerTest, NonTerminalFinalLineOfACompletedExportIs100) {
     EXPECT_EQ(err.text(), QByteArray("Карта  export  100%\n"));
 }
 
-// Proof 4
 TEST_F(ExportRunnerTest, AStalePartFileAndItsSideFilesAreReplacedNotAppendedTo) {
     writeFile(out_ + QStringLiteral(".part"), "junk, not a database");
     writeFile(out_ + QStringLiteral(".part-journal"), "junk journal");
@@ -535,7 +533,7 @@ TEST_F(ExportRunnerTest, AStalePartFileAndItsSideFilesAreReplacedNotAppendedTo) 
     EXPECT_EQ(scalar(out_, "SELECT count(*) FROM tiles"), QStringLiteral("2"));
 }
 
-// Proof 5, success half: the old file is replaced.
+// Success half: the old file is replaced.
 TEST_F(ExportRunnerTest, WithOverwriteAnExistingOutIsReplacedAfterASuccessfulExport) {
     writeFile(out_, "OLD");
     Job j = job();
@@ -546,7 +544,7 @@ TEST_F(ExportRunnerTest, WithOverwriteAnExistingOutIsReplacedAfterASuccessfulExp
     EXPECT_EQ(scalar(out_, "SELECT count(*) FROM tiles"), QStringLiteral("2"));
 }
 
-// Spec app-cli.md 1.5: the replacing rename leaves the new content and no .part.
+// The replacing rename leaves the new content and no .part.
 TEST_F(ExportRunnerTest, WithOverwriteTheRenameReplacesTheOldFileAndLeavesNoPart) {
     writeFile(out_, "OLD");
     Job j = job();
@@ -557,7 +555,7 @@ TEST_F(ExportRunnerTest, WithOverwriteTheRenameReplacesTheOldFileAndLeavesNoPart
     EXPECT_EQ(files(), QStringList{QStringLiteral("o.mbtiles")});
 }
 
-// T-0172 caller contract: a bare relative out name (`--out o.mbtiles`) is made absolute.
+// Caller contract: a bare relative out name (`--out o.mbtiles`) is made absolute.
 TEST_F(ExportRunnerTest, ABareRelativeOutNameIsWrittenInTheCurrentDirectory) {
     const auto map = makeMap({{1, 1}}); // before the chdir: the fixture is read by a relative path
     const QString oldCwd = QDir::currentPath();
@@ -569,7 +567,7 @@ TEST_F(ExportRunnerTest, ABareRelativeOutNameIsWrittenInTheCurrentDirectory) {
     EXPECT_EQ(files(), QStringList{QStringLiteral("o.mbtiles")});
 }
 
-// Proof 5, failure half: the directory cannot be written after the checks.
+// Failure half: the directory cannot be written after the checks.
 TEST_F(ExportRunnerTest, AnUnwritableDirectoryFailsAndLeavesTheOldOutUntouched) {
     if (cg::core::platform::directoryPermissionsIgnored()) {
         GTEST_SKIP() << "root ignores directory permissions";
@@ -590,7 +588,7 @@ TEST_F(ExportRunnerTest, AnUnwritableDirectoryFailsAndLeavesTheOldOutUntouched) 
     EXPECT_EQ(readFile(out_), QByteArray("OLD"));
 }
 
-// The file appeared since the checks and overwrite is off: not replaced (ticket step 5).
+// The file appeared since the checks and overwrite is off: not replaced.
 TEST_F(ExportRunnerTest, AnExistingOutWithoutOverwriteFailsAndIsKept) {
     writeFile(out_, "OLD");
     const ExportResult r = run(source(makeMap({{1, 1}})), job());
@@ -600,7 +598,7 @@ TEST_F(ExportRunnerTest, AnExistingOutWithoutOverwriteFailsAndIsKept) {
     EXPECT_EQ(readFile(out_), QByteArray("OLD"));
 }
 
-// Proof 6: a storage error ends the export (the writer is closed, T-0172); the error text is returned.
+// A storage error ends the export (the writer is closed); the error text is returned.
 TEST_F(ExportRunnerTest, AStorageErrorFailsWithItsTextAndDeletesEveryFile) {
     writeFile(out_, "OLD");
     auto map = makeMap({{1, 1}, {2, 1}, {1, 2}});
@@ -614,8 +612,8 @@ TEST_F(ExportRunnerTest, AStorageErrorFailsWithItsTextAndDeletesEveryFile) {
     EXPECT_EQ(readFile(out_), QByteArray("OLD"));
 }
 
-// T-0249 (Q-W3): the default attribution's {year} is the snapshot's UTC year; a static source or an unknown
-// time takes the current UTC year; --attribution is verbatim.
+// The default attribution's {year} is the snapshot's UTC year; a static source or an unknown time takes the
+// current UTC year; --attribution is verbatim.
 TEST_F(ExportRunnerTest, YearOfTheDefaultAttributionIsTheSnapshotsOrTheCurrent) {
     const QString current = QString::number(QDateTime::currentDateTimeUtc().date().year());
     ResolvedSource s = source(named(makeMap({{1, 1}}), QStringLiteral("Wx")));
@@ -653,8 +651,8 @@ TEST_F(ExportRunnerTest, YearOfTheDefaultAttributionIsTheSnapshotsOrTheCurrent) 
     EXPECT_EQ(scalar(out_, sql), QStringLiteral("X {year}"));
 }
 
-// T-0249 (Q-W4): the default description of a snapshot export; --description wins; static stays empty;
-// the apostrophe of a derived text is removed with a warning (S-11).
+// The default description of a snapshot export; --description wins; static stays empty; the apostrophe
+// of a derived text is removed with a warning.
 TEST_F(ExportRunnerTest, DefaultDescriptionOfASnapshotExportNamesTheSnapshot) {
     const QByteArray sql = "SELECT value FROM metadata WHERE name='description'";
     ResolvedSource s = source(named(makeMap({{1, 1}}), QStringLiteral("Wx Radar")));
@@ -690,7 +688,7 @@ TEST_F(ExportRunnerTest, DefaultDescriptionOfASnapshotExportNamesTheSnapshot) {
         << err.text().toStdString();
 }
 
-// T-0327: the default MBTiles name of a snapshot export carries the frame time; --name wins; static
+// The default MBTiles name of a snapshot export carries the frame time; --name wins; static
 // unchanged.
 TEST_F(ExportRunnerTest, DefaultNameOfASnapshotExportCarriesTheFrameTime) {
     const QByteArray sql = "SELECT value FROM metadata WHERE name='name'";
@@ -727,8 +725,8 @@ TEST_F(ExportRunnerTest, DefaultNameOfASnapshotExportCarriesTheFrameTime) {
     EXPECT_EQ(scalar(out_, sql), QStringLiteral("Карта"));
 }
 
-// T-0330: an overlay from a snapshot source carries the frame time in its name too; --name names the base
-// only (resolveJob), so it does not stop the overlay; a static overlay is unchanged.
+// An overlay from a snapshot source carries the frame time in its name too; --name names the base only
+// (resolveJob), so it does not stop the overlay; a static overlay is unchanged.
 TEST_F(ExportRunnerTest, OverlayOfASnapshotSourceCarriesTheFrameTimeInItsName) {
     const QByteArray sql = "SELECT value FROM metadata WHERE name='name'";
     ResolvedSource s = source(makeMap({{1, 1}}), true);
@@ -755,8 +753,7 @@ TEST_F(ExportRunnerTest, OverlayOfASnapshotSourceCarriesTheFrameTimeInItsName) {
     EXPECT_EQ(scalar(out_, sql), QStringLiteral("Слой"));
 }
 
-// T-0330: a static base with a snapshot overlay: the base is unchanged, the overlay has the overlay's frame
-// time.
+// A static base with a snapshot overlay: the base is unchanged, the overlay has the overlay's frame time.
 TEST_F(ExportRunnerTest, StaticBaseKeepsItsNameBesideASnapshotOverlay) {
     const QByteArray sql = "SELECT value FROM metadata WHERE name='name'";
     ResolvedSource base = source(makeMap({{1, 1}}));

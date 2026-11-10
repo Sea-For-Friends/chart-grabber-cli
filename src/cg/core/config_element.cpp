@@ -40,14 +40,14 @@ ConfigElement::WriteGuard::~WriteGuard() {
         owner->dirty_.load(std::memory_order_relaxed)) {
         // Ports the recursive-lock trick of TConfigDataElementWithStaticBase.DoBeforeChangeNotify
         // (u_ConfigDataElementBase.pas:221-238): rebuild derived/published state here, still under
-        // the write lock, instead of re-entering it (idioms.md 6; core.md 2.16). Record that it
-        // ran so finishWrite() -- which fires unconditionally, including for the BatchToken path
-        // that never takes this lock at all -- does not call it a second time (rework finding 2).
+        // the write lock, instead of re-entering it. Record that it ran so finishWrite() -- which
+        // fires unconditionally, including for the BatchToken path that never takes this lock at
+        // all -- does not call it a second time.
         //
-        // T-0094: the record is stored BEFORE the hook runs; setChanged() (a child's change landing
-        // during or after the hook, before finishWrite) clears it, so finishWrite() re-runs the
-        // hook and the notification never publishes state older than a change that preceded it.
-        // Legacy gets this by running the hook at notification time, after the counter reached 0
+        // The record is stored BEFORE the hook runs; setChanged() (a child's change landing during
+        // or after the hook, before finishWrite) clears it, so finishWrite() re-runs the hook and
+        // the notification never publishes state older than a change that preceded it. Legacy gets
+        // this by running the hook at notification time, after the counter reached 0
         // (u_ConfigDataElementBase.pas:163-173, u_ChangeableBase.pas:87-95). No lock is added: only
         // atomics changed, so the lock order (element lock -> a child's lock) is untouched.
         owner->beforeHookRun_.store(true, std::memory_order_release);
@@ -59,25 +59,25 @@ ConfigElement::WriteGuard::~WriteGuard() {
 
 void ConfigElement::finishWrite() {
     // Ports StartNotify: decrement, and only at 0 with the dirty flag set, fire once
-    // (u_ConfigDataElementBase.pas:163-178). Firing happens after the lock is released (core.md 3,
-    // ConfigElement row): a slot may observe a newer state than the one that triggered it, which
-    // is legacy behavior, not a bug to "fix" here.
+    // (u_ConfigDataElementBase.pas:163-178). Firing happens after the lock is released: a slot may
+    // observe a newer state than the one that triggered it, which is legacy behavior, not a bug to
+    // "fix" here.
     //
     // doBeforeChangeNotify() -> before -> doChangeNotify -> changed -> doAfterChangeNotify -> after
     // (u_ChangeableBase.pas:87-95). This is the ONLY place a BatchToken-terminated batch runs the
-    // before-hook, since BatchToken never takes the lock (rework finding 2); beforeHookRun_ avoids
-    // calling it again when WriteGuard's own pre-pass above already ran it under the lock.
+    // before-hook, since BatchToken never takes the lock; beforeHookRun_ avoids calling it again
+    // when WriteGuard's own pre-pass above already ran it under the lock.
     const int depth = batchDepth_.fetch_sub(1, std::memory_order_acq_rel) - 1;
     if (depth == 0 && dirty_.exchange(false, std::memory_order_acq_rel)) {
         {
-            // T-0094 part 2: legacy rebuilds under LockWrite (u_ConfigDataElementBase.pas:221-238),
-            // so rebuilds are serialised with writers and with each other. Here the batch is at 0,
-            // so no WriteGuard is in flight; take the element's own lock for the hook only, and
-            // release it BEFORE any subscriber runs (idioms.md 6). The record is consumed under
-            // the lock, so a writer's fresh pre-pass that ran meanwhile is honoured.
-            // Lock order (unchanged, now also reached from here): element lock -> a hook's
-            // private mutex (MapTypeGuiConfigList::rebuildMutex_) -> a child's read lock.
-            // Precondition: the caller must not hold this element's ReadGuard (non-recursive).
+            // Legacy rebuilds under LockWrite (u_ConfigDataElementBase.pas:221-238), so rebuilds
+            // are serialised with writers and with each other. Here the batch is at 0, so no
+            // WriteGuard is in flight; take the element's own lock for the hook only, and release
+            // it BEFORE any subscriber runs. The record is consumed under the lock, so a writer's
+            // fresh pre-pass that ran meanwhile is honoured. Lock order (unchanged, now also
+            // reached from here): element lock -> a hook's private mutex
+            // (MapTypeGuiConfigList::rebuildMutex_) -> a child's read lock. Precondition: the
+            // caller must not hold this element's ReadGuard (non-recursive).
             const WriteLock hookLock(mutex_);
             if (!beforeHookRun_.exchange(false, std::memory_order_acq_rel)) {
                 doBeforeChangeNotify();

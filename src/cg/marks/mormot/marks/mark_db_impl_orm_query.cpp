@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORM.pas :752-1214 (docs/specs/marks.md §2.9.10, §2.9.12,
-// §2.9.9). Ticket T-0125 (O17).
+// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORM.pas :752-1214.
 //
 // Lock scope is as in legacy, method by method: the two visibility getters take no lock; the id list and
 // the subset readers lock only around the helper's record query (the marks are built after unlocking); the
@@ -45,7 +44,7 @@ const IMarkInternalORM* internalOfId(const MarkIdPtr& mark) {
 }
 
 // Supports(AMarkList.Items[I], IMarkInternalORM) of :1119, :1157: the element itself, no MainInfo fallback
-// (spec §2 preamble C3, LC-20): a mark (IVectorDataItem) fails the probe unless the object is also an id.
+// (a legacy defect, reproduced): a mark (IVectorDataItem) fails the probe unless the object is also an id.
 const IMarkInternalORM* internalOfElement(const MarkOrId& element) {
     return std::visit([](const auto& p) { return dynamic_cast<const IMarkInternalORM*>(p.get()); }, element);
 }
@@ -96,7 +95,7 @@ void MarkDbImplORM::getMarkSubset(qint64 categoryId, bool includeHiddenMarks,
     }
     if (count > 0) {
         // Legacy sets Capacity := VCount on a builder that may hold marks of an earlier category already; a
-        // capacity below the count raises EListError in every build (TList), and so does the landed builder.
+        // capacity below the count raises EListError in every build (TList), and so does the builder.
         resultList.setCapacity(count);
         for (int i = 0; i < count; ++i) {
             resultList.add(factory_->createMark(records[static_cast<std::size_t>(i)]));

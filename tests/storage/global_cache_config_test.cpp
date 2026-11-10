@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-036. Ports i_GlobalCacheConfig.pas, u_GlobalCacheConfig.pas;
-// docs/specs/storage.md §2.10.4's "Path composition" (:846-867)
+// Ports i_GlobalCacheConfig.pas, u_GlobalCacheConfig.pas
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/storage/global_cache_config.h"
@@ -71,8 +70,8 @@ TEST(GlobalCacheConfig, SetDefCacheAcceptsAWhitelistedId) {
 
 TEST(GlobalCacheConfig, SetDefCacheSilentlyRejectsGmBingAndOsmAnd) {
     // u_GlobalCacheConfig.pas:SetDefCache's whitelist does NOT include GM_Bing (42) or OsmAnd
-    // (44), even though they are ordinary Linux-supported folder types -- docs/specs/storage.md
-    // :864-865 undercounts this (only names Ge/GeTerrain/GeoCacher/SqliteOruxMaps as rejected).
+    // (44), even though they are ordinary Linux-supported folder types; a reading that rejects
+    // only Ge/GeTerrain/GeoCacher/SqliteOruxMaps would undercount this.
     GlobalCacheConfig config(makeAbsoluteRoot());
     config.setDefCache(CacheTypeId::GmBing);
     EXPECT_EQ(config.defCache(), CacheTypeId::Sqlite);

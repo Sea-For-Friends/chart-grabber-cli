@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-032 (model only). Ports Src/MapVersion (u_MapVersionInfo.pas,
-// u_MapVersionFactorySimpleString.pas, u_MapVersionRequest.pas); docs/specs/storage.md §2.2
+// The model only. Ports Src/MapVersion (u_MapVersionInfo.pas, u_MapVersionFactorySimpleString.pas,
+// u_MapVersionRequest.pas)
 #include "cg/core/hash.h"
 #include "cg/storage/map_version.h"
 
@@ -72,8 +72,8 @@ TEST(MapVersion, RequestShowOtherVersionsAlwaysValid) {
 }
 
 TEST(MapVersion, RequestNullBaseVersionOnlyNullVersionIsValid) {
-    // Deviation D-1: legacy crashes dereferencing a null FBaseVersion here; the port treats it as
-    // "only the empty/unversioned request matches".
+    // Deviation: legacy crashes dereferencing a null FBaseVersion here; the port treats it as "only
+    // the empty/unversioned request matches".
     MapVersionRequest req; // baseVersion stays null, showOtherVersions stays false
     EXPECT_TRUE(req.isValid(nullptr));
     EXPECT_FALSE(req.isValid(std::make_shared<const MapVersionInfo>(QStringLiteral("x"), kNoHash)));

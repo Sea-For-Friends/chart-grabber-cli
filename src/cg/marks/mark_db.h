@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkDb.pas  (the implementation is the facade mark_db_by_impl, ticket M5a)
+// Ports: i_MarkDb.pas (the implementation is the facade mark_db_by_impl)
 
 #include "cg/core/notifier.h"
 #include "cg/geo/geo_types.h"
@@ -41,7 +41,7 @@ public:
     // Add: oldMark is null; delete: newMark is null.
     virtual vector::VectorDataItemPtr updateMark(const vector::VectorDataItemPtr& oldMark,
                                                  const vector::VectorDataItemPtr& newMark) = 0;
-    // oldList: marks, mark ids or null; newList null deletes every old one (decision C3).
+    // oldList: marks, mark ids or null; newList null deletes every old one.
     virtual MarkList updateMarkList(const MarkOrIdList& oldList, const MarkList& newList) = 0;
     [[nodiscard]] virtual MarkIdList allMarkIdList() const = 0;
     [[nodiscard]] virtual MarkIdList markIdListByCategory(const vector::CategoryPtr& category) const = 0;

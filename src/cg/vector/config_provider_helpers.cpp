@@ -21,7 +21,6 @@ template <class Facet> std::shared_ptr<const Facet> facetOf(const AppearancePtr&
 }
 } // namespace
 
-// FEAT-GEO-037
 AppearancePtr readAppearancePoint(const core::IConfigProviderPtr& config,
                                   const MarkPictureListPtr& markPictureList,
                                   const IAppearanceOfMarkFactory& factory,

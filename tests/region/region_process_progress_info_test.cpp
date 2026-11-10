@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Tests for src/cg/region/region_process_progress_info (Src/RegionProcess/u_RegionProcessProgressInfo.pas).
-// No FEAT tag: shared base unit (T-0169).
+// A shared base unit.
 #include "cg/region/region_process_progress_info.h"
 
 #include <QString>
@@ -110,8 +110,8 @@ TEST(RegionProcessProgressInfo, ConcurrentWriterAndReaderSeeNoTornString) {
     // The written strings come from a pool built before the threads start and living past their join, so the
     // writer never drops the last reference to a buffer while the test runs. Reason: libQt6Core is not
     // instrumented by TSan; when the writer's QString::operator= frees the old buffer, TSan does not see the
-    // Qt reference count that the reader released first and reports a false "race" with free() (first gate
-    // run, saved in docs/handoffs/T-0169.md).
+    // Qt reference count that the reader released first and reports a false "race" with free() (seen in a
+    // gate run).
     std::vector<QString> pool;
     for (int i = 0; i < 26; ++i) {
         pool.emplace_back(64, QChar(u'a' + i));

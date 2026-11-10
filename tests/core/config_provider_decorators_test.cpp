@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-201, FEAT-UI-203, FEAT-UI-204; docs/specs/core.md 2.15, test plan 7.8
 #include "cg/core/config_provider_folder.h"
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/config_provider_resource.h"

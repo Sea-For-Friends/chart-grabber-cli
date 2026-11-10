@@ -12,7 +12,7 @@ namespace cg::bitmap {
 
 Bitmap32Static::Bitmap32Static(core::HashValue hash, Bitmap32BufferPtr buffer) : buffer_(std::move(buffer)) {
     // unreachable in legacy (u_Bitmap32StaticFactory.pas:102-105 builds a static only for an assigned
-    // buffer); no register row
+    // buffer)
     if (!buffer_) {
         throw std::invalid_argument("Bitmap32Static: null buffer");
     }

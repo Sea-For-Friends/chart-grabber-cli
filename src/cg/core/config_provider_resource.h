@@ -16,7 +16,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-203
 class ConfigProviderResource final : public IConfigProvider {
 public:
     explicit ConfigProviderResource(QString prefix);

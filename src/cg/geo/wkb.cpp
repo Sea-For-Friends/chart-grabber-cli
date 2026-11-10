@@ -35,7 +35,7 @@ constexpr quint32 kWkbMultiPolygon = 6;
 
 // Internal control-flow signal only -- never escapes parseWkb/parseMetaJson. Legacy signals a
 // malformed blob with a silent Delphi `Abort`; this is the C++ analog, caught once at the public
-// entry point and turned into a core::Result (docs/specs/geo.md §3.7 "Errors").
+// entry point and turned into a core::Result.
 struct WkbParseError {};
 
 // A bounds-checked little-endian cursor over the WKB blob.
@@ -83,11 +83,11 @@ public:
         return count;
     }
 
-    // Rule 3: XY only, a whole ring/line is one read(count * 16). BLOCKER fix (review F1): bounds-
-    // check the declared count against the remaining bytes BEFORE allocating -- `count` is only
-    // bounded by the rule-4 guard (~134M), so a corrupt blob declaring a huge count must not be
-    // able to force a multi-GB allocation / std::bad_alloc out of parseWkb (wkb.h:24-27 "a
-    // corrupt blob must be skippable, not fatal").
+    // Rule 3: XY only, a whole ring/line is one read(count * 16). Bounds-check the declared count
+    // against the remaining bytes BEFORE allocating -- `count` is only bounded by the rule-4 guard
+    // (~134M), so a corrupt blob declaring a huge count must not be able to force a multi-GB
+    // allocation / std::bad_alloc out of parseWkb (wkb.h:24-27 "a corrupt blob must be skippable,
+    // not fatal").
     [[nodiscard]] LonLatPointsPtr readPoints(quint32 count) {
         if (count == 0) {
             return std::make_shared<std::vector<LonLat>>();
@@ -377,7 +377,7 @@ QByteArray writeMetaJson(const IGeometryLonLat& geometry) {
 
     // Built by hand rather than QJsonDocument::toJson(): QJsonObject always serializes keys in
     // sorted order, which would reorder root {"v","t","g"} to {"g","t","v"} (only "c"/"m" and
-    // "t"/"n"/"d" survive alphabetization unscathed). Tech Lead ruling (review F4): reproduce
+    // "t"/"n"/"d" survive alphabetization unscathed). Reproduce
     // TGeometryMetaToStreamJson.DoSaveLines (u_GeometryMetaToStreamJson.pas:100-174) byte-for-byte,
     // including its exact key order, not merely a JSON-equivalent reordering.
     QByteArray out("JSON");
@@ -422,10 +422,10 @@ core::Result<PointsMeta> parseMetaJson(QByteArrayView data) {
         return core::fail(core::ErrorCode::ParseError, QStringLiteral("meta-json: invalid JSON"));
     }
     const QJsonObject root = doc.object();
-    // Tech Lead ruling (review F5): an unknown "v"/"t" is legacy's Assert(False); Exit --
-    // Result stays nil, i.e. "no meta", not a parse error (u_GeometryMetaFromStreamJson.pas:
-    // 103-112). Only a "JSON"-prefixed payload that fails to parse as JSON at all, or omits "g",
-    // is a real error (spec §11.2 MalformedPayloadReturnsError).
+    // An unknown "v"/"t" is legacy's Assert(False); Exit -- Result stays nil, i.e. "no meta",
+    // not a parse error (u_GeometryMetaFromStreamJson.pas:103-112). Only a "JSON"-prefixed
+    // payload that fails to parse as JSON at all, or omits "g", is a real error
+    // (MalformedPayloadReturnsError).
     if (root.value(QLatin1String("v")).toInt(-1) != 1) {
         return PointsMeta{};
     }
@@ -483,14 +483,14 @@ core::Result<PointsMeta> parseMetaJson(QByteArrayView data) {
     const bool anyTime =
         std::any_of(segments.begin(), segments.end(), [](const Segment& s) { return !s.days.empty(); });
 
-    // Tech Lead ruling (review F3): a sub-line with no meta of its own is gap-filled with legacy's
-    // literal FillChar(..., 0) -- ZERO, not this port's own NaN/invalid-QDateTime convention --
-    // matching TDoublePointsMetaAggregator.AddItems/MoveRight (u_DoublePointsMetaAggregator.pas:
-    // 126, 196) and EraseMetaItems (u_DoublePointsMetaFunc.pas:138-142). A raw double 0.0
-    // reinterpreted as a Delphi TDateTime is the "zero date" 1899-12-30, not "no timestamp"; the
-    // port has no null TDateTime, so fromDelphiDateTime(0.0) (a *valid* QDateTime on that date) is
-    // the byte-exact analog -- an invalid QDateTime would still round-trip back out as 0.0 (see
-    // toDelphiDateTime above) but would misrepresent what's actually stored here.
+    // A sub-line with no meta of its own is gap-filled with legacy's literal FillChar(..., 0) --
+    // ZERO, not this port's own NaN/invalid-QDateTime convention -- matching
+    // TDoublePointsMetaAggregator.AddItems/MoveRight (u_DoublePointsMetaAggregator.pas:126, 196)
+    // and EraseMetaItems (u_DoublePointsMetaFunc.pas:138-142). A raw double 0.0 reinterpreted as a
+    // Delphi TDateTime is the "zero date" 1899-12-30, not "no timestamp"; the port has no null
+    // TDateTime, so fromDelphiDateTime(0.0) (a *valid* QDateTime on that date) is the byte-exact
+    // analog -- an invalid QDateTime would still round-trip back out as 0.0 (see toDelphiDateTime
+    // above) but would misrepresent what's actually stored here.
     PointsMeta result;
     if (anyEle) {
         for (const Segment& s : segments) {

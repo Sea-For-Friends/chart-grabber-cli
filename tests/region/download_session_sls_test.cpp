@@ -3,12 +3,11 @@
 // SAS.Planet development team; modified.
 
 // Tests for DownloadSession::save / load (Src/RegionProcess/Download/u_DownloadSession.pas, Save :230-284,
-// Load :286-478 with _CheckZoom :293-304 and _ReadZoom :305-324). T-0165, RD-4.
-// FEAT-REG-017 (save) and FEAT-REG-019 (load): contribute only (docs/parity/held-open.md).
+// Load :286-478 with _CheckZoom :293-304 and _ReadZoom :305-324).
 //
-// No legacy-written .sls file exists on this box (spec region-download.md 8.3, OQ-7). Every INI text that is
-// LOADED below is written inline from the key rules of the Pascal, NOT produced by save. Only the round-trip
-// tests go through save. All expectations are literals taken from the Pascal.
+// No legacy-written .sls file exists on this box. Every INI text that is LOADED below is written inline from
+// the key rules of the Pascal, NOT produced by save. Only the round-trip tests go through save. All
+// expectations are literals taken from the Pascal.
 //
 // Time zone convention: TileDate is a naive local wall clock (storage/tile_date.h). save writes
 // checkTileDate().date(), the date of that wall clock, without any zone conversion; load builds that date at
@@ -17,7 +16,7 @@
 // processedFromLastSuccessfulPoint has no getter. Two observations are used:
 //  - savedFromLast(): save() right after the call under test (save zeroes it when the two points are equal);
 //  - fromLastViaSetter(): setLastProcessedPoint to a point that differs from the last successful one adds 1
-//    (T-0164 setter), so the saved key minus 1 is the member.
+//    (the setter), so the saved key minus 1 is the member.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/geo/geometry_factory.h"
@@ -106,7 +105,7 @@ Lines minimal() {
             {"PointLon_2", "50.5"},           {"PointLat_2", "60.25"}};
 }
 
-// Every key of the table of spec 2.3.1 with a distinct non-default value.
+// Every key of the session file with a distinct non-default value.
 Lines full() {
     Lines l = minimal();
     l = put(l, "VersionDownload", "dl-v7");
@@ -234,7 +233,7 @@ int savedFromLast(DownloadSession& s) {
     return saveOf(s).get(QStringLiteral("ProcessedFromLastSuccessfulPoint")).toInt();
 }
 
-// The member itself: a point that differs from every point the tests use adds exactly 1 (T-0164 setter).
+// The member itself: a point that differs from every point the tests use adds exactly 1 (the setter).
 int fromLastViaSetter(DownloadSession& s) {
     s.setLastProcessedPoint({-77, -78});
     return savedFromLast(s) - 1;
@@ -332,7 +331,7 @@ QString messageOf(const std::function<void()>& call) {
 } // namespace
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 1: load
+// Load
 // ---------------------------------------------------------------------------------------------------------
 
 // Load :356-440 with every key present and the rollback off: each member equals its value.
@@ -402,8 +401,8 @@ TEST(DownloadSessionSls, LoadDefaultsOfAbsentKeys) {
 }
 
 // Load :405 ReadDate('CheckTileDate', Now): an absent or unparsable key keeps Now WITH its time of day
-// (ConfigData/u_ConfigDataProviderByIniFileSection.pas:165-184); spec 2.3.1 step 7 ("at 00:00") is wrong,
-// ticket finding a. Bound: one minute (fails only within a minute of local midnight).
+// (ConfigData/u_ConfigDataProviderByIniFileSection.pas:165-184); it is not "at 00:00". Bound: one minute
+// (fails only within a minute of local midnight).
 TEST(DownloadSessionSls, LoadAbsentOrUnparsableCheckTileDateIsNowWithTimeOfDay) {
     Rig rig;
     for (const Lines& lines : {minimal(), put(minimal(), "CheckTileDate", "garbage")}) {
@@ -436,7 +435,7 @@ TEST(DownloadSessionSls, LoadBoolKeysReachTheirOwnMember) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 2: error texts, order of the checks, the session stays untouched
+// Error texts, order of the checks, the session stays untouched
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(DownloadSessionSls, LoadErrorsKeepTheTextOrderAndTheSession) {
@@ -498,7 +497,7 @@ TEST(DownloadSessionSls, LoadNullSectionThrowsAndKeepsTheSession) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 3: zoom rules (:305-324)
+// Zoom rules (:305-324)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(DownloadSessionSls, LoadZoomAndZoomArrRules) {
@@ -529,7 +528,7 @@ TEST(DownloadSessionSls, LoadZoomAndZoomArrRules) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 4: version fields (:373-398)
+// Version fields (:373-398)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(DownloadSessionSls, LoadVersionFields) {
@@ -582,7 +581,7 @@ TEST(DownloadSessionSls, LoadVersionFields) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 5: rollback to the last successful point (:426-440)
+// Rollback to the last successful point (:426-440)
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(DownloadSessionSls, LoadRollbackRows) {
@@ -631,7 +630,7 @@ TEST(DownloadSessionSls, LoadRollbackRows) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 7: processedFromLastSuccessfulPoint bookkeeping (T-0164 setters; save :247-249)
+// processedFromLastSuccessfulPoint bookkeeping (the setters; save :247-249)
 // ---------------------------------------------------------------------------------------------------------
 
 // setLastProcessedPoint: a point that differs from the last successful one adds 1, an equal one zeroes.
@@ -698,7 +697,7 @@ TEST(DownloadSessionSls, SaveZeroesFromLastWhenThePointsAreEqual) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 6: save
+// Save
 // ---------------------------------------------------------------------------------------------------------
 
 TEST(DownloadSessionSls, SaveWritesTheKeysOfTheTableInOrder) {
@@ -807,7 +806,7 @@ TEST(DownloadSessionSls, SaveNarrowsTheCountersTo32Bits) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Proof 8: round trip
+// Round trip
 // ---------------------------------------------------------------------------------------------------------
 
 // load(save(x)) gives x for every member except the time of day of the two dates, which the file loses.
@@ -853,7 +852,7 @@ TEST(DownloadSessionSls, RoundTripKeepsEveryMemberButTheTimeOfDay) {
     EXPECT_EQ(fromLastViaSetter(y), 3);
 }
 
-// T-0272 (L-260 fixed, DEVIATION D-158; legacy ConfigData/u_ConfigProviderHelpers.pas :363-365 wrote the
+// DEVIATION, a legacy defect fixed (legacy ConfigData/u_ConfigProviderHelpers.pas :363-365 wrote the
 // second hole at a wrong index): the file reads back as outer + both holes.
 TEST(DownloadSessionSls, RoundTripKeepsTheSecondHole) {
     Rig rig;

@@ -5,12 +5,12 @@
 #pragma once
 // Ports: u_ConfigDataProviderByFolder.pas
 //
-// A directory of the filesystem exposed as a read-only config node: a subdirectory becomes
-// another ConfigProviderFolder, an ".ini"/".txt" file becomes a ConfigProviderIni over its parsed
-// contents, and anything else is unreachable through subItem(). value() reads ".ini"/".html"/".txt"
-// files as decoded text and "::FileName" as the folder path. Extensions are matched
-// case-insensitively. A member name is looked up exactly first, then case-insensitively (the first
-// match in QDir::Name order): legacy ran on a case-insensitive filesystem (deviation, maptype 2.2).
+// A directory of the filesystem exposed as a read-only config node: a subdirectory becomes another
+// ConfigProviderFolder, an ".ini"/".txt" file becomes a ConfigProviderIni over its parsed contents,
+// and anything else is unreachable through subItem(). value() reads ".ini"/".html"/".txt" files as
+// decoded text and "::FileName" as the folder path. Extensions are matched case-insensitively. A
+// member name is looked up exactly first, then case-insensitively (the first match in QDir::Name
+// order): legacy ran on a case-insensitive filesystem (a deviation from legacy).
 
 #include "cg/core/config_provider.h"
 
@@ -18,7 +18,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-201
 class ConfigProviderFolder final : public IConfigProvider {
 public:
     explicit ConfigProviderFolder(QString folderPath);

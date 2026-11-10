@@ -2,15 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT of its own (structural-only, spec 11.5 preamble: "no Delphi oracle" for these
-// 350 maps). docs/specs/script.md 11.4/11.5/11.8. Runs every one of the 350 real
-// `GetUrlScript.txt` fixtures through the landed `UrlScript` (T-0015A/B/C) at the four tile points
-// of §11.5.2, with the fake host of T-0015A/B, and checks STRUCTURE only (ticket T-0015E):
-// finishes within budget, no crash/TSan/ASan report, a runtime error is accepted only when
-// justified by a row of `corpus_run_expected_errors.csv`, a produced ResultURL is well-formed, and
-// a deterministic script gives byte-identical output on two runs without touching Random/
-// GetUnixTime/Downloader. `corpus_parse_test.cpp` (§11.4) proves compilation only; this proves
-// execution. No URL parity with legacy is claimed here (T-0015D, 21 maps, does that).
+// Structural only: there is no Delphi oracle for these 350 maps. Runs every one of the 350 real
+// `GetUrlScript.txt` fixtures through `UrlScript` at the four tile points, with the fake host, and
+// checks STRUCTURE only: finishes within budget, no crash/TSan/ASan report, a runtime error is
+// accepted only when justified by a row of `corpus_run_expected_errors.csv`, a produced ResultURL
+// is well-formed, and a deterministic script gives byte-identical output on two runs without
+// touching Random/GetUnixTime/Downloader. `corpus_parse_test.cpp` proves compilation only; this
+// proves execution. No URL parity with legacy is claimed here (golden_url_test.cpp does that for
+// 21 maps).
 //
 // One gtest TEST_P per (script, tile point) - not a for-loop in one TEST like corpus_parse_test -
 // so a single known port defect (see kPortDefects below) can GTEST_SKIP() just that script's four
@@ -52,7 +51,7 @@ using cg::script::test::FakeScriptTileCache;
 
 namespace {
 
-// --- the four tile points, spec 11.5.2 table (values copied verbatim, full precision) -----------
+// --- the four tile points (values copied verbatim, full precision) -----------
 struct TilePoint {
     const char* name;
     qint32 x, y, z; // GetZ is 1-based (internal zoom + 1)
@@ -76,8 +75,8 @@ QString zmpRoot() {
 }
 
 // Same exclusion as corpus_parse_test.cpp: two _broken_maps scripts are genuinely malformed
-// Pascal (a missing ';' - legacy defect, not a parser gap, see docs/handoffs/T-0013.md) and never
-// reach CompiledScript::compile successfully, so there is nothing here to run.
+// Pascal (a missing ';' - legacy defect, not a parser gap) and never reach
+// CompiledScript::compile successfully, so there is nothing here to run.
 bool isKnownMalformed(const QString& path) {
     return path.endsWith(QStringLiteral("_broken_maps/Balticsmap/balticmaps.eu.map.zmp/GetUrlScript.txt")) ||
            path.endsWith(QStringLiteral("_broken_maps/Balticsmap/balticmaps.eu.topo.zmp/GetUrlScript.txt"));
@@ -91,14 +90,12 @@ QByteArray readRawBytes(const QString& path) {
     return file.readAll();
 }
 
-// --- port defects found by this ticket (category (a): T-0015E's own instructions - 0 production
-// LOC, do not fix here). Each entry GTEST_SKIP()s the named script; `onlyPoints` empty means all
-// four points, otherwise just the listed ones (a defect only reachable through a script's own
-// guard, e.g. PD-4/Fonecta's `6<=GetZ<=19` branch, must not skip the points that guard excludes -
-// those points pass cleanly and must stay counted that way). See docs/handoffs/T-0015E.md "Port
-// defects found" and docs/handoffs/T-0015E-review.md for the full table (construct, corpus
-// impact, evidence). Review finding 5: a PD fixed later stays skipped silently here - the PD
-// ticket (T-0031/T-0032, see docs/handoffs/T-0015E.md) must delete its entries.
+// --- known port defects (fixed elsewhere, not here) ---
+// Each entry GTEST_SKIP()s the named script; `onlyPoints` empty means all four points, otherwise
+// just the listed ones (a defect only reachable through a script's own guard, e.g. Fonecta's
+// `6<=GetZ<=19` branch, must not skip the points that guard excludes - those points pass cleanly
+// and must stay counted that way). A port defect fixed later stays skipped silently here, so its
+// fix must delete its entries.
 struct PortDefect {
     QString id;
     QString note;
@@ -107,25 +104,23 @@ struct PortDefect {
 
 const QMap<QString, PortDefect>& portDefectsByRelPath() {
     static const QMap<QString, PortDefect> table{
-        // PD-1 (belgeodesy/odessa.ua/Rambler_maps/ProGorod1/eatlas_new/megafonpro - static
-        // arrays), PD-2 (MAmet.zmp), PD-3 (Atlogis x2) and PD-4 (Fonecta x3) are all fixed - see
-        // docs/handoffs/T-0031.md and docs/handoffs/T-0032.md for the before/after. Table kept
-        // empty (not removed) so the next port defect found by a corpus run has somewhere to go.
+        // The port defects found so far (static arrays in six maps, MAmet.zmp, Atlogis x2,
+        // Fonecta x3) are all fixed. The table is kept empty (not removed) so the next port
+        // defect found by a corpus run has somewhere to go.
     };
     return table;
 }
 
 // --- corpus_run_expected_errors.csv: path,point,line,expected,reason (RFC4180-ish: a field may be
-// double-quoted to carry commas). Rule 2/3 of the ticket's Scope (in): a runtime error or a
-// malformed ResultURL is accepted only when a row here names it AND its actual error text /
-// ResultURL contains the row's pinned `expected` substring (review finding 3 - a CSV row that
-// merely names the (path,point) but excuses *any* error hides a regression). `expected` is
-// matched against `Error::what()` for the error path, or against the raw ResultURL bytes for the
-// malformed-URL path. `line` stays documentation only (not cross-checked against the script
-// text). A row whose (path,point) never actually produces its pinned error/URL text - because the
-// case now passes structurally, the text changed, or the script/point no longer exists - is a
-// "stale row" and must fail (see CorpusRunCsv.EveryRowFiresWithItsExpectedError below), so the CSV
-// cannot silently rot.
+// double-quoted to carry commas). A runtime error or a malformed ResultURL is accepted only when a
+// row here names it AND its actual error text / ResultURL contains the row's pinned `expected`
+// substring (a CSV row that merely names the (path,point) but excuses *any* error hides a
+// regression). `expected` is matched against `Error::what()` for the error path, or against the
+// raw ResultURL bytes for the malformed-URL path. `line` stays documentation only (not
+// cross-checked against the script text). A row whose (path,point) never actually produces its
+// pinned error/URL text - because the case now passes structurally, the text changed, or the
+// script/point no longer exists - is a "stale row" and must fail (see
+// CorpusRunCsv.EveryRowFiresWithItsExpectedError below), so the CSV cannot silently rot.
 struct ExpectedRow {
     QString path;
     QString point;
@@ -203,12 +198,12 @@ struct RowLookupResult {
 };
 
 // Looks up the CSV row for (relPath, point) and compares `actualText` against its pinned
-// `expected` substring. A text mismatch is reported by the caller as an immediate failure (review
-// finding 3: a different regression at the same point must not be silently absorbed). The
-// stale-row guarantee (every row must actually fire) is checked independently, and
-// process-independently, by CorpusRunCsv.EveryRowFiresWithItsExpectedError below - this lookup no
-// longer tracks "consumed" rows, since that bookkeeping only made sense when every case shared one
-// process (it does not under `ctest`'s one-case-per-process discovery).
+// `expected` substring. A text mismatch is reported by the caller as an immediate failure (a
+// different regression at the same point must not be silently absorbed). The stale-row guarantee
+// (every row must actually fire) is checked independently, and process-independently, by
+// CorpusRunCsv.EveryRowFiresWithItsExpectedError below - this lookup no longer tracks "consumed"
+// rows, since that bookkeeping only made sense when every case shared one process (it does not
+// under `ctest`'s one-case-per-process discovery).
 RowLookupResult matchExpectedRow(const QString& relPath, const QString& point, const QString& actualText) {
     const auto& rows = expectedErrorRows();
     for (const ExpectedRow& row : rows) {
@@ -265,7 +260,7 @@ QString sanitizeTestName(const QString& relPath) {
     return out;
 }
 
-// --- params.txt (DefURLBase, RequestHead) -- spec 11.5.1 step 1 ---------------------------------
+// --- params.txt (DefURLBase, RequestHead) ---------------------------------
 struct MapParams {
     QByteArray urlBase;
     QByteArray requestHead;
@@ -320,14 +315,13 @@ ScriptVars buildVars(const TilePoint& point, const MapParams& params,
     vars.getBMetr = point.bmetr;
     vars.getUrlBase = params.urlBase;
     vars.requestHead = params.requestHead;
-    vars.version = QByteArray(); // ticket: Version is '' for every corpus case here
+    vars.version = QByteArray(); // Version is '' for every corpus case here
     vars.lang = QByteArrayLiteral("en");
-    // Global/Logger/TileCache are legacy-always-non-nil per spec 8.1 (one instance per ZMP) -
-    // bound live so a script that calls them unconditionally does not surface a spurious nil-
-    // interface error (docs/handoffs/T-0015B.md "What T-0015E must know"). Converter/
-    // DefProjConverter/ProjFactory are left nil (0/2/0 corpus hits, T-0015A's usage table) - a
-    // script that reaches one unguarded needs a corpus_run_expected_errors.csv row (fake-host
-    // limitation), exactly as that same handoff note anticipates.
+    // Global/Logger/TileCache are always non-nil in legacy (one instance per ZMP) - bound live
+    // so a script that calls them unconditionally does not surface a spurious nil-interface
+    // error. Converter/DefProjConverter/ProjFactory are left nil (0/2/0 corpus hits) - a
+    // script that reaches one unguarded needs a corpus_run_expected_errors.csv row (a
+    // fake-host limitation).
     vars.downloader = downloader;
     vars.global = global;
     vars.logger = logger;
@@ -385,15 +379,15 @@ TEST_P(CorpusRun, ExecutesStructurally) {
     auto result = script.buildRequest(vars); // default (never-cancelled) stop_token, default ExecBudget
 
     if (!result.has_value()) {
-        // Note this is NOT the same axis as ErrorCode: ErrorCode::Unsupported only says "this
-        // slice's interpreter cannot execute the compiled construct" - it does not by itself say
-        // whether category (a) (a port defect - legacy runs this fine) or (b)/(c) (legacy fails
-        // here too, or this is purely a fake-host/harness limitation) applies. That classification
-        // is made by hand, once, and recorded in either portDefectsByRelPath() (category (a),
-        // skipped above) or the CSV (categories (b)/(c), which must also pin the expected error
-        // text - see ExpectedRow above); this branch only catches whatever neither table has
-        // classified yet, plus any CSV row whose pinned text no longer matches (a regression at
-        // the same (script, point) that the row's stale text would otherwise silently absorb).
+        // Note this is NOT the same axis as ErrorCode: ErrorCode::Unsupported only says "the
+        // interpreter cannot execute the compiled construct" - it does not by itself say whether
+        // category (a) (a port defect - legacy runs this fine) or (b)/(c) (legacy fails here too,
+        // or this is purely a fake-host/harness limitation) applies. That classification is made
+        // by hand, once, and recorded in either portDefectsByRelPath() (category (a), skipped
+        // above) or the CSV (categories (b)/(c), which must also pin the expected error text - see
+        // ExpectedRow above); this branch only catches whatever neither table has classified yet,
+        // plus any CSV row whose pinned text no longer matches (a regression at the same (script,
+        // point) that the row's stale text would otherwise silently absorb).
         const QString actualText = result.error().what();
         const RowLookupResult lookup = matchExpectedRow(c.relPath, point.name, actualText);
         const char* codeName = "IoError";
@@ -494,7 +488,7 @@ INSTANTIATE_TEST_SUITE_P(Zmp, CorpusRun, ::testing::ValuesIn(allCorpusCases()),
                                     kPoints[static_cast<std::size_t>(paramInfo.param.pointIndex)].name;
                          });
 
-// T-0321: the public tree has no catalogue, so the generator yields no case; that is not a failure.
+// The public tree has no catalogue, so the generator yields no case; that is not a failure.
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CorpusRun);
 
 TEST(Corpus, AtLeast350ScriptsFound) {
@@ -505,22 +499,22 @@ TEST(Corpus, AtLeast350ScriptsFound) {
     EXPECT_GE(allScriptPaths().size(), 350) << "the ZMP script corpus fixture changed size";
 }
 
-// Review finding 3 / fix after the landing gate (T-0015E): a corpus_run_expected_errors.csv row
-// that never actually fires its pinned text - because its (path,point) case now passes
-// structurally, the error text changed, or the script/point no longer exists in the corpus - must
-// fail a test, so the CSV cannot rot. This used to be a global ::testing::Environment whose
-// TearDown() ran after every Zmp/CorpusRun case in the (single) test process and checked a
-// process-wide "consumed" bitmap - correct only when every case shares one process. `ctest` (via
-// gtest_discover_tests(), tests/CMakeLists.txt) instead runs the binary once PER CASE with
-// --gtest_filter=<case>, so under that invocation style every per-case process saw every *other*
-// row as "never consumed" and failed spuriously, even though each case was individually [ OK ].
-// This ordinary TEST() is self-contained instead: it does not depend on any other test having run,
-// or on how many other cases share its process. For each CSV row it independently drives the exact
-// script at the exact tile point through the same UrlScript::create()/buildRequest() path the
-// parameterized CorpusRun test uses, and asserts the run actually produces the row's pinned
-// expected error/URL substring. A row whose script now passes cleanly, whose actual text differs,
-// whose tile point name is unknown, or whose script file no longer exists in the corpus fails this
-// test - the stale-row guarantee, now independent of test-process layout.
+// A corpus_run_expected_errors.csv row that never actually fires its pinned text - because its
+// (path,point) case now passes structurally, the error text changed, or the script/point no longer
+// exists in the corpus - must fail a test, so the CSV cannot rot. This used to be a global
+// ::testing::Environment whose TearDown() ran after every Zmp/CorpusRun case in the (single) test
+// process and checked a process-wide "consumed" bitmap - correct only when every case shares one
+// process. `ctest` (via gtest_discover_tests(), tests/CMakeLists.txt) instead runs the binary once
+// PER CASE with --gtest_filter=<case>, so under that invocation style every per-case process saw
+// every *other* row as "never consumed" and failed spuriously, even though each case was
+// individually [ OK ]. This ordinary TEST() is self-contained instead: it does not depend on any
+// other test having run, or on how many other cases share its process. For each CSV row it
+// independently drives the exact script at the exact tile point through the same
+// UrlScript::create()/buildRequest() path the parameterized CorpusRun test uses, and asserts the
+// run actually produces the row's pinned expected error/URL substring. A row whose script now
+// passes cleanly, whose actual text differs, whose tile point name is unknown, or whose script
+// file no longer exists in the corpus fails this test - the stale-row guarantee, now independent
+// of test-process layout.
 TEST(CorpusRunCsv, EveryRowFiresWithItsExpectedError) {
     CG_SKIP_IF_NO_CORPUS();
     const auto& rows = expectedErrorRows();
@@ -587,7 +581,7 @@ TEST(CorpusRunCsv, EveryRowFiresWithItsExpectedError) {
     }
 }
 
-// --- the two UrlScript cases moved here from T-0015C (need interface method dispatch, T-0015B) --
+// --- the two UrlScript cases that need interface method dispatch --
 
 TEST(UrlScript, NestedHttpRequestUsesTheFakeHost) {
     // A script that calls Downloader.DoHttpRequest() from inside its own execution - i.e. nested
@@ -617,9 +611,9 @@ TEST(UrlScript, NestedHttpRequestUsesTheFakeHost) {
 }
 
 TEST(UrlScript, GlobalStoreSharedBetweenTwoUrlScriptsOfTheSameMap) {
-    // spec 5.6/8.1: IScriptGlobal is process-wide, shared across every download slot of a map (and
-    // across maps) - two independent UrlScript instances (as maptype would build for two download
-    // slots) that share one IScriptGlobal must see each other's writes.
+    // IScriptGlobal is process-wide, shared across every download slot of a map (and across
+    // maps) - two independent UrlScript instances (as maptype would build for two download slots)
+    // that share one IScriptGlobal must see each other's writes.
     FakeScriptHost hostA;
     FakeScriptHost hostB;
     auto global = std::make_shared<FakeScriptGlobal>();

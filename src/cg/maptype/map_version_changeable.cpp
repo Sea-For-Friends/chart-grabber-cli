@@ -34,8 +34,8 @@ void MapVersionChangeable::onConfigChange() {
     update();
 }
 
-// L-152: the freshly built version is compared with static_ but never stored into it, so
-// static_ stays null, getStatic() yields nullptr and every call notifies.
+// The freshly built version is compared with static_ but never stored into it, so static_ stays
+// null, getStatic() yields nullptr and every call notifies.
 void MapVersionChangeable::update() {
     bool needNotify = false;
     {

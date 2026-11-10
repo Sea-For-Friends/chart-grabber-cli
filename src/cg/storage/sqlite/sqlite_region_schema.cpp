@@ -19,10 +19,10 @@ namespace cg::storage::sqlite {
 namespace {
 
 // Ports TStringListStatic.CreateFromFile / TStringList.LoadFromFile's "one statement per line"
-// splitting (spec §2.16.1 "Override-file rules"): a statement may not span lines, and a file
-// ending in a line terminator does not produce a phantom trailing empty statement. The files this
-// module reads are user-authored plain-ASCII/UTF-8 SQL (the §7.4 fixture, or a user's own
-// s.sql/t.sql/e.sql), so UTF-8 decoding is exact for every realistic case.
+// splitting: a statement may not span lines, and a file ending in a line terminator does not
+// produce a phantom trailing empty statement. The files this module reads are user-authored
+// plain-ASCII/UTF-8 SQL (the test fixture, or a user's own s.sql/t.sql/e.sql), so UTF-8 decoding
+// is exact for every realistic case.
 QList<QByteArray> splitStatements(const QString& text) {
     QString normalized = text;
     normalized.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
@@ -54,8 +54,7 @@ SqliteRegionSchema::SqliteRegionSchema(const QString& storagePath, QByteArray ma
                                        MapVersionFactoryPtr mapVersionFactory, bool logging)
     : mainContentType_(std::move(mainContentType)), mapVersionFactory_(std::move(mapVersionFactory)),
       logging_(logging) {
-    // Ports InternalLoadParams (u_TileStorageSQLiteHolder.pas:186-226), the built-in defaults of
-    // spec §2.16.1's table.
+    // Ports InternalLoadParams (u_TileStorageSQLiteHolder.pas:186-226), the built-in defaults.
     sessionSql_ = loadStatementFile(storagePath + QStringLiteral("s.sql"),
                                     {QByteArrayLiteral("PRAGMA encoding = \"UTF-8\""),
                                      QByteArrayLiteral("PRAGMA cache_size = 2000"),
@@ -94,8 +93,8 @@ QByteArray SqliteRegionSchema::contentTypeFromDb(QByteArrayView contentTypeFromD
     if (contentTypeFromDb.isEmpty()) {
         return mainContentType_;
     }
-    // T-0022B2 review finding 4: FContentTypeManager.GetInfo(c) -- nil for an unknown type, the
-    // canonical info for a known one.
+    // FContentTypeManager.GetInfo(c) -- nil for an unknown type, the canonical info for a known
+    // one.
     const core::ContentTypeInfo* info = core::ContentTypeRegistry::standard().infoByType(contentTypeFromDb);
     return info ? info->type : QByteArray();
 }
@@ -136,7 +135,7 @@ void SqliteRegionSchema::logError(LogKind kind, const QString& message) const {
     // Ports LogError's VLogText assembly (u_TileStorageSQLiteHolder.pas:279-291). Delphi's
     // `DateTimeToString` counts the run length of a `z` format specifier and prints milliseconds
     // with 3 digits for any run longer than 1 -- so `'zzzz'` gives `.mmm`, the same 3 digits as
-    // `'zzz'`, not 4 (T-0022B2 review finding 5); no invented extra padding digit.
+    // `'zzz'`, not 4; no invented extra padding digit.
     const QDateTime now = QDateTime::currentDateTime();
     const QString timestamp = now.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz"));
     const QString line = timestamp + QChar(u'\t') + QChar(u'(') + QString::fromLatin1(kindText) +

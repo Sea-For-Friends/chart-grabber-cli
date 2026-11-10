@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/u_MarkSystemImplORM.pas (269; docs/specs/marks.md §2.9.10 last bullet). Line
-// numbers in the sources are those of that unit.
+// Ports: Src/MarksDB/mORMot/u_MarkSystemImplORM.pas (269 lines). Line numbers in the sources are those
+// of that unit.
 //
 // One opened SQLite mark database: the read / write state, the client provider (the file), the category
 // database, the internal mark factory and the mark database. The constructor builds them in the legacy order
@@ -16,8 +16,8 @@
 // to it).
 //
 // Not ported: the four geometry readers / writers of :176-180 (the mark database takes the one geometry
-// factory, mark_db_impl_orm.h), the hash function, the two performance counters (DV-1), the client type (only
-// SQLite3 is ported, DV-4), the log set-up of :266-267.
+// factory, mark_db_impl_orm.h), the hash function, the two performance counters, the client type (only
+// SQLite3 is ported), the log set-up of :266-267.
 
 #include "cg/core/read_write_state_internal.h"
 #include "cg/geo/geometry_factory.h"

@@ -3,10 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Shared by the bitmap tests whose error path leaves a C library through longjmp (T-0160 JPEG, T-0161 PNG).
-// The GCC ThreadSanitizer runtime aborts with "can't find longjmp buf" on it
-// (tsan_interceptors_posix.cpp:582), so these tests skip under --tsan; the ASan / UBSan build and the plain
-// build run them.
+// Shared by the bitmap tests whose error path leaves a C library through longjmp (JPEG, PNG). The GCC
+// ThreadSanitizer runtime aborts with "can't find longjmp buf" on it (tsan_interceptors_posix.cpp:582), so
+// these tests skip under --tsan; the ASan / UBSan build and the plain build run them.
 
 #include <gtest/gtest.h>
 

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/core/platform/file_ops and native_path (new code, T-0335, Windows port: the two rename
+// Tests for src/cg/core/platform/file_ops and native_path (new code, Windows port: the two rename
 // semantics and non-ASCII paths).
 #include "cg/core/platform/file_ops.h"
 #include "cg/core/platform/native_path.h"

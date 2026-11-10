@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/Basic/u_NetworkStrFunc.pas:69-403; Src/PascalScript/u_PascalScriptUtils.pas:88-119.
-// FEAT-NET-011 (this file backs the raw ResponseHead/RequestHead contract that content-type
-// detection and the ZMP script header functions both sit on top of). T-0028: moved from
-// src/cg/net/http_headers.cpp (T-0012B) so `cg::net` and `cg::script` can share it via `core`.
+// This file backs the raw ResponseHead/RequestHead contract that content-type detection and the
+// ZMP script header functions both sit on top of. Moved from src/cg/net/http_headers.cpp so
+// `cg::net` and `cg::script` can share it via `core`.
 #include "cg/core/header_text.h"
 
 #include "cg/core/log.h"
@@ -39,8 +39,8 @@ struct HeaderMatch {
     qsizetype terminatorEnd; // lineEnd plus the entire following run of control chars
 };
 
-// Shared line-scan skeleton (docs/specs/net.md §2.11 "The line scan"): a line ends at the first
-// control char; only the first matching line is ever acted on.
+// Shared line-scan skeleton: a line ends at the first control char; only the first matching line is
+// ever acted on.
 [[nodiscard]] std::optional<HeaderMatch> findHeaderMatch(QByteArrayView headers, QByteArrayView upName) {
     const qsizetype n = headers.size();
     qsizetype i = 0;
@@ -59,8 +59,8 @@ struct HeaderMatch {
             }
             // Trailing control-char run consumed by deleteHeaderValueUp's cut range: legacy stops
             // extending the run -- without aborting the match -- at a literal '\0', leaving it in
-            // place (u_NetworkStrFunc.pas:227-231: `if (AHeaders[K] = #0) or (AHeaders[K] >= ' ')
-            // then Break`). tech-lead-rulings.md 2026-09-17 "\0 header-scan stop".
+            // place (u_NetworkStrFunc.pas:227-231:
+            // `if (AHeaders[K] = #0) or (AHeaders[K] >= ' ') then Break`).
             qsizetype terminatorEnd = lineEnd;
             while (terminatorEnd < n && headers[terminatorEnd] != '\0' && isControl(headers[terminatorEnd])) {
                 ++terminatorEnd;
@@ -73,8 +73,8 @@ struct HeaderMatch {
         // Advance past this (non-matching) line's control-char terminator to reach the next
         // candidate line. Legacy aborts the whole scan (line not found) the instant it hits a
         // literal '\0' while skipping, instead of treating it like any other control byte
-        // (u_NetworkStrFunc.pas:157-163: `if AHeaders[I] = #0 then Exit`). tech-lead-rulings.md
-        // 2026-09-17 "\0 header-scan stop" -- fixed here per T-0012B.
+        // (u_NetworkStrFunc.pas:157-163: `if AHeaders[I] = #0 then Exit`). The port fixes this
+        // legacy defect.
         qsizetype next = lineEnd;
         while (next < n && isControl(headers[next])) {
             if (headers[next] == '\0') {
@@ -111,12 +111,12 @@ QByteArray getHeaderValueUp(QByteArrayView headers, QByteArrayView upName) {
         return {};
     }
     if (match->valueStart > match->lineEnd) {
-        // D-24: when the NAME carries a control byte also present in the header blob, the
-        // full-byte name compare (idemPChar, above) can match past the line's own end, so
-        // valueStart lands after lineEnd. Legacy's equivalent, GetHeaderValueUp, has the same
-        // shape: Result := Copy(AHeaders, I, K-I) at u_NetworkStrFunc.pas:156, and Delphi's
-        // Copy with a negative Count returns '' -- reproduce that here instead of slicing with a
-        // negative length (QByteArrayView::sliced asserts n >= 0; T-0034).
+        // When the NAME carries a control byte also present in the header blob, the full-byte
+        // name compare (idemPChar, above) can match past the line's own end, so valueStart lands
+        // after lineEnd. Legacy's equivalent, GetHeaderValueUp, has the same shape:
+        // Result := Copy(AHeaders, I, K-I) at u_NetworkStrFunc.pas:156, and Delphi's Copy with a
+        // negative Count returns '' -- reproduce that here instead of slicing with a negative
+        // length (QByteArrayView::sliced asserts n >= 0).
         return {};
     }
     return headers.sliced(match->valueStart, match->lineEnd - match->valueStart).toByteArray();
@@ -127,7 +127,7 @@ bool replaceHeaderValueUp(QByteArray& headers, QByteArrayView upName, QByteArray
         return false;
     }
     if (upName.isEmpty() || value.isEmpty()) {
-        // T-0028: legacy asserts here (a no-op in a release build, SASPlanet.dproj
+        // Legacy asserts here (a no-op in a release build, SASPlanet.dproj
         // DCC_AssertionsAtRuntime=False); the only observable effect is this diagnostic, logged
         // through core (net and script both link core) instead of duplicated per caller.
         qCWarning(logCore) << "replaceHeaderValueUp: rejecting empty name/value";

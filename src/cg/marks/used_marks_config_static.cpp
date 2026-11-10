@@ -4,7 +4,7 @@
 
 #include "cg/marks/used_marks_config_static.h"
 
-// Ports u_UsedMarksConfigStatic.pas (T-0147): constructor :41-59, getters :61-74.
+// Ports u_UsedMarksConfigStatic.pas: constructor :41-59, getters :61-74.
 
 namespace cg::marks {
 

@@ -6,8 +6,7 @@
 // Test helper: resolves tests/fixtures. The CMake build passes CG_FIXTURES_DIR as a compile
 // definition; the tools/nocmake_build.sh fallback passes no definitions, so the directory is
 // found by walking up from the working directory instead. Kept local to tests/script (rather than
-// reusing tests/core/fixture_path.h) per the parallel development rule in
-// docs/conventions/agent-protocol.md - each module only touches its own test directory.
+// reusing tests/core/fixture_path.h) - each module only touches its own test directory.
 
 #include <QDir>
 #include <QString>
@@ -29,6 +28,6 @@
 #endif
 }
 
-// T-0321: skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
+// Skip a test that reads the private map catalogue when it is absent (tests/corpus_skip.h).
 #include "../corpus_skip.h"
 #define CG_SKIP_IF_NO_CORPUS() CG_SKIP_IF_NO_CORPUS_IN(cgScriptFixturesDir())

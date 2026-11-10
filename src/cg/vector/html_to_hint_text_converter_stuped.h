@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/u_HtmlToHintTextConverterStuped.pas
 //
-// Mark hint text from name + description HTML, statement by statement as legacy (spec vector.md
-// §2.2.2). The legacy defects are reproduced (docs/parity/legacy-defects.md L-124, L-125).
+// Mark hint text from name + description HTML, statement by statement as legacy. The legacy defects
+// are reproduced.
 
 #include "cg/vector/html_to_hint_text_converter.h"
 

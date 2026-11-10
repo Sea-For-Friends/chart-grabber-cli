@@ -2,13 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-009 (the file:// I/O cases only -- see below) -- docs/specs/net.md §7.15.
+// The file:// I/O cases only -- see below.
 //
-// Per the Tech Lead ruling moving these 4 cases here from T-0010A (docs/handoffs/T-0010A.md open
-// questions): FileUrlIsRead, MissingFileGives404DataNotExists, ContentTypeComesFromExtension and
+// FileUrlIsRead, MissingFileGives404DataNotExists, ContentTypeComesFromExtension and
 // UnknownExtensionTriggersDetection exercise file I/O and ContentTypeRegistry lookups -- the full
-// processFileSystemRequest(), which only exists once CurlDownloader (T-0010B) does. The other 4
-// cases test filePathFromUrl() itself (T-0010A) directly.
+// processFileSystemRequest() of CurlDownloader. The other 4 cases test filePathFromUrl() itself
+// directly.
 #include "cg/core/content_type.h"
 #include "cg/core/platform/native_path.h"
 #include "cg/net/curl_downloader.h"
@@ -43,7 +42,7 @@ namespace {
     return req;
 }
 
-// "file:///" + the path without its leading '/': /tmp/x -> file:///tmp/x, and C:/x -> file:///C:/x (T-0335).
+// "file:///" + the path without its leading '/': /tmp/x -> file:///tmp/x, and C:/x -> file:///C:/x.
 QString fileUrlOf(const QString& path) {
     return QStringLiteral("file:///") + (path.startsWith(u'/') ? path.mid(1) : path);
 }
@@ -131,8 +130,8 @@ TEST(FileUrl, UnknownExtensionTriggersDetection) {
     EXPECT_EQ(result.contentType, QByteArrayLiteral("image/png"));
 }
 
-// T-0335: the drive letter form needs "C:/x", not "/C:/x" on Windows; POSIX keeps the leading '/' as it
-// always did.
+// The drive letter form needs "C:/x", not "/C:/x" on Windows; POSIX keeps the leading '/' as it always
+// did.
 TEST(FileUrl, DriveLetterUrlLosesTheLeadingSlashOnWindowsOnly) {
     const bool windows = cg::core::platform::kWindowsHost;
     EXPECT_EQ(*filePathFromUrl(QByteArrayLiteral("file:///C:/maps/a.png")),

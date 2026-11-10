@@ -4,18 +4,18 @@
 
 #pragma once
 // Ports: i_SimpleTileStorageConfig.pas, u_SimpleTileStorageConfig.pas,
-// u_SimpleTileStorageConfigStatic.pas. docs/specs/storage.md §2.11 (:868-918).
+// u_SimpleTileStorageConfigStatic.pas.
 //
 // A per-map ConfigElement holding the map's cache-type choice, subfolder name and
 // read/scan/add/delete/replace permission overrides, layered on top of an immutable ZMP-supplied
-// default (`defaults`, ports FDefConfig/ADefConfig). It publishes an immutable snapshot (idioms
-// §4, cg/core/snapshot.h) rebuilt in doBeforeChangeNotify() -- the same shape as
+// default (`defaults`, ports FDefConfig/ADefConfig). It publishes an immutable snapshot
+// (cg/core/snapshot.h) rebuilt in doBeforeChangeNotify() -- the same shape as
 // cg::net::ProxyConfig.
 //
 // useMemCache/memCacheCapacity/memCacheTTL/memCacheClearStrategy are legacy fields of this same
 // Delphi class (i_SimpleTileStorageConfig.pas:48-58,101-115; u_SimpleTileStorageConfig.pas:45-48,
-// 126-129,152-155,490-540; docs/specs/storage.md :882-885). They have no INI keys (ZMP-only) and
-// are read by maptype (u_MapType.pas:386-391), not by this class's own doReadConfig/doWriteConfig.
+// 126-129,152-155,490-540). They have no INI keys (ZMP-only) and are read by maptype
+// (u_MapType.pas:386-391), not by this class's own doReadConfig/doWriteConfig.
 
 #include "cg/core/config_element.h"
 #include "cg/core/snapshot.h"
@@ -47,7 +47,7 @@ struct SimpleTileStorageConfigStatic {
 };
 using SimpleTileStorageConfigStaticPtr = std::shared_ptr<const SimpleTileStorageConfigStatic>;
 
-// FEAT-STO-034 (the per-map settings half; the mem-cache class itself is T-0021E1).
+// The per-map settings half; the mem-cache class itself is tile_info_mem_cache.h.
 class SimpleTileStorageConfig final : public core::ConfigElement {
 public:
     explicit SimpleTileStorageConfig(SimpleTileStorageConfigStaticPtr defaults);
@@ -103,9 +103,9 @@ protected:
     void doBeforeChangeNotify() override; // rebuilds the snapshot
 
 private:
-    // The "...Locked()" split (core.md 2.16): the ConfigElement mutex is non-recursive, so
-    // doReadConfig() and the setters below that re-run one another's rule call these directly
-    // instead of the public, self-locking setters.
+    // The "...Locked()" split: the ConfigElement mutex is non-recursive, so doReadConfig()
+    // and the setters below that re-run one another's rule call these directly instead of the
+    // public, self-locking setters.
     void setCacheTypeLocked(CacheTypeId v);
     void setNameInCacheLocked(QString v);
     void setReadOnlyLocked(bool v);

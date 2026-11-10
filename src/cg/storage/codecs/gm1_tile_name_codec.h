@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: u_TileFileNameGM1.pas -- the GlobalMapper Tiles folder cache (CacheType id 4), default
-// root folder `cache_gmt_tiles`. FEAT-STO-005.
+// root folder `cache_gmt_tiles`.
 
 #include "cg/storage/tile_name_codec.h"
 

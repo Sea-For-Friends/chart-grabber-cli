@@ -3,12 +3,11 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Test rig of T-0190 (tile_estimate_test.cpp, fill_report_test.cpp): a scripted tile storage that counts and
+// Test rig of tile_estimate_test.cpp and fill_report_test.cpp: a scripted tile storage that counts and
 // records every lookup, a map type around it (Google/3857, 256 px tiles), and one real AppContext for the
-// geometry and tile-iterator factories.
-// Why not the RAM cache of a ZMP folder: the ticket needs the storage calls counted and an error / stop
-// injected at a chosen call; the scripted storage gives that and exact TileInfo types (Exists, TneExists,
-// NotExists, Unknown) without a ZMP folder.
+// geometry and tile-iterator factories. Why not the RAM cache of a ZMP folder: the tests need the storage
+// calls counted and an error / stop injected at a chosen call; the scripted storage gives that and exact
+// TileInfo types (Exists, TneExists, NotExists, Unknown) without a ZMP folder.
 
 #include "cg/app/app_context.h"
 #include "cg/geo/datum.h"
@@ -104,7 +103,7 @@ public:
     tileInfo(geo::PointI, quint8, const storage::MapVersionInfoPtr&, storage::LoadMode) const override {
         unused();
     }
-    // T-0246 (snapshot_prune_test.cpp): scripted versions per tile and a record of the deletions
+    // Scripted versions per tile and a record of the deletions (snapshot_prune_test.cpp)
     std::map<std::tuple<int, int, int>, std::vector<storage::MapVersionInfoPtr>>
         versions;                               // absent = null list
     mutable std::vector<StorageCall> listCalls; // baseVersion = request's
@@ -127,9 +126,9 @@ public:
         }
         return deleteAnswer;
     }
-    // T-0351: the saves of the prune (zoom, x, y, version, data); the answers are scripted below
+    // The saves of the prune (zoom, x, y, version, data); the answers are scripted below
     std::vector<std::tuple<int, int, int, storage::MapVersionInfoPtr, QByteArray>> saves;
-    // T-0351: the record of the skipped saves the prune takes (per call: the version asked for)
+    // The record of the skipped saves the prune takes (per call: the version asked for)
     std::map<std::tuple<quint8, int, int>, storage::ITileStorage::SkippedSave> skippedSaves;
     std::vector<storage::MapVersionInfoPtr> takenFor;
     [[nodiscard]] std::map<std::tuple<quint8, int, int>, storage::ITileStorage::SkippedSave>

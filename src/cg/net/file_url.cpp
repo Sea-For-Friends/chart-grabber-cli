@@ -22,10 +22,10 @@ std::optional<QByteArray> filePathFromUrl(const QByteArray& url) {
         return std::nullopt; // fast-reject http/https/ftp
     }
     if (first == '\\' && second == '\\') {
-        return std::nullopt; // UNC, e.g. \\server\share\... -- no Windows path forms here [D-11]
+        return std::nullopt; // UNC, e.g. \\server\share\... -- no Windows path forms here
     }
     if (second == ':' && third == '\\') {
-        return std::nullopt; // drive letter, e.g. C:\dir\... [D-11]
+        return std::nullopt; // drive letter, e.g. C:\dir\...
     }
     if (first != 'f' && first != 'F') {
         return std::nullopt;
@@ -41,7 +41,7 @@ std::optional<QByteArray> filePathFromUrl(const QByteArray& url) {
     // "file:///" and reinstates a root by replacing '/' with '\' for its Windows path forms
     // (C:\..., \\server\...); there is no such reinstatement on Linux, so keeping the 8th byte
     // here is what makes file:///tmp/example/a.png become /tmp/example/a.png rather than home/u/a.png.
-    return core::platform::nativeFilePathFromUrlPath(url.mid(7)); // T-0335: "/C:/x" -> "C:/x" on Windows only
+    return core::platform::nativeFilePathFromUrlPath(url.mid(7)); // "/C:/x" -> "C:/x" on Windows only
 }
 
 } // namespace cg::net

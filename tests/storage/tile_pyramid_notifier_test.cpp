@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-035. Ports i_NotifierTilePyramidUpdate.pas, u_NotifierTilePyramidUpdate.pas
-// (the collapsed subscribe-all API); docs/specs/storage.md §2.8 (:531-549)
+// Ports i_NotifierTilePyramidUpdate.pas, u_NotifierTilePyramidUpdate.pas (the collapsed
+// subscribe-all API)
 #include "cg/geo/geo_types.h"
 #include "cg/storage/tile_pyramid_notifier.h"
 
@@ -162,7 +162,7 @@ TEST(TilePyramidNotifier, SubscriptionDestructionStopsFurtherNotifications) {
 TEST(TilePyramidNotifier, ReentrantNotifyFromWithinASlotSeesItsOwnPayload) {
     // A render-thread slot that re-enters the storage (invalidate + re-read) can trigger a nested
     // save/delete that itself calls notify() -- the reentrant call must not clobber the outer
-    // call's payload once control returns to it (spec §3.1 rule 3 concern).
+    // call's payload once control returns to it (notification happens outside the storage lock).
     TilePyramidNotifier notifier;
     std::vector<int> seenZooms;
     const auto sub = notifier.subscribe([&](const TileUpdate* u) {

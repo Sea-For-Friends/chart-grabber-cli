@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: u_CoordToStringConverter.pas. docs/specs/geo.md:1969-2086 (§6.2). FEAT-GEO-004,
-// FEAT-GEO-005 (UTM/UPS), FEAT-GEO-006 (SK-42/GSK-2011), FEAT-GEO-007 (MGRS).
+// Ports: u_CoordToStringConverter.pas.
 #include "cg/geo/coord_to_string.h"
 
 #include <QChar>
@@ -44,11 +43,10 @@ QString formatFixed(double value, int intDigits, int decimals) {
 // Ports the "0.00000000" mask used by the DD/DD2 path (ddToStr below; ports
 // u_CoordToStringConverter.pas:207's `FormatFloat('0.00000000', VDegr)`). Unlike the DMS/DDM masks
 // above, `value` here is an arbitrary, non-quantized double (a raw degree value), so an exact tie
-// at the 9th decimal is reachable (any odd multiple of 1/512, e.g. 12.001953125 -- see
-// docs/handoffs/T-0019A1-review.md finding 1). `%.*f` (snprintf, and Qt's own string-to-double
-// formatting) rounds such a tie half-to-even on the binary value; Delphi's FormatFloat rounds it
-// half away from zero on the decimal value (docs/specs/geo.md:2020). `intDigits`/`decimals` as
-// above; `value` is always non-negative (see ddToStr).
+// at the 9th decimal is reachable (any odd multiple of 1/512, e.g. 12.001953125). `%.*f`
+// (snprintf, and Qt's own string-to-double formatting) rounds such a tie half-to-even on the
+// binary value; Delphi's FormatFloat rounds it half away from zero on the decimal value.
+// `intDigits`/`decimals` as above; `value` is always non-negative (see ddToStr).
 //
 // Approach: scale to an integer count of the smallest printed unit (10^-decimals) and round with
 // std::round, which is itself specified to break ties away from zero -- so std::round(1200195312.5)
@@ -88,9 +86,9 @@ constexpr qint64 kDdmUnitsPerDegree = 60LL * 1000000;
 // But the seconds field is *always* rendered with 4 decimal digits (mask "00.0000"), so the '.'
 // always sits 6 characters from the end, never inside that 4-character window: the guard cannot
 // be true for any input (verified by construction here, and empirically over 2,000,000 random
-// degree values while porting -- see docs/handoffs/T-0019A1.md). DMS CutZero is therefore a
-// legacy no-op; reproduced as such rather than translating dead string-matching code (coding
-// standard: write the intent, not a transliteration). Flagged as an open question in the ticket.
+// degree values while porting). DMS CutZero is therefore a legacy no-op; reproduced as such
+// rather than translating dead string-matching code (coding standard: write the intent, not a
+// transliteration).
 QString dmsToStr(double degr) {
     const double absDegr = std::abs(degr);
     auto value = static_cast<qint64>(absDegr * 60 * 60 * 10000 + 0.005);
@@ -105,8 +103,7 @@ QString dmsToStr(double degr) {
 
 // u_CoordToStringConverter.pas:187-204 (DDM: dshCharDegrMin / dshSignDegrMin). Unlike DMS, this
 // guard's fixed layout genuinely works: the apostrophe is unique in the string, so a global
-// replace-all of "0'" / ".'" / "00'" only ever touches the tail -- endsWith/chop is equivalent
-// (spec §6.2.2).
+// replace-all of "0'" / ".'" / "00'" only ever touches the tail -- endsWith/chop is equivalent.
 QString ddmToStr(double degr, bool cutZero) {
     const double absDegr = std::abs(degr);
     auto value = static_cast<qint64>(absDegr * 60 * 1000000 + 0.00005);
@@ -152,7 +149,7 @@ QString ddToStr(double degr, bool cutZero, bool withDegreeSign) {
 }
 
 // DegrToStr, u_CoordToStringConverter.pas:144-238. `degr` may be negative; only its magnitude is
-// formatted here -- the sign/hemisphere letter is a separate, unspaced prefix (spec §6.2.1 intro).
+// formatted here -- the sign/hemisphere letter is a separate, unspaced prefix.
 QString degrToStr(GeogCoordShowFormat format, double degr, bool cutZero) {
     switch (format) {
     case GeogCoordShowFormat::CharDegrMinSec:
@@ -223,8 +220,8 @@ void geodeticCoordToStr(GeogCoordShowFormat format, LonLat lonLat, bool cutZero,
 
 // GetCoordSysTypeCaptionShort / GetUPSCoordSysTypeCaptionShort, u_CoordRepresentation.pas:94-111.
 // Only the short captions are ported here (the settings dialog's long-form captions and the
-// Geog/Proj/Mgrs format caption arrays stay `ui`'s, spec §6.1); GetCoordSysInfo is the one method
-// in this class's own scope that consumes them. Untranslated, like every other geo caption
+// Geog/Proj/Mgrs format caption arrays stay `ui`'s); GetCoordSysInfo is the one method in this
+// class's own scope that consumes them. Untranslated, like every other geo caption
 // (projection_set.h: "geo has no tr(); ui" wraps at the call site) -- these four SK-42/GSK-2011
 // captions are gettext-wrapped in legacy, Utm/Mgrs/Wgs84 are not, but that distinction is `ui`'s
 // tr() call to make, not this module's.

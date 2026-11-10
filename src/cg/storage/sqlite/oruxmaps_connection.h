@@ -10,10 +10,10 @@
 //        The base64 blob format BasePointsStrToArray decodes: Includes/OruxMapsXmlFile.pas:180-285
 //        (TOruxMapsCalibrationInfo.SaveToStream/LoadFromStream/*Base64String).
 //
-// docs/specs/storage.md §2.17.3 "OruxMaps (read-only)". Depends on the format-independent base
-// landed by T-0022C1 (sqlite_file_connection.h) and reuses the placeholder-then-finishOpen()
-// two-phase-construction shape T-0022C2/T-0022C3 established (mbtiles_connection.h's own top
-// comment; rmaps_connection.h's own top comment).
+// The OruxMaps format (read-only). Depends on the format-independent base
+// (sqlite_file_connection.h) and reuses the placeholder-then-finishOpen()
+// two-phase-construction shape of mbtiles_connection.h and rmaps_connection.h (see their top
+// comments).
 //
 // The OruxMaps flavour: `tiles(x, y, z, image)` -- no `s` column, unlike the RMaps family --
 // always opened read-only (legacy hardcodes `inherited Create(True, ...)`, :169; the isReadOnly a
@@ -45,10 +45,10 @@
 namespace cg::storage::sqlite {
 
 // Ports TryGetOruxMapsXmlFileName (u_TileStorageSQLiteFileImporter.pas:303-314) and the lookup in
-// FetchMetadata: the first '*.otrk2.xml' beside the .db file, in name order (D-43); "" when none.
+// FetchMetadata: the first '*.otrk2.xml' beside the .db file, in name order; "" when none.
 [[nodiscard]] QString oruxmapsSiblingXmlFile(const QString& dbFilePath);
 
-// FEAT-STO-019. Ports TTileStorageSQLiteFileConnectionOruxMaps.
+// Ports TTileStorageSQLiteFileConnectionOruxMaps.
 // NOLINTNEXTLINE(readability-identifier-naming)
 class OruxmapsConnection final : public SqliteFileConnection {
 private:
@@ -60,7 +60,7 @@ private:
     };
 
 public:
-    // Ports the constructor (:158-193) plus what T-0022C1's initialize() does not cover: builds
+    // Ports the constructor (:158-193) plus what the base's initialize() does not cover: builds
     // the object, calls initialize(), then finishOpen(). Always read-only -- see the class doc
     // comment above; there is no isReadOnly parameter to be ignored, unlike a caller ignoring one.
     [[nodiscard]] static core::Result<std::unique_ptr<OruxmapsConnection>>

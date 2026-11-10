@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT yet (T-0013 slice A). docs/specs/script.md 3, 11.3 (parser half only -
-// interpreter_test.cpp lands with T-0014).
+// The parser half; interpreter_test.cpp holds the run half.
 #include "cg/script/lexer.h"
 #include "cg/script/parser.h"
 
@@ -34,8 +33,8 @@ ParseOutcome parseSource(const QByteArray& source) {
     return outcome;
 }
 
-// F1 rework: returns the parsed Program* (or nullptr on failure), keeping `outcome` alive so the
-// caller can walk the tree and query `outcome.symbols` for slot/name facts.
+// Returns the parsed Program* (or nullptr on failure), keeping `outcome` alive so the caller can
+// walk the tree and query `outcome.symbols` for slot/name facts.
 Program* mustParse(const QByteArray& source, ParseOutcome& outcome) {
     outcome = parseSource(source);
     return outcome.result.has_value() ? *outcome.result : nullptr;
@@ -53,7 +52,7 @@ Program* mustParse(const QByteArray& source, ParseOutcome& outcome) {
 
 #define EXPECT_PARSES(src) EXPECT_TRUE(parses(QByteArrayLiteral(src)))
 
-// --- one test per grammar production (spec 3.1), ~27 constructs ---------------------------------
+// --- one test per grammar production, ~27 constructs ---------------------------------
 
 TEST(Parser, ConstSection) {
     EXPECT_PARSES("const A = 1;\nbegin end.");
@@ -65,8 +64,8 @@ TEST(Parser, VarSectionList) {
     EXPECT_PARSES("var A, B, C: Integer;\nbegin end.");
 }
 TEST(Parser, MultipleVarSectionsInterleave) {
-    // spec 3.3 S11: the first of the 4 token-service maps of the SAS maps archive has const, const, function,
-    // function, var, begin.
+    // The first of the 4 token-service maps of the SAS maps archive has const, const, function, function,
+    // var, begin.
     EXPECT_PARSES("const A = 1;\nconst B = 2;\nvar C: Integer;\nbegin end.");
 }
 TEST(Parser, FunctionDecl) {
@@ -76,11 +75,11 @@ TEST(Parser, ProcedureDecl) {
     EXPECT_PARSES("procedure P(A: Integer);\nbegin end;\nbegin end.");
 }
 TEST(Parser, ProcedureEmptyParams) {
-    // spec 3.5 G5: `procedure GetMaxZoom();` (zoomify_usage_example.zmp).
+    // `procedure GetMaxZoom();` (zoomify_usage_example.zmp).
     EXPECT_PARSES("procedure P();\nbegin end;\nbegin P(); end.");
 }
 TEST(Parser, ParamModesConstVarOut) {
-    // spec 3.5 G5: `out` parameters (Google/GoogleSat.zmp's `_RequestVersion`).
+    // `out` parameters (Google/GoogleSat.zmp's `_RequestVersion`).
     EXPECT_PARSES("function F(const A: Integer; var B: Integer; out C: Integer): Integer;\n"
                   "begin B := A; C := A; Result := A; end;\nbegin end.");
 }
@@ -112,11 +111,11 @@ TEST(Parser, CaseSingleLabel) {
     EXPECT_PARSES("var X: Integer;\nbegin X := 1; case X of 1: ResultURL := 'a'; end; end.");
 }
 TEST(Parser, CaseCommaList) {
-    // spec 3.3 S4: `GGC/karta_ggc_250m.zmp` (`case r of 0,1,2`).
+    // `GGC/karta_ggc_250m.zmp` (`case r of 0,1,2`).
     EXPECT_PARSES("var X: Integer;\nbegin X := 1; case X of 0, 1, 2: ResultURL := 'a'; end; end.");
 }
 TEST(Parser, CaseRangeLabel) {
-    // spec 3.5 G4: `Tatar.ru.zmp` (`case Y1 of 0..9: ... 10..99: ...`).
+    // `Tatar.ru.zmp` (`case Y1 of 0..9: ... 10..99: ...`).
     EXPECT_PARSES("var X: Integer;\nbegin X := 1; case X of 0..9: ResultURL := 'a'; 10..99: ResultURL := "
                   "'b'; end; end.");
 }
@@ -137,23 +136,23 @@ TEST(Parser, RepeatUntilRunsAtLeastOnce) {
     EXPECT_PARSES("var I: Integer;\nbegin I := 0; repeat I := I + 1; until I = 10; end.");
 }
 TEST(Parser, TryFinallyAlwaysRuns) {
-    // spec 3.3 S9: the 4 token-service maps, `Google/GoogleSat.zmp`, `Yandex/*` use `finally`.
+    // The 4 token-service maps, `Google/GoogleSat.zmp`, `Yandex/*` use `finally`.
     EXPECT_PARSES("begin try ResultURL := 'a'; finally ResultURL := 'b'; end; end.");
 }
 TEST(Parser, TryExceptSwallows) {
     EXPECT_PARSES("begin try ResultURL := 'a'; except ResultURL := 'b'; end; end.");
 }
 TEST(Parser, WithStmtOverRegisteredType) {
-    // spec 3.5: kept in the grammar though the corpus never uses it.
+    // Kept in the grammar though the corpus never uses it.
     EXPECT_PARSES("var P: TDoublePoint;\nbegin with P do begin end; end.");
 }
 TEST(Parser, WithStmtResolvesFieldNamesAgainstTheSixBuiltInTypes) {
-    // T-0014B: `X` inside the `with` body is `P`'s field, not an unknown identifier.
+    // `X` inside the `with` body is `P`'s field, not an unknown identifier.
     EXPECT_PARSES("var P: TPoint;\nbegin with P do X := 1; end.");
 }
 TEST(Parser, WithStmtOverNonRecordVariableIsAParseTimeReject) {
-    // spec 3.5: a `with` designator that is not one of the 6 built-in record types stays a
-    // parse-time reject, unchanged from T-0013 (here, a plain Integer local).
+    // A `with` designator that is not one of the 6 built-in record types stays a parse-time reject
+    // (here, a plain Integer local).
     ParseOutcome outcome = parseSource("var N: Integer;\nbegin with N do begin end; end.");
     ASSERT_FALSE(outcome.result.has_value());
     bool found = false;
@@ -171,11 +170,11 @@ TEST(Parser, ExitBreakContinue) {
         "exit; end.");
 }
 TEST(Parser, AssignTargetsVarFieldAndStringIndex) {
-    // spec 3.3 S14: `GetURLBase[8] := chr(...)` even on a bound variable.
+    // `GetURLBase[8] := chr(...)` even on a bound variable.
     EXPECT_PARSES("var P: TDoublePoint;\nbegin P.X := 1.0; GetURLBase[1] := 'x'; end.");
 }
 TEST(Parser, CallWithAndWithoutParens) {
-    // spec 3.3 S10: `GetMaxZoom();` and `InitScriptBuffer;` both occur.
+    // `GetMaxZoom();` and `InitScriptBuffer;` both occur.
     EXPECT_PARSES("procedure P();\nbegin end;\nbegin P(); P; end.");
 }
 TEST(Parser, LiteralFormsIntHexRealStringBoolNil) {
@@ -184,31 +183,31 @@ TEST(Parser, LiteralFormsIntHexRealStringBoolNil) {
                   "if DefProjConverter = nil then B := False; ResultURL := 'lit'; end.");
 }
 TEST(Parser, EmptyStatementsAndTrailingSemicolon) {
-    // spec 3.3 S1: `eAtlas.zmp` ends a chained `if` with `then mn:='Yaroslavl' ;` before `end`.
+    // `eAtlas.zmp` ends a chained `if` with `then mn:='Yaroslavl' ;` before `end`.
     EXPECT_PARSES("begin ;; if True then ResultURL := 'a' ; end.");
 }
 TEST(Parser, RoutineShadowsRegisteredFunction) {
-    // spec 2.8: `_broken_maps/Local/MAmet.zmp` declares its own `Exp`/`ArcTan`.
+    // `_broken_maps/Local/MAmet.zmp` declares its own `Exp`/`ArcTan`.
     EXPECT_PARSES("function Exp(X: Extended): Extended;\nbegin Result := X; end;\n"
                   "begin ResultURL := RoundEx(Exp(1.0), 3); end.");
 }
 TEST(Parser, RecursionIsLegal) {
-    // spec 3.3 S13: `MAmet.zmp`'s `ArcTan` calls itself.
+    // `MAmet.zmp`'s `ArcTan` calls itself.
     EXPECT_PARSES(
         "function F(X: Integer): Integer;\nbegin if X <= 0 then Result := 0 else Result := F(X - 1); end;\n"
         "begin end.");
 }
 TEST(Parser, G6ArrayOrSetLiteral) {
-    // spec 3.1 G6 (F2/D-3): `[e1, e2, ...]` open-array/set-constructor literal.
+    // `[e1, e2, ...]` open-array/set-constructor literal.
     EXPECT_PARSES("begin ResultURL := Format('%d,%d', [1, 2]); end.");
     EXPECT_PARSES("begin ResultURL := Format('%d', []); end.");
 }
 
 TEST(Parser, StructuralReplaceFlagsResolveToTheirOrdinal) {
-    // spec 5.2 TReplaceFlag (F2): `rfReplaceAll`/`rfIgnoreCase` are not callables (not in
-    // kExternals) - they must resolve, inside a G6 set literal, to their Delphi ordinal (0/1) so
-    // `StringReplace(s, a, b, [rfReplaceAll])` (corpus-shaped call) is not a false "unknown
-    // identifier".
+    // TReplaceFlag: `rfReplaceAll`/`rfIgnoreCase` are not callables (not in kExternals) - they
+    // must resolve, inside a set literal, to their Delphi ordinal (0/1) so
+    // `StringReplace(s, a, b, [rfReplaceAll])` (corpus-shaped call) is not a false
+    // "unknown identifier".
     ParseOutcome outcome;
     Program* program = mustParse(
         "begin ResultURL := StringReplace(ResultURL, 'a', 'b', [rfReplaceAll, rfIgnoreCase]); end.", outcome);
@@ -232,15 +231,15 @@ TEST(Parser, InterfaceMethodCallOnBoundVariable) {
                   "DefProjConverter.LonLat2XY(TL); end.");
 }
 
-// --- F1 rework (2026-09-18): structural AST assertions ------------------------------------------
+// --- structural AST assertions ------------------------------------------
 // Every test above only proves the source *parses*; none inspects the returned tree, so a
 // mis-wired AST (wrong BinaryOp, swapped precedence levels, dropped downto/range/arg, a
-// miscomputed Call::callee) stayed invisible (review F1). These pin the shape.
+// miscomputed Call::callee) stayed invisible. These pin the shape.
 
 TEST(Parser, StructuralPrecedenceAdditiveAndOrVsMultiplicative) {
-    // spec 3.2: `and` binds like `*`/`div` (parseTerm), `+`/`or` bind one level looser
-    // (parseSimpleExpr). A swap of the two levels (review F1's named regression) would produce
-    // Or(And(Add(1,2),3),4) instead of the correct Or(Add(1,And(2,3)),4).
+    // `and` binds like `*`/`div` (parseTerm), `+`/`or` bind one level looser
+    // (parseSimpleExpr). A swap of the two levels would produce Or(And(Add(1,2),3),4) instead
+    // of the correct Or(Add(1,And(2,3)),4).
     ParseOutcome outcome;
     Program* program = mustParse("var X: Integer;\nbegin X := 1 + 2 and 3 or 4; end.", outcome);
     ASSERT_NE(program, nullptr);
@@ -266,8 +265,8 @@ TEST(Parser, StructuralPrecedenceAdditiveAndOrVsMultiplicative) {
 }
 
 TEST(Parser, StructuralRelationalIsLoosestAndNonChaining) {
-    // spec 3.2 level 4: relational wraps a whole additive expression on each side and does not
-    // itself chain - `1 + 2 > 3` must be Gt(Add(1,2), 3), not Add(1, Gt(2,3)).
+    // Relational wraps a whole additive expression on each side and does not itself
+    // chain - `1 + 2 > 3` must be Gt(Add(1,2), 3), not Add(1, Gt(2,3)).
     ParseOutcome outcome;
     Program* program = mustParse("var X: Integer;\nbegin X := 1 + 2 > 3; end.", outcome);
     ASSERT_NE(program, nullptr);
@@ -318,8 +317,8 @@ TEST(Parser, StructuralLeftAssociativity) {
 }
 
 TEST(Parser, StructuralDivModShlShrProduceDistinctBinaryOps) {
-    // Guards `parseTerm` mapping every one of these to its own BinaryOp (review F1's named
-    // regression: `div` silently landing on RealDiv).
+    // Guards `parseTerm` mapping every one of these to its own BinaryOp (a regression: `div`
+    // silently landing on RealDiv).
     ParseOutcome outcome;
     Program* program = mustParse(
         "var X: Integer;\nbegin X := 7 div 2; X := 7 mod 2; X := 7 shl 2; X := 7 shr 2; X := 7 / 2; end.",
@@ -376,7 +375,7 @@ TEST(Parser, StructuralCaseRangeAndSingleLabels) {
 }
 
 TEST(Parser, StructuralAssignSlotMatchesDeclaredVariable) {
-    // Guards "Assign::slot taken from the wrong scope" (review F1).
+    // Guards "Assign::slot taken from the wrong scope".
     ParseOutcome outcome;
     Program* program = mustParse("var X: Integer;\nbegin X := 5; end.", outcome);
     ASSERT_NE(program, nullptr);
@@ -445,8 +444,7 @@ TEST(Parser, StructuralCallCalleeEncodesMethodSlotAndIndex) {
     EXPECT_EQ(call->callee % kMethodSlotStride, expectedIndex);
 }
 
-// --- T-0014 acceptance item #0 (tech-lead-rulings.md 2026-09-18 T-0013 escalation): dedicated
-// Mul/not/and/or precedence and F4 field-on-unknown-base coverage, before any interpreter work. ---
+// --- Mul/not/and/or precedence and field-on-unknown-base coverage ---
 
 TEST(Parser, StructuralMulBindsTighterThanAdd) {
     // `a*b+c` must be Add(Mul(a,b), c), never Mul(a, Add(b,c)).
@@ -527,8 +525,8 @@ TEST(Parser, StructuralNotBindsTighterThanRelational) {
 }
 
 TEST(Parser, RejectsFieldAccessOnStaticallyUnknownBase) {
-    // F4 (T-0013 review escalation): `.field` on a base with no statically-known RegisteredType
-    // (here a plain Integer local) is a compile error, not a silently wrong fieldIndex == -1.
+    // `.field` on a base with no statically-known RegisteredType (here a plain Integer local) is a
+    // compile error, not a silently wrong fieldIndex == -1.
     ParseOutcome outcome;
     outcome = parseSource("var X: Integer;\nbegin X := X.foo; end.");
     ASSERT_FALSE(outcome.result.has_value());
@@ -541,7 +539,7 @@ TEST(Parser, RejectsFieldAccessOnStaticallyUnknownBase) {
     EXPECT_TRUE(found);
 }
 
-// --- the 12 rejections of spec 3.4, each asserting the exact message -----------------------------
+// --- the 12 parser rejections, each asserting the exact message -----------------------------
 
 ::testing::AssertionResult rejectsWith(const QByteArray& source, const QString& expectedSubstring) {
     ParseOutcome outcome = parseSource(source);
@@ -603,8 +601,8 @@ TEST(Parser, RejectsWrongArgumentCount) {
                             QStringLiteral("expects 1 argument(s), got 2")));
 }
 
-// --- T-0035: what the engine rejects at compile time (FEAT-SCRIPT-001). One row per construct; an
-// empty `expected` means the source must compile. Texts and citations: docs/handoffs/T-0035.md. -----
+// --- What the engine rejects at compile time. One row per construct; an
+// empty `expected` means the source must compile. -----
 
 struct CompileCheckCase {
     const char* name;
@@ -630,7 +628,7 @@ std::string compileCheckName(const ::testing::TestParamInfo<CompileCheckCase>& i
 INSTANTIATE_TEST_SUITE_P(
     T0035, Parser_CompileTimeChecks,
     ::testing::Values(
-        // L-68: DoConstBlock has no colon branch (uPSCompiler.pas:12162-12167).
+        // DoConstBlock has no colon branch (uPSCompiler.pas:12162-12167).
         CompileCheckCase{"TypedConstIsRejected", "const A: Integer = 1;\nbegin end.", "is ('=') expected"},
         // :3271-3272 IsCompatibleType - a Real is not compatible with an integer target.
         CompileCheckCase{"RealLiteralToInteger", "var I: Integer;\nbegin I := 1.5; end.", "Type mismatch"},
@@ -661,7 +659,7 @@ INSTANTIATE_TEST_SUITE_P(
         CompileCheckCase{"ConstExprCallsAFunction", "const C = Random(3);\nbegin end.",
                          "Unknown identifier ''"},
         CompileCheckCase{"ConstExprUnaryPlusIsASyntaxError", "const C = +1;\nbegin end.", "Syntax error"},
-        // L-67: the target of the assignment is not a variable (:10653-10658).
+        // The target of the assignment is not a variable (:10653-10658).
         CompileCheckCase{"AssignToConst", "const C = 1;\nbegin C := 2; end.", "Internal error (20)"},
         // :5438 ValidateParameters - an in/out argument must be a variable.
         CompileCheckCase{"ConstToInc", "const C = 1;\nbegin Inc(C); end.", "Variable Expected"},
@@ -674,7 +672,7 @@ INSTANTIATE_TEST_SUITE_P(
         CompileCheckCase{"ConstDivByZero", "const C = 1 div 0;\nbegin end.", "Divide by Zero"},
         CompileCheckCase{"ConstCharLessThanChar", "const C = 'a' < 'b';\nbegin end.", "Type mismatch"},
         CompileCheckCase{"ConstRelationalFolds", "const C = 3 > 2; D = 'a' = 'a';\nbegin end.", ""},
-        // L-70 and :4143-4205: bounds are full const-exprs of integer type; length in [0, MaxInt/4].
+        // uPSCompiler.pas:4143-4205: bounds are full const-exprs of integer type; length in [0, MaxInt/4].
         CompileCheckCase{"ArrayHiBelowLoMinusOne", "var A: array[5..3] of Integer;\nbegin end.",
                          "Type mismatch"},
         CompileCheckCase{"ArrayEmptyIsAccepted", "var A: array[3..2] of Integer;\nbegin end.", ""},
@@ -683,7 +681,7 @@ INSTANTIATE_TEST_SUITE_P(
                          "const N = 4;\nvar A: array[-N+1 .. N*2-1] of Integer;\nbegin end.", ""}),
     compileCheckName);
 
-// --- error recovery (spec 2.5 / 11.3) -------------------------------------------------------------
+// --- error recovery -------------------------------------------------------------
 
 TEST(Parser, ReportsAllErrorsNotJustTheFirst) {
     ParseOutcome outcome = parseSource("begin ResultURL := NoSuchThing; PostData := AlsoUnknown; end.");

@@ -45,8 +45,7 @@ void saveLine(const geo::IGeometryLonLatLine& line, QByteArray& out) { // :136-1
     if (const auto* single = dynamic_cast<const geo::IGeometryLonLatSingleLine*>(&line)) {
         saveSingleLine(*single, out);
     } else if (const auto* multi = dynamic_cast<const geo::IGeometryLonLatMultiLine*>(&line)) {
-        if (multi->count() >
-            0) { // legacy: Assert(Count > 0), then Item[0] (:184-186); see the D row of T-0109
+        if (multi->count() > 0) { // legacy: Assert(Count > 0), then Item[0] (:184-186)
             saveSingleLine(*multi->item(0), out);
             for (std::size_t i = 1; i < multi->count(); ++i) {
                 appendEmpty(out);
@@ -111,7 +110,7 @@ QByteArray saveGeometrySml(const geo::IGeometryLonLat* geometry) {
             }
         }
         // :210 -- the closing record. Legacy reads an uninitialised first vertex when no contour had a
-        // vertex; the port writes no closing record then (handoff D row).
+        // vertex; the port writes no closing record then (a deviation from legacy).
         if (!out.isEmpty() && first) {
             appendVertex(out, *first);
         }

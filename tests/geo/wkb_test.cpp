@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-012. Ports Test/u_GeometrySaveLoadWKB_Test.pas (8 cases) and
-// docs/specs/geo.md §11.2 wkb_test.cpp (4 new), plus 2 more added in Rework 1
-// (docs/handoffs/T-0017A-review.md F1/F7) -- 14 cases total.
+// Ports Test/u_GeometrySaveLoadWKB_Test.pas (8 cases), plus 6 new cases -- 14
+// cases total.
 
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/wkb.h"
@@ -133,20 +132,19 @@ TEST(Wkb, TestLoadMySqlSinglePolygonBinary) {
     EXPECT_TRUE((*parsed)->isSameGeometry(*expected));
 }
 
-// --- new coverage: docs/specs/geo.md §11.2 wkb_test.cpp (4 cases) ------------------------------
+// --- new coverage (4 cases) ------------------------------
 
 TEST(Wkb, RingGrowsByOneOnRoundTrip) {
-    // §3.7 rule 5: SaveContour writes count+1, re-emitting points[0], so the ring is on the wire
-    // CLOSED even though IGeometryLonLatContour::points() reports it open. Uses a pre-closed
-    // input (the last point literally repeats the first) exactly like legacy's own
-    // u_GeometrySaveLoadWKB_Test.pas TestSinglePolygon: GeometryLonLatContour's pre-closed-input
-    // trim (geometry_lonlat.h) reduces it to an open 3-point ring at construction, which is
-    // exactly what a fresh read of the +1-on-the-wire blob below reconstructs too -- so hash()
-    // (computed over the untrimmed buffer, like legacy's CalcHashByBuffer) matches on both sides.
-    // A NOT-pre-closed input can come back from one round trip with a different hash despite
-    // identical points() (the untrimmed buffers differ by exactly the appended vertex); noted as
-    // an open question in docs/handoffs/T-0017A.md -- legacy's own test suite avoids it the same
-    // way, by only ever round-tripping pre-closed rings.
+    // SaveContour writes count+1, re-emitting points[0], so the ring is on the wire CLOSED even
+    // though IGeometryLonLatContour::points() reports it open. Uses a pre-closed input (the last
+    // point literally repeats the first) exactly like legacy's own u_GeometrySaveLoadWKB_Test.pas
+    // TestSinglePolygon: GeometryLonLatContour's pre-closed-input trim (geometry_lonlat.h)
+    // reduces it to an open 3-point ring at construction, which is exactly what a fresh read of
+    // the +1-on-the-wire blob below reconstructs too -- so hash() (computed over the untrimmed
+    // buffer, like legacy's CalcHashByBuffer) matches on both sides. A NOT-pre-closed input can
+    // come back from one round trip with a different hash despite identical points() (the
+    // untrimmed buffers differ by exactly the appended vertex); legacy's own test suite avoids it
+    // the same way, by only ever round-tripping pre-closed rings.
     GeometryLonLatFactory factory;
     const std::vector<LonLat> pts = {{0, 1}, {1, 1}, {1, 0}, {0, 1}};
     auto polygon =
@@ -189,12 +187,12 @@ TEST(Wkb, BigEndianIsRejected) {
 }
 
 TEST(Wkb, HugeDeclaredCountOnCorruptBlobFailsInsteadOfCrashing) {
-    // Review F1 (blocker): readPoints used to allocate `count` points BEFORE checking that
-    // `count * 16` bytes actually remain in the blob, so a 9-byte corrupt blob whose declared
-    // count is huge could force a multi-GB allocation and let std::bad_alloc escape parseWkb
-    // uncaught (wkb.h:24-27's contract: "a corrupt blob must be skippable, not fatal"). `count`
-    // here is comfortably under the rule-4 vertex-count cap (~134,217,727) but nowhere near
-    // satisfied by the blob's actual (zero) remaining bytes.
+    // readPoints used to allocate `count` points BEFORE checking that `count * 16` bytes
+    // actually remain in the blob, so a 9-byte corrupt blob whose declared count is huge could
+    // force a multi-GB allocation and let std::bad_alloc escape parseWkb uncaught
+    // (wkb.h:24-27's contract: "a corrupt blob must be skippable, not fatal"). `count` here is
+    // comfortably under the vertex-count cap (~134,217,727) but nowhere near satisfied by the
+    // blob's actual (zero) remaining bytes.
     GeometryLonLatFactory factory;
     QByteArray blob;
     blob.append(char(1));   // byte-order
@@ -208,8 +206,8 @@ TEST(Wkb, HugeDeclaredCountOnCorruptBlobFailsInsteadOfCrashing) {
 }
 
 TEST(Wkb, SinglePointContourWritesRepeatedVertex) {
-    // Review F7: writeContour used to special-case an empty ring (write count=1 but 0 points),
-    // producing a malformed blob for a case legacy's own SaveContour never guards -- because
+    // writeContour used to special-case an empty ring (write count=1 but 0 points), producing a
+    // malformed blob for a case legacy's own SaveContour never guards -- because
     // GeometryLonLatContour's constructor (like TGeometryLonLatBase.Create) already asserts a ring
     // is never empty. The smallest legal ring (one point after the pre-closed-input trim) is the
     // boundary case right next to the removed branch: writeContour must still write count+1=2

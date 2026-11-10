@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Test-only IMapType for the region module tests (T-0164, reused by T-0165, T-0166, T-0168).
-// Why a second fake: tests/maptype/fake_map_type.h is final, lives in the maptype test directory and answers
-// null for the projection set and the version objects, which the region tests need. Everything answers
-// null / empty / false except the public members below, which a test fills. Do not edit in later tickets.
+// Test-only IMapType for the region module tests. Why a second fake: tests/maptype/fake_map_type.h is final,
+// lives in the maptype test directory and answers null for the projection set and the version objects, which
+// the region tests need. Everything answers null / empty / false except the public members below, which a
+// test fills. Do not change it.
 
 #include "cg/maptype/map_type.h"
 
@@ -28,10 +28,10 @@ public:
     std::shared_ptr<maptype::MapTypeGuiConfig> guiConfigValue;
     std::shared_ptr<maptype::ITileDownloadSubsystem> tileDownloadSubsystemValue;
     std::shared_ptr<storage::ITileStorage> tileStorageValue;
-    std::shared_ptr<storage::SimpleTileStorageConfig> storageConfigValue; // T-0181, additive
-    std::shared_ptr<net::TileDownloaderConfig> tileDownloaderConfigValue; // T-0181, additive
-    const core::ContentTypeInfo* contentTypeValue = nullptr;              // T-0183: answered by contentType()
-    bool isBitmapTilesValue = false; // T-0183: answered by isBitmapTiles()
+    std::shared_ptr<storage::SimpleTileStorageConfig> storageConfigValue; // Additive
+    std::shared_ptr<net::TileDownloaderConfig> tileDownloaderConfigValue; // Additive
+    const core::ContentTypeInfo* contentTypeValue = nullptr;              // Answered by contentType()
+    bool isBitmapTilesValue = false;                                      // Answered by isBitmapTiles()
     std::function<QString(geo::PointI, quint8, const storage::MapVersionInfoPtr&)> getTileShowNameFn =
         [](geo::PointI, quint8, const storage::MapVersionInfoPtr&) { return QString(); };
 

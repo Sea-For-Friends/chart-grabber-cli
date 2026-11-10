@@ -15,9 +15,9 @@ core::Result<std::unique_ptr<UrlScript>> UrlScript::create(const QByteArray& sou
         // compilation) never runs, so there is no compiled program and no ScriptBuffer.
         return create(nullptr, host);
     }
-    // A whitespace-only (but non-empty) source reaches the compiler exactly like any other
-    // (spec 1.3) and, having no `end.`, fails - CompiledScript::compile's diagnostics already
-    // carry the shape ticket §7 wants ("Compilation error in script \r\n" + every diagnostic + "\r\n",
+    // A whitespace-only (but non-empty) source reaches the compiler exactly like any other and, having
+    // no `end.`, fails - CompiledScript::compile's diagnostics already carry the legacy shape
+    // ("Compilation error in script \r\n" + every diagnostic + "\r\n",
     // u_PascalScriptCompiler.pas:83-90), so the error is forwarded unchanged.
     core::Result<std::shared_ptr<const CompiledScript>> compiled =
         CompiledScript::compile(sourceBytes, std::move(originName));
@@ -48,21 +48,21 @@ core::Result<ScriptRequest> UrlScript::buildRequest(ScriptVars vars, const std::
 
     // u_TileDownloadRequestBuilder.pas:67-78: Lock/Unlock wraps the whole call body below, not
     // just the interpreter run - a nested HTTP request the script makes through IScriptHost is
-    // therefore made with this mutex held too (spec 8.2), exactly as legacy.
+    // therefore made with this mutex held too, exactly as legacy.
     core::WriteLock lock(mutex_);
 
     // legacy BuildRequest:223: checked again right after acquiring the lock - the wait above can
     // be long (another slot's script may be blocked in a nested HTTP request), so a cancellation
-    // that landed during that wait must still stop the script from running.
+    // that arrived during that wait must still stop the script from running.
     if (stop.stop_requested()) {
         ScriptRequest noRequest;
         noRequest.tileExists = false;
         return noRequest;
     }
 
-    // spec 2.13 / ticket: ResultURL and PostData are cleared before every run regardless of what
-    // the caller passed in; ScriptBuffer is supplied by this object, not by the caller, and
-    // survives to the next call only through scriptBuffer_.
+    // ResultURL and PostData are cleared before every run regardless of what the caller passed
+    // in; ScriptBuffer is supplied by this object, not by the caller, and survives to the next
+    // call only through scriptBuffer_.
     vars.resultUrl.clear();
     vars.postData.clear();
     vars.scriptBuffer = scriptBuffer_;

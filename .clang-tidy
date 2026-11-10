@@ -1,4 +1,4 @@
-# T-0036 (clang-tidy 23.1.1) - checks disabled below, one reason each:
+# clang-tidy 23.1.1: the checks disabled below, one reason each:
 # -bugprone-signed-bitwise: LLVM 23 flags every signed operand of & | ^ << >>; ported codecs/SQLite flags rely on it (1:1 port, no bit-arithmetic rewrites).
 # -bugprone-std-exception-baseclass: fires on WkbParseError, a project exception type not derived from std::exception (ported design).
 # -performance-use-std-move: new in LLVM 21+, absent when the gate last passed; style-only hint on unchanged files.

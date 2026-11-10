@@ -96,7 +96,7 @@ VectorDataItemMainInfoPtr VectorDataItemMainInfoFactoryForMap::buildMainInfo(IdD
     // Legacy BuildMainInfo (:206-208): Assert(AIdData <> nil) is a no-op in the shipped build
     // (SASPlanet.dproj:92), then Result := nil. Trace: the map factory is created only at
     // u_MapType.pas:433; its two legacy loader calls set IdData first (u_MapType.pas:542,
-    // u_VectorTileProviderByInfoTileProvider.pas:144). Full trace in the handoff.
+    // u_VectorTileProviderByInfoTileProvider.pas:144).
     if (idData == nullptr) {
         return nullptr;
     }

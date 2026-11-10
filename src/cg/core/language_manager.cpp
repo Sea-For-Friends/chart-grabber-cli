@@ -21,7 +21,7 @@ constexpr QLatin1StringView kLangFileExt{".mo"};
 // Ports GetListOfLanguages: StringReplace removes every ".mo", ignoring case. Legacy walks the
 // folder in NTFS order (case-insensitive by name); the port sorts by name ignoring case, then by
 // bytes, so the order is the same on a case-sensitive file system. A code already listed (equal
-// ignoring case, "en" included) is skipped, first one wins (D-50, legacy L-128).
+// ignoring case, "en" included) is skipped, first one wins (legacy).
 QStringList installedLanguages(const QString& langRootPath) {
     QStringList files = QDir(langRootPath).entryList(QDir::Files, QDir::Unsorted);
     std::ranges::sort(files, [](const QString& l, const QString& r) {

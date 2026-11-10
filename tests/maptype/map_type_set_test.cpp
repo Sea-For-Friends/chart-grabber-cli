@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-001 (prerequisite slice, held open). Ports MapType/u_MapTypeSetBuilderFactory.pas
-// (TMapTypeSet, TMapTypeSetBuilder) and Basic/u_GUIDInterfaceSetOrdered.pas; spec maptype.md §2.11.2.
+// Ports MapType/u_MapTypeSetBuilderFactory.pas (TMapTypeSet, TMapTypeSetBuilder) and
+// Basic/u_GUIDInterfaceSetOrdered.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/hash.h"
 #include "cg/maptype/map_type_set.h"

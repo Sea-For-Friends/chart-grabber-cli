@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT yet (T-0014 slice B). docs/specs/script.md 2.6 (the Value model).
 #include "cg/script/value.h"
 
 #include <gtest/gtest.h>
@@ -32,7 +31,7 @@ TEST(Value, IntWidensToReal) {
 
 TEST(Value, RealDoesNotImplicitlyConvertToInt) {
     Value v = Value::fromReal(1.5L);
-    EXPECT_FALSE(v.toInt().has_value()); // spec 4.3 A1
+    EXPECT_FALSE(v.toInt().has_value());
 }
 
 TEST(Value, BoolConvertsToOrdinalInt) {
@@ -50,7 +49,7 @@ TEST(Value, EmptyActsAsZeroForConversions) {
 
 TEST(Value, StrDoesNotImplicitlyConvertToInt) {
     Value v = Value::fromStr(QByteArrayLiteral("5"));
-    EXPECT_FALSE(v.toInt().has_value()); // spec 4.3 A3 - StrToInt must be explicit
+    EXPECT_FALSE(v.toInt().has_value()); // StrToInt must be explicit
 }
 
 TEST(Value, StrRoundTrips) {
@@ -73,7 +72,7 @@ TEST(Value, IsTruthyOnlyForBoolAndNonzeroInt) {
 }
 
 TEST(Value, RecordFieldsAreValueCopiedOnWrite) {
-    // ADR-0003 semantic table row 8: `TL := BR` must not alias.
+    // `TL := BR` must not alias.
     Value a = Value::fromRecord({Value::fromReal(1.0L), Value::fromReal(2.0L)});
     Value b = a; // shares the COW buffer until a write happens
     b.fields()[0] = Value::fromReal(99.0L);
@@ -98,7 +97,7 @@ TEST(Value, EmptyIsNeverAssigned) {
     EXPECT_FALSE(Value().isAssigned());
 }
 
-// --- T-0014B: declared-type range-wrap/rounding (spec 4.1 N1/N2) -------------------------------
+// --- Declared-type range-wrap/rounding -------------------------------
 
 TEST(Value, WrappedToByteWrapsMod256) {
     EXPECT_EQ(*Value::fromInt(265).wrappedTo(DeclaredType::Byte).toInt(), 9);   // overflow
@@ -131,7 +130,7 @@ TEST(Value, WrappedToShortIntAndSmallIntSignedWrap) {
 
 TEST(Value, WrappedToInt64AndUnknownNeverWrap) {
     EXPECT_EQ(*Value::fromInt(-1).wrappedTo(DeclaredType::Int64).toInt(), -1);
-    EXPECT_EQ(*Value::fromInt(-1).wrappedTo(DeclaredType::Unknown).toInt(), -1); // N1: today's behaviour
+    EXPECT_EQ(*Value::fromInt(-1).wrappedTo(DeclaredType::Unknown).toInt(), -1); // Today's behaviour
 }
 
 TEST(Value, WrappedToDoubleRoundsFromExtendedPrecision) {
@@ -139,7 +138,7 @@ TEST(Value, WrappedToDoubleRoundsFromExtendedPrecision) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
     // A long double value whose extra (beyond `double`) mantissa bits are non-zero: narrowing to
-    // `double` and back must change the represented value (spec 4.1 N2).
+    // `double` and back must change the represented value.
     const long double extended = 1.0L / 3.0L;
     const Value wrapped = Value::fromReal(extended).wrappedTo(DeclaredType::Double);
     ASSERT_EQ(wrapped.kind(), ValueKind::Real);
@@ -168,21 +167,14 @@ TEST(Value, WrappedToIsANoOpForNonNumericKinds) {
     EXPECT_EQ(s.wrappedTo(DeclaredType::Byte).toStr(), QByteArrayLiteral("x"));
 }
 
-// T-0014 rework Major 3: `FloatToStr` (spec 5.4/4.1 N2) is Delphi's `ffGeneral` format, not
-// QByteArray::number(double,'g',15) - 15 significant digits, fixed notation switching to
-// scientific outside exponent range [-3, 15] (Borland convention), upper-case `E`, no `+`, no
-// zero-padded exponent, locale-independent.
+// `FloatToStr` is Delphi's `ffGeneral` format, not QByteArray::number(double,'g',15) - 15
+// significant digits, fixed notation switching to scientific outside exponent range [-3, 15]
+// (Borland convention), upper-case `E`, no `+`, no zero-padded exponent, locale-independent.
 //
-// T-0014C1 rework (finding 8): the fixed/scientific threshold moved from `e < -1` to `e < -3`
-// (Borland convention: `e` is exp10+1). The review measured Delphi's actual `ffGeneral` switch
-// point as "Exponent < -3" (0.0001 stays fixed, values below 1e-5 go scientific); the ticket's own
-// restatement ("fixed when value >= 0.00001") disagrees with the review for exactly one value,
-// 0.00001 itself: e=exp10+1=-4 for 1e-5, and -4 < -3, so the review's rule sends it scientific
-// ("1E-5") while the ticket's sentence would keep it fixed ("0.00001"). Per the Tech Lead ruling,
-// the review's threshold wins; see docs/handoffs/T-0014C1.md "Rework" for this note restated.
-// Checked against every existing row below: none has `e` (Borland exp10+1) equal to -2 or -3 -
-// the only two values whose classification flips (old: scientific below e<=-2; new: scientific
-// only below e<=-4) - so no existing expectation changes.
+// Delphi's `ffGeneral` goes scientific when the Borland exponent `e` (exp10+1) is below -3: 0.0001
+// stays fixed, 1e-5 gives "1E-5". An earlier threshold of `e < -1` was wrong. No row below has `e`
+// equal to -2 or -3, the only two values whose classification differs between the two thresholds,
+// so no existing expectation changes.
 struct FloatToStrCase {
     long double input;
     const char* expected;
@@ -202,11 +194,9 @@ INSTANTIATE_TEST_SUITE_P(Goldens, Value_FloatToStr,
                                            FloatToStrCase{123456789.125L, "123456789.125"},
                                            FloatToStrCase{100.0L, "100"}, FloatToStrCase{0.01L, "0.01"},
                                            FloatToStrCase{-123.0L, "-123"},
-                                           // finding 8: e=exp10+1=-2, not < -3 -> stays fixed. This
-                                           // is the value the review's own bug report used
-                                           // (`FloatToStr(0.001)` gave `1E-3` before this fix).
+                                           // e=exp10+1=-2, not < -3 -> stays fixed
+                                           // (`FloatToStr(0.001)` gave `1E-3` under the earlier
+                                           // threshold).
                                            FloatToStrCase{0.001L, "0.001"}));
-// The ticket's other requested row, 0.00001 -> "the rule yields", is not a new row: it is exactly
-// the existing `1e-5L, "1E-5"` golden above (e=exp10+1=-4, < -3, so the review's threshold - not
-// the ticket's own restatement, which disagree here - sends it scientific; see the note above).
-// Adding a byte-identical duplicate row would be exactly the redundancy finding 7 asks to remove.
+// 1e-5 is not a new row: it is the existing `1e-5L, "1E-5"` golden above (e=exp10+1=-4, < -3, so
+// it goes scientific).

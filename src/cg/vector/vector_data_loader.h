@@ -30,7 +30,7 @@ struct VectorLoadContext {    // TVectorLoadContext
 class IVectorDataLoader {
 public:
     virtual ~IVectorDataLoader() = default;
-    // Success with a null subset means "no items" (legacy nil). Parse failures: spec §4.
+    // Success with a null subset means "no items" (legacy nil).
     [[nodiscard]] virtual core::Result<VectorItemSubsetPtr> load(const VectorLoadContext& context,
                                                                  const QByteArray& data) const = 0;
 };

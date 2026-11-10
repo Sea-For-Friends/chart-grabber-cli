@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: Test/u_SASTestCase.pas:38-70 (TSASTestCase.CheckDoublePointsEquals,
-// u_ProjectionSet_Test.pas:69-76 cEpsilon). Shared by every ported projection test
-// (docs/specs/geo.md §11.0).
+// u_ProjectionSet_Test.pas:69-76 cEpsilon). Shared by every ported projection
+// test.
 
 #include "cg/geo/geo_types.h"
 

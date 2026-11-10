@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// FEAT-GEO-034 (held open). Ports: Src/MarksDB/mORMot/u_MarkSystemORMLog.pas
-// (docs/specs/marks.md §2.9.14).
+// Ports: Src/MarksDB/mORMot/u_MarkSystemORMLog.pas.
 //
 // Legacy compiles the four log calls only under ORM_LOG_ENABLE, which MarkSystemORM.inc keeps
 // switched off even in debug builds, so a shipped SAS.Planet writes no ORM log at all. Switched on,

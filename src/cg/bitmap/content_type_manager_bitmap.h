@@ -5,9 +5,9 @@
 #pragma once
 // Ports: Src/ContentType/u_ContentTypeManagerSimple.pas:46-97, 577-762 (TContentTypeManagerBitmap: the key
 // lists, InitLists, GetBitmapLoaderByFileName, GetIsBitmapType, GetIsBitmapExt) and
-// Src/ContentType/u_ContentTypeInfo.pas:49-66, 109-143 (TContentTypeInfoBitmap), docs/specs/bitmap.md §2.6.
-// Not ported here: ConverterMatrixUpdateBitmaps (u_ContentTypeManagerSimple.pas:539-575, T-0120; typeKeys()
-// serves it), the performance counter lists (:603-604), CheckOtherForSaveCompatible (already in
+// Src/ContentType/u_ContentTypeInfo.pas:49-66, 109-143 (TContentTypeInfoBitmap). Not ported here:
+// ConverterMatrixUpdateBitmaps (u_ContentTypeManagerSimple.pas:539-575; typeKeys() serves it), the
+// performance counter lists (:603-604), CheckOtherForSaveCompatible (already in
 // storage/content_type_compat.h).
 
 #include "cg/bitmap/bitmap_tile_save_load.h"
@@ -31,7 +31,6 @@ struct ContentTypeInfoBitmap {
     BitmapTileSaverPtr saver; // null for ico
 };
 
-// FEAT-STO-033
 class ContentTypeManagerBitmap final { // TContentTypeManagerBitmap
 public:
     explicit ContentTypeManagerBitmap(const std::shared_ptr<const IBitmapTileSaveLoadFactory>& factory);

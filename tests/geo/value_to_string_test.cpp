@@ -2,8 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-016; docs/specs/geo.md:2227-2311 (§6.5, §6.5.1).
-//
 // ValToNum's one primitive (`QLocale().toString(value, 'f', digits)`) makes every string here
 // depend on the *process-wide default* QLocale, exactly like legacy's global DecimalSeparator/
 // ThousandSeparator -- unlike coord_to_string.cpp, which pins '.' unconditionally
@@ -46,11 +44,11 @@ protected:
         // separator is ever emitted, unlike a bare default-constructed QLocale, which picks up
         // whatever the process/environment locale is) -- deterministic across machines. It also
         // rounds an exact decimal tie AWAY FROM ZERO, matching the Delphi FormatFloat convention
-        // established in docs/handoffs/T-0019A1-review.md finding 1 (verified: QLocale::c()
-        // .toString(0.125, 'f', 2) == "0.13", not the round-half-to-even "0.12" glibc's printf
-        // gives for the same input) -- so, unlike coord_to_string.cpp's ddToStr, no separate
-        // formatFixedRoundHalfAwayFromZero-style helper is needed here: QLocale's own primitive
-        // already reproduces legacy's tie rule for every decimals count this module uses.
+        // (verified: QLocale::c() .toString(0.125, 'f', 2) == "0.13", not the round-half-to-even
+        // "0.12" glibc's printf gives for the same input) -- so, unlike coord_to_string.cpp's
+        // ddToStr, no separate formatFixedRoundHalfAwayFromZero-style helper is needed here:
+        // QLocale's own primitive already reproduces legacy's tie rule for every decimals count
+        // this module uses.
         QLocale::setDefault(QLocale::c());
     }
     void TearDown() override { QLocale::setDefault(savedDefault_); }
@@ -86,10 +84,10 @@ TEST_F(ValueToStringTest, DataSizeConvertThresholds) {
 }
 
 TEST_F(ValueToStringTest, DataSizeConvertHasNoNaNGuard) {
-    // Spec §6.5 closing note: NaN guards exist on distConvert/areaConvert/speedConvert/
-    // altitudeConvert but NOT on dataSizeConvert -- reproduce, add none. NaN > 1048576 and
-    // NaN > 1024 are both false in IEEE 754, so this falls to the KB branch and formats NaN
-    // itself, never returning the "NaN" sentinel.
+    // NaN guards exist on distConvert/areaConvert/speedConvert/altitudeConvert but NOT on
+    // dataSizeConvert -- reproduce, add none. NaN > 1048576 and NaN > 1024 are both false
+    // in IEEE 754, so this falls to the KB branch and formats NaN itself, never returning
+    // the "NaN" sentinel.
     const ValueToStringConverter conv = makeConverter(DistStrFormat::KmAndM);
     EXPECT_NE(conv.dataSizeConvert(kNaN), QStringLiteral("NaN"));
 }
@@ -127,7 +125,7 @@ TEST_F(ValueToStringTest, DistConvertThresholdsAcrossEveryDistStrFormat) {
 }
 
 TEST_F(ValueToStringTest, DistNegativePrefixesTheWholeString) {
-    // §6.5.1 point 1: Abs-then-format, single '-' on the WHOLE result.
+    // Abs-then-format, single '-' on the WHOLE result.
     const ValueToStringConverter conv = makeConverter(DistStrFormat::KmAndM);
     EXPECT_EQ(conv.distConvert(-1500.0), QStringLiteral("-1 km 500.00 m"));
     EXPECT_NE(conv.distConvert(-1500.0), QStringLiteral("-1 km -500.00 m"));
@@ -180,9 +178,9 @@ TEST_F(ValueToStringTest, AreaConvertThresholdsAcrossEveryAreaStrFormat) {
 }
 
 TEST_F(ValueToStringTest, AreaComparesSignedInput) {
-    // §6.5.1 point 2: unlike distConvert, no Abs() -- a negative area takes the "small" branch of
-    // every threshold (asfAuto's <= 1000000 branch here), not the "large" one a magnitude
-    // comparison would pick for -2000000.
+    // Unlike distConvert, no Abs() -- a negative area takes the "small" branch of every threshold
+    // (asfAuto's <= 1000000 branch here), not the "large" one a magnitude comparison would pick
+    // for -2000000.
     const ValueToStringConverter conv = makeConverter(DistStrFormat::KmAndM, AreaStrFormat::Auto);
     EXPECT_EQ(conv.areaConvert(-2000000.0), QStringLiteral("-2000000.00 m2"));
 }
@@ -195,7 +193,7 @@ TEST_F(ValueToStringTest, AreaConvertNaNGuard) {
 // --- speedConvert (u_ValueToStringConverter.pas:318-357) -----------------------------------------
 
 TEST_F(ValueToStringTest, SpeedUnitDerivedFromDistFormat) {
-    // §6.5.1 point 3: the speed unit is derived from `dist`, never stored on its own.
+    // The speed unit is derived from `dist`, never stored on its own.
     struct Row {
         DistStrFormat dist;
         double kmph;
@@ -300,8 +298,8 @@ TEST(ValueFormatSettingsTest, ReadWriteRoundTrip) {
 TEST(ValueFormatSettingsTest, ReadKeepsRawOutOfRangeOrdinalAndRoundTripsLikeLegacy) {
     // Legacy casts these with an *unchecked* `TFoo(Integer)` cast
     // (u_ValueToStringConverterConfig.pas:88-89) and writes the stored ordinal straight back
-    // (`DoWriteConfig`) -- strict 1:1 (Tech Lead ruling, T-0019A2 rework): the port keeps the raw
-    // ordinal rather than validating and falling back to the default.
+    // (`DoWriteConfig`) -- strict 1:1: the port keeps the raw ordinal rather than validating and
+    // falling back to the default.
     std::shared_ptr<IniFile> file;
     const auto section = makeSection(file);
     section->writeInt(u"DistFormat", 99);

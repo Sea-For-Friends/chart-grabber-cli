@@ -4,12 +4,10 @@
 
 #pragma once
 // New code (no legacy unit). Inherits: frm_ProgressDownload.pas:268-279, 306-393, 431-437, 586-595 (the
-// window's loop and its buttons, without the window). Ports: nothing. docs/specs/app-cli.md 3.9, 5.2, 6.3;
-// docs/specs/region-download.md section 7 (caller obligations).
+// window's loop and its buttons, without the window). Ports: nothing.
 //
 // Starts or resumes the runs of one source, polls them once a second like the window's timer, applies the
-// unattended policy of app-cli.md 1.8 where the window had a human, keeps the sessions of 1.9 and infers why
-// the runs ended (6.3).
+// unattended policy where the window had a human, keeps the sessions and infers why the runs ended.
 
 #include "cg/app/app_context.h"
 #include "cg/app/console.h"
@@ -37,23 +35,23 @@ enum class DownloadOutcome : std::uint8_t {
     Stalled,
     SaveFailed,
     WorkerFailed,
-    FrameNotServed, // T-0356: stopped because the newest young frame has no served tile
+    FrameNotServed, // Stopped because the newest young frame has no served tile
                     // (source.frameFallback)
-    Refused         // exit 3: resume: no file could be started (runCli checks the files first); T-0445: the
-                    // session lock of the job is held by another run
+    Refused         // exit 3: resume: no file could be started (runCli checks the files first); the session
+                    // lock of the job is held by another run
 };
 
 struct DownloadPolicy {
     int stallTimeoutSec = 300; // 0 = never
     int saveRetries = 3;
-    int maxConnectionErrors = 60; // T-0271; 0 = never
+    int maxConnectionErrors = 60; // 0 = never
     int resumeDelaySec = 5;
     int pollMs = 1000;
-    int notServedAnswers = 3; // T-0356: answers in a row of the class "not served yet" that stop a run
+    int notServedAnswers = 3; // Answers in a row of the class "not served yet" that stop a run
 };
 
 // What the runner needs of one started run. `owner` keeps the run (and so its worker thread) alive;
-// destroying it joins the worker, so the runner cancels first (region-download.md section 7).
+// destroying it joins the worker, so the runner cancels first.
 struct StartedRun {
     std::shared_ptr<region::IRegionProcessProgressInfoDownload> progress;
     std::shared_ptr<core::OperationNotifier> cancelNotifier;
@@ -80,10 +78,14 @@ public:
     // `sourceNames[i]` is the name of the map of `slsFiles[i]` (the progress line shows it).
     [[nodiscard]] DownloadOutcome resume(const QStringList& slsFiles, const QStringList& sourceNames);
 
-    // T-0450: the job folder a session prefix `<id>/<guid>/...` writes to; empty = none (no lock).
+    // The refusals of the last run() / resume(), summed over its slots (streak 0); a deviation from
+    // legacy.
+    [[nodiscard]] region::RefusalCounts lastRefusals() const { return lastRefusals_; }
+
+    // The job folder a session prefix `<id>/<guid>/...` writes to; empty = none (no lock).
     [[nodiscard]] static QString jobDirOfSessionPrefix(const QString& autoSaveDir, const QString& prefix);
 
-    // app-cli.md 1.9: the first 12 hex digits of SHA-1 over the inputs that decide what a session means.
+    // The first 12 hex digits of SHA-1 over the inputs that decide what a session means.
     [[nodiscard]] static QString jobId(const Job& job, const maptype::IMapType& map,
                                        const geo::IGeometryLonLatPolygon& area,
                                        std::span<const quint8> zooms);
@@ -97,6 +99,7 @@ private:
     std::stop_token termination_;
     DownloadPolicy policy_;
     std::shared_ptr<IRunStarter> starter_;
+    region::RefusalCounts lastRefusals_;
 };
 
 } // namespace cg::app

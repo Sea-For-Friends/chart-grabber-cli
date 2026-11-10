@@ -6,8 +6,8 @@
 // Ports: i_ProjectionTypeFactory.pas, u_ProjectionTypeFactorySimple.pas:70-220
 //
 // Resolves a ZMP's `projection=`/`EPSG=`/`sradiusa=`/`sradiusb=` keys to one of the four interned
-// projection types, or synthesizes an ad-hoc one for a non-standard radius (docs/specs/geo.md
-// §2.4 -- "the +/-1 m rule"). Immutable snapshot, no locks (§8.1).
+// projection types, or synthesizes an ad-hoc one for a non-standard radius. Immutable snapshot,
+// no locks.
 
 #include "cg/core/config_provider.h"
 #include "cg/geo/datum.h"
@@ -35,8 +35,8 @@ public:
     // Throws cg::geo::UnexpectedProjectionType for an unknown EPSG code.
     [[nodiscard]] ProjectionTypePtr byCode(int projectionEpsg) const;
 
-    // Reads EPSG / projection / sradiusa / sradiusb from a ZMP params.txt section (docs/specs/geo.md
-    // §2.4). `config` should already be scoped to the `[PARAMS]` section (e.g. via
+    // Reads EPSG / projection / sradiusa / sradiusb from a ZMP params.txt section. `config` should
+    // already be scoped to the `[PARAMS]` section (e.g. via
     // `core::IConfigProvider::subItem(u"PARAMS")`) and may be nullptr (all defaults apply, as
     // legacy's `AConfig <> nil` guard).
     [[nodiscard]] ProjectionTypePtr byConfig(const core::IConfigProvider* config) const;

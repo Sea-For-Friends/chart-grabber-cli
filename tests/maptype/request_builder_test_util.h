@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Shared by the request-builder tests (T-0096): a scripted net::IDownloader, a counting proj-converter
-// factory and a factory double for the lazy wrapper.
+// Shared by the request-builder tests: a scripted net::IDownloader, a counting proj-converter factory
+// and a factory double for the lazy wrapper.
 
 #include "cg/core/language_manager.h"
 #include "cg/geo/datum.h"

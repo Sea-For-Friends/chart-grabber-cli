@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Non-interactive smoke run of docs/test-plans/stage0-acceptance.md (cases AC-01..AC-08, AC-15,
-# AC-17, AC-19, AC-21, AC-24). Writes only into RESULT_DIR (must not exist) and the cache directory.
-# Session files (.sls) are in AutoSave/ of the data directory (spec 1.6), not here. Never uses --overwrite, never needs root, deletes nothing. Needs real network for AC-04..AC-08.
+# Non-interactive smoke run of the acceptance cases. Writes only into RESULT_DIR (must not exist) and the cache directory. Session files (.sls) are in AutoSave/ of the data
+# directory, not here. Never uses --overwrite, never needs root, deletes nothing. Needs real network for the download cases.
 # Usage: run_smoke.sh --maps DIR --bbox W,S,E,N --sat ID --chart ID --overlay ID [options]
 #   --bin PATH       chart-grabber-cli binary (default: chart-grabber-cli on PATH; refuses to start if missing)
-#   --zooms LIST     0-based zooms (default 10-14)     --route FILE.gpx --corridor-nm N  (AC-07)
-#   --nonmercator ID a source with EPSG other than 3857 (AC-15, e.g. "Yandex - Map")
+#   --zooms LIST     0-based zooms (default 10-14)     --route FILE.gpx --corridor-nm N  (route)
+#   --nonmercator ID a source with EPSG other than 3857 (e.g. "Yandex - Map")
 #   --cache DIR      cache root (default RESULT_DIR/cache)   --out RESULT_DIR (default ./smoke-DATE)
 set -u
 BIN=chart-grabber-cli; ZOOMS=10-14; OUT="./smoke-$(date +%Y%m%d-%H%M%S)"
@@ -46,7 +45,7 @@ fi
 t AC-17 3 estimate --bbox "$BBOX" --zooms 22 --source "$SAT"
 t AC-19 3 estimate --bbox 179,10,-179,12 --zooms "$ZOOMS" --source "$SAT"
 t AC-24 0 download --bbox "$BBOX" --zooms "$ZOOMS" --source "$SAT" --strict
-# AC-21: dead proxy in a fresh cache, must stop with exit 4 after the stall timeout (about 30 s)
+# Dead proxy in a fresh cache, must stop with exit 4 after the stall timeout (about 30 s)
 COM=(--maps "$MAPS" --cache "$OUT/cache-dead" --no-progress)
 t AC-21 4 download --bbox "$BBOX" --zooms 10 --source "$SAT" --proxy http://127.0.0.1:9 --stall-timeout 30
 { date -Is; "$BIN" --version 2>&1; uname -a; command -v "$BIN"; } >"$OUT/environment.txt"

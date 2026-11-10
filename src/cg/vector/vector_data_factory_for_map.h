@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/Vector/u_VectorDataFactoryForMap.pas
 //
-// The main-info factory for map layers. Each item gets the next index of its IdData and an info
-// URL built from the map's URL prefix. Index and URL take no part in hash or isEqual (LV-3).
+// The main-info factory for map layers. Each item gets the next index of its IdData and an info URL
+// built from the map's URL prefix. Index and URL take no part in hash or isEqual.
 
 #include "cg/vector/html_to_hint_text_converter.h"
 #include "cg/vector/string_provider.h"

@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: Src/MarksDB/mORMot/Marks/i_MarkDbInternalORM.pas (57). Interfaces only; the implementing
-// classes are later tickets (docs/specs/marks.md section 2.9.10).
+// classes are ported separately.
 //
 // IMarkInternalORM is the view of a SQLite mark object that the database uses to find its row
 // (id, database identity, category id, name, visibility). IMarkDbInternalORM is the database side

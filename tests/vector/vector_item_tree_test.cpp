@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_VectorItemTree.pas; docs/specs/vector.md §2.7, §7.2.
+// Ports u_VectorItemTree.pas.
 #include "cg/vector/vector_item_tree.h"
 
 #include <gtest/gtest.h>

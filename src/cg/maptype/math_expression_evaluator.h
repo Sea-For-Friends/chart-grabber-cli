@@ -6,9 +6,9 @@
 // Ports: u_MathExpressionEvaluator.pas
 //
 // The integer arithmetic of a URL-template tag such as {z-1} or {x*2}: grammar
-// expr := term (('+'|'-') term)*, term := number (('*'|'/') number)*, number := 'x'|'y'|'z'|digits.
-// 32-bit wrapping arithmetic, truncating division. Trailing text after a valid expression is not
-// an error (docs/parity/legacy-defects.md, L-137).
+// `expr := term (('+'|'-') term)*, term := number (('*'|'/') number)*, number := 'x'|'y'|'z'|digits`.
+// 32-bit wrapping arithmetic, truncating division. Trailing text after a valid expression is not an
+// error.
 
 #include <QString>
 #include <QStringView>
@@ -19,7 +19,6 @@ namespace cg::maptype {
 class MathExpressionEvaluator {
 public:
     // "" when the expression is empty or any operand is missing / does not fit Integer / divides by zero.
-    // FEAT-NET-004
     [[nodiscard]] QString evaluate(QStringView expression, qint32 x, qint32 y, qint32 z);
 
 private:

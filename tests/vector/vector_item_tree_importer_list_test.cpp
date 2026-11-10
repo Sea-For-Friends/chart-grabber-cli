@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (the T-0141 row assigns none). Ports u_VectorItemTreeImporterList.pas
-// (GetImporterByExt :123-147, GetCount :114-120, GetItem :149-154) and the item class of
-// i_VectorItemTreeImporterList.pas; docs/specs/vector.md §2.11.
+// Ports u_VectorItemTreeImporterList.pas (GetImporterByExt :123-147, GetCount :114-120,
+// GetItem :149-154) and the item class of i_VectorItemTreeImporterList.pas.
 #include "cg/vector/vector_item_tree_importer_list.h"
 
 #include <QString>
@@ -64,7 +63,7 @@ TEST(ImporterListByExt, DataDriven) {
         {QStringLiteral(".ГПХ"), cyrUpper}, // no fold of non-ASCII (SysUtils.LowerCase)
         {QStringLiteral(".гпх"), cyrLower},   {QStringLiteral("Гпх"), nullptr},
         {QStringLiteral("unknown"), nullptr}, {QStringLiteral("..kml"), nullptr}, // only one dot is dropped
-        {QStringLiteral(""), nullptr},                                            // D row: empty ext
+        {QStringLiteral(""), nullptr},                                            // A deviation: empty ext
         {QStringLiteral("."), nullptr},
     };
     for (const auto& row : rows) {
@@ -73,7 +72,7 @@ TEST(ImporterListByExt, DataDriven) {
 }
 
 TEST(ImporterListStatic, EmptyListIsTheNilListRegression) {
-    VectorItemTreeImporterListStatic list({}); // D row: legacy nil list
+    VectorItemTreeImporterListStatic list({}); // A deviation from legacy: legacy nil list
     EXPECT_EQ(list.count(), 0);
     EXPECT_EQ(list.importerByExt(QStringLiteral("kml")), nullptr);
     EXPECT_EQ(list.item(0), nullptr);

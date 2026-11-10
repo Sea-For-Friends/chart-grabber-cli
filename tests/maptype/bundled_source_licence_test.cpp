@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (T-0454: licence text of the bundled map sources). The `License=` line of a bundled
-// params.txt is the `license` field that the sources record shows to users. The expected strings are the
-// public texts settled for T-0454 (Esri via Vantor; EMODnet Bathymetry layers under CC BY 4.0, the world
-// layer with GEBCO 2019), written here as literals, not read from the bundle.
+// The licence text of the bundled map sources. The `License=` line of a bundled params.txt is the
+// `license` field that the sources record shows to users. The expected strings are the published texts
+// (Esri via Vantor; EMODnet Bathymetry layers under CC BY 4.0, the world layer with GEBCO 2019), written
+// here as literals, not read from the bundle.
 #include <QDir>
 #include <QFile>
 #include <QIODevice>
@@ -13,6 +13,8 @@
 #include <QStringList>
 
 #include <gtest/gtest.h>
+
+#include "../corpus_skip.h"
 
 namespace {
 
@@ -52,6 +54,7 @@ QString licenceLine(const QString& relPath) {
 }
 
 TEST(BundledSourceLicence, SettledTextOfEachLayer) {
+    CG_SKIP_IF_NO_FIXTURE(bundledDir() + QStringLiteral("/LICENSE"));
     struct Row {
         const char* relPath;
         const char* licence;

@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: T-0370 tests/corpus_skip.h: a missing fixture skips in the public tree (CG_REQUIRE_FIXTURES unset)
-// and FAILS in the private checkout (CG_REQUIRE_FIXTURES=1, exported by tools/validate.sh), so it can never
-// become a silent skip.
+// tests/corpus_skip.h: a missing fixture skips in the public tree (CG_REQUIRE_FIXTURES unset) and FAILS in
+// the private checkout (CG_REQUIRE_FIXTURES=1, exported by tools/validate.sh), so it can never become a
+// silent skip.
 #include <QtGlobal>
 
 #include <gtest/gtest-spi.h>

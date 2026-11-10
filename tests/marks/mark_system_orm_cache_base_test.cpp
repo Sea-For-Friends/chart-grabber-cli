@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (enabler, held open). Ports u_MarkSystemORMCacheBase.pas; docs/specs/marks.md §2.9.7.
-// Proof of ticket T-0063: sorted order, size arithmetic, auto-reset at the limit, prepared-by-category.
+// Ports u_MarkSystemORMCacheBase.pas: sorted order, size arithmetic, auto-reset at the limit,
+// prepared-by-category.
 #include "cg/marks/mormot/mark_system_orm_cache_base.h"
 
 #include <QString>
@@ -177,7 +177,7 @@ TEST(IdDynArrayObjectTest, AddArrayWindows) {
         {{}, {3, 1, 2}, 0, 0, {}},                // count 0: nothing
         {{7}, {3, 1, 2}, 0, -1, {1, 2, 3, 7}},    // all new: AddArray + Sort
         {{1, 2, 3}, {3, 1, 2}, 0, -1, {1, 2, 3}}, // all present: nothing
-        {{2}, {5, 5, 2}, 0, -1, {2, 5, 5}},       // L-157: duplicates inside the source are both added
+        {{2}, {5, 5, 2}, 0, -1, {2, 5, 5}},       // Duplicates inside the source are both added
         {{}, {5, 5}, 0, -1, {5, 5}},              // ... also into an empty target
     };
     for (const Case& c : cases) {
@@ -191,7 +191,7 @@ TEST(IdDynArrayObjectTest, AddArrayWindows) {
     }
 }
 
-TEST(IdDynArrayObjectTest, AddArrayWindowPastTheArrayDoesNotReadOutOfRange) { // D-66
+TEST(IdDynArrayObjectTest, AddArrayWindowPastTheArrayDoesNotReadOutOfRange) {
     struct Case {
         qint64 first;
         int start;

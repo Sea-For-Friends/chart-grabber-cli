@@ -4,7 +4,6 @@
 
 // Ports: the portable half of Src/Network/Curl/u_CurlProxyResolver.pas:479-551
 // (GetProxyAuthenticateInfo); replaces u_InternetExplorerProxy.pas and u_WindowsCredentials.pas.
-// docs/specs/net.md §2.18. FEAT-NET-008.
 #include "cg/net/proxy_resolver.h"
 
 #include "cg/net/http_headers.h"
@@ -23,7 +22,7 @@ namespace cg::net {
 namespace {
 
 // http_proxy/https_proxy/all_proxy/no_proxy, upper and lower case -- libcurl already reads exactly
-// these, with the same precedence, so the simplest correct move is to defer to it (net.md §2.18.1).
+// these, with the same precedence, so the simplest correct move is to defer to it.
 constexpr const char* kProxyEnvNames[] = {"http_proxy", "https_proxy", "all_proxy", "no_proxy",
                                           "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"};
 
@@ -40,9 +39,8 @@ constexpr const char* kProxyEnvNames[] = {"http_proxy", "https_proxy", "all_prox
     // Ports GetAuthTypeByName (u_CurlProxyResolver.pas:485-500) *exactly*: legacy recognizes only
     // basic/digest/bearer/negotiate and falls through to atAny (-> CURLAUTH_ANY) for everything
     // else, "ntlm" included, even though TCurlAuthType has an atNtlm member elsewhere
-    // (t_CurlHttpClient.pas:53). docs/specs/net.md §2.18 claims an "ntlm -> CURLAUTH_NTLM" mapping
-    // that legacy does not implement; per protocol rule 5 (legacy wins on disagreement), that branch
-    // is NOT ported -- see docs/handoffs/T-0011A.md open questions.
+    // (t_CurlHttpClient.pas:53). An "ntlm -> CURLAUTH_NTLM" mapping that legacy does not implement
+    // is NOT ported: legacy wins.
     if (schemeLower == "basic") {
         return CURLAUTH_BASIC;
     }
@@ -69,7 +67,7 @@ struct CachedCredential {
 // The one call into Qt/libproxy/GIO. Not inlined on purpose: TSan unwinds through the uninstrumented glib
 // with frame pointers and drops the frame of the function that owns the live frame pointer; with this call in
 // its own frame, `SystemProxyResolver::resolve` shows in the stacks of the GDBus reports and
-// tools/tsan_suppressions.txt (T-0201) can be anchored on it instead of on a whole library.
+// tools/tsan_suppressions.txt can be anchored on it instead of on a whole library.
 [[gnu::noinline]] QList<QNetworkProxy> systemProxies(const QNetworkProxyQuery& query) {
     return QNetworkProxyFactory::systemProxyForQuery(query);
 }
@@ -93,7 +91,7 @@ public:
                 type = ProxyType::Socks5;
                 break;
             default:
-                continue; // anything else -> no proxy (net.md §2.18.2)
+                continue; // anything else -> no proxy
             }
             const QByteArray hostPort = proxy.hostName().toUtf8() + ':' + QByteArray::number(proxy.port());
             out.address = proxySchemePrefix(type) + hostPort;

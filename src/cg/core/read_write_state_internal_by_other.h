@@ -20,7 +20,6 @@ public:
     virtual void setOther(const ReadWriteStateChangeablePtr& state) = 0;
 };
 
-// FEAT-GEO-033
 class ReadWriteStateInternalByOther final : public IReadWriteStateInternalByOther {
 public:
     ReadWriteStateInternalByOther();

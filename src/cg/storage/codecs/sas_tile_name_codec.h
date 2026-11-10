@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_TileFileNameSAS.pas -- the SAS.Planet native folder cache (CacheType id 2), default
-// root folder `cache`. FEAT-STO-002.
+// Ports: u_TileFileNameSAS.pas -- the SAS.Planet native folder cache (CacheType id 2), default root
+// folder `cache`.
 
 #include "cg/storage/tile_name_codec.h"
 

@@ -2,16 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-029 (engine only). Ports u_ThreadCacheConverter.pas Process/
-// OnSourceTileStorageScan; docs/specs/storage.md §2.20 (:1626-1646).
+// The engine only. Ports u_ThreadCacheConverter.pas Process/OnSourceTileStorageScan.
 //
-// Test-count ruling (tests/conventions/tests-port-dont-multiply, T-0027 dispatch "~5 tests"):
-// legacy has no DUnit suite for this unit (its "Legacy units to port" section finds none under
-// Test/), so this is the ticket's own minimal list: a plain copy (every tile + TNE, correct
-// running progress totals), one table-driven test over ignoreTne / overwriteDestination / the
-// "a destination TNE blocks a source TNE but never a source tile" quirk, removeSource deleting
-// only after a successful copy, cancellation leaving a consistent partial state with correct
-// counters, and an incompatible destination content type aborting the whole conversion.
+// Legacy has no DUnit suite for this unit (none under Test/), so this is a minimal list: a
+// plain copy (every tile + TNE, correct running progress totals), one table-driven test over
+// ignoreTne / overwriteDestination / the "a destination TNE blocks a source TNE but never a
+// source tile" quirk, removeSource deleting only after a successful copy, cancellation leaving
+// a consistent partial state with correct counters, and an incompatible destination content
+// type aborting the whole conversion.
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/hash_seed.h"
@@ -112,8 +110,8 @@ bool tileOrTneExistsAt(FileSystemTileStorage& storage, PointI xy, quint8 zoom) {
 }
 
 // A minimal ITileStorage double that yields exactly one versioned real tile from scanTiles().
-// Needed only to exercise the version-filter comparison end to end (T-0027 review finding 2,
-// truth-table row V3): FileSystemTileStorage always forwards a null version
+// Needed only to exercise the version-filter comparison end to end (the case-differing version
+// row of the truth table): FileSystemTileStorage always forwards a null version
 // (file_system_tile_storage.h:8-10, matching legacy's file-system enumerator), so it can never
 // produce a scanned entry whose version differs from a filter only in letter case.
 class SingleVersionedTileEnumerator final : public IEnumTileInfo {
@@ -340,15 +338,15 @@ TEST(CacheConverter, IgnoreTneOverwriteAndDestTneQuirk) {
     }
 }
 
-// Pins rows of the T-0027 review's removeSource truth table (docs/handoffs/T-0027-review.md):
-// deletion from the source is never conditioned on whether a copy happened (legacy
-// u_ThreadCacheConverter.pas:174-178 is a sibling of the whole version/scan branch, not nested
-// inside it; legacy-defects.md L-1/L-2). Renamed from RemoveSourceDeletesOnlyAfterSuccessfulCopy,
-// which claimed the opposite of legacy's actual behaviour (T-0027 review finding 3).
+// Pins rows of the removeSource truth table: deletion from the source is never conditioned on
+// whether a copy happened (legacy u_ThreadCacheConverter.pas:174-178 is a sibling of the whole
+// version/scan branch, not nested inside it; two legacy defects). Renamed from
+// RemoveSourceDeletesOnlyAfterSuccessfulCopy, which claimed the opposite of legacy's actual
+// behaviour.
 TEST(CacheConverter, RemoveSourceDeletesEveryScannedEntryRegardlessOfSkip) {
     const TileDate loadDate = fromPosixSeconds(1700000000);
 
-    // Row A1: every entry is copied, and removeSource deletes every one of them from the source.
+    // Row: every entry is copied, and removeSource deletes every one of them from the source.
     {
         QTemporaryDir srcDir, dstDir;
         ASSERT_TRUE(srcDir.isValid());
@@ -375,11 +373,11 @@ TEST(CacheConverter, RemoveSourceDeletesEveryScannedEntryRegardlessOfSkip) {
         EXPECT_TRUE(tileOrTneExistsAt(*dst, kTileTne, kZoom));
     }
 
-    // Row V2 (T-0027 review finding 1; legacy-defects.md L-1/L-2): a `sourceVersionFilter` is
-    // set, and the scanned entry has NO version at all -- a plain file-system source never
-    // carries one (file_system_tile_storage.h:8-10). Legacy's `Assigned(...) and SameText(...)`
-    // takes the `else` branch: the entry is SKIPPED, not copied. removeSource still deletes it
-    // from the source: a skipped tile IS deleted, the copy is simply lost.
+    // Row: a `sourceVersionFilter` is set, and the scanned entry has NO version at all -- a
+    // plain file-system source never carries one (file_system_tile_storage.h:8-10). Legacy's
+    // `Assigned(...) and SameText(...)` takes the `else` branch: the entry is SKIPPED, not
+    // copied. removeSource still deletes it from the source: a skipped tile IS deleted, the
+    // copy is simply lost.
     {
         QTemporaryDir srcDir, dstDir;
         ASSERT_TRUE(srcDir.isValid());
@@ -409,10 +407,10 @@ TEST(CacheConverter, RemoveSourceDeletesEveryScannedEntryRegardlessOfSkip) {
         EXPECT_FALSE(tileOrTneExistsAt(*src, kTileA, kZoom)); // yet still deleted from the source
     }
 
-    // Row V3 (T-0027 review finding 2; T-0041): a versioned entry whose version differs from the filter
-    // only in ASCII letter case IS a match (legacy SameText) and is copied; a non-ASCII case difference is
-    // not (Delphi folding is ASCII only here, not Qt's Unicode folding). Exercised through a minimal
-    // versioned ITileStorage double, since FileSystemTileStorage never carries a per-tile version.
+    // Row: a versioned entry whose version differs from the filter only in ASCII letter case IS a match
+    // (legacy SameText) and is copied; a non-ASCII case difference is not (Delphi folding is ASCII only
+    // here, not Qt's Unicode folding). Exercised through a minimal versioned ITileStorage double, since
+    // FileSystemTileStorage never carries a per-tile version.
     struct Row {
         const char16_t* tileVersion;
         const char16_t* filter;
@@ -479,7 +477,7 @@ TEST(CacheConverter, CancellationMidScanStopsAndLeavesConsistentCounters) {
     EXPECT_EQ(result.error().code(), ErrorCode::Cancelled);
 
     // Exactly one tile was processed before the next iteration observed the cancellation
-    // (stop_token is polled at the top of the loop, per storage.md §3.1 rule 4).
+    // (stop_token is polled at the top of the loop).
     EXPECT_EQ(progressCalls, 1);
     EXPECT_EQ(lastTotals.processed, 1);
     EXPECT_EQ(lastTotals.skipped, 0);

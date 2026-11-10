@@ -39,14 +39,14 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-constexpr auto kFinishWait = std::chrono::seconds(30); // app-cli.md 6.1 step 3
+constexpr auto kFinishWait = std::chrono::seconds(30);
 constexpr auto kFinishPoll = std::chrono::milliseconds(100);
 
 struct Tr {
     Q_DECLARE_TR_FUNCTIONS(DownloadRunner)
 };
 
-// T-0445: one lock per job (`<AutoSave>/<id>/run.lock`, outside the session folder `<id>/<guid>`, so no
+// One lock per job (`<AutoSave>/<id>/run.lock`, outside the session folder `<id>/<guid>`, so no
 // removeRecursively of a session touches it). No age-based staleness (a long download keeps its lock); Qt
 // removes the lock of a dead process of this host by itself. New code: legacy has no inter-process lock (the
 // GUI is one instance, u_DownloadSession.pas:373-397 only reads the session files). Null = refused, the
@@ -136,7 +136,7 @@ struct Slot {
     int resumes = 0;
     qint64 processedAtResume = -1;
     bool saved = false;
-    double elapsedSeen = 0; // days, the largest elapsedTime() reported so far (T-0233)
+    double elapsedSeen = 0; // days, the largest elapsedTime() reported so far
 };
 
 struct Context {
@@ -144,9 +144,9 @@ struct Context {
     Console& console;
     DownloadPolicy policy;
     std::stop_token termination;
-    bool records = false; // --progress=lines
-    bool frameFallback =
-        false; // T-0356: stop a run whose frame is not served (ResolvedSource::frameFallback)
+    bool records = false;             // --progress=lines
+    bool frameFallback = false;       // Stop a run whose frame is not served (ResolvedSource::frameFallback)
+    region::RefusalCounts refusals{}; // Filled by finish() (sums of the slots)
 };
 
 QString newestLine(const Slot& slot) {
@@ -155,11 +155,11 @@ QString newestLine(const Slot& slot) {
     return lines.isEmpty() ? QString() : lines.last();
 }
 
-bool isCompleted(const Slot& slot) { // app-cli.md 6.3 row 3
+bool isCompleted(const Slot& slot) {
     return slot.started.progress->finished() && newestLine(slot) == completedText();
 }
 
-void cancelAll(std::vector<Slot>& runs) { // region-download.md section 7: cancel before destroy
+void cancelAll(std::vector<Slot>& runs) { // Cancel before destroy
     for (auto& slot : runs) {
         if (slot.started.cancelNotifier) {
             slot.started.cancelNotifier->cancel();
@@ -195,7 +195,7 @@ struct Sums {
 
 // Once a run is finished, elapsedTime() of the progress info falls back to the session's stored value (legacy
 // u_RegionProcessProgressInfoDownload.pas:237-239), which is 0 for a run that was never paused. The runner
-// keeps the largest value seen per run so the reported elapsed never decreases (T-0233).
+// keeps the largest value seen per run so the reported elapsed never decreases.
 Sums sumsOf(std::vector<Slot>& runs) {
     Sums sums;
     for (auto& slot : runs) {
@@ -247,6 +247,14 @@ void writeProgressRecord(Console& console, std::vector<Slot>& runs) {
     }
 }
 
+// Prints the log lines the run wrote since the last read. A run that finishes between the poll's read and
+// its finished() test is not read again by the poll, so finish() reads once more after the run has ended.
+void drainLog(Console& console, Slot& slot) {
+    for (const QString& line : slot.started.progress->logProvider()->since(slot.lastLogId, 100)) {
+        console.log(line);
+    }
+}
+
 // The poll loop (UpdateTimerTimer :431-437) and the policy that replaces the human. Returns the reason the
 // runner stops the runs, or nullopt when every run finished by itself.
 std::optional<DownloadOutcome> poll(Context& ctx, std::vector<Slot>& runs) {
@@ -261,9 +269,7 @@ std::optional<DownloadOutcome> poll(Context& ctx, std::vector<Slot>& runs) {
 
     while (true) {
         for (auto& slot : runs) { // :381-393 UpdateMemoProgressForm
-            for (const QString& line : slot.started.progress->logProvider()->since(slot.lastLogId, 100)) {
-                ctx.console.log(line);
-            }
+            drainLog(ctx.console, slot);
             slot.progress->checkSessionAutosave(); // :431-437
         }
         ctx.console.progress(progressLine(runs));
@@ -319,8 +325,21 @@ std::optional<DownloadOutcome> poll(Context& ctx, std::vector<Slot>& runs) {
             return DownloadOutcome::Stalled;
         }
 
-        // T-0271 (deviates from L-271): a streak of connection errors in one worker stops the download.
+        // A streak of connection errors in one worker stops the download.
         if (ctx.policy.maxConnectionErrors > 0) {
+            // DEVIATION: A refusal also counts in the connection streak, so this check comes first; a mixed
+            // streak falls through to the connection text below.
+            region::RefusalCounts counts; // read once per slot: the worker moves between two reads
+            const auto refused = std::find_if(runs.begin(), runs.end(), [&](const Slot& s) {
+                counts = s.started.progress->refusalCounts();
+                return counts.streak >= ctx.policy.maxConnectionErrors;
+            });
+            if (refused != runs.end()) {
+                ctx.console.error(Tr::tr("the server refused %1 tiles in a row: HTTP %2")
+                                      .arg(counts.streak)
+                                      .arg(counts.lastStatus));
+                return DownloadOutcome::Stalled;
+            }
             const auto it = std::find_if(runs.begin(), runs.end(), [&ctx](const Slot& s) {
                 return s.started.progress->connectionErrorStreak() >= ctx.policy.maxConnectionErrors;
             });
@@ -332,11 +351,10 @@ std::optional<DownloadOutcome> poll(Context& ctx, std::vector<Slot>& runs) {
             }
         }
 
-        // DEVIATION: the D row of T-0356. The frame is not out when no tile of it was stored or skipped as
-        // present (other == 0) and either every run's latest notServedAnswers answers are Unavailable (HTTP
-        // 5xx, the ban tile: the worker asks for the same tile again; fewer when the run has fewer tiles), or
-        // all runs have finished with at least one answer in the class (404, the empty tile, a TNE row: the
-        // next tile is asked).
+        // DEVIATION: The frame is not out when no tile of it was stored or skipped as present (other == 0)
+        // and either every run's latest notServedAnswers answers are Unavailable (HTTP 5xx, the ban tile: the
+        // worker asks for the same tile again; fewer when the run has fewer tiles), or all runs have finished
+        // with at least one answer in the class (404, the empty tile, a TNE row: the next tile is asked).
         if (ctx.frameFallback) {
             const auto unserved = [&ctx](const Slot& s) {
                 const auto& info = *s.started.progress;
@@ -373,17 +391,17 @@ std::optional<DownloadOutcome> poll(Context& ctx, std::vector<Slot>& runs) {
     }
 }
 
-// Steps 5 and 6 of app-cli.md 5.2: stop the runs, save what did not complete, decide the outcome.
+// The last steps of a download: stop the runs, save what did not complete, decide the outcome.
 DownloadOutcome finish(Context& ctx, std::vector<Slot>& runs, const std::optional<DownloadOutcome>& ownReason,
                        bool removeDirWhenCompleted) {
-    // T-0308: the optional is read once, by const reference, into a flag and an enum; GCC 12 Release reports
-    // a false maybe-uninitialized when the by-value optional parameter is tested and reset in the body.
+    // The optional is read once, by const reference, into a flag and an enum; GCC 12 Release reports a false
+    // maybe-uninitialized when the by-value optional parameter is tested and reset in the body.
     bool stopped = ownReason.has_value();
     DownloadOutcome reason = stopped ? *ownReason : DownloadOutcome::Completed;
-    // T-0234: an interrupt that arrives after every run has completed (the last tile is in, the completion
-    // line written) interrupts nothing: finish as completed, so the fill report runs and the state is
-    // removed. Legacy has no such case (frm_ProgressDownload.pas:586-595 FormClose only cancels and deletes
-    // the .bk).
+    // An interrupt that arrives after every run has completed (the last tile is in, the completion line
+    // written) interrupts nothing: finish as completed, so the fill report runs and the state is removed.
+    // Legacy has no such case (frm_ProgressDownload.pas:586-595 FormClose only cancels and deletes the
+    // .bk).
     if (stopped && reason == DownloadOutcome::Interrupted &&
         std::all_of(runs.begin(), runs.end(), [](const Slot& s) { return isCompleted(s); })) {
         stopped = false;
@@ -398,15 +416,17 @@ DownloadOutcome finish(Context& ctx, std::vector<Slot>& runs, const std::optiona
             std::this_thread::sleep_for(kFinishPoll);
         }
     }
-    ctx.console.progress(
-        progressLine(runs)); // the final counters (T-0266): endProgress prints them if dropped
+    for (auto& slot : runs) {
+        drainLog(ctx.console, slot); // the lines written after the poll's last read
+    }
+    ctx.console.progress(progressLine(runs)); // the final counters: endProgress prints them if dropped
     ctx.console.endProgress();
 
     bool anySaved = false;
     QStringList savedFiles;
     for (std::size_t i = 0; i < runs.size(); ++i) {
         Slot& slot = runs[i];
-        if (isCompleted(slot) || reason == DownloadOutcome::FrameNotServed) { // T-0356: nothing to continue
+        if (isCompleted(slot) || reason == DownloadOutcome::FrameNotServed) { // Nothing to continue
             slot.progress->close();                                           // deletes the .bk
             continue;
         }
@@ -431,7 +451,7 @@ DownloadOutcome finish(Context& ctx, std::vector<Slot>& runs, const std::optiona
         }
     }
 
-    // Outcome (6.3): the own reason first, else per run, the worst wins.
+    // Outcome: the own reason first, else per run, the worst wins.
     DownloadOutcome outcome = reason;
     if (outcome == DownloadOutcome::Completed) {
         for (const auto& slot : runs) {
@@ -453,12 +473,20 @@ DownloadOutcome finish(Context& ctx, std::vector<Slot>& runs, const std::optiona
         }
     }
 
+    for (const auto& slot : runs) { // The sums for DownloadRunner::lastRefusals()
+        const region::RefusalCounts counts = slot.started.progress->refusalCounts();
+        ctx.refusals.refused += counts.refused;
+        ctx.refusals.notRefused += counts.notRefused;
+        if (counts.refused > 0) {
+            ctx.refusals.lastStatus = counts.lastStatus;
+        }
+    }
     cancelAll(runs); // never destroy an unfinished run without cancel
     runs.clear();
     return outcome;
 }
 
-// Zoom list, polygon points and replace / retry values as text (app-cli.md 1.9).
+// Zoom list, polygon points and replace / retry values as text.
 void appendPoints(QString& text, const geo::IGeometryLonLatContour& contour) {
     for (const geo::LonLat& p : contour.points()) {
         text += QString::asprintf("%.8f,%.8f;", p.lon, p.lat);
@@ -511,8 +539,8 @@ QString sessionMapGuid(AppContext& app, const QString& file) {
     }
 }
 
-// T-0450: the AutoSavePrefix key of the file's Session section (u_DownloadSession.pas:416), empty when the
-// file cannot be read. Only the key: the whole session need not load (no map set) to name the job folder.
+// The AutoSavePrefix key of the file's Session section (u_DownloadSession.pas:416), empty when the file
+// cannot be read. Only the key: the whole session need not load (no map set) to name the job folder.
 QString sessionAutosavePrefix(const QString& file) {
     const auto ini = core::ConfigProviderIni::open(file);
     if (!ini) {
@@ -561,6 +589,7 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
     if (!starter_) {
         starter_ = std::make_shared<ProviderStarter>(app_);
     }
+    lastRefusals_ = {};
     Context ctx{app_,
                 console_,
                 policy_,
@@ -573,12 +602,12 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
     const QString sessionDir = app_.autoSaveDir() + QLatin1Char('/') + id + QLatin1Char('/') + guid;
     QDir dir(sessionDir);
 
-    // T-0445: held to the end of this source's download, incl. finish() and the removal of the session
+    // Held to the end of this source's download, incl. finish() and the removal of the session
     const auto jobLock = lockJob(console_, app_.autoSaveDir() + QLatin1Char('/') + id);
     if (!jobLock) {
         return DownloadOutcome::Refused;
     }
-    // T-0451: written once the lock is held; a refused run starts nothing, so it writes no `phase download`
+    // Written once the lock is held; a refused run starts nothing, so it writes no `phase download`
     if (ctx.records) {
         console_.progressRecord(phaseRecord(u"download", guid));
     }
@@ -599,8 +628,8 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
                 newest[group] = file;
             }
         }
-        // T-0243 (weather-sources.md 4.3): a saved session of another snapshot is not continued. The legacy
-        // resume (u_DownloadSession.pas:373-397) would continue it under its own version.
+        // A saved session of another snapshot is not continued. The legacy resume
+        // (u_DownloadSession.pas:373-397) would continue it under its own version.
         if (source.snapshot) {
             for (const auto& [group, file] : newest) {
                 QString saved; // a file that cannot be read counts as another snapshot
@@ -609,7 +638,7 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
                         saved = section->readString(u"VersionDownload", {});
                     }
                 }
-                if (source.snapshot->referenceChanged) { // T-0443
+                if (source.snapshot->referenceChanged) {
                     console_.warning(Tr::tr("the model run of \"%1\" changed (%2 -> %3); starting afresh")
                                          .arg(sourceName(*source.map),
                                               referenceText(source.snapshot->referenceWas),
@@ -663,9 +692,9 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
         params.replaceDate = job_.replaceOlderThan.isValid() ? job_.replaceOlderThan : storage::tileDateNow();
         if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
             !(job_.replace && !job_.replaceOlderThan.isValid())) {
-            // T-0443: tiles loaded before the model run was first seen are of an older run. The legacy skip
-            // of an existing tile (u_ThreadDownloadTiles.pas:322-325) comes before its date check
-            // (:328-333), so the replace flag is set too.
+            // Tiles loaded before the model run was first seen are of an older run. The legacy skip of an
+            // existing tile (u_ThreadDownloadTiles.pas:322-325) comes before its date check (:328-333), so
+            // the replace flag is set too.
             const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
             params.isReplace = true;
             params.isReplaceIfOlder = true;
@@ -675,9 +704,9 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
         }
         if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
             !(job_.retryMissing && !job_.retryMissingOlderThan.isValid())) {
-            // T-0449: a TNE marker loaded before the model run was first seen is of an older run, the new run
-            // may serve the tile (legacy skip of a marker: u_ThreadDownloadTiles.pas:335-345). Also under a
-            // bare --replace (it replaces tiles, never markers). A bare --retry-missing retries every marker.
+            // A TNE marker loaded before the model run was first seen is of an older run, the new run may
+            // serve the tile (legacy skip of a marker: u_ThreadDownloadTiles.pas:335-345). Also under a bare
+            // --replace (it replaces tiles, never markers). A bare --retry-missing retries every marker.
             const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
             params.isIgnoreTne = true;
             params.loadTneOlderDate =
@@ -709,7 +738,9 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
     if (ctx.records) {
         writeProgressRecord(console_, runs); // the final values
     }
-    return finish(ctx, runs, reason, true);
+    const DownloadOutcome outcome = finish(ctx, runs, reason, true);
+    lastRefusals_ = ctx.refusals;
+    return outcome;
 }
 
 // `resume`: the GUID is the one of the map the .sls names (read as ProviderTilesDownload::startBySls does).
@@ -729,7 +760,7 @@ void DownloadRunner::printSessionRecord(const QString& file, const QDateTime& ti
     }
 }
 
-// T-0450: `<id>/<guid>/NN_` -> `<autoSaveDir>/<id>`; new code (the lock has no legacy). Fewer than two
+// `<id>/<guid>/NN_` -> `<autoSaveDir>/<id>`; new code (the lock has no legacy). Fewer than two
 // segments (a legacy GUI prefix is a bare name), or a "." / ".." segment: empty = no lock.
 QString DownloadRunner::jobDirOfSessionPrefix(const QString& autoSaveDir, const QString& prefix) {
     const QStringList parts = prefix.split(QLatin1Char('/'), Qt::SkipEmptyParts);
@@ -748,15 +779,16 @@ DownloadOutcome DownloadRunner::resume(const QStringList& slsFiles, const QStrin
     if (!starter_) {
         starter_ = std::make_shared<ProviderStarter>(app_);
     }
+    lastRefusals_ = {};
     Context ctx{app_, console_, policy_, termination_, job_.progressMode == ProgressMode::Lines};
 
     std::vector<StartedRun> started;
     QStringList files;
     QStringList guids;
     QStringList labels;
-    // T-0445: the lock of each job folder AutoSave/<id>/ the files write to (one per folder: the files of a
-    // route session share it). T-0450: the folder is named by the session's AutoSavePrefix (the new parts go
-    // there wherever the file lies); only a file whose prefix cannot be read is locked by its own folder.
+    // The lock of each job folder AutoSave/<id>/ the files write to (one per folder: the files of a route
+    // session share it). The folder is named by the session's AutoSavePrefix (the new parts go there
+    // wherever the file lies); only a file whose prefix cannot be read is locked by its own folder.
     const QString autoSave = QFileInfo(app_.autoSaveDir()).canonicalFilePath();
     std::map<QString, std::unique_ptr<QLockFile>> locks;
     for (qsizetype i = 0; i < slsFiles.size(); ++i) {
@@ -811,6 +843,7 @@ DownloadOutcome DownloadRunner::resume(const QStringList& slsFiles, const QStrin
     // The files of a resume are the user's: only a session of AutoSave/ whose runs all completed is removed
     // (as `run` does); a file elsewhere stays.
     const DownloadOutcome outcome = finish(ctx, runs, reason, false);
+    lastRefusals_ = ctx.refusals;
     if (outcome == DownloadOutcome::Completed) {
         for (const QString& file : files) {
             const QString dir = QFileInfo(file).dir().canonicalPath();

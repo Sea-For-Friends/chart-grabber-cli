@@ -2,14 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018. Ports the write half of
-// Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas: SaveTile (:1075-1229, TNE at
-// :1196-1204), DeleteTile (:401-425) / GetSQL_DeleteTile (:854-881), GetTileRectInfo (:444-469) /
-// GetSQL_TileRectInfo (:882-943); see docs/specs/storage.md §2.16.1, §2.16.3.
+// Ports the write half of Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas: SaveTile
+// (:1075-1229, TNE at :1196-1204), DeleteTile (:401-425) / GetSQL_DeleteTile (:854-881),
+// GetTileRectInfo (:444-469) / GetSQL_TileRectInfo (:882-943).
 //
-// Kept in its own file (not sqlite_region_handler_test.cpp) per the Tech Lead's T-0022B4
-// dispatch, to avoid a merge conflict with the T-0022B3 developer's read-side tests landing in
-// that file concurrently.
+// Kept in its own file (not sqlite_region_handler_test.cpp), apart from the read-side tests.
 #include "cg/geo/geo_types.h"
 #include "cg/storage/map_version.h"
 #include "cg/storage/sqlite/sqlite_region_handler.h"
@@ -53,7 +50,7 @@ std::shared_ptr<SqliteRegionSchema> makeSchema(const QString& storagePath) {
 }
 
 // Opens a fresh 8-column (x,y,v,c,s,h,d,b) region file in a scratch temp dir. `storagePath` has no
-// s.sql/t.sql/e.sql, so the built-in default schema (docs/specs/storage.md §2.16.1) applies.
+// s.sql/t.sql/e.sql, so the built-in default schema applies.
 std::unique_ptr<SqliteRegionHandler> openFreshHandler(QTemporaryDir& dir) {
     auto schema = makeSchema(dir.path() + QStringLiteral("/"));
     const QString dbPath = QDir(dir.path()).filePath(QStringLiteral("region.sqlitedb"));
@@ -61,7 +58,7 @@ std::unique_ptr<SqliteRegionHandler> openFreshHandler(QTemporaryDir& dir) {
                                                  /*readOnly=*/false);
 }
 
-// Opens a region file built from the §7.4 fixture's 5-column t.sql (x,y,d,s,b -- no v, c or h).
+// Opens a region file built from the test fixture's 5-column t.sql (x,y,d,s,b -- no v, c or h).
 std::unique_ptr<SqliteRegionHandler> openFiveColumnHandler(QTemporaryDir& dir) {
     const QString overridesDir =
         QDir(cgStorageFixture(QStringLiteral("cache/sqlite_overrides"))).absolutePath() + QStringLiteral("/");
@@ -130,7 +127,7 @@ TEST(SqliteRegionHandlerWrite, SaveTileSkipIfSameAsPrevRefusesIdenticalCrcWhenHC
     EXPECT_TRUE(*first);
 
     // Same bytes -> same CRC-32 -> the WHERE guard's COALESCE matches and the INSERT selects 0
-    // rows (spec §2.16.3 "save tile").
+    // rows.
     auto second = handler->saveTile(PointI(2, 2), nullptr, fromLegacyUnixSeconds(1800000000),
                                     QByteArrayView(), original, SaveFlags(SaveFlag::SkipIfSameAsPrev));
     ASSERT_TRUE(second);
@@ -143,11 +140,10 @@ TEST(SqliteRegionHandlerWrite, SaveTileSkipIfSameAsPrevRefusesIdenticalCrcWhenHC
 
 // u_TileStorageSQLiteHandler.pas:1136-1153: the whole SkipIfSameAsPrev WHERE-clause block sits
 // INSIDE `if FTBColInfo.ModeV <> vcm_None` -- nested under the version column, not the CRC column.
-// On the §7.4 5-column fixture (no v, c OR h) the flag is therefore a complete no-op: legacy never
-// even reaches the `if FTBColInfo.HasH ... else GetCheckOtherVersionsBySizeSQLText` choice the
-// ticket's Tests section describes for this fixture. Flagged as a ticket/legacy disagreement in
-// the T-0022B4 handoff -- legacy wins, so this test pins the REAL behaviour instead of the
-// ticket's assumed one: a same-size, different-byte second save still overwrites.
+// On the 5-column test fixture (no v, c OR h) the flag is therefore a complete no-op: legacy never
+// even reaches the `if FTBColInfo.HasH ... else GetCheckOtherVersionsBySizeSQLText` choice one
+// would expect for this fixture. Legacy wins, so this test pins the REAL behaviour: a same-size,
+// different-byte second save still overwrites.
 TEST(SqliteRegionHandlerWrite, SaveTileSkipIfSameAsPrevIsANoOpWithoutAVersionColumn) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
@@ -234,8 +230,8 @@ TEST(SqliteRegionHandlerWrite, SaveTileKeepExistingDoesNotOverwrite) {
 }
 
 TEST(SqliteRegionHandlerWrite, DeleteTileWithNoVersionColumnRemovesTheOnlyRow) {
-    // L-49: "no v column" is the ONLY form of DeleteTile that is really "all versions" (the other
-    // two filter by the default/requested version). The 5-column fixture has no v column.
+    // "no v column" is the ONLY form of DeleteTile that is really "all versions" (the other two
+    // filter by the default/requested version). The 5-column fixture has no v column.
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
     auto handler = openFiveColumnHandler(dir);

@@ -1,4 +1,4 @@
-; T-0015D golden: Here/here.com.map.zmp - long literal tail, script never reads the
+; Golden: Here/here.com.map.zmp - long literal tail, script never reads the
 ; Version bound variable (the 'RUS' in the URL is a literal in the script text, not
 ; GetURLBase's Version param) so Version='' has no effect.
 ; ResultURL := GetURLBase+IntToStr(GetZ-1)+'/'+IntToStr(GetX)+'/'+IntToStr(GetY)+

@@ -2,13 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-004, FEAT-GEO-005, FEAT-GEO-006, FEAT-GEO-007; docs/specs/geo.md:1969-2086
-// (§6.2), test plan §11.2 (item 13, u_CoordToStringConverter_Test.pas -> ported below).
+// u_CoordToStringConverter_Test.pas is ported below.
 //
 // Every expected string in the table below was hand-derived by replaying
 // u_CoordToStringConverter.pas's DegrToStr algorithm (Trunc-based quantisation, then the
-// FormatFloat mask) in Python during porting; non-obvious rows carry an inline note. See
-// docs/handoffs/T-0019A1.md for the derivation script and the DMS CutZero finding.
+// FormatFloat mask) in Python during porting; non-obvious rows carry an inline note.
 #include "cg/geo/coord_to_string.h"
 #include "cg/geo/coord_transformer.h"
 #include "cg/geo/proj_converter.h"
@@ -50,7 +48,7 @@ CoordRepresentationSettings settingsFor(GeogCoordShowFormat format, bool latitud
 
 } // namespace
 
-// --- u_CoordToStringConverter_Test.pas -> ported 1:1 (spec §11.2 item 13) -----------------------
+// --- u_CoordToStringConverter_Test.pas -> ported 1:1 -----------------------
 
 TEST(CoordToString, LegacyPortedTestCoordToString) {
     CoordRepresentationSettings s;
@@ -62,16 +60,17 @@ TEST(CoordToString, LegacyPortedTestCoordToString) {
     s.coordSysInfoType = CoordSysInfoType::DontShow;
     const CoordToStringConverter converter(s);
 
-    // Note the one-argument overload (legacy calls `LonLatConvertExt(DoublePoint(10.0, 40.101),
-    // [coCutZero])`, which dispatches on the converter's own coordSysType, set to Wgs84 above):
-    // isLatitudeFirst is NOT applied (spec §6.2.4) -- that is exactly what this legacy test pins.
+    // Note the one-argument overload (legacy calls
+    // `LonLatConvertExt(DoublePoint(10.0, 40.101), [coCutZero])`, which dispatches on the
+    // converter's own coordSysType, set to Wgs84 above): isLatitudeFirst is NOT applied -- that
+    // is exactly what this legacy test pins.
     const auto result = converter.lonLatConvertExt({10.0, 40.101}, {CoordToStringOption::CutZero});
 
     EXPECT_EQ(result[static_cast<int>(CoordPart::Lon)], QStringLiteral("10"));
     EXPECT_EQ(result[static_cast<int>(CoordPart::Lat)], QStringLiteral("40.101"));
 }
 
-// --- degrToStr, one row per GeogCoordShowFormat "shape", CutZero on/off (spec §6.2.1/§6.2.2) -----
+// --- degrToStr, one row per GeogCoordShowFormat "shape", CutZero on/off -----
 
 namespace {
 struct DegrCase {
@@ -102,7 +101,7 @@ TEST(CoordToString, DegrToStrTableAcrossFormatsAndCutZero) {
         {"CharDDM_NoCutZero", GeogCoordShowFormat::CharDegrMin, 40.101, -33.5, false,
          QStringLiteral(u"E40°06.060000'"), QStringLiteral(u"S33°30.000000'")},
         // 12°34.50000' -> 12°34.5' style trim: -33.5's minutes are exactly 30.000000 -> the whole
-        // field (including the integer part) collapses per spec's cascading DDM algorithm.
+        // field (including the integer part) collapses per the cascading DDM algorithm.
         {"CharDDM_CutZero", GeogCoordShowFormat::CharDegrMin, 40.101, -33.5, true,
          QStringLiteral(u"E40°06.06'"), QStringLiteral(u"S33°30'")},
         {"SignDDM_WholeDegreeCutZero", GeogCoordShowFormat::SignDegrMin, 12.0, -1.0, true,
@@ -123,10 +122,10 @@ TEST(CoordToString, DegrToStrTableAcrossFormatsAndCutZero) {
          true, QStringLiteral(u"179.9999999"), QStringLiteral(u"-89.99999999")},
         {"SignDD2_TinyValue", GeogCoordShowFormat::SignDegr2, 0.000001, 0.0, true,
          QStringLiteral(u"0.000001"), QStringLiteral(u"0")},
-        // Regression (docs/handoffs/T-0019A1-review.md finding 1): 12.001953125 (= 12 + 1/512) is
-        // an exact tie at the 9th decimal. Legacy's FormatFloat rounds half away from zero ->
-        // ...13; snprintf's %.*f rounds the binary value half-to-even -> ...12 (wrong). No CutZero,
-        // so the full 8-decimal mask is visible in both signs.
+        // Regression: 12.001953125 (= 12 + 1/512) is an exact tie at the 9th decimal. Legacy's
+        // FormatFloat rounds half away from zero -> ...13; snprintf's %.*f rounds the binary value
+        // half-to-even -> ...12 (wrong). No CutZero, so the full 8-decimal mask is visible in both
+        // signs.
         {"SignDD2_HalfAwayFromZeroTie", GeogCoordShowFormat::SignDegr2, 12.001953125, -12.001953125,
          false, QStringLiteral(u"12.00195313"), QStringLiteral(u"-12.00195313")},
     };
@@ -149,8 +148,7 @@ TEST(CoordToString, DmsCutZeroIsALegacyNoOp) {
     // '.' followed by two zeros and the closing quote, but the seconds field is always rendered
     // with 4 decimal digits (mask "00.0000"), so the '.' is always 6 characters from the end --
     // never inside that window. Even the all-zero case (0°00'00.0000") is left untouched. This was
-    // verified by construction and empirically (2,000,000 random degree values) while porting; see
-    // docs/handoffs/T-0019A1.md and the ticket's Open Questions.
+    // verified by construction and empirically (2,000,000 random degree values) while porting.
     const CoordToStringConverter converter(settingsFor(GeogCoordShowFormat::CharDegrMinSec));
     const auto noCutZero = converter.lonLatConvertExt({0.0, 0.0}, CoordSysType::Wgs84, {});
     const auto cutZero =
@@ -159,7 +157,7 @@ TEST(CoordToString, DmsCutZeroIsALegacyNoOp) {
     EXPECT_EQ(cutZero[static_cast<int>(CoordPart::Lat)], QStringLiteral(u"0°00'00.0000\""));
 }
 
-// --- hemisphere markers (spec §6.2.3) -------------------------------------------------------------
+// --- hemisphere markers -------------------------------------------------------------
 
 TEST(CoordToString, MarkerIsEmptyAtExactlyZeroForCharFormats) {
     const CoordToStringConverter converter(settingsFor(GeogCoordShowFormat::CharDegr2));
@@ -177,7 +175,7 @@ TEST(CoordToString, SignFormatEmitsNoMinusForZeroOrPositive) {
     EXPECT_EQ(result[static_cast<int>(CoordPart::Lat)], QStringLiteral("12.50000000"));
 }
 
-// --- lonLatConvert: join order, space-skipping, and the LatitudeFirst asymmetry (spec §6.2.4) ----
+// --- lonLatConvert: join order, space-skipping, and the LatitudeFirst asymmetry ----
 
 TEST(CoordToString, LonLatConvertJoinsWithSingleSpaceSkippingEmptyParts) {
     const CoordToStringConverter converter(
@@ -189,7 +187,7 @@ TEST(CoordToString, LonLatConvertJoinsWithSingleSpaceSkippingEmptyParts) {
 TEST(CoordToString, LonLatConvertAppliesLatitudeFirstUnlikeLonLatConvertExt) {
     const CoordToStringConverter converter(
         settingsFor(GeogCoordShowFormat::SignDegr2, /*latitudeFirst=*/true));
-    // lonLatConvert applies isLatitudeFirst (spec's asymmetry) -> lat printed before lon.
+    // lonLatConvert applies isLatitudeFirst (a legacy asymmetry) -> lat printed before lon.
     EXPECT_EQ(converter.lonLatConvert({10.0, 40.101}, {CoordToStringOption::CutZero}),
               QStringLiteral("40.101 10"));
     // The two-arg lonLatConvertExt overload never applies it, regardless of the setting.
@@ -199,7 +197,7 @@ TEST(CoordToString, LonLatConvertAppliesLatitudeFirstUnlikeLonLatConvertExt) {
     EXPECT_EQ(ext[static_cast<int>(CoordPart::Lat)], QStringLiteral("40.101"));
 }
 
-// --- coordSysInfo (spec §6.2.4 last paragraph) ----------------------------------------------------
+// --- coordSysInfo ----------------------------------------------------
 
 TEST(CoordToString, CoordSysInfoDontShowIsAlwaysEmpty) {
     CoordRepresentationSettings s = settingsFor(GeogCoordShowFormat::CharDegrMinSec);
@@ -231,14 +229,13 @@ TEST(CoordToString, CoordSysInfoUtmSwapsToUpsNearThePoles) {
     EXPECT_EQ(converter.coordSysInfo({0.0, -80.0}), QStringLiteral("WGS 84 / UPS"));
 }
 
-// --- non-WGS84 dispatch: T-0019B2 wires CoordTransformer / the UTM-MGRS-GaussKruger CRS table ----
+// --- non-WGS84 dispatch: CoordTransformer / the UTM-MGRS-GaussKruger CRS table ----
 
 TEST(CoordToString, FailedTransformYieldsLiteralNaN) {
-    // Legacy's own failure sentinel (spec §6.2.4: literal "NaN" in Lon/Lat, empty Zone) is only
-    // observable when the transform itself fails -- with PROJ available every CoordSysType below
-    // succeeds for an ordinary mid-latitude point, so this pins the sentinel for the one condition
-    // that reliably fails it in this environment: PROJ unavailable (ticket: "what is returned when
-    // PROJ is unavailable -> legacy's failure sentinel"). With PROJ present, WiringRoundTripThrough...
+    // Legacy's own failure sentinel (literal "NaN" in Lon/Lat, empty Zone) is only observable when the
+    // transform itself fails -- with PROJ available every CoordSysType below succeeds for an ordinary
+    // mid-latitude point, so this pins the sentinel for the one condition that reliably fails it in
+    // this environment: PROJ unavailable. With PROJ present, WiringRoundTripThrough...
     // (coord_transformer_test.cpp) exercises the success path for every non-WGS84 system instead.
     if (ProjConverterFactory().isAvailable()) {
         GTEST_SKIP() << "PROJ available -- every CoordSysType transform succeeds, nothing to pin here";
@@ -260,20 +257,19 @@ TEST(CoordToString, OneArgLonLatConvertExtDispatchesOnTheConverterSOwnCoordSysTy
     const CoordToStringConverter converter(s);
     // NOTE: `lonLatConvertExt(lonLat, {})` used to be genuinely ambiguous at this call site -- `{}`
     // bound equally well to the 1-arg overload's `CoordToStringOptions options` and to the 2-arg
-    // overload's `CoordSysType coordSysType` (a scalar value-initialization outranks the
-    // class-type default constructor in overload resolution), so it silently picked the 2-arg
-    // overload with coordSysType defaulted to Wgs84 -- not "the converter's own coordSysType" at
-    // all (docs/handoffs/T-0019A1-review.md finding 3). Fixed by dropping the default on the 2-arg
-    // overload's `options` (coord_to_string.h); `f(ll)` now resolves unambiguously to the 1-arg
-    // overload, exercising exactly the dispatch this test names -- compared directly against the
-    // explicit 2-arg call with the same CoordSysType, rather than hard-coding a "NaN" outcome that
-    // depends on PROJ availability.
+    // overload's `CoordSysType coordSysType` (a scalar value-initialization outranks the class-type
+    // default constructor in overload resolution), so it silently picked the 2-arg overload with
+    // coordSysType defaulted to Wgs84 -- not "the converter's own coordSysType" at all. Fixed by
+    // dropping the default on the 2-arg overload's `options` (coord_to_string.h); `f(ll)` now
+    // resolves unambiguously to the 1-arg overload, exercising exactly the dispatch this test names --
+    // compared directly against the explicit 2-arg call with the same CoordSysType, rather than
+    // hard-coding a "NaN" outcome that depends on PROJ availability.
     const auto oneArg = converter.lonLatConvertExt({37.6, 55.75});
     const auto twoArg = converter.lonLatConvertExt({37.6, 55.75}, CoordSysType::Utm, {});
     EXPECT_EQ(oneArg, twoArg);
 }
 
-// --- non-WGS84 formatting: _ProjectedCoordToStr / _MgrsCoordToStr / _ZoneInfoToStr (§6.2.4) ------
+// --- non-WGS84 formatting: _ProjectedCoordToStr / _MgrsCoordToStr / _ZoneInfoToStr ------
 // Every test below needs PROJ (a real UtmCoord/MgrsCoord/GaussKrugerCoord to format), skipping
 // cleanly when it is unavailable, same as coord_transformer_test.cpp.
 

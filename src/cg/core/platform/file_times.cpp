@@ -31,7 +31,7 @@ namespace {
 }
 
 #else
-// T-0335: wide Win32 calls (a path with non-ASCII characters survives); error text is the system code.
+// Wide Win32 calls (a path with non-ASCII characters survives); error text is the system code.
 [[nodiscard]] Unexpected ioFail(const QString& path, const char* op, DWORD code) {
     return fail(ErrorCode::IoError, QStringLiteral("%1 failed for '%2': error %3")
                                         .arg(QString::fromLatin1(op), path, QString::number(code)));

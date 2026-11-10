@@ -5,7 +5,7 @@
 #pragma once
 // Ports: i_TileDownloadSubsystem.pas, u_TileDownloadSubsystem.pas (with its private
 // TRequestBuilderProviderInternal), and the maptype side of u_TileDownloaderSimple.pas:152-274 -- the
-// per-task job (docs/specs/maptype.md 2.13.6, 3.1 R1-R4, net.md 2.15).
+// per-task job.
 //
 // One subsystem per map. Built from the ZMP only when the ZMP allows downloading: the sample predicates, the
 // anti-ban, the checker, the request-builder factory, the result saver, the subsystem state, the download
@@ -16,16 +16,16 @@
 // the queue's workers. The destructor must run on a thread that is not a worker of this queue (it joins
 // them).
 //
-// Lifetime (R1). A queued job holds only shared_ptrs to the task and the saver -- never the subsystem, the
-// queue or the factory -- so the last reference to the queue is the member below and ~DownloadQueue never
-// joins the thread it runs on. The destructor first fires the destroy token (this cancels the builds of
-// getRequest and, through the queue's stop, every transfer in flight), then drops the provider and joins the
-// queue's workers, and only then do the saver, the factory and the storage go (member order, last = first
+// Lifetime. A queued job holds only shared_ptrs to the task and the saver -- never the subsystem, the queue
+// or the factory -- so the last reference to the queue is the member below and ~DownloadQueue never joins
+// the thread it runs on. The destructor first fires the destroy token (this cancels the builds of getRequest
+// and, through the queue's stop, every transfer in flight), then drops the provider and joins the queue's
+// workers, and only then do the saver, the factory and the storage go (member order, last = first
 // destroyed). Jobs still waiting in the queue when the subsystem dies are dropped unfinished, as in legacy
-// (TInterfaceQueue.Destroy): their owners must not wait for them after destroying the map.
-// The saver unsubscribes from the storage state in its destructor but a callback already running on another
-// thread is not waited for (core/notifier.cpp): whoever changes the storage's state must not do it
-// concurrently with the destruction of this object (docs/specs/maptype.md 2.13.5 item 8).
+// (TInterfaceQueue.Destroy): their owners must not wait for them after destroying the map. The saver
+// unsubscribes from the storage state in its destructor but a callback already running on another thread is
+// not waited for (core/notifier.cpp): whoever changes the storage's state must not do it concurrently with
+// the destruction of this object.
 
 #include "cg/core/content_type.h"
 #include "cg/core/language_manager.h"
@@ -84,8 +84,8 @@ public:
 
     [[nodiscard]] virtual std::shared_ptr<ITileDownloaderStateChangeable> state() const = 0;
 
-    // T-0366 (port extension): loads the script of a JavaScript source now, so that a script that does not
-    // load turns the state off with its reason before the first tile. No effect for any other source.
+    // Port extension: loads the script of a JavaScript source now, so that a script that does not load
+    // turns the state off with its reason before the first tile. No effect for any other source.
     virtual void checkRequestBuilder() {}
 };
 
@@ -95,7 +95,7 @@ namespace detail {
 
 // What the queue's SlotStateFactory makes for one slot (u_TileDownloaderList.pas:146-168): the slot's lazy
 // request builder and its LastResponseInfo. Never shared between slots; touched only inside the callables of
-// RetryDownloader::run (its run lock serialises two workers on one slot, net.md 2.15).
+// RetryDownloader::run (its run lock serialises two workers on one slot).
 struct SlotState {
     ITileDownloadRequestBuilderPtr builder;
     std::shared_ptr<net::LastResponseInfo> lastResponse;
@@ -119,14 +119,13 @@ public:
     // knows is read from `zmp` (file name, enabled flag, projection set, samples, crop config, content-type
     // substitution, the provider holding params.txt and GetUrlScript.txt). Not taken, with the reason:
     // ProjectionSetFactory (unused in legacy's body), ImageResampler / Bitmap32StaticFactory /
-    // DownloadResultFactory (saver arguments of the unported crop/cut half, T-0119), InvisibleBrowser (the
-    // anti-ban fetches through the downloader factory, D-14), ThreadConfig (the queue has no thread-priority
-    // input). `gc` and `tileDownloaderConfig` must outlive the subsystem's queue (the subsystem holds the
-    // config by shared_ptr; `gc` is the application notifier). `contentTypes` is held by shared_ptr because
-    // the saver keeps a reference to it. `appClosing`: once it stops, the destroy token fires (a token
-    // already stopped at construction acts at once). Null arguments that legacy would dereference are
-    // std::invalid_argument; a ZMP without params.txt / [PARAMS] (ZmpInfo cannot produce one) is
-    // std::runtime_error.
+    // DownloadResultFactory (saver arguments of the unported crop/cut half), InvisibleBrowser (the anti-ban
+    // fetches through the downloader factory), ThreadConfig (the queue has no thread-priority input). `gc`
+    // and `tileDownloaderConfig` must outlive the subsystem's queue (the subsystem holds the config by
+    // shared_ptr; `gc` is the application notifier). `contentTypes` is held by shared_ptr because the saver
+    // keeps a reference to it. `appClosing`: once it stops, the destroy token fires (a token already stopped
+    // at construction acts at once). Null arguments that legacy would dereference are std::invalid_argument;
+    // a ZMP without params.txt / [PARAMS] (ZmpInfo cannot produce one) is std::runtime_error.
     TileDownloadSubsystem(IZmpInfoPtr zmp, core::Notifier& gc, std::stop_token appClosing,
                           std::shared_ptr<core::ILanguageManager> languageManager,
                           std::shared_ptr<const net::IGlobalDownloadConfig> globalDownloadConfig,

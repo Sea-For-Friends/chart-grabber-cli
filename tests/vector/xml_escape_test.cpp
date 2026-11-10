@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_XmlEscape.pas; docs/specs/vector.md §2.13, §7.1, §8.1 LV-8. The seven DUnit methods of
-// Test/u_XmlEscape_Test.pas are rows of the tables below (each row names its DUnit method) and the
-// TEST blocks that follow. No FEAT id: enabler of the exporters. Expected strings are the literal DUnit
-// values or worked out from the legacy tables. The legacy code was not run; the NUL rows are read from
-// u_XmlEscape.pas:126-211 and are not run.
+// Ports u_XmlEscape.pas. The seven DUnit methods of Test/u_XmlEscape_Test.pas are rows of the tables
+// below (each row names its DUnit method) and the TEST blocks that follow. The exporters build on it.
+// Expected strings are the literal DUnit values or worked out from the legacy tables. The legacy code
+// was not run; the NUL rows are read from u_XmlEscape.pas:126-211 and are not run.
 #include "cg/vector/xml_escape.h"
 
 #include <gtest/gtest.h>
@@ -116,16 +115,16 @@ TEST(XmlEscape, AttrNumericTable) {
     }
 }
 
-// Legacy LV-8, read from :126-211: U+0000 ends the scan. The text is cut at the NUL when an escape
-// was written before it (the output then stops there).
+// Legacy, read from :126-211: U+0000 ends the scan. The text is cut at the NUL when an escape was
+// written before it (the output then stops there).
 TEST(XmlEscape, NulEndsTheTextAfterAnEscape) {
     const QString input = QString::fromUtf16(u"a<\0b", 4);
     EXPECT_EQ(xmlEscapeText(input, false), QStringLiteral("a&lt;"));
     EXPECT_EQ(xmlEscapeText(input, true), QStringLiteral("a&#60;"));
 }
 
-// Legacy LV-8, read from :171-173: when nothing is escaped before the NUL the input is returned as
-// it is, the part after the NUL included.
+// Legacy, read from :171-173: when nothing is escaped before the NUL the input is returned as it
+// is, the part after the NUL included.
 TEST(XmlEscape, NulWithoutEscapeReturnsInputUnchanged) {
     const QString input = QString::fromUtf16(u"a\0<b", 4);
     EXPECT_EQ(xmlEscapeText(input, false), input);

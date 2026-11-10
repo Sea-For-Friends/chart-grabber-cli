@@ -2,10 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-003 (the run half, now with the host binding). docs/specs/script.md 2.11,
-// 2.7, 4, 5.1, 5.3, 7, 8. Acceptance item #0's parser tests live in parser_test.cpp; this file is
-// the "value model, VM/global scopes, expression + statement evaluation, built-ins" half of
-// T-0014/T-0014B/T-0015A.
+// This file is the run half: the value model, VM/global scopes, expression + statement
+// evaluation, built-ins and the host binding. The parser tests live in parser_test.cpp.
 #include "cg/script/compiled_script.h"
 #include "cg/script/interpreter.h"
 #include "cg/script/parser.h" // SymbolTable::kBoundVariableCount
@@ -52,7 +50,7 @@ struct Outcome {
 
 // `vars` is passed by value (the caller's copy is never touched - `run(IScriptHost&, ScriptVars&)`
 // only ever mutates the Outcome's own copy) and `host` defaults to a freshly-seeded FakeScriptHost
-// so the ~90 pre-T-0015A call sites (`run(source)`) are unaffected by the host binding.
+// so the ~90 earlier call sites (`run(source)`) are unaffected by the host binding.
 Outcome run(const QByteArray& source, ScriptVars vars = {}, std::unique_ptr<FakeScriptHost> host = nullptr) {
     Outcome outcome;
     outcome.vars = std::move(vars);
@@ -79,13 +77,13 @@ Outcome run(const QByteArray& source, ScriptVars vars = {}, std::unique_ptr<Fake
 
 #define ASSERT_RAN_OK(outcome) ASSERT_TRUE(ranOk(outcome))
 
-// --- BuiltinId / externalSymbols pairing (ruling 2026-09-18) --------------------------------------
+// --- BuiltinId / externalSymbols pairing --------------------------------------
 
 TEST(Interpreter, BuiltinIdMatchesExternalSymbolOrder) {
     EXPECT_TRUE(builtinIdsMatchExternalSymbolOrder());
 }
 
-// --- expressions: numeric model (spec 4.1) --------------------------------------------------------
+// --- expressions: numeric model --------------------------------------------------------
 
 TEST(Interpreter, MulBindsTighterThanAddAtRuntime) {
     Outcome o = run("var X: Integer;\nbegin X := 2 * 3 + 4; end.");
@@ -107,10 +105,10 @@ TEST(Interpreter, DivisionByZeroIsARuntimeError) {
     EXPECT_TRUE(o.runResult.error().what().contains(QStringLiteral("Division by zero")));
 }
 
-// T-0031, spec N5 corrected: `4 / 2` is Int/Int, so the `/` itself yields Int(2) (PD-4 - see the
-// DivisionAndRealSlots table below for the direct case). This still ends up Real(2.0) here only
-// because PD-2 makes assignment into a `Double`-declared slot widen an Int - two rules composing,
-// not N5's old "/ always yields a real". Was named RealDivisionAlwaysYieldsReal.
+// `4 / 2` is Int/Int, so the `/` itself yields Int(2) (see the DivisionAndRealSlots table below
+// for the direct case). This still ends up Real(2.0) here only because assignment into a
+// `Double`-declared slot widens an Int - two rules composing, not "/ always yields a real". Was
+// named RealDivisionAlwaysYieldsReal.
 TEST(Interpreter, IntDivisionResultWidensWhenAssignedToARealSlot) {
     Outcome o = run("var A: Double;\nbegin A := 4 / 2; end.");
     ASSERT_RAN_OK(o);
@@ -118,16 +116,16 @@ TEST(Interpreter, IntDivisionResultWidensWhenAssignedToARealSlot) {
     EXPECT_DOUBLE_EQ(static_cast<double>(*o.interpreter->slot(kV0).toReal()), 2.0);
 }
 
-// --- T-0031: PD-2 (Int -> real slot widening), PD-3/PD-4 (`div`/`/` semantics), PD-104 (32-bit
-// integer intermediates) - docs/backlog/T-0031-script-real-typed-slots-and-division-semantics.md.
-// Expected values are derived from the engine (sasgis/pascalscript, commit 81202d0), not the port:
-//  - PD-2: uPSRuntime.pas's assignment/parameter-bind/Result-store path converts an Int into a
-//    real-declared slot (spec 4.3 A1); a real scalar slot zero-inits to 0.0 (spec 4.4 I1).
-//  - PD-3/PD-4: uPSCompiler.pas's GetResultType (~8597-8645), no PS_DELPHIDIV: int op int -> the
-//    left operand's integer type (truncating division); int/real mixed -> real division. `/` and
+// --- Int -> real slot widening, `div`/`/` semantics and 32-bit
+// integer intermediates. Expected values are derived from the engine (sasgis/pascalscript, commit
+// 81202d0), not the port:
+//  - uPSRuntime.pas's assignment/parameter-bind/Result-store path converts an Int into a
+//    real-declared slot; a real scalar slot zero-inits to 0.0.
+//  - uPSCompiler.pas's GetResultType (~8597-8645), no PS_DELPHIDIV: int op int -> the left
+//    operand's integer type (truncating division); int/real mixed -> real division. `/` and
 //    `div` compile to the SAME opcode (codegen ~6248) and are semantically identical.
-//  - PD-104: GetResultType's "Result := t1" rule for +/-/*/div/mod/shl/shr and unary '-' makes an
-//    entire left-associative arithmetic chain compute (and wrap) in its LEFTMOST leaf's static
+//  - GetResultType's "Result := t1" rule for +/-/*/div/mod/shl/shr and unary '-' makes an entire
+//    left-associative arithmetic chain compute (and wrap) in its LEFTMOST leaf's static
 //    type - S32 for an Integer-typed literal/slot (`{$R-}{$Q-}`, overflow wraps), S64 only when
 //    that leftmost operand is declared Int64.
 struct DivAndRealSlotCase {
@@ -136,8 +134,8 @@ struct DivAndRealSlotCase {
     int slotOffset; // added to kV0 - the slot holding the value under test
     ValueKind expectedKind;
     const char* expectedStr; // Value::toStr() - IntToStr/FloatToStr form, exact
-    // T-0031 rework (ruling 3): the two vectors that are a runtime error instead of a value -
-    // expectedKind/expectedStr/slotOffset are unused when this is set.
+    // The two vectors that are a runtime error instead of a
+    // value - expectedKind/expectedStr/slotOffset are unused when this is set.
     bool expectError = false;
     const char* expectedErrorSubstr = nullptr;
 };
@@ -166,7 +164,7 @@ std::string divAndRealSlotCaseName(const ::testing::TestParamInfo<DivAndRealSlot
 INSTANTIATE_TEST_SUITE_P(
     T0031, Interpreter_DivAndRealSlots,
     ::testing::Values(
-        // PD-2: Int -> Extended by assignment/parameter/Result.
+        // Int -> Extended by assignment/parameter/Result.
         DivAndRealSlotCase{"IntAssignedToExtendedSlotWidens", "var R: Extended;\nbegin R := 5; end.", 0,
                            ValueKind::Real, "5"},
         DivAndRealSlotCase{"IntPassedToExtendedParamWidens",
@@ -177,35 +175,34 @@ INSTANTIATE_TEST_SUITE_P(
                            "function G: Extended;\nbegin Result := 7; end;\n"
                            "var R: Extended;\nbegin R := G; end.",
                            2, ValueKind::Real, "7"},
-        // PD-2/I1: a real scalar slot zero-inits to 0.0, not Empty.
+        // A real scalar slot zero-inits to 0.0, not Empty.
         DivAndRealSlotCase{"RealSlotZeroInitialisesToZeroPointZero", "var Z: Double;\nbegin end.", 0,
                            ValueKind::Real, "0"},
-        // PD-3: `div` with a real operand is REAL division.
+        // `div` with a real operand is REAL division.
         DivAndRealSlotCase{"DivWithRealRightOperandIsRealDivision",
                            "var R: Extended;\nbegin R := 7 div 2.0; end.", 0, ValueKind::Real, "3.5"},
         DivAndRealSlotCase{"DivWithRealLeftOperandIsRealDivision",
                            "var R: Extended;\nbegin R := 7.5 div 2; end.", 0, ValueKind::Real, "3.75"},
-        // PD-4: `/` between two Integers is INTEGER division; `/` with a real operand stays real.
+        // `/` between two Integers is INTEGER division; `/` with a real operand stays real.
         DivAndRealSlotCase{"SlashBetweenIntegersIsIntegerDivision", "var R: Integer;\nbegin R := 7 / 2; end.",
                            0, ValueKind::Int, "3"},
         DivAndRealSlotCase{"SlashWithRealOperandIsRealDivision", "var R: Extended;\nbegin R := 7.0 / 2; end.",
                            0, ValueKind::Real, "3.5"},
-        // PD-104: Integer-literal arithmetic wraps at 32 bits (2000000000+2000000000 = 4000000000,
-        // which as signed S32 is 4000000000 - 2^32 = -294967296); the SAME expression on Int64
-        // operands does not wrap. `R` is declared Int64 (T-0031 rework, review finding 6): both
-        // operands are Integer literals, so the wrap happens in the `+` itself, before the
-        // assignment - declaring R Integer would make N1's slot-wrap alone produce the same
-        // -294967296 even without PD-104, so this row would pass either way. Int64 pins the
-        // INTERMEDIATE instead.
+        // Integer-literal arithmetic wraps at 32 bits (2000000000+2000000000 = 4000000000, which
+        // as signed S32 is 4000000000 - 2^32 = -294967296); the SAME expression on Int64 operands
+        // does not wrap. `R` is declared Int64: both operands are Integer literals, so the wrap
+        // happens in the `+` itself, before the assignment - declaring R Integer would make the
+        // slot wrap alone produce the same -294967296 even without the 32-bit intermediate, so
+        // this row would pass either way. Int64 pins the INTERMEDIATE instead.
         DivAndRealSlotCase{"IntegerArithmeticWrapsAt32Bits",
                            "var R: Int64;\nbegin R := 2000000000 + 2000000000; end.", 0, ValueKind::Int,
                            "-294967296"},
         DivAndRealSlotCase{"Int64ArithmeticDoesNotWrap",
                            "var A, B, R: Int64;\nbegin A := 2000000000; B := 2000000000; R := A + B; end.", 2,
                            ValueKind::Int, "4000000000"},
-        // T-0031 rework (review findings 1/2, ruling 1): the width rule is the left operand's
-        // EXACT static type, not just "32 or 64 bits" - Cardinal and a literal in 2^31..2^32-1 are
-        // UNSIGNED 32-bit, and Byte/Word/ShortInt/SmallInt compute at 8/16 bits.
+        // The width rule is the left operand's EXACT static type, not just
+        // "32 or 64 bits" - Cardinal and a literal in 2^31..2^32-1 are UNSIGNED 32-bit, and
+        // Byte/Word/ShortInt/SmallInt compute at 8/16 bits.
         DivAndRealSlotCase{"CardinalArithmeticIsUnsigned32Bit",
                            "var C: Cardinal; R: Int64;\nbegin C := 4000000000; R := C + 0; end.", 1,
                            ValueKind::Int, "4000000000"},
@@ -214,13 +211,13 @@ INSTANTIATE_TEST_SUITE_P(
         DivAndRealSlotCase{"ByteArithmeticComputesAt8Bits",
                            "var B: Byte; R: Integer;\nbegin B := 200; R := B + 100; end.", 1, ValueKind::Int,
                            "44"},
-        // T-0031 rework (review finding 3, ruling 2): unary '-' as the direct assignment RHS
-        // computes in the DESTINATION's width, not the operand's - I (Integer) holds Low(Integer);
-        // negating it directly into R64 (Int64) widens I first, then negates at 64 bits.
+        // Unary '-' as the direct assignment RHS computes in the DESTINATION's width, not the
+        // operand's - I (Integer) holds Low(Integer); negating it directly into R64 (Int64) widens
+        // I first, then negates at 64 bits.
         DivAndRealSlotCase{"UnaryMinusOfLowIntegerWidensIntoAWiderDestination",
                            "var I: Integer; R64: Int64;\nbegin I := -2147483648; R64 := -I; end.", 1,
                            ValueKind::Int, "2147483648"},
-        // T-0031 rework (review finding 7, ruling 3): the two pre-existing error-text/class gaps.
+        // The two error-text/class gaps.
         DivAndRealSlotCase{"RealDivisionByZeroReportsTheEngineText",
                            "var R: Extended;\nbegin R := 5.0 / 0; end.", 0, ValueKind::Real, "",
                            /*expectError=*/true, "Floating point division by zero"},
@@ -251,12 +248,12 @@ TEST(Interpreter, MixedIntRealComparisonPromotesToReal) {
 }
 
 TEST(Interpreter, ShrIsLogicalOnUnsignedInterpretation) {
-    Outcome o = run("var A: Integer;\nbegin A := (-1) shr 60; end."); // N8
+    Outcome o = run("var A: Integer;\nbegin A := (-1) shr 60; end.");
     ASSERT_RAN_OK(o);
     EXPECT_EQ(*o.interpreter->slot(kV0).toInt(), 15);
 }
 
-// --- expressions: string model (spec 4.2) ---------------------------------------------------------
+// --- expressions: string model ---------------------------------------------------------
 
 TEST(Interpreter, StringIndexingIsOneBased) {
     Outcome o = run("var S: string; A: string;\nbegin S := 'Galileo'; A := S[1]; end.");
@@ -265,7 +262,7 @@ TEST(Interpreter, StringIndexingIsOneBased) {
 }
 
 TEST(Interpreter, StringIndexPastEndWithinWindowReturnsNul) {
-    // T3: RoscosmGeo.zmp reads one byte past Length() on its last loop iteration.
+    // RoscosmGeo.zmp reads one byte past Length() on its last loop iteration.
     Outcome o = run("var S: string; A: string;\nbegin S := 'ab'; A := S[3]; end.");
     ASSERT_RAN_OK(o);
     EXPECT_EQ(o.interpreter->slot(kV1).toStr(), QByteArray(1, '\0'));
@@ -278,7 +275,7 @@ TEST(Interpreter, StringIndexFarPastEndIsARuntimeError) {
 }
 
 TEST(Interpreter, IndexedAssignmentWritesOneByteInPlace) {
-    Outcome o = run("var S: string;\nbegin S := 'cat'; S[1] := 'b'; end."); // T4
+    Outcome o = run("var S: string;\nbegin S := 'cat'; S[1] := 'b'; end.");
     ASSERT_RAN_OK(o);
     EXPECT_EQ(o.interpreter->slot(kV0).toStr(), QByteArrayLiteral("bat"));
 }
@@ -376,7 +373,7 @@ TEST(Interpreter, TryExceptSwallowsTheError) {
     EXPECT_EQ(*o.interpreter->slot(kV0).toInt(), 99);
 }
 
-// --- routines (spec 4.4 I2/I4) ----------------------------------------------------------------------
+// --- routines ----------------------------------------------------------------------
 
 // Slot arithmetic for these: a routine's own name occupies a slot too (SymbolTable::declareRoutine
 // precedes its params/Result/locals), so a `var` section declared AFTER a routine starts at
@@ -391,8 +388,7 @@ TEST(Interpreter, FunctionResultAndCall) {
 }
 
 TEST(Interpreter, RecursionGetsAFreshFrameEachCall) {
-    // _broken_maps/Local/MAmet.zmp-style recursion (spec notes). Fact=kV0, N=kV0+1, Result=kV0+2,
-    // A=kV0+3.
+    // _broken_maps/Local/MAmet.zmp-style recursion. Fact=kV0, N=kV0+1, Result=kV0+2, A=kV0+3.
     Outcome o = run("function Fact(N: Integer): Integer;\n"
                     "begin if N <= 1 then Result := 1 else Result := N * Fact(N - 1); end;\n"
                     "var A: Integer;\nbegin A := Fact(5); end.");
@@ -417,15 +413,15 @@ TEST(Interpreter, OutParameterIsZeroInitialisedThenWrittenBack) {
 }
 
 TEST(Interpreter, RoutineLocalsAreZeroInitialised) {
-    // I1: MAmet.zmp reads `r` before assigning it. ReadBeforeSet=kV0 (no params), Result=kV0+1,
-    // R=kV0+2 (declared in the function's own `var` section, after Result), A=kV0+3.
+    // MAmet.zmp reads `r` before assigning it. ReadBeforeSet=kV0 (no params), Result=kV0+1, R=kV0+2
+    // (declared in the function's own `var` section, after Result), A=kV0+3.
     Outcome o = run("function ReadBeforeSet: Integer;\nvar R: Integer;\nbegin Result := R; end;\n"
                     "var A: Integer;\nbegin A := ReadBeforeSet; end.");
     ASSERT_RAN_OK(o);
     EXPECT_EQ(*o.interpreter->slot(kV0 + 3).toInt(), 0);
 }
 
-// --- built-ins (a representative slice, not the full 57 - see docs/handoffs/T-0014.md) ------------
+// --- built-ins (a representative selection, not the full 57) ------------
 
 TEST(Interpreter, RoundIsBankersRounding) {
     Outcome o = run("var A, B, C, D: Integer;\n"
@@ -446,7 +442,7 @@ TEST(Interpreter, TruncIntFrac) {
 }
 
 TEST(Interpreter, IntPowerIsOneForAnyBaseAtZero) {
-    Outcome o = run("var A: Double;\nbegin A := IntPower(0, 0); end."); // spec F4
+    Outcome o = run("var A: Double;\nbegin A := IntPower(0, 0); end.");
     ASSERT_RAN_OK(o);
     EXPECT_DOUBLE_EQ(static_cast<double>(*o.interpreter->slot(kV0).toReal()), 1.0);
 }
@@ -528,11 +524,11 @@ TEST(Interpreter, PiIsAvailable) {
     EXPECT_NEAR(static_cast<double>(*o.interpreter->slot(kV0).toReal()), 3.14159265358979, 1e-12);
 }
 
-// --- deliberately unsupported this slice (fails loudly, never silently) ---------------------------
+// --- deliberately unsupported (fails loudly, never silently) ---------------------------
 
 TEST(Interpreter, BoundVariableReadReachesScriptVars) {
-    // T-0015A: GetX now flows straight from the caller's ScriptVars (spec 5.1 #16) - see
-    // AllBoundVariablesRoundTrip below for the full 26-variable table.
+    // GetX now flows straight from the caller's ScriptVars - see AllBoundVariablesRoundTrip below
+    // for the full 26-variable table.
     ScriptVars vars;
     vars.getX = 42;
     Outcome o = run("var A: Integer;\nbegin A := GetX; end.", vars);
@@ -541,11 +537,11 @@ TEST(Interpreter, BoundVariableReadReachesScriptVars) {
 }
 
 TEST(Interpreter, InterfaceMethodCallOnNilInterfaceIsARuntimeError) {
-    // T-0015B: method-call dispatch is now implemented (Maps.by.zmp: `DefProjConverter.LonLat2XY
-    // (TL)`), so this default-constructed ScriptVars (every interface slot null) exercises the one
-    // remaining failure mode for a method call - spec 7's generic runtime-error row, IoError, not
-    // Unsupported. The exact legacy exception text is unverifiable (no compiler/oracle - see
-    // docs/handoffs/T-0015B.md); only the error *class* is asserted.
+    // Method-call dispatch is implemented (Maps.by.zmp: `DefProjConverter.LonLat2XY (TL)`), so
+    // this default-constructed ScriptVars (every interface slot null) exercises the one remaining
+    // failure mode for a method call - a generic runtime error, IoError, not Unsupported. The
+    // exact legacy exception text is unverifiable (no compiler/oracle); only the error *class* is
+    // asserted.
     Outcome o = run("var TL: TDoublePoint;\nbegin TL := DefProjConverter.LonLat2XY(TL); end.");
     ASSERT_FALSE(o.runResult.has_value());
     EXPECT_EQ(o.runResult.error().code(), cg::core::ErrorCode::IoError);
@@ -565,13 +561,12 @@ TEST(Interpreter, ExecBudgetCancelsARunawayLoop) {
     EXPECT_EQ(result.error().code(), cg::core::ErrorCode::Cancelled);
 }
 
-// --- T-0014 rework (2026-09-18 review) -------------------------------------------------------------
+// --- regression cases -------------------------------------------------------------
 
 TEST(Interpreter, AssignToBoundVariableSucceedsAndReadsBack) {
-    // T-0015A: 349/350 corpus scripts assign a bound variable (ResultURL). Blocker 1 (T-0014
-    // review) demanded this fail loudly rather than silently no-op before the host binding
-    // existed; now it is the whole point - a plain `Assign` to ResultURL must reach `vars` after a
-    // successful run (spec 2.11/2.13).
+    // 349/350 corpus scripts assign a bound variable (ResultURL). An earlier version had to fail
+    // this loudly rather than silently no-op before the host binding existed; now it is the whole
+    // point - a plain `Assign` to ResultURL must reach `vars` after a successful run.
     Outcome o = run("begin ResultURL := 'http://x/'; end.");
     ASSERT_RAN_OK(o);
     EXPECT_EQ(o.interpreter->slot(7).toStr(), QByteArrayLiteral("http://x/"));
@@ -579,7 +574,7 @@ TEST(Interpreter, AssignToBoundVariableSucceedsAndReadsBack) {
 }
 
 TEST(Interpreter, BuiltinArityIsCheckedBeforeAnyArgAccess) {
-    // Blocker 2: the parser deliberately does not enforce arity for Builtin/Registered calls, so
+    // The parser deliberately does not enforce arity for Builtin/Registered calls, so
     // callBuiltin must reject a bad argument count itself, before it ever indexes args[i] - a
     // diagnostic, never an out-of-bounds access.
     Outcome tooFew = run("var A: string;\nbegin A := Copy('abcdef'); end.");
@@ -592,20 +587,20 @@ TEST(Interpreter, BuiltinArityIsCheckedBeforeAnyArgAccess) {
 }
 
 TEST(Interpreter, OutParameterToNonLvalueFailsLoudly) {
-    // Blocker 2: the 'out' write-back needs the same VarRef guard the 'var' path already has -
-    // Give(5) must be a diagnostic, never a write through a garbage slot.
+    // The 'out' write-back needs the same VarRef guard the 'var' path already has - Give(5) must be
+    // a diagnostic, never a write through a garbage slot.
     Outcome o = run("procedure Give(out X: Integer);\nbegin X := 42; end;\nbegin Give(5); end.");
     ASSERT_FALSE(o.runResult.has_value());
     EXPECT_EQ(o.runResult.error().code(), cg::core::ErrorCode::Unsupported);
 }
 
 TEST(Interpreter, TryExceptDoesNotSwallowUnsupportedOrCancelled) {
-    // Major 3: only a Delphi-equivalent runtime error (IoError) is catchable; Unsupported and
-    // Cancelled are port-internal and must propagate through `except` unchanged. T-0015A: GetX
-    // is now a live bound variable (no longer Unsupported); T-0015B: an interface method call is
-    // now dispatched too (a *nil* interface call is IoError, catchable - see
+    // Only a Delphi-equivalent runtime error (IoError) is catchable; Unsupported and Cancelled
+    // are port-internal and must propagate through `except` unchanged. GetX is now a live bound
+    // variable (no longer Unsupported); an interface method call is now dispatched too (a *nil*
+    // interface call is IoError, catchable - see
     // InterfaceMethodCallOnNilInterfaceIsARuntimeError), so the still-Unsupported construct used
-    // here is aliased `var` arguments (Major 5, T-0014B) instead.
+    // here is aliased `var` arguments instead.
     Outcome unsupportedInTry = run("procedure P(var a, b: Integer);\nbegin a := 1; b := 2; end;\n"
                                    "var X: Integer;\nbegin X := 0; try P(X, X); except X := 99; end; end.");
     ASSERT_FALSE(unsupportedInTry.runResult.has_value());
@@ -626,8 +621,8 @@ TEST(Interpreter, TryExceptDoesNotSwallowUnsupportedOrCancelled) {
 }
 
 TEST(Interpreter, InterpreterOutlivesADroppedCompiledScript) {
-    // Major 4: Interpreter must keep the CompiledScript (and the AST arena it owns) alive itself -
-    // nothing should force the caller to outlive it.
+    // Interpreter must keep the CompiledScript (and the AST arena it owns) alive itself - nothing
+    // should force the caller to outlive it.
     std::unique_ptr<Interpreter> interp;
     {
         auto compiled =
@@ -644,9 +639,9 @@ TEST(Interpreter, InterpreterOutlivesADroppedCompiledScript) {
 }
 
 TEST(Interpreter, AliasedVarArgumentsFailLoudly) {
-    // Major 5 (spec 4.3 A5): Delphi's `var` is by-reference, so P(x, x) writes through the SAME
-    // cell; this slice's copy-in/copy-out VM cannot reproduce that and must fail loudly instead of
-    // silently diverging (true var-by-reference is T-0014B).
+    // Delphi's `var` is by-reference, so P(x, x) writes through the SAME cell; the
+    // copy-in/copy-out VM cannot reproduce that and must fail loudly instead of silently
+    // diverging.
     Outcome o = run("procedure P(var a, b: Integer);\nbegin a := 1; b := 2; end;\n"
                     "var X: Integer;\nbegin X := 0; P(X, X); end.");
     ASSERT_FALSE(o.runResult.has_value());
@@ -654,7 +649,6 @@ TEST(Interpreter, AliasedVarArgumentsFailLoudly) {
 }
 
 TEST(Interpreter, CopyEdgeCases) {
-    // spec 4.2 T6/5.4.
     Outcome o = run("var A, B, C, D: string;\n"
                     "begin A := Copy('Galileo', 1, 0); B := Copy('Galileo', 0, 2); "
                     "C := Copy('Galileo', 99, 5); D := Copy('Galileo', 1, -1); end.");
@@ -666,8 +660,8 @@ TEST(Interpreter, CopyEdgeCases) {
 }
 
 TEST(Interpreter, InsertAndDeleteEdgeCases) {
-    // spec 4.2 T6: Insert clamps an out-of-range position instead of erroring; Delete fully out of
-    // range is a no-op.
+    // Insert clamps an out-of-range position instead of erroring; Delete fully out of range is a
+    // no-op.
     Outcome o = run("var S, T: string;\n"
                     "begin S := 'bc'; Insert('a', S, 0); T := 'bc'; Insert('d', T, 99); end.");
     ASSERT_RAN_OK(o);
@@ -680,8 +674,8 @@ TEST(Interpreter, InsertAndDeleteEdgeCases) {
 }
 
 TEST(Interpreter, PosExAndSubStrPosEdgeCasesAndArgumentOrder) {
-    // spec 5.3 F22/F32: PosEx(SubStr, S, Offset) vs SubStrPos(S, SubStr, From) - the reversed
-    // argument order is exactly the kind of thing that silently changes a URL.
+    // PosEx(SubStr, S, Offset) vs SubStrPos(S, SubStr, From) - the reversed argument order is
+    // exactly the kind of thing that silently changes a URL.
     Outcome o = run("var A, B, C: Integer;\n"
                     "begin A := PosEx('v', 'k=v', 99); "
                     "B := PosEx('v', 'k=v', 1); C := SubStrPos('k=v', 'v', 1); end.");
@@ -692,7 +686,6 @@ TEST(Interpreter, PosExAndSubStrPosEdgeCasesAndArgumentOrder) {
 }
 
 TEST(Interpreter, IntToHexEdgeCases) {
-    // spec 5.3 F18.
     Outcome o = run("var A, B, C: string;\n"
                     "begin A := IntToHex(-1, 8); B := IntToHex(255, 2); C := IntToHex(4096, 2); end.");
     ASSERT_RAN_OK(o);
@@ -702,7 +695,7 @@ TEST(Interpreter, IntToHexEdgeCases) {
 }
 
 TEST(Interpreter, GetDiv3PathExactTable) {
-    // spec F34's full table (the existing test only covers one shape).
+    // The full table of shapes (the existing test only covers one shape).
     Outcome o = run("var A, B, C, D, E: string;\n"
                     "begin A := GetDiv3Path(''); B := GetDiv3Path('1'); C := GetDiv3Path('12'); "
                     "D := GetDiv3Path('123'); E := GetDiv3Path('12345678'); end.");
@@ -722,9 +715,9 @@ TEST(Interpreter, StringReplaceBothFlagsTogether) {
 }
 
 TEST(Interpreter, ForLoopBoundEvaluatedOnceAndLoopVarReassignmentIsIgnored) {
-    // spec 3.3: the upper bound is evaluated once, before the loop starts, and iteration is driven
-    // by a hidden counter, not a re-read of the loop variable's slot - a body that reassigns the
-    // loop variable does not change how many times the loop runs.
+    // The upper bound is evaluated once, before the loop starts, and iteration is driven by a
+    // hidden counter, not a re-read of the loop variable's slot - a body that reassigns the loop
+    // variable does not change how many times the loop runs.
     Outcome o = run("var I, N, Count: Integer;\n"
                     "begin N := 3; Count := 0; "
                     "for I := 1 to N do begin N := 100; I := 99; Count := Count + 1; end; end.");
@@ -732,10 +725,10 @@ TEST(Interpreter, ForLoopBoundEvaluatedOnceAndLoopVarReassignmentIsIgnored) {
     EXPECT_EQ(*o.interpreter->slot(kV2).toInt(), 3); // ran exactly 3 times, not 100
 }
 
-// --- T-0014B: declared-type range-wrap/rounding on assignment (spec 4.1 N1/N2) -------------------
+// --- Declared-type range-wrap/rounding on assignment -------------------
 
 TEST(Interpreter, ByteSlotWrapsMod256OnOverflowAndUnderflow) {
-    // megafonpro.zmp-style: `max: array[0..20] of byte` motivates N1; this is the scalar case.
+    // megafonpro.zmp-style: `max: array[0..20] of byte` motivates the byte wrap; this is the scalar case.
     Outcome over = run("var B: Byte;\nbegin B := 255 + 10; end.");
     ASSERT_RAN_OK(over);
     EXPECT_EQ(*over.interpreter->slot(kV0).toInt(), 9); // 265 mod 256
@@ -780,7 +773,7 @@ TEST(Interpreter, DoubleSlotRoundsFromExtendedPrecisionOnAssignment) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: `Sqrt` (std::sqrtl) is genuine long double precision; a Double slot narrows it.
+    // `Sqrt` (std::sqrtl) is genuine long double precision; a Double slot narrows it.
     Outcome o = run("var E: Extended; D: Double;\nbegin E := Sqrt(2); D := Sqrt(2); end.");
     ASSERT_RAN_OK(o);
     const long double extended = *o.interpreter->slot(kV0).toReal();
@@ -803,7 +796,7 @@ TEST(Interpreter, ExpIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: Exp is long double precision (std::exp(long double))
+    // Exp is long double precision (std::exp(long double))
     expectExtendedBuiltin("Exp(1)", std::exp(1.0L), static_cast<long double>(std::exp(1.0)));
 }
 
@@ -811,7 +804,7 @@ TEST(Interpreter, LnIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: Ln is long double precision
+    // Ln is long double precision
     expectExtendedBuiltin("Ln(2)", std::log(2.0L), static_cast<long double>(std::log(2.0)));
 }
 
@@ -819,7 +812,7 @@ TEST(Interpreter, SinIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: Sin is long double precision
+    // Sin is long double precision
     expectExtendedBuiltin("Sin(1)", std::sin(1.0L), static_cast<long double>(std::sin(1.0)));
 }
 
@@ -827,7 +820,7 @@ TEST(Interpreter, CosIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: Cos is long double precision
+    // Cos is long double precision
     expectExtendedBuiltin("Cos(1)", std::cos(1.0L), static_cast<long double>(std::cos(1.0)));
 }
 
@@ -835,7 +828,7 @@ TEST(Interpreter, ArcTanIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: ArcTan is long double precision
+    // ArcTan is long double precision
     expectExtendedBuiltin("ArcTan(1)", std::atan(1.0L), static_cast<long double>(std::atan(1.0)));
 }
 
@@ -843,17 +836,17 @@ TEST(Interpreter, NonIntegralPowerIsExtendedPrecision) {
     if (sizeof(long double) == sizeof(double)) {
         GTEST_SKIP() << "long double is a plain double here (arm64): no extended precision to test";
     }
-    // spec 4.1 N2: Power(b, non-integral e) = exp(e * log(b)) in long double
+    // Power(b, non-integral e) = exp(e * log(b)) in long double
     expectExtendedBuiltin("Power(2, 0.5)", std::exp(0.5L * std::log(2.0L)),
                           static_cast<long double>(std::exp(0.5 * std::log(2.0))));
 }
 
-// --- T-0014B: the 6 built-in record types - default init, Field/FieldAssign, `with` --------------
+// --- The 6 built-in record types - default init, Field/FieldAssign, `with` --------------
 
 TEST(Interpreter, TPointZeroInitsAtFrameEntryAndRoundTripsThroughXY) {
     Outcome o = run("var P: TPoint; Z: Integer;\nbegin Z := P.X; P.X := 5; P.Y := P.X + 1; end.");
     ASSERT_RAN_OK(o);
-    EXPECT_EQ(*o.interpreter->slot(kV1).toInt(), 0); // spec 4.4 I1: zero before any write
+    EXPECT_EQ(*o.interpreter->slot(kV1).toInt(), 0); // Zero before any write
     const Value& p = o.interpreter->slot(kV0);
     ASSERT_EQ(p.kind(), ValueKind::Record);
     EXPECT_EQ(*p.fields()[0].toInt(), 5);
@@ -886,8 +879,8 @@ TEST(Interpreter, WithStmtResolvesFieldsAgainstTheSubjectRecord) {
 }
 
 TEST(Interpreter, RecordAssignmentCopiesByValueNotAlias) {
-    // Maps.by.zmp-style `TL := BR`: ADR-0003 semantic table row 8 - mutating the copy must not
-    // change the original (COW detach on the first field write after the slot-to-slot copy).
+    // Maps.by.zmp-style `TL := BR`: record assignment copies - mutating the copy must not change
+    // the original (COW detach on the first field write after the slot-to-slot copy).
     Outcome o = run("var TL, BR: TDoubleRect;\n"
                     "begin BR.Left := 1.0; BR.Top := 2.0; BR.Right := 3.0; BR.Bottom := 4.0; "
                     "TL := BR; TL.Left := 99.0; end.");
@@ -897,9 +890,9 @@ TEST(Interpreter, RecordAssignmentCopiesByValueNotAlias) {
     EXPECT_DOUBLE_EQ(static_cast<double>(*o.interpreter->slot(kV0).fields()[0].toReal()), 99.0); // TL mutated
 }
 
-// T-0014C1: `Format`/`RoundEx` are wired into callBuiltin (delphi_format_test.cpp has the
-// specifier-level table-driven coverage); this is just the "reachable from a script" acceptance
-// check, including the corpus-critical `Format('%d/%s', [1, 'x'])` shape (F20).
+// `Format`/`RoundEx` are wired into callBuiltin (delphi_format_test.cpp has the specifier-level
+// table-driven coverage); this is just the "reachable from a script" acceptance check,
+// including the corpus-critical `Format('%d/%s', [1, 'x'])` shape.
 TEST(Interpreter, FormatAndRoundExAreReachableFromAScript) {
     Outcome o = run("var A, B: string;\n"
                     "begin A := Format('%d/%s', [1, 'x']); B := RoundEx(1.0, 3); end.");
@@ -908,9 +901,9 @@ TEST(Interpreter, FormatAndRoundExAreReachableFromAScript) {
     EXPECT_EQ(o.interpreter->slot(kV1).toStr(), QByteArrayLiteral("1.000"));
 }
 
-// T-0092: pins script::Value -> core::FormatArg (delphi_format_adapter.cpp). Bool and Empty are
-// integers only for `%*` (Value::toInt(): 1/0 and 0); every specifier rejects them, and a record
-// is rejected by both. Expected texts are those of the pre-move code (same messages, moved verbatim).
+// Pins script::Value -> core::FormatArg (delphi_format_adapter.cpp). Bool and Empty are integers only
+// for `%*` (Value::toInt(): 1/0 and 0); every specifier rejects them, and a record is rejected by
+// both. Expected texts are those of the pre-move code (same messages, moved verbatim).
 struct FormatKindCase {
     const char* name;
     const char* source;
@@ -952,9 +945,9 @@ INSTANTIATE_TEST_SUITE_P(
                        "Format: '*' width needs an integer argument", true}),
     [](const ::testing::TestParamInfo<FormatKindCase>& paramInfo) { return paramInfo.param.name; });
 
-// T-0014C2a: RegExprGetMatchSubStr/RegExprReplaceMatchSubStr are wired into callBuiltin
-// (regex_compat_test.cpp has the R1-R16/substitution-template coverage); this is just the
-// "reachable from a script" acceptance check for F13/F14.
+// RegExprGetMatchSubStr/RegExprReplaceMatchSubStr are wired into callBuiltin
+// (regex_compat_test.cpp has the pattern-rewrite and substitution-template coverage);
+// this is just the "reachable from a script" check.
 TEST(Interpreter, RegExprBuiltinsAreReachableFromAScript) {
     Outcome o = run("var A, B: string;\n"
                     "begin A := RegExprGetMatchSubStr('abc123', '[0-9]+', 0); "
@@ -964,11 +957,11 @@ TEST(Interpreter, RegExprBuiltinsAreReachableFromAScript) {
     EXPECT_EQ(o.interpreter->slot(kV1).toStr(), QByteArrayLiteral("abcX"));
 }
 
-// --- T-0014C2b: SetHeaderValue/GetHeaderValue/DeleteHeaderEntry (F29-F31) and Base64Decode -------
-// (F17). Src/Network/u_NetworkStrFunc.pas:69-258 (IdemPChar/GetHeaderValueUp/ReplaceHeaderValueUp/
+// --- SetHeaderValue/GetHeaderValue/DeleteHeaderEntry and Base64Decode -------
+// Src/Network/u_NetworkStrFunc.pas:69-258 (IdemPChar/GetHeaderValueUp/ReplaceHeaderValueUp/
 // DeleteHeaderValueUp), Src/PascalScript/u_PascalScriptUtils.pas:88-119. The 350-script corpus
 // under tests/fixtures/zmp has zero calls to any of these four functions (verified by grep), so
-// these tables are entirely spec/legacy-derived, not corpus-derived.
+// these tables are entirely legacy-derived, not corpus-derived.
 
 TEST(Interpreter, SetHeaderValueTable) {
     Outcome o = run(
@@ -1071,9 +1064,9 @@ TEST(Interpreter, Base64DecodeStrictnessTable) {
     EXPECT_EQ(o.interpreter->slot(kV0 + 8).toStr(), QByteArray());
 }
 
-// Reachability check (ticket policy: one script-level test covering the real-usage call shapes).
-// The 350-script corpus has no calls to these four functions at all, so this uses the natural
-// call shapes from spec F17/F29-F31 instead of a corpus excerpt.
+// Reachability check (one script-level test covering the real-usage call shapes). The 350-script
+// corpus has no calls to these four functions at all, so this uses the natural call shapes of
+// Base64Decode and the header functions instead of a corpus excerpt.
 TEST(Interpreter, HeaderAndBase64FunctionsAreReachableFromAScript) {
     Outcome o = run("var H, G, D, B: string;\n"
                     "begin H := SetHeaderValue('X: 1'#13#10, 'Y', '2'); "
@@ -1087,15 +1080,14 @@ TEST(Interpreter, HeaderAndBase64FunctionsAreReachableFromAScript) {
     EXPECT_EQ(o.interpreter->slot(kV0 + 3).toStr(), QByteArrayLiteral("Man"));
 }
 
-// --- T-0015A: the host binding (spec 2.7/5.1/5.3) --------------------------------------------
+// --- The host binding --------------------------------------------
 
-// One table-driven case for all 26 bound variables (spec 5.1) - registration order == slot index,
-// TileCache=0 .. GetBMetr=25 (parser.cpp's kBoundVariables). The 7 interface slots are covered for
-// their "unassigned" shape here (this fixture's ScriptVars leaves them null - the fakes for a live
-// Assigned()=true case arrive with T-0015B); UnassignedInterfaceGivesAssignedFalse below is the
-// dedicated case ticket §Tests asks for. No script body is needed: bindScriptVars runs
-// unconditionally at the start of run(), independently of whether the script names a variable
-// (legacy's AddUsedVariable marks all 26 "used" regardless too).
+// One table-driven case for all 26 bound variables - registration order == slot index, TileCache=0
+// .. GetBMetr=25 (parser.cpp's kBoundVariables). The 7 interface slots are covered for their
+// "unassigned" shape here (this fixture's ScriptVars leaves them null);
+// UnassignedInterfaceGivesAssignedFalse below is the dedicated case. No script body is needed:
+// bindScriptVars runs unconditionally at the start of run(), independently of whether the script
+// names a variable (legacy's AddUsedVariable marks all 26 "used" regardless too).
 TEST(Interpreter, AllBoundVariablesRoundTrip) {
     ScriptVars vars;
     vars.getX = 100;
@@ -1142,16 +1134,16 @@ TEST(Interpreter, AllBoundVariablesRoundTrip) {
     EXPECT_DOUBLE_EQ(static_cast<double>(*in.slot(24).toReal()), 7.5); // #25 GetTMetr
     EXPECT_DOUBLE_EQ(static_cast<double>(*in.slot(25).toReal()), 8.5); // #26 GetBMetr
 
-    // spec 2.11/2.13: on success, ResultURL/PostData/RequestHead/ScriptBuffer are written back
-    // onto the caller's ScriptVars (an empty script leaves them at their run-start value).
+    // On success, ResultURL/PostData/RequestHead/ScriptBuffer are written back onto the caller's
+    // ScriptVars (an empty script leaves them at their run-start value).
     EXPECT_EQ(o.vars.resultUrl, QByteArray());
     EXPECT_EQ(o.vars.postData, QByteArray());
     EXPECT_EQ(o.vars.requestHead, QByteArrayLiteral("reqhead"));
     EXPECT_EQ(o.vars.scriptBuffer, QByteArrayLiteral("buf0"));
 }
 
-// spec 5.1 row 18: GetZ is VZoom+1, already 1-based in the caller's ScriptVars - the interpreter
-// must copy it through unchanged, never reinterpret or re-offset it.
+// GetZ is VZoom+1, already 1-based in the caller's ScriptVars - the interpreter must copy it
+// through unchanged, never reinterpret or re-offset it.
 TEST(Interpreter, GetZIsOneBased) {
     ScriptVars vars;
     vars.getZ = 9; // stands for an internal zoom of 8
@@ -1160,8 +1152,8 @@ TEST(Interpreter, GetZIsOneBased) {
     EXPECT_EQ(*o.interpreter->slot(kV0).toInt(), 9);
 }
 
-// spec 2.7 tail: GetURLBase is copied into a *mutable* slot that this Interpreter discards at the
-// end of run() - a script mutating it (the corpus does this via `GetURLBase[8] := ...`, e.g.
+// GetURLBase is copied into a *mutable* slot that this Interpreter discards at the end of
+// run() - a script mutating it (the corpus does this via `GetURLBase[8] := ...`, e.g.
 // _osm/Thunderfores_cycle.zmp) must never leak the change back into the caller's ScriptVars, or
 // the next tile request for the same map would see the previous request's mutation.
 TEST(Interpreter, GetURLBaseMutationDoesNotReachScriptVars) {
@@ -1175,8 +1167,7 @@ TEST(Interpreter, GetURLBaseMutationDoesNotReachScriptVars) {
 }
 
 // An interface bound variable the host left null reads back as `nil`/Assigned() = False, for
-// every one of the 7 interface-typed slots (spec 5.1 #1-7) - not just the one the caller happens
-// to exercise. Method calls on a bound interface stay Unsupported until T-0015B.
+// every one of the 7 interface-typed slots - not just the one the caller happens to exercise.
 TEST(Interpreter, UnassignedInterfaceGivesAssignedFalse) {
     Outcome o = run("var A, B, C, D, E, F, G: Boolean;\n"
                     "begin "
@@ -1190,11 +1181,11 @@ TEST(Interpreter, UnassignedInterfaceGivesAssignedFalse) {
     }
 }
 
-// --- T-0015B: interface method dispatch (spec 2.7/5.6) ------------------------------------------
+// --- Interface method dispatch ------------------------------------------
 
-// ICoordConverter: record argument + record result, plus the 0-based Byte zoom parameter (spec 5.1
-// tail). FakeCoordConverter's spherical Mercator puts pixel (128,128) at zoom 0 exactly at the
-// tiling's centre, lon/lat (0, 0).
+// ICoordConverter: record argument + record result, plus the 0-based Byte zoom parameter.
+// FakeCoordConverter's spherical Mercator puts pixel (128,128) at zoom 0 exactly at the tiling's
+// centre, lon/lat (0, 0).
 TEST(Interpreter, ConverterMethodCallMarshalsRecordsAndByteZoom) {
     ScriptVars vars;
     vars.converter = std::make_shared<FakeCoordConverter>();
@@ -1221,7 +1212,7 @@ TEST(Interpreter, DefProjConverterMethodCallReturnsRecord) {
     EXPECT_DOUBLE_EQ(static_cast<double>(*xy.fields()[1].toReal()), 2000.0);
 }
 
-// IProjConverterFactory: an unknown EPSG code returns nil (script_host.h/spec 5.6), so
+// IProjConverterFactory: an unknown EPSG code returns nil (script_host.h), so
 // Assigned(ProjFactory.GetByEPSG(...)) is False - "GetByEPSG" is legacy's spelling
 // (u_PascalScriptTypes.pas:68), which parser.cpp's method table now matches.
 TEST(Interpreter, ProjFactoryByEpsgOfUnknownCodeGivesAssignedFalse) {
@@ -1233,7 +1224,7 @@ TEST(Interpreter, ProjFactoryByEpsgOfUnknownCodeGivesAssignedFalse) {
 }
 
 // IHttpDownloader: the 2 `var` output arguments are written back independently of the Cardinal
-// result, and a status of 0 is passed through unchanged (spec 5.6 - it also means "no connection").
+// result, and a status of 0 is passed through unchanged (it also means "no connection").
 TEST(Interpreter, HttpDownloaderWritesBackTheTwoOutParameters) {
     auto downloader = std::make_shared<FakeHttpDownloader>();
     downloader->enqueueReply(
@@ -1262,8 +1253,8 @@ TEST(Interpreter, GlobalGetVarOnAbsentIdGivesVarTypeZero) {
     EXPECT_EQ(*o.interpreter->slot(kV0).toInt(), 0);
 }
 
-// IScriptLogger: an empty Write is dropped (spec 5.6) - by the implementation, not the dispatch
-// site (FakeScriptLogger reproduces this the same way legacy's TPascalScriptLogger.Write does).
+// IScriptLogger: an empty Write is dropped - by the implementation, not the dispatch site
+// (FakeScriptLogger reproduces this the same way legacy's TPascalScriptLogger.Write does).
 // WriteFmt dispatches as legacy does: Write(Format(fmt, args)) (u_PascalScriptLogger.pas:139-142).
 TEST(Interpreter, LoggerEmptyWriteIsDropped) {
     auto logger = std::make_shared<FakeScriptLogger>();
@@ -1278,9 +1269,9 @@ TEST(Interpreter, LoggerEmptyWriteIsDropped) {
 }
 
 // IScriptTileCache: a Write-then-Read round-trip of the TTileInfo layout in declared field order
-// (spec 5.2: IsExists, IsExistsTne, LoadDate, Size, Version, ContentType, Data). Zoom 259 on the
-// Write also proves the dispatcher wraps it to a Byte (u_PascalScriptTypes.pas:159,169,179,187),
-// like ICoordConverter's: 259 wraps to 3, so it round-trips with the Read at zoom 3.
+// (IsExists, IsExistsTne, LoadDate, Size, Version, ContentType, Data). Zoom 259 on the Write
+// also proves the dispatcher wraps it to a Byte (u_PascalScriptTypes.pas:159,169,179,187), like
+// ICoordConverter's: 259 wraps to 3, so it round-trips with the Read at zoom 3.
 TEST(Interpreter, TileCacheReadRoundTripsTileInfo) {
     ScriptVars vars;
     vars.tileCache = std::make_shared<FakeScriptTileCache>();
@@ -1299,8 +1290,8 @@ TEST(Interpreter, TileCacheReadRoundTripsTileInfo) {
     EXPECT_EQ(t.fields()[6].toStr(), QByteArrayLiteral("hello"));      // Data
 }
 
-// spec 5.3 F1: Delphi System.Random's exact process-global LCG, seeded to reproduce the golden
-// harness's reference vector - 6 draws of Random(10) from seed 0 are 0, 0, 8, 2, 2, 6.
+// Delphi System.Random's exact process-global LCG, seeded to reproduce the golden harness's
+// reference vector - 6 draws of Random(10) from seed 0 are 0, 0, 8, 2, 2, 6.
 TEST(Interpreter, RandomUsesSeededLcgVector) {
     Outcome o = run("var A, B, C, D, E, F: Integer;\n"
                     "begin A := Random(10); B := Random(10); C := Random(10); "
@@ -1315,8 +1306,8 @@ TEST(Interpreter, RandomUsesSeededLcgVector) {
     EXPECT_EQ(*o.interpreter->slot(kV0 + 5).toInt(), 6);
 }
 
-// Random(X) for X <= 0 is 0 without ever calling the host (spec 5.3 F1) - proven by using a seed
-// that would otherwise produce a non-zero first draw.
+// Random(X) for X <= 0 is 0 without ever calling the host - proven by using a seed that would
+// otherwise produce a non-zero first draw.
 TEST(Interpreter, RandomOfNonPositiveIsZero) {
     Outcome o = run("var A, B: Integer; begin A := Random(0); B := Random(-5); end.", ScriptVars{},
                     std::make_unique<FakeScriptHost>(1));
@@ -1325,10 +1316,10 @@ TEST(Interpreter, RandomOfNonPositiveIsZero) {
     EXPECT_EQ(*o.interpreter->slot(kV0 + 1).toInt(), 0);
 }
 
-// Reachability check (ticket policy: one script-level test per the remaining 6 host-backed
+// Reachability check (one script-level test per the remaining 6 host-backed
 // builtins - RandomRange, FileExists, GetUnixTime, SaveToLocalFile, WriteLn, TemplateToUrl - not
-// a semantics suite for each). RandomRange(5, 5) is deterministic by F2's own rule (equal args ->
-// AFrom) without depending on the LCG, so it also doubles as a spec-F2 spot check.
+// a semantics suite for each). RandomRange(5, 5) is deterministic by its own rule (equal
+// args -> AFrom) without depending on the LCG, so it also doubles as a spot check of that rule.
 TEST(Interpreter, RemainingHostBuiltinsAreReachableFromAScript) {
     auto host = std::make_unique<FakeScriptHost>();
     host->setUnixTime(1'700'000'000);
@@ -1363,15 +1354,13 @@ TEST(Interpreter, RemainingHostBuiltinsAreReachableFromAScript) {
     EXPECT_EQ(rawHost->fileExistsCalls().size(), 2);
 }
 
-// --- T-0032 rework (review F1): the two tests the ticket's own Tests section asked for and the
-// developer left out. Corpus/golden coverage is real (megafonpro/eatlas_new for char/byte,
-// odessa.ua.zmp/Rambler_maps.zmp for integer, belgeodesy.zmp for longint - see
-// docs/handoffs/T-0032-review.md finding 1), but no corpus script stores an out-of-range value
-// into a byte/char element, so `Value::wrappedTo`'s narrowing (value.cpp) on the IndexAssign write
-// path (interpreter.cpp, NodeKind::IndexAssign) was untested; the PD-103 const repro
-// (docs/handoffs/T-0015D-review.md "Repro (reviewer)") was likewise never turned into a test.
-// Expected values are derived from the engine (sasgis-pascalscript, uPSRuntime.pas), not from
-// running the port.
+// --- the two tests for the static-array element types and the const repro, which the corpus
+// does not cover. Corpus/golden coverage is real (megafonpro/eatlas_new for char/byte,
+// odessa.ua.zmp/Rambler_maps.zmp for integer, belgeodesy.zmp for longint), but no corpus script
+// stores an out-of-range value into a byte/char element, so `Value::wrappedTo`'s narrowing
+// (value.cpp) on the IndexAssign write path (interpreter.cpp, NodeKind::IndexAssign) was untested;
+// the const repro was likewise never turned into a test. Expected values are derived from the
+// engine (sasgis-pascalscript, uPSRuntime.pas), not from running the port.
 
 struct StaticArrayElementCase {
     const char* name;
@@ -1409,7 +1398,7 @@ INSTANTIATE_TEST_SUITE_P(
                                "var A: array[0..2] of byte; N: Integer;\nbegin A[1] := 200; N := A[1]; end.",
                                1, ValueKind::Int, "200"},
         // byte wrap-on-store: uPSRuntime.pas's element-store narrows exactly like a scalar Byte
-        // slot does (N1; see ByteSlotWrapsMod256OnOverflowAndUnderflow above) - 300 mod 256 = 44.
+        // slot does (see ByteSlotWrapsMod256OnOverflowAndUnderflow above) - 300 mod 256 = 44.
         StaticArrayElementCase{"ByteElementWrapsOnStore",
                                "var A: array[0..2] of byte; N: Integer;\nbegin A[0] := 300; N := A[0]; end.",
                                1, ValueKind::Int, "44"},
@@ -1420,13 +1409,13 @@ INSTANTIATE_TEST_SUITE_P(
                                1, ValueKind::Int, "12345"},
         // longint: belgeodesy.zmp-style `dx,dy: array[1..50] of longint` (Longint is Integer's
         // Delphi synonym - parser.cpp's kTypeNames - same 32-bit representation, tested separately
-        // because the ticket names it as one of the four element types).
+        // because it is one of the four element types).
         StaticArrayElementCase{"LongintElementDeclareWriteRead",
                                "var A: array[1..50] of longint; N: Integer;\n"
                                "begin A[50] := 2000000000; N := A[50]; end.",
                                1, ValueKind::Int, "2000000000"},
-        // T-0035 (review F5): InitializeVariant zero-fills, so an unassigned char element is #0
-        // and an unassigned string element is '' - `'x' + a[k]` is 2 characters / 1 character.
+        // InitializeVariant zero-fills, so an unassigned char element is #0 and an unassigned
+        // string element is '' - `'x' + a[k]` is 2 characters / 1 character.
         StaticArrayElementCase{"CharElementUnassignedIsNul",
                                "var A: array[0..2] of char; N: Integer;\nbegin N := Length('x' + A[1]); end.",
                                1, ValueKind::Int, "2"},
@@ -1434,14 +1423,14 @@ INSTANTIATE_TEST_SUITE_P(
             "StringElementUnassignedIsEmpty",
             "var A: array[0..2] of string; N: Integer;\nbegin N := Length('x' + A[1]); end.", 1,
             ValueKind::Int, "1"},
-        // T-0035 (review F4): bounds are full const-exprs.
+        // Bounds are full const-exprs.
         StaticArrayElementCase{"ArrayBoundsFromANamedConst",
                                "const N = 3;\nvar A: array[0..N-1] of byte; M: Integer;\n"
                                "begin A[2] := 7; M := A[2]; end.",
                                2, ValueKind::Int, "7"},
-        // T-0035 (review F3a/b, L-69): const folding as ReadConstant/PreCalc (uPSCompiler.pas:3325,
-        // :13104-13118, :5720-5743). 65536*65536 wraps to 0 at s32; 4000000000 is u32 so C + 0
-        // does not wrap; `-8 shr 1` is -(8 shr 1); `/` on integers is `div`; `>` folds to Boolean.
+        // const folding as ReadConstant/PreCalc (uPSCompiler.pas:3325, :13104-13118, :5720-5743).
+        // 65536*65536 wraps to 0 at s32; 4000000000 is u32 so C + 0 does not wrap; `-8 shr 1` is
+        // -(8 shr 1); `/` on integers is `div`; `>` folds to Boolean.
         StaticArrayElementCase{"ConstFoldsAtTheLeftOperandType",
                                "const C = 65536 * 65536;\nvar N: Int64;\nbegin N := C; end.", 1,
                                ValueKind::Int, "0"},
@@ -1454,7 +1443,7 @@ INSTANTIATE_TEST_SUITE_P(
         StaticArrayElementCase{"ConstIntegerPlusCharIsItsOrd",
                                "const C = 1 + 'a';\nvar N: Integer;\nbegin N := C; end.", 1, ValueKind::Int,
                                "98"},
-        // T-0035 confirmation (F1d): Boolean-left folds on ordinals (uPSCompiler.pas:3343, :3522, :3708).
+        // Boolean-left folds on ordinals (uPSCompiler.pas:3343, :3522, :3708).
         StaticArrayElementCase{
             "ConstTruePlusOneIsTrue",
             "const C = True + 1;\nvar N: Integer;\nbegin if C then N := 1 else N := 2; end.", 1,
@@ -1476,24 +1465,23 @@ INSTANTIATE_TEST_SUITE_P(
     staticArrayElementCaseName);
 
 TEST(Interpreter, StaticArrayIndexOutOfRangeIsARuntimeError) {
-    // belgeodesy.zmp-style bounds case (spec 3.6): uPSRuntime.pas:7127-7135 range-checks every
-    // static-array index at run time - an out-of-range index ends the script in a runtime error,
-    // never a silent Empty/zero read.
+    // belgeodesy.zmp-style bounds case: uPSRuntime.pas:7127-7135 range-checks every static-array
+    // index at run time - an out-of-range index ends the script in a runtime error, never a
+    // silent Empty/zero read.
     Outcome o = run("var A: array[0..2] of byte; N: Integer;\nbegin N := A[5]; end.");
     ASSERT_FALSE(o.runResult.has_value());
     EXPECT_EQ(o.runResult.error().code(), cg::core::ErrorCode::IoError);
     EXPECT_TRUE(o.runResult.error().what().contains(QStringLiteral("Static array index out of bounds")));
-    // T-0035 (L-70): array[lo..lo-1] is a zero-length array - every access raises the same error.
+    // `array[lo..lo-1]` is a zero-length array - every access raises the same error.
     Outcome empty = run("var A: array[3..2] of byte; N: Integer;\nbegin N := A[3]; end.");
     ASSERT_FALSE(empty.runResult.has_value());
     EXPECT_TRUE(empty.runResult.error().what().contains(QStringLiteral("Length is 0")));
 }
 
 TEST(Interpreter, ConstDeclarationsFoldIntegerStringAndExpression) {
-    // PD-103 repro, verbatim (docs/handoffs/T-0015D-review.md "Repro (reviewer)"): an integer
-    // const, a string const, and an expression built from a const must all read their compile-
-    // time-folded value, not the zero-initialised slot default that was the PD-103 bug (the port
-    // produced "0||1" before the fix landed in this ticket).
+    // The const-folding repro, verbatim: an integer const, a string const, and an expression
+    // built from a const must all read their compile-time-folded value, not the zero-initialised
+    // slot default that was the defect (the port produced "0||1" before the fix).
     Outcome o = run("const X = 42; S = 'abc';\nvar A: Integer;\n"
                     "begin A := X; ResultURL := IntToStr(A)+'|'+S+'|'+IntToStr(X+1); end.");
     ASSERT_RAN_OK(o);

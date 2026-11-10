@@ -5,8 +5,7 @@
 #pragma once
 // Ports: Src/RegionProcess/Export/MBTiles/u_ExportTaskToMBTiles.pas:46-290
 //
-// FEAT-REG-069 (stage 0: the direct-copy branch only; the recompose branch returns Unsupported).
-// docs/specs/region-export.md §2.6.
+// The direct-copy branch only; the recompose branch returns Unsupported.
 
 #include "cg/core/result.h"
 #include "cg/region/export_task_abstract.h"
@@ -25,7 +24,7 @@ namespace cg::region {
 class ExportTaskToMbtiles final : public ExportTaskAbstract {
 public:
     // Create :101-161, legacy order minus the recompose-only AProjectionSetFactory, ABitmapTileSaver,
-    // ABitmapTileProviderArr (held open).
+    // ABitmapTileProviderArr.
     ExportTaskToMbtiles(std::shared_ptr<IRegionProcessProgressInfoInternal> progressInfo,
                         const QString& exportPath,
                         std::shared_ptr<const geo::TileIteratorFactory> tileIteratorFactory,

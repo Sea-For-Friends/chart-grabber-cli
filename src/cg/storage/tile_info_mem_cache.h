@@ -5,9 +5,9 @@
 #pragma once
 // Ports: i_TileInfoBasicMemCache.pas, u_TileInfoBasicMemCache.pas (TTileInfoBasicMemCache).
 //
-// docs/specs/storage.md §2.9 (:550-623). One instance sits in front of every persistent backend,
-// owned by the future `TMapType`-equivalent facade (out of scope here) and caches `TileInfo`
-// values *including negatives* -- a NotExists result is cached just as eagerly as a hit.
+// One instance sits in front of every persistent backend, owned by the future
+// `TMapType`-equivalent facade (out of scope here) and caches `TileInfo` values *including
+// negatives* -- a NotExists result is cached just as eagerly as a hit.
 //
 // Locking: legacy's `Get` takes the WRITE lock even on a pure read (`FCS.BeginWrite` in
 // u_TileInfoBasicMemCache.pas:362) because a hit may rewrite the deadline and a `OneByOne` miss
@@ -18,13 +18,12 @@
 // less likely to be caught). The port takes `core::ReadLock` there instead -- observably identical
 // for any single-threaded caller, and required for a TSan-clean build under concurrent use.
 //
-// TTL is a deadline (`GetTickCount + FTTL`), not a timestamp; an entry is live while
-// `deadline > now`. Per the spec's idiom note (§5, "do not make the utility self-debouncing") this
-// class owns no timer: the caller's own `QTimer`/GC-tick subscriber calls `clearExpired()`
-// directly. `now()` itself is supplied by an injectable `Clock` (default
+// TTL is a deadline (`GetTickCount + FTTL`), not a timestamp; an entry is live while `deadline > now`.
+// This class owns no timer (the utility is not self-debouncing): the caller's own `QTimer`/GC-tick
+// subscriber calls `clearExpired()` directly. `now()` itself is supplied by an injectable `Clock` (default
 // `std::chrono::steady_clock::now`), the same test-injection shape the net GC-tick consumers use for their
-// owners (T-0011B) -- production callers still construct with exactly the spec's 3 arguments;
-// tests pass a 4th, fake clock to exercise TTL expiry/refresh without sleeping.
+// owners -- production callers construct with 3 arguments; tests pass a 4th, fake clock to exercise TTL
+// expiry/refresh without sleeping.
 
 #include "cg/core/notifier.h"
 #include "cg/core/sync.h"
@@ -47,7 +46,6 @@ namespace cg::storage {
 // on-disk values of the ZMP key MemCacheClearStrategy -- keep them.
 enum class ClearStrategy : std::uint8_t { ByOldest = 0, ByYoungest = 1, OneByOne = 2, Never = 3 };
 
-// FEAT-STO-034
 class TileInfoMemCache final {
 public:
     using Clock = std::function<std::chrono::steady_clock::time_point()>;

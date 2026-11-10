@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 // Ports u_MarkSystemHelpers.pas:213-301 (ImportItemsTree with PrepareCategoriesFromTreeForImport and
-// PrepareFromTreeForImport; CategoryTreeToMarkTreeHelper). No FEAT id: ticket T-0106 has Features: —.
-// The fakes record every database and factory call in order; each expected log is what the Pascal makes,
-// derived from the line numbers in the comments. Names with Cyrillic letters are compared as well.
+// PrepareFromTreeForImport; CategoryTreeToMarkTreeHelper). The fakes record every database and factory
+// call in order; each expected log is what the Pascal makes, derived from the line numbers in the
+// comments. Names with Cyrillic letters are compared as well.
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_tree.h"
 #include "cg/marks/mark_system_helpers.h"

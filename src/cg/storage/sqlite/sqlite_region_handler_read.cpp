@@ -2,12 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0022B3: SqliteRegionHandler's read side. Ports:
+// SqliteRegionHandler's read side. Ports:
 // - GetTileInfo / CallbackSelectTileInfo (u_TileStorageSQLiteHandler.pas:949-1039, :526-671)
 // - GetListOfTileVersions / GetListOfVersions / CallbackSelectVersions / TSelectTileVersions
 //   (u_TileStorageSQLiteHandler.pas:773-816, :817-853, :715-772, :230-251)
-// docs/specs/storage.md §2.15.1 (LOGICALSORTING ordering), §2.16.3 "The statements".
-// FEAT-STO-018, FEAT-STO-032.
 
 #include "cg/storage/sqlite/sqlite_region_handler.h"
 #include "cg/storage/sqlite/sqlite_region_sql.h"
@@ -40,8 +38,7 @@ QString versionStringFromColumn(const SqliteStmt& stmt, int index) {
 // Ports SysUtils's 2-arg SameText (u_TileStorageSQLiteHandler.pas:597), used to decide whether the
 // row's TEXT/FLOAT/BLOB version text is the same version the caller already holds a pointer to.
 // That overload folds only ASCII 'A'-'Z' -- unlike Qt::CaseInsensitive (QString::compare), which
-// folds full Unicode -- so a non-ASCII letter differing only in case must NOT compare equal here
-// (review finding 2, T-0022B3 rework).
+// folds full Unicode -- so a non-ASCII letter differing only in case must NOT compare equal here.
 bool asciiSameText(const QString& a, const QString& b) {
     if (a.size() != b.size()) {
         return false;
@@ -106,7 +103,7 @@ core::Result<TileInfo> SqliteRegionHandler::tileInfo(geo::PointI xy, const MapVe
                                                      bool useOtherVersions, LoadMode mode) {
     // Callers must not query an unopened handler (mirrors `db()`'s "nullptr when !isOpened()" --
     // legacy never reaches GetTileInfo through a handler whose Create failed either, since the
-    // owning helper/map checks Opened first; T-0022B5's scope).
+    // owning helper/map checks Opened first).
     Q_ASSERT(isOpened());
 
     const bool withBody = (mode == LoadMode::WithData); // TileInfoModeToSQLiteMode's gtiiBody,
@@ -157,10 +154,10 @@ core::Result<TileInfo> SqliteRegionHandler::tileInfo(geo::PointI xy, const MapVe
     }
     sql += " FROM t " + where + order + " LIMIT 1";
 
-    // DEVIATION D-160 (T-0276, L-75): a prepare/bind/step failure here is what legacy's GetTileInfo catches
-    // around OpenSQL (u_TileStorageSQLiteHandler.pas:1027-1037: LogError(c_Log_Select), Result stays False),
-    // which GetTileInfoInternal (u_TileStorageSQLite.pas:280-297) turns into a cached NotExists, so a locked
-    // or damaged file looked empty. Here the failure is logged the same way and then returned as an error
+    // DEVIATION: a prepare/bind/step failure here is what legacy's GetTileInfo catches around OpenSQL
+    // (u_TileStorageSQLiteHandler.pas:1027-1037: LogError(c_Log_Select), Result stays False), which
+    // GetTileInfoInternal (u_TileStorageSQLite.pas:280-297) turns into a cached NotExists, so a locked or
+    // damaged file looked empty. Here the failure is logged the same way and then returned as an error
     // (never cached, see SqliteRegionTileStorage::tileInfoInternal); "no row" stays NotExists.
     const auto selectFailed = [this](const QString& message) -> core::Result<TileInfo> {
         schema_->logError(SqliteRegionSchema::LogKind::Select, message);
@@ -305,14 +302,14 @@ core::Result<MapVersionList> SqliteRegionHandler::listVersions() {
         return MapVersionList{};
     }
 
-    // GetListOfVersions (:817-853) takes an AOper and polls it exactly like GetListOfTileVersions
-    // -- but the FINAL handler header (T-0022B2) declares this method with no std::stop_token, so
-    // there is no cancellation source to poll here. That costs nothing observable: legacy's only
-    // caller (u_TileStorageSQLiteFetcher.pas:433) always passes AOper = nil, and
+    // GetListOfVersions (:817-853) takes an AOper and polls it exactly like GetListOfTileVersions --
+    // but the FINAL handler header declares this method with no std::stop_token, so there is no
+    // cancellation source to poll here. That costs nothing observable: legacy's only caller
+    // (u_TileStorageSQLiteFetcher.pas:433) always passes AOper = nil, and
     // TNotifierOperationRec.IsOperationCancelled is `Assigned(@Self) and ...`
-    // (t_NotifierOperationRec.pas:50-54) -- legacy itself never cancels this scan either (review
-    // finding 3 / ruling R4, T-0022B3 rework). A default-constructed std::stop_token is never
-    // stoppable (stop_possible() == false), so collectVersions() simply runs to completion.
+    // (t_NotifierOperationRec.pas:50-54) -- legacy itself never cancels this scan either. A
+    // default-constructed std::stop_token is never stoppable (stop_possible() == false), so
+    // collectVersions() simply runs to completion.
     return collectVersions(*schema_, *stmt, /*storeEmptyVersion=*/true, std::stop_token{});
 }
 

@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkTemplate.pas (interfaces, shared), u_MarkTemplates.pas (the implementations, T-0091:
+// Ports: i_MarkTemplate.pas (interfaces, shared), u_MarkTemplates.pas (the implementations:
 // MarkTemplateCommon = TMarkTemplateBase, MarkTemplatePoint, MarkTemplateLine, MarkTemplatePoly).
 
 #include "cg/marks/mark_name_generator.h"

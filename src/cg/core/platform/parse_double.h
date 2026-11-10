@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors.
 
 #pragma once
-// Ports: nothing (T-0396, macOS port). Apple's libc++ has std::from_chars for double only from macOS 26, so
-// the deployment target 12 needs another parser there; Linux and Windows keep std::from_chars.
+// Ports: nothing (macOS port). Apple's libc++ has std::from_chars for double only from macOS 26, so the
+// deployment target 12 needs another parser there; Linux and Windows keep std::from_chars.
 
 #include <cstddef>
 

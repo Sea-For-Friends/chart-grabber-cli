@@ -43,7 +43,7 @@ private:
     QString userName_;
     QString password_; // the INI value verbatim: legacy holds mORMot's obfuscated Base64
                        // (mormot.crypt.secure.pas:7072-7075, :7159-7175), not decoded here; a plain-text ctor
-                       // argument is kept as-is (D-78)
+                       // argument is kept as-is
     quint32 cacheSizeMb_;
     QString forcedSchemaName_;
 };

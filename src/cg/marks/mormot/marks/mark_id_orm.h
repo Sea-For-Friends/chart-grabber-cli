@@ -4,15 +4,14 @@
 
 #pragma once
 // Ports: Src/MarksDB/mORMot/Marks/u_MarkIdORM.pas (322): TMarkIdORM, the mark row object of the SQLite
-// backend (docs/specs/marks.md section 2.9.10). It implements IMarkId, IMarkInternalORM,
-// IVectorDataItemMainInfo and IVectorDataItemWithCategory.
+// backend. It implements IMarkId, IMarkInternalORM, IVectorDataItemMainInfo and
+// IVectorDataItemWithCategory.
 //
-// Legacy methods without a caller in Src: IsEqualInternal (:221-244) is ported as protected, as in
-// the Pascal, and has no caller in the port either.
-// Legacy Assert(AId > 0) (u_MarkIdORM.pas:118) is not ported: the shipped build has assertions off
-// (SASPlanet.dproj:92).
-// The legacy hint converter has no assert; hintText() dereferences it without a nil check (:163-166),
-// as the landed MarkMainInfo does. Callers must pass a non-null converter; O9 traces where it comes from.
+// Legacy methods without a caller in Src: IsEqualInternal (:221-244) is ported as protected, as in the
+// Pascal, and has no caller in the port either. Legacy Assert(AId > 0) (u_MarkIdORM.pas:118) is not
+// ported: the shipped build has assertions off (SASPlanet.dproj:92). The legacy hint converter has no
+// assert; hintText() dereferences it without a nil check (:163-166), as MarkMainInfo does. Callers must
+// pass a non-null converter.
 
 #include "cg/core/hash.h"
 #include "cg/marks/c_mark_system.h"
@@ -79,7 +78,7 @@ private:
     int multiGeometryCount_;
     vector::CategoryPtr category_;
     qint64 categoryId_;
-    // Shared mark object: setVisible is const (IMarkInternalORM), so the flag is atomic (spec 2.9.10).
+    // Shared mark object: setVisible is const (IMarkInternalORM), so the flag is atomic.
     mutable std::atomic<bool> visible_;
 };
 

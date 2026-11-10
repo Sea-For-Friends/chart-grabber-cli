@@ -34,7 +34,7 @@ std::vector<ITileStorageTypeListItemPtr> makeItems(const MapVersionFactoryPtr& v
         list.push_back(makeItem(id, std::make_shared<FileSystemTileStorageType>(
                                         codecForCacheType(id), versions, config.pathFor(id))));
     }
-    // BerkeleyDB (6) and BerkeleyDB Versioned (61) go here in legacy: removed, T-0333 (owner 2026-10-21).
+    // BerkeleyDB (6) and BerkeleyDB Versioned (61) go here in legacy: removed here.
     list.push_back(makeItem(CacheTypeId::Sqlite, std::make_shared<sqlite::SqliteRegionTileStorageType>(
                                                      versions, config.pathFor(CacheTypeId::Sqlite), gc)));
     // GeoCacher, GoogleEarth, GoogleEarth Terrain and DBMS go here in legacy: not ported yet.

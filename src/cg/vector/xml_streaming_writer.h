@@ -5,12 +5,12 @@
 #pragma once
 // Ports: Src/Vector/u_XmlStreamingWriter.pas
 //
-// Hand-ported writer, not QXmlStreamWriter (spec vector.md §2.13, Q-8): the indentation, the
-// empty-tag form and the escape tables define the bytes of the KML/GPX/TCX exports.
-// Bytes are always UTF-8 without BOM: the three legacy exporters pass TUTF8Encoding.Create(False)
-// (u_ExportMarks2KML.pas:144, u_ExportMarks2GPX.pas:382, u_ExportMarks2TCX.pas:170). The legacy
-// 4 MB TStreamWriter buffer is not ported: each write goes to the device at once, and the device
-// stays owned by the caller (it is not flushed or closed here).
+// Hand-ported writer, not QXmlStreamWriter: the indentation, the empty-tag form and the escape
+// tables define the bytes of the KML/GPX/TCX exports. Bytes are always UTF-8 without BOM: the
+// three legacy exporters pass TUTF8Encoding.Create(False) (u_ExportMarks2KML.pas:144,
+// u_ExportMarks2GPX.pas:382, u_ExportMarks2TCX.pas:170). The legacy 4 MB TStreamWriter buffer is
+// not ported: each write goes to the device at once, and the device stays owned by the caller (it
+// is not flushed or closed here).
 
 #include <QIODevice>
 #include <QString>

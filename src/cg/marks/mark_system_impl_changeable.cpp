@@ -21,8 +21,8 @@ namespace {
 
 // Legacy Assert(Assigned(...)) at :102 (base path), :103 (factory list), :104 (error notifier) is compiled
 // out in the shipped build (SASPlanet.dproj:92). The config list has no Assert. A nil base path or config
-// list then fails at :124-125 (no handler): the port refuses it at construction (widens D-95). The factory
-// list is not checked here: its nil access violation is at :175 inside the task, reproduced there. The error
+// list then fails at :124-125 (no handler): the port refuses it at construction (widens). The factory list
+// is not checked here: its nil access violation is at :175 inside the task, reproduced there. The error
 // notifier is a reference and cannot be nil.
 template <class Ptr> Ptr requireSet(Ptr ptr, const char* what) {
     if (!ptr) {
@@ -51,7 +51,7 @@ MarkSystemImplChangeable::MarkSystemImplChangeable(core::PathConfigPtr basePath,
     basePathChanged_ = basePath_->changed().subscribe([this] { onConfigChanged(); });
     configListChanged_ = configList_->changed().subscribe([this] { onConfigChanged(); });
     // :127-128 Add(listener). A token that already fired runs the callback here, so legacy's explicit
-    // OnAppStarted call at :129 is not written (spec ruling A.2).
+    // OnAppStarted call at :129 is not written.
     appStartedCallback_.emplace(appStarted_, std::function<void()>([this] { onAppStarted(); }));
 }
 
@@ -62,10 +62,10 @@ MarkSystemImplChangeable::~MarkSystemImplChangeable() {
     shutdown();
 }
 
-// :135-136 plus the join legacy lacks (D-57 widened, L-row of T-0137): after this returns the build has
-// returned, so nothing of it can still notify a listener of this object. The task is destroyed here, which
-// terminates and joins it; the subscriptions go first so that nothing starts it again. Idempotent. Not from
-// the task's own thread.
+// :135-136 plus the join legacy lacks (a deviation from legacy for a legacy defect): after this returns the
+// build has returned, so nothing of it can still notify a listener of this object. The task is destroyed
+// here, which terminates and joins it; the subscriptions go first so that nothing starts it again.
+// Idempotent. Not from the task's own thread.
 void MarkSystemImplChangeable::shutdown() {
     if (!task_) {
         return;
@@ -95,7 +95,7 @@ void MarkSystemImplChangeable::onInitialization(std::stop_token stop) {
             // :175, outside the try. Legacy dereferences the lookup result without a check: a GUID that is
             // not registered, or a nil factory list (a nil list is the same call on nil), is an access
             // violation, caught by the task's thread loop (u_BackgroundTask.pas:153-158). The port reproduces
-            // that flow with a defined error thrown from this procedure (spec ruling A.3, step 4).
+            // that flow with a defined error thrown from this procedure.
             if (!implFactoryList_) {
                 throw std::runtime_error("MarkSystem: no factory list");
             }

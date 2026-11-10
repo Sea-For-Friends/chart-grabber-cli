@@ -2,11 +2,11 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-NET-011 -- docs/specs/net.md §2.11, §7.4. T-0028: the cases for the moved-to-core
-// implementation (getHeaderValueUp/replaceHeaderValueUp/deleteHeaderValueUp/scriptSetHeaderValue)
-// moved to tests/core/header_text_test.cpp; this file keeps the cases for what stayed in
-// cg::net (addHeaderValue, parseStatusLine, which -- via idemPChar -- also exercises the core
-// forward net now calls).
+// the cases for the moved-to-core implementation
+// (getHeaderValueUp/replaceHeaderValueUp/deleteHeaderValueUp/scriptSetHeaderValue) moved to
+// tests/core/header_text_test.cpp; this file keeps the cases for what stayed in cg::net
+// (addHeaderValue, parseStatusLine, which -- via idemPChar -- also exercises the core forward net
+// now calls).
 #include "cg/net/http_headers.h"
 
 #include <QByteArray>

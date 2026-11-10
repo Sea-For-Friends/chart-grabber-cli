@@ -22,7 +22,7 @@ MarkSystemImplFactoryORM::MarkSystemImplFactoryORM(
       subsetBuilderFactory_(std::move(subsetBuilderFactory)), markFactory_(std::move(markFactory)),
       hintConverter_(std::move(hintConverter)) {
     // The legacy Asserts :97-103 are off in the shipped build; a null collaborator would be an access
-    // violation at the first use. Refused here instead (D-95 family).
+    // violation at the first use. Refused here instead (a deviation from legacy).
     if (!markPictureList_) {
         throw std::invalid_argument("MarkSystemImplFactoryORM: markPictureList is null");
     }

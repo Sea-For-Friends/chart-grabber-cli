@@ -50,7 +50,7 @@ void ActiveMapConfig::doReadConfig(const core::IConfigProviderPtr& src) {
 // Ports DoWriteConfig (:93-94). writeUuid writes the same braced upper-case text as GUIDToString
 // (config_writer.cpp:35-38). Always written, also the zero GUID.
 void ActiveMapConfig::doWriteConfig(const core::IConfigWriterPtr& dst) const {
-    if (!dst) { // defensive; a null writer is a legacy access violation (see deviations.md)
+    if (!dst) { // defensive; a null writer is a legacy access violation
         return;
     }
     dst->writeUuid(u"Map", mainMapGuid_);

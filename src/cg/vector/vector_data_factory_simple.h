@@ -4,8 +4,6 @@
 
 #pragma once
 // Ports: Src/Vector/u_VectorDataFactorySimple.pas
-//
-// FEAT-GEO-037.
 
 #include "cg/vector/html_to_hint_text_converter.h"
 #include "cg/vector/vector_data_factory.h"
@@ -27,7 +25,7 @@ private:
 
 class VectorDataFactorySimple final : public IVectorDataFactory { // TVectorDataFactorySimple
 public:
-    // Null mainInfo or geometry is a programmer error: std::invalid_argument in every build (D-52).
+    // Null mainInfo or geometry is a programmer error: std::invalid_argument in every build.
     [[nodiscard]] VectorDataItemPtr buildItem(const VectorDataItemMainInfoPtr& mainInfo,
                                               const AppearancePtr& appearance,
                                               const geo::GeometryLonLatPtr& geometry) const override;

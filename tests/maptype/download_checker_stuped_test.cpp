@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_DownloadCheckerStuped.pas (docs/specs/maptype.md 2.13.4, LD-20). Expected values are literals read
-// from the Pascal (line numbers in the comments) and from the stock ZMP corpus tests/fixtures/zmp/sas.maps
-// (counts taken by a script outside the code under test: find/md5sum over the EmptyTiles folders).
+// Ports u_DownloadCheckerStuped.pas. Expected values are literals read from the Pascal (line numbers in the
+// comments) and from the stock ZMP corpus tests/fixtures/zmp/sas.maps (counts taken by a script outside the
+// code under test: find/md5sum over the EmptyTiles folders).
 #include "cg/core/content_type.h"
 #include "cg/core/language_manager.h"
 #include "cg/geo/projection_set.h"
@@ -176,7 +176,7 @@ TEST(DownloadCheckerStuped, ContentTypeDecisionTable) {
          "image/jpeg"},
         {"ignore: empty type, default written", true, "image/png", "image/jpeg", "", false, "image/jpeg"},
         {"ignore wins over an empty expected list", true, "", "image/gif", "x/y", false, "image/gif"},
-        // LD-20: Pos(received, expected) is a substring search
+        // Pos(received, expected) is a substring search
         {"LD-20 token of a list", false, "image/jpeg,image/png", "image/png", "image/jpeg", false,
          "image/jpeg"},
         {"LD-20 the stock image/png8bit accepts image/png", false, "image/png8bit", "image/png", "image/png",
@@ -387,10 +387,10 @@ TEST(DownloadCheckerStuped, SizeCheckPath) {
     EXPECT_EQ(o.result->text, u"disk gone"_s);
 
     // A nil answer (TileInfoType::Unknown; folder / SQLite single-file without read access, archive) leaves
-    // CheckOldTileSize False (u_DownloadCheckerStuped.pas:135-141): no result, the checker continues
-    // (the transport ends the empty 200 body, net/curl_downloader.cpp:148). The storage WAS asked, once.
-    // Closes D-106. The mirrored row above: a NotExists answer of size 0 (BerkeleyDB, SQLite region, RAM)
-    // is NotNecessary for an empty body.
+    // CheckOldTileSize False (u_DownloadCheckerStuped.pas:135-141): no result, the checker continues (the
+    // transport ends the empty 200 body, net/curl_downloader.cpp:148). The storage WAS asked, once. The
+    // mirrored row above: a NotExists answer of size 0 (BerkeleyDB, SQLite region, RAM) is NotNecessary for
+    // an empty body.
     store->answer = storage::TileInfo{};
     const int callsBefore = store->calls;
     o = run(checker, requestOf(withCheck), QByteArray(), "image/png");
@@ -600,7 +600,8 @@ TEST(DownloadCheckerStuped, StockContentTypeValues) {
                   ResultKind::BadContentType);
         if (own == "image/png8bit") {
             ++stockPng8bit;
-            // LD-20 in the corpus: the server's "image/png" passes only because of the substring rule
+            // A legacy defect in the corpus: the server's "image/png" passes only because of the substring
+            // rule
             EXPECT_FALSE(run(checker, requestOf(nullptr), "x", "image/png").result.has_value());
         }
     }

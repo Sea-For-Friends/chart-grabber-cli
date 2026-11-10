@@ -84,7 +84,7 @@ void ActiveLayersConfig::doReadConfig(const core::IConfigProviderPtr& src) {
 // Ports DoWriteConfig (:93-120). Deletes every prefixed key, then writes Layer0 ... Layer<n-1> in
 // the set's own order. A null set writes nothing after the deletion.
 void ActiveLayersConfig::doWriteConfig(const core::IConfigWriterPtr& dst) const {
-    if (!dst) { // defensive; a null writer is a legacy access violation (see deviations.md)
+    if (!dst) { // defensive; a null writer is a legacy access violation
         return;
     }
     for (const QString& key : dst->valueNames()) {

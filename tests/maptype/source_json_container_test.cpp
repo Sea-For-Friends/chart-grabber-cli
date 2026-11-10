@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for src/cg/maptype/source_json_container (T-0224). NEW code, no legacy unit and no FEAT id: the
-// expectations are the literals of docs/specs/map-source-json.md (sections 2, 3, 3.1, 6.1-6.4) and of the
-// existing ZMP rules the JSON source must meet (the same-GUID report, the ZMP twin of every example).
-// Fixtures: tests/fixtures/maptype/json (README there); the twins are hand-written ZMP folders.
+// Tests for src/cg/maptype/source_json_container. NEW code, no legacy unit: the expected values are the
+// literals of the *.source.json format and the existing ZMP rules the JSON source must meet (the
+// same-GUID report, the ZMP twin of every example). Fixtures: tests/fixtures/maptype/json (README there);
+// the twins are hand-written ZMP folders.
 #include "cg/maptype/source_json_container.h"
 #include "cg/maptype/tile_download_request_builder_config.h"
 #include "cg/maptype/zmp_file_names_iterator_factory.h"
@@ -56,7 +56,7 @@ void writeFile(const QString& path, const QByteArray& data) {
     f.write(data);
 }
 
-// The smallest valid source (section 3: the required keys, no script).
+// The smallest valid source (the required keys, no script).
 QJsonObject baseObject() {
     return QJsonDocument::fromJson(
                R"({"format":1,"guid":"{11111111-2222-3333-4444-555555555555}","name":"N",
@@ -87,7 +87,7 @@ std::shared_ptr<const SourceJsonContainer> mustParse(const QByteArray& bytes, co
     return parsed ? *parsed : nullptr;
 }
 
-// --- file name predicate and the walk (section 2: Location)
+// --- file name predicate and the walk
 // --------------------------------------------------
 
 TEST(SourceJsonName, EndsWithDotSourceDotJsonAsciiCaseInsensitive) {
@@ -134,7 +134,7 @@ TEST(SourceJsonWalk, ReturnsOnlyRegularSourceJsonFilesBesideZmps) {
     EXPECT_EQ(got, want);
 }
 
-// --- the worked examples 6.1-6.3 against their ZMP twins (acceptance 1)
+// --- the worked examples against their ZMP twins
 // --------------------------------------
 
 struct Example {
@@ -253,7 +253,7 @@ TEST(SourceJsonExamples, EveryZmpInfoGetterEqualsTheSameSourceWrittenAsAZmpFolde
     }
 }
 
-// --- the key mapping of section 3 and 3.1 (every key, distinct values)
+// --- the key mapping (every key, distinct values)
 // ---------------------------------------
 
 constexpr auto kFullJson = u8R"({
@@ -298,7 +298,7 @@ TEST(SourceJsonMapping, EveryKeyBecomesItsParamsKey) {
         {u"SnapshotIndex", u"http://i/"_s},
         {u"SnapshotIndexType", u"geojson"_s},
         {u"SnapshotItem", u"it"_s},
-        {u"SnapshotPick", u"nearest-now"_s}, // T-0337
+        {u"SnapshotPick", u"nearest-now"_s},
         {u"SnapshotTimeField", u"tf"_s},
         {u"SnapshotVersionField", u"vf"_s},
     };
@@ -390,7 +390,7 @@ TEST(SourceJsonMapping, DefaultKeyOfALocalisedObjectIsTheEmptyKeyOnly) {
     EXPECT_EQ(paramsOf(*c)->readString(u"name_ru", {}), u"Рус"_s);
 }
 
-// --- script (section 3: script, T-0224 scope)
+// --- script
 // ----------------------------------------------------------------
 
 TEST(SourceJsonScript, CodeSourceKeepsTheTextAndKeepsDownloadingOn) {
@@ -401,7 +401,7 @@ TEST(SourceJsonScript, CodeSourceKeepsTheTextAndKeepsDownloadingOn) {
     EXPECT_TRUE(code.startsWith("function token() {\n  return shared.locked(function () {\n"));
     EXPECT_TRUE(code.endsWith("  return { url: template(ctx.urlBase), headers: h };\n}\n"));
     EXPECT_TRUE(code.contains("r.body.match(/\"access_token\":\"([^\"]+)\"/)"));
-    EXPECT_TRUE(zmp->tileDownloaderConfig()->enabled); // T-0225: the JavaScript builder downloads it
+    EXPECT_TRUE(zmp->tileDownloaderConfig()->enabled); // The JavaScript builder downloads it
     EXPECT_TRUE(zmp->abilities()->useDownload);
     EXPECT_TRUE(zmp->tileDownloadRequestBuilderConfig()->isUseDownloader); // allowHttp: true
     EXPECT_EQ(zmp->tileDownloadRequestBuilderConfig()->urlBase, "https://tiles.example.org/{z}/{x}/{y}.png");
@@ -445,7 +445,7 @@ TEST(SourceJsonScript, UrlIsNotRequiredWithAScript) {
     EXPECT_FALSE(SourceJsonContainer::parse(QJsonDocument(o).toJson(), {}).has_value());
 }
 
-// --- the rules of section 2 and 3 (acceptance 2)
+// --- the format rules
 // --------------------------------------------------------------
 
 struct BadCase {
@@ -522,7 +522,7 @@ TEST(SourceJsonRules, EachViolationIsAnErrorThatNamesTheKey) {
         {u"nameInCache"_s, u"\"\""_s, u"nameInCache"_s},
         {u"contentType"_s, u"\"\""_s, u"contentType"_s},
         {u"ext"_s, u"\"\""_s, u"ext"_s},
-        // T-0346: the three keys of the .zmp that the loader did not know
+        // The three keys of the .zmp that the loader did not know
         {u"ignoreContentType"_s, u"1"_s, u"ignoreContentType"_s},
         {u"ignoreContentType"_s, u"\"true\""_s, u"ignoreContentType"_s},
         {u"navigationWarning"_s, u"1"_s, u"navigationWarning"_s},
@@ -541,7 +541,7 @@ TEST(SourceJsonRules, EachViolationIsAnErrorThatNamesTheKey) {
         {u"snapshot"_s, u"{\"type\":\"t\"}"_s, u"index"_s},
         {u"snapshot"_s, u"{\"index\":\"u\",\"type\":\"t\",\"bogus\":\"x\"}"_s, u"bogus"_s},
         {u"snapshot"_s, u"{\"index\":5,\"type\":\"t\"}"_s, u"index"_s},
-        // T-0303: the full dotted names (QString + QStringView rewrite)
+        // The full dotted names (QString + QStringView rewrite)
         {u"snapshot"_s, u"{\"index\":\"u\"}"_s, u"snapshot.type"_s},
         {u"snapshot"_s, u"{\"index\":5,\"type\":\"t\"}"_s, u"snapshot.index"_s},
         {u"snapshot"_s, u"{\"index\":\"u\",\"type\":\"t\",\"versionField\":7}"_s, u"snapshot.versionField"_s},
@@ -603,7 +603,7 @@ TEST(SourceJsonRules, ValidVariantsAreAccepted) {
     }
 }
 
-// T-0346: ignoreContentType, contentTypeSubst and navigationWarning, read back the way the .zmp keys are.
+// ignoreContentType, contentTypeSubst and navigationWarning, read back the way the .zmp keys are.
 TEST(SourceJsonMapping, IgnoreContentTypeAndNavigationWarningAreTheZmpBooleans) {
     const Env env;
     for (const bool value : {true, false}) {
@@ -699,7 +699,7 @@ TEST(SourceJsonRules, ADirectoryOrMissingFileFailsToLoad) {
     EXPECT_FALSE(SourceJsonContainer::load(tmp.path()).has_value());
 }
 
-// --- through ZmpInfoSet: report, skip only that file, same-GUID rule (acceptance 2, 3)
+// --- through ZmpInfoSet: report, skip only that file, same-GUID rule
 // -------------------------
 
 TEST(SourceJsonSet, BadFilesAreReportedLikeABrokenZmpAndOnlyTheyAreSkipped) {
@@ -754,7 +754,7 @@ TEST(SourceJsonSet, DuplicateGuidWithAZmpOrAnotherJsonIsTheSameGuidReport) {
                   readFile(jsonDir() + u"/ex62.source.json"_s)); // unrelated, after
         QStringList errors;
         const auto set = env.load(tmp.path(), {row.second, u"c.source.json"_s, row.first}, errors);
-        // LD-11: the first is relative, the second is the full path
+        // The first is relative, the second is the full path
         EXPECT_EQ(errors, QStringList{u"Files %1 and %2 have the same GUID"_s.arg(row.first,
                                                                                   tmp.filePath(row.second))})
             << row.first.toStdString() << " / " << row.second.toStdString();

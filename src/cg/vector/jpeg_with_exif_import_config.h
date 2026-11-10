@@ -13,7 +13,7 @@
 
 namespace cg::vector {
 
-// Ports TJpegWithExifImportConfig (u_JpegWithExifImportConfig.pas:33-82). Derives from the landed
+// Ports TJpegWithExifImportConfig (u_JpegWithExifImportConfig.pas:33-82). Derives from
 // ImportConfig, which legacy TImportConfig also is. The importer reaches the extra values with
 // dynamic_pointer_cast.
 class JpegWithExifImportConfig final : public ImportConfig {

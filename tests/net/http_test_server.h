@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: nothing -- a test fixture only. docs/specs/net.md §7.0.
+// Ports: nothing -- a test fixture only.
 //
 // A scripted HTTP/1.1 server, in-process, bound to 127.0.0.1:0 (the OS picks a free port; read it
 // back via port()). Chosen over a subprocess server because it needs no external process, can
@@ -59,13 +59,18 @@ public:
     // several replies; served in order, then the last one repeats -- how the redirect-loop and
     // retry-style tests work.
     void addReply(QByteArrayView path, Reply reply);
-    // T-0271: forgets every reply and cursor (the log stays), so a test can serve the same paths differently.
+    // Forgets every reply and cursor (the log stays), so a test can serve the same paths differently.
     void clearReplies();
 
     // Accepts absolute-form request targets ("GET http://host/path HTTP/1.1") and, on the FIRST
     // request after being turned on, replies 407 with Proxy-Authenticate: Basic realm="test"
     // instead of consulting addReply().
     void setProxyMode(bool on);
+
+    // When `prefix` is non-empty, a request whose User-Agent value does not start with it (no header counts
+    // as not starting) is answered 403 Forbidden / text/plain / "Forbidden" before addReply routing. The
+    // request is logged as every request. Empty turns the rule off.
+    void setRefuseUserAgentsWithout(QByteArray prefix);
 
     [[nodiscard]] QList<QByteArray> requestLog() const; // full raw request blobs, in order
     // The number of requests so far; no copy of the log, so a poll loop shares no array with the server.
@@ -84,6 +89,7 @@ private:
     QHash<QByteArray, int> cursor_;
     QList<QByteArray> requestLog_;
     bool proxyMode_ = false;
+    QByteArray refuseUserAgentsWithout_;
     bool challengeSent_ = false;
 };
 

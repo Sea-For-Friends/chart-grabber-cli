@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/ContentType/i_ContentConverter.pas:31-37 (IContentConverter) and
 // Src/ContentType/u_ContentConverterBase.pas:85-100 (TContentConverterBase, TContentConverterSimpleCopy).
-// GetSource / GetTarget are not kept: no caller outside the converter units (docs/backlog/T-0120).
+// GetSource / GetTarget are not kept: no caller outside the converter units.
 
 #include <QByteArray>
 

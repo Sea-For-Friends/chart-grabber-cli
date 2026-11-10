@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkSystemImplChangeable.pas (interface, M1) and u_MarkSystemImplChangeable.pas (class
-// TMarkSystemImplChangeable, ticket T-0102, spec marks.md section 2.6 ruling A).
+// Ports: i_MarkSystemImplChangeable.pas (interface) and u_MarkSystemImplChangeable.pas (class
+// TMarkSystemImplChangeable).
 
 #include "cg/core/background_task.h"
 #include "cg/core/changeable.h"
@@ -37,8 +37,8 @@ public:
 class MarkSystemImplChangeable final : public IMarkSystemImplChangeable {
 public:
     // errorNotifierInternal is owned by the caller and outlives this object. A nil base path or config list
-    // throws std::invalid_argument (widens D-95). A nil factory list is accepted: its access violation of
-    // legacy happens at the first build and is reproduced there (L-row, T-0102).
+    // throws std::invalid_argument (a deviation from legacy). A nil factory list is accepted: its access
+    // violation of legacy happens at the first build and is reproduced there.
     MarkSystemImplChangeable(core::PathConfigPtr basePath,                            // ABasePath
                              std::shared_ptr<IMarkSystemConfigListChangeable> config, // AConfig
                              MarkSystemImplFactoryListStaticPtr implFactoryList,      // AImplFactoryList
@@ -70,8 +70,7 @@ private:
     core::Subscription basePathChanged_;                                 // FConfigChangeListener
     core::Subscription configListChanged_;                               // the same listener, on the list
     std::optional<std::stop_callback<std::function<void()>>> appStartedCallback_; // FAppStartedListener
-    std::unique_ptr<core::BackgroundTask>
-        task_; // FBackgroundTask: the LAST data member, destroyed first (D-57)
+    std::unique_ptr<core::BackgroundTask> task_; // FBackgroundTask: the LAST data member, destroyed first
 };
 
 } // namespace cg::marks

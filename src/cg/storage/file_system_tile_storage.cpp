@@ -39,8 +39,8 @@ namespace {
     return {};
 }
 
-// FEAT-STO-035. Ports TEnumTileInfoByFileIterator (u_EnumTileInfoByFileIterator.pas) plus the
-// three legacy iterator classes ScanTiles composes (u_FoldersIteratorRecursiveByLevels,
+// Ports TEnumTileInfoByFileIterator (u_EnumTileInfoByFileIterator.pas) plus the three legacy
+// iterator classes ScanTiles composes (u_FoldersIteratorRecursiveByLevels,
 // u_FileNameIteratorFolderWithSubfolders, u_FileNameIteratorInFolderByMaskList): a breadth-first
 // walk of the folder tree (a single global FIFO queue, seeded with the root, each dequeue
 // enqueueing its own children before its own files are yielded -- legacy's
@@ -50,12 +50,12 @@ namespace {
 // (legacy's mask list order, u_TileStorageFileSystem.pas:574-577) -- not interleaved by directory
 // order.
 //
-// D-27 (deviations.md, F-1 review fix): folder/file order WITHIN one mask is sorted by name,
-// case-insensitively (QDir::Name | QDir::IgnoreCase), which reproduces NTFS's $UpCase-folded
-// collation order for every name the nine layouts produce -- on other Windows file systems (FAT/
-// exFAT, network shares) legacy's order was file-system dependent and is not reproduced. The
-// *structure* of the walk (breadth-first by level, tile mask before .tne mask per folder, depth
-// cap) is the ported, observable behaviour.
+// Folder/file order WITHIN one mask is sorted by name, case-insensitively
+// (QDir::Name | QDir::IgnoreCase), which reproduces NTFS's $UpCase-folded collation order for
+// every name the nine layouts produce -- on other Windows file systems (FAT/exFAT, network
+// shares) legacy's order was file-system dependent and is not reproduced. The *structure* of the
+// walk (breadth-first by level, tile mask before .tne mask per folder, depth cap) is the ported,
+// observable behaviour.
 class FileSystemTileEnumerator final : public IEnumTileInfo {
 public:
     FileSystemTileEnumerator(QString storagePath, QString tileFileExt, bool ignoreTne,
@@ -76,9 +76,9 @@ public:
             }
             const Entry entry = currentEntries_[currentIndex_++];
 
-            // F-3 (review): u_EnumTileInfoByFileIterator.pas:99 skips any candidate whose
-            // root-relative path (the same string handed to the parser, not just the file name)
-            // contains a non-ASCII character, before it ever reaches the parser.
+            // u_EnumTileInfoByFileIterator.pas:99 skips any candidate whose root-relative path
+            // (the same string handed to the parser, not just the file name) contains a
+            // non-ASCII character, before it ever reaches the parser.
             bool hasNonAscii = false;
             for (const QChar ch : entry.relPath) {
                 if (ch.unicode() > 0x7F) {
@@ -92,10 +92,9 @@ public:
 
             geo::PointI xy;
             quint8 z = 0;
-            // T-0021F1 review's "confirm ITileNameCodec covers parsing" open question: it does --
-            // parse() takes the whole storagePath-relative path with any extension and any number
-            // of leading directories, exactly what legacy's separate ATileFileNameParser consumed.
-            // No separate parser is added.
+            // ITileNameCodec covers parsing too: parse() takes the whole storagePath-relative path
+            // with any extension and any number of leading directories, exactly what legacy's
+            // separate ATileFileNameParser consumed. No separate parser is added.
             if (!codec_->parse(entry.relPath, xy, z)) {
                 continue; // foreign file: extension matched the mask, the name didn't parse
             }
@@ -107,9 +106,9 @@ public:
 
             TileInfo info;
             {
-                // Per-item lock -- spec §3.2's one required refinement over the coarse backend
-                // lock, matching u_EnumTileInfoByFileIterator.pas:103-121 (FLock.BeginRead inside
-                // Next(), not held across the whole walk).
+                // Per-item lock -- a refinement over the coarse backend lock, matching
+                // u_EnumTileInfoByFileIterator.pas:103-121 (FLock.BeginRead inside Next(), not
+                // held across the whole walk).
                 core::ReadLock lock(fsMutex_);
                 const QString absPath = storagePath_ + entry.relPath;
                 core::Result<qint64> mtime = core::platform::fileMTime(absPath);
@@ -132,12 +131,12 @@ public:
                 } else {
                     info.type = TileInfoType::Exists;
                     QFile file(absPath);
-                    // D-27 (deviations.md): legacy's TMemoryStream.LoadFromFile raises uncaught on
-                    // a read failure here; IEnumTileInfo::next() has no error channel (coding
-                    // standard: exceptions are for programmer errors only), so an unreadable tile
-                    // is skipped instead of aborting the whole scan -- logged, matching this
-                    // module's BerkeleyDB-corrupt-record precedent ("the enumerator logs, skips and
-                    // continues").
+                    // Legacy's TMemoryStream.LoadFromFile raises uncaught on a read failure here;
+                    // IEnumTileInfo::next() has no error channel (coding standard: exceptions are
+                    // for programmer errors only), so an unreadable tile is skipped instead of
+                    // aborting the whole scan -- logged, matching this module's
+                    // BerkeleyDB-corrupt-record precedent
+                    // ("the enumerator logs, skips and continues").
                     if (!file.open(QIODevice::ReadOnly)) {
                         qCWarning(core::logStorage) << "scanTiles: cannot open" << absPath
                                                     << "for reading, skipping:" << file.errorString();
@@ -179,9 +178,9 @@ private:
             }
 
             if (depth < kMaxFolderDepth) {
-                // F-2/F-1 (review): QDir::Hidden lists dot-prefixed and hidden-attribute entries too
-                // -- legacy's FindFirstFileEx enumerates every entry regardless of attributes ('.'/
-                // '..' are still excluded by NoDotAndDotDot). QDir::IgnoreCase reproduces NTFS's
+                // QDir::Hidden lists dot-prefixed and hidden-attribute entries too -- legacy's
+                // FindFirstFileEx enumerates every entry regardless of attributes ('.'/'..' are
+                // still excluded by NoDotAndDotDot). QDir::IgnoreCase reproduces NTFS's
                 // $UpCase-folded collation order for every name the nine codecs produce.
                 const QFileInfoList subdirs = dir.entryInfoList(
                     QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden, QDir::Name | QDir::IgnoreCase);
@@ -286,7 +285,7 @@ QString FileSystemTileStorage::tileFileName(geo::PointI xy, quint8 zoom, const M
 core::Result<TileInfo> FileSystemTileStorage::probeLocked(const QString& tilePath, const QString& tnePath,
                                                           bool withData) const {
     // Ports TFileSystemTools.UpdateTileInfoByFile(False, ...) then, on a miss,
-    // UpdateTileInfoByFile(True, ...) on the .tne path -- storage.md §2.13.2 steps 3-5.
+    // UpdateTileInfoByFile(True, ...) on the .tne path.
     const QFileInfo tileFi(tilePath);
     if (tileFi.isFile()) {
         core::Result<qint64> mtime = core::platform::fileMTime(tilePath);
@@ -308,7 +307,7 @@ core::Result<TileInfo> FileSystemTileStorage::probeLocked(const QString& tilePat
             }
             return info;
         }
-        // F-4 (review): vanished between isFile() and fileMTime() -- legacy's GetFileAttributesEx
+        // The tile vanished between isFile() and fileMTime() -- legacy's GetFileAttributesEx
         // failing here yields titNotExists, and UpdateTileInfoByFile falls through to the TNE probe
         // below instead of raising. Fall through instead of propagating the error, so a stat race
         // never fails the caller's whole rect/tile.
@@ -334,8 +333,8 @@ core::Result<TileInfo> FileSystemTileStorage::probeLocked(const QString& tilePat
 
 core::Result<TileInfo> FileSystemTileStorage::tileInfo(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr&,
                                                        LoadMode mode) const {
-    // storage.md §2.13.2: mem-cache lookup happens BEFORE the read-access check, and even a
-    // negative result gets cached in step 6 below -- reproduce the order exactly.
+    // Mem-cache lookup happens BEFORE the read-access check, and even a negative result gets cached
+    // below -- reproduce the order exactly.
     if (memCache_) {
         std::optional<TileInfo> cached = memCache_->get(xy, zoom, nullptr, mode, true);
         if (cached.has_value()) {
@@ -379,9 +378,9 @@ core::Result<bool> FileSystemTileStorage::deleteTile(geo::PointI xy, quint8 zoom
     const QString tnePath = tnePathFor(base);
 
     core::WriteLock lock(fsMutex_);
-    // Ports `Result := DeleteFile(VFileName) or DeleteFile(VTneName)` (u_TileStorageFileSystem.pas:
-    // 204). Delphi's default short-circuit `or` evaluation means the .tne is left untouched once
-    // the tile file was deleted -- `||` reproduces that exactly (T-0021F1 review finding 2).
+    // Ports `Result := DeleteFile(VFileName) or DeleteFile(VTneName)`
+    // (u_TileStorageFileSystem.pas:204). Delphi's default short-circuit `or` evaluation means the
+    // .tne is left untouched once the tile file was deleted -- `||` reproduces that exactly.
     const bool deleted = QFile::remove(tilePath) || QFile::remove(tnePath);
     lock.unlock();
 
@@ -391,7 +390,7 @@ core::Result<bool> FileSystemTileStorage::deleteTile(geo::PointI xy, quint8 zoom
             notExists.type = TileInfoType::NotExists;
             memCache_->add(xy, zoom, nullptr, notExists);
         }
-        base_.notifyTileUpdate(xy, zoom, nullptr); // outside the lock -- spec §3.1 rule 3
+        base_.notifyTileUpdate(xy, zoom, nullptr); // outside the lock
     }
     return deleted;
 }
@@ -404,10 +403,9 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
     }
     if (!contentType.isEmpty()) {
         // Ports FMainContentType.CheckOtherForSaveCompatible (u_ContentTypeInfo.pas:123-157) via
-        // the shared helper (content_type_compat.h) -- also used by RamTileStorage::saveTile
-        // (T-0021F1 review "For F2/F3" note: reuse, don't re-derive). Legacy raises here
-        // (u_TileStorageFileSystem.pas:SaveTile); the port turns it into a Result, keeping the
-        // port's existing Unsupported error code (T-0021F1 review finding 1).
+        // the shared helper (content_type_compat.h) -- also used by RamTileStorage::saveTile.
+        // Legacy raises here (u_TileStorageFileSystem.pas:SaveTile); the port turns it into a
+        // Result, keeping the port's existing Unsupported error code.
         if (!contentTypeCompatibleForSave(mainContentType_, contentType)) {
             return core::fail(core::ErrorCode::Unsupported,
                               QStringLiteral("Bad content type for this tile storage"));
@@ -442,7 +440,7 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
             // Legacy's GetTileInfo only probes the filesystem -- and caches the result -- when
             // ReadAccess is true (u_TileStorageFileSystem.pas:461 -> :407-426); with ReadAccess
             // false and nothing cached, GetTileInfo returns nil and the save proceeds as an
-            // overwrite (T-0021F1 review finding 4a).
+            // overwrite.
             core::Result<TileInfo> probed = probeLocked(tilePath, tnePath, false);
             if (!probed.has_value()) {
                 return std::unexpected(probed.error());
@@ -450,7 +448,7 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
             existingInfo = *probed;
             haveExisting = true;
             if (memCache_) {
-                // Legacy caches the probed result too (:422-424) -- finding 4b.
+                // Legacy caches the probed result too (:422-424).
                 memCache_->add(xy, zoom, nullptr, existingInfo);
             }
         }
@@ -474,9 +472,9 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
         }
         file.close();
         // Legacy ignores FileSetDate's return value (u_TileStorageFileSystem.pas:483 ->
-        // u_FileSystemTools.pas:165-176): a failed setFileMTime must NOT fail the save (T-0021F1
-        // review finding 3) -- the tile bytes are already on disk, so the sibling is still
-        // unlinked and the mem-cache/notification still fire below.
+        // u_FileSystemTools.pas:165-176): a failed setFileMTime must NOT fail the save -- the
+        // tile bytes are already on disk, so the sibling is still unlinked and the
+        // mem-cache/notification still fire below.
         [[maybe_unused]] core::Result<void> dateOk =
             core::platform::setFileMTime(tilePath, toPosixSeconds(loadDate));
         QFile::remove(tnePath); // unconditional, matching legacy -- a no-op when no .tne exists
@@ -501,8 +499,7 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
         }
         file.close();
         // Legacy ignores FileSetDate's return value (u_TileStorageFileSystem.pas:526 ->
-        // u_FileSystemTools.pas:165-176): a failed setFileMTime must NOT fail the save (T-0021F1
-        // review finding 3).
+        // u_FileSystemTools.pas:165-176): a failed setFileMTime must NOT fail the save.
         [[maybe_unused]] core::Result<void> dateOk =
             core::platform::setFileMTime(tnePath, toPosixSeconds(loadDate));
         QFile::remove(tilePath); // unconditional, matching legacy
@@ -519,23 +516,23 @@ core::Result<bool> FileSystemTileStorage::saveTile(geo::PointI xy, quint8 zoom, 
         if (memCache_) {
             memCache_->add(xy, zoom, nullptr, newInfo);
         }
-        base_.notifyTileUpdate(xy, zoom, nullptr); // outside the lock -- spec §3.1 rule 3
+        base_.notifyTileUpdate(xy, zoom, nullptr); // outside the lock
     }
     return saved;
 }
 
 core::Result<MapVersionList> FileSystemTileStorage::listVersions(geo::PointI, quint8,
                                                                  const MapVersionRequest&) const {
-    return MapVersionList{}; // FEAT-STO-032 default (u_TileStorageAbstract.pas): empty list
+    return MapVersionList{}; // The default (u_TileStorageAbstract.pas): empty list
 }
 
 core::Result<TileRectInfoPtr> FileSystemTileStorage::tileRectInfo(geo::RectI rect, quint8 zoom,
                                                                   const MapVersionRequest&,
                                                                   std::stop_token stop) const {
-    // storage.md §2.13.2 / u_TileStorageFileSystem.pas:GetTileRectInfo:319 -- gated on ReadAccess,
-    // not ScanAccess. Legacy leaves Result = nil (not an error) when access is denied; the port
-    // mirrors that with a successful null pointer, the same "nothing to give you" convention
-    // scanTiles uses below for a denied ScanAccess.
+    // u_TileStorageFileSystem.pas:GetTileRectInfo:319 -- gated on ReadAccess, not ScanAccess.
+    // Legacy leaves Result = nil (not an error) when access is denied; the port mirrors that with
+    // a successful null pointer, the same "nothing to give you" convention scanTiles uses below
+    // for a denied ScanAccess.
     if (!base_.state().get()->readAccess) {
         return TileRectInfoPtr{};
     }
@@ -552,23 +549,22 @@ core::Result<TileRectInfoPtr> FileSystemTileStorage::tileRectInfo(geo::RectI rec
     }
     if (width > 2048 || height > 2048) {
         // Legacy returns nil for a rect over the 2048x2048 cap (u_TileStorageFileSystem.pas, the
-        // `(VCount.X <= 2048) and (VCount.Y <= 2048)` guard); a null rect info is a legal result (spec §2.6
-        // note 6).
+        // `(VCount.X <= 2048) and (VCount.Y <= 2048)` guard); a null rect info is a legal result.
         return TileRectInfoPtr{};
     }
 
     std::vector<TileRectInfoEntry> items(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
 
-    // §2.13.2: "remembers the previous directory name and whether it existed and skips both
-    // stat()s for a tile in a directory it has just found missing" (VPrevFolderName/
-    // VPrevFolderExist, u_TileStorageFileSystem.pas:314-347).
+    // "remembers the previous directory name and whether it existed and skips both stat()s
+    // for a tile in a directory it has just found missing"
+    // (VPrevFolderName/VPrevFolderExist, u_TileStorageFileSystem.pas:314-347).
     QString prevFolder;
     bool prevFolderExists = false;
     bool havePrev = false;
 
-    // spec §3.2: one ReadLock for the whole (read-only) walk -- coarse, deliberately so; only
-    // scanTiles' enumerator is called out for per-item locking. Legacy's GetTileRectInfo itself
-    // takes no FFsLock at all; §3 is this port's own, stricter thread-safety contract.
+    // One ReadLock for the whole (read-only) walk -- coarse, deliberately so; only scanTiles'
+    // enumerator is called out for per-item locking. Legacy's GetTileRectInfo itself takes no
+    // FFsLock at all; this is the port's own, stricter thread-safety contract.
     core::ReadLock lock(fsMutex_);
     for (int y = r.top; y < r.bottom; ++y) {
         for (int x = r.left; x < r.right; ++x) {
@@ -617,9 +613,9 @@ core::Result<TileRectInfoPtr> FileSystemTileStorage::tileRectInfo(geo::RectI rec
 
 core::Result<EnumTileInfoPtr> FileSystemTileStorage::scanTiles(bool ignoreTne,
                                                                bool /*ignoreMultiVersionTiles*/) {
-    // FEAT-STO-035, u_TileStorageFileSystem.pas:ScanTiles:568-571 -- gated on ScanAccess, not
-    // ReadAccess; legacy returns nil (not an error) when denied. `ignoreMultiVersionTiles` is
-    // ignored: folder caches have no versions (§2.13.4).
+    // u_TileStorageFileSystem.pas:ScanTiles:568-571 -- gated on ScanAccess, not ReadAccess;
+    // legacy returns nil (not an error) when denied. `ignoreMultiVersionTiles` is ignored:
+    // folder caches have no versions.
     if (!base_.state().get()->scanAccess) {
         return EnumTileInfoPtr{};
     }

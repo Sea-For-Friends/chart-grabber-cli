@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: Src/BitmapTileSaveLoad/i_BitmapTileSaveLoad.pas:33-41 (IBitmapTileLoader, IBitmapTileSaver).
-// Legacy exchanges IBinaryData; the port exchanges QByteArray (docs/specs/bitmap.md §2.4).
+// Legacy exchanges IBinaryData; the port exchanges QByteArray.
 
 #include "cg/bitmap/bitmap32_static.h"
 

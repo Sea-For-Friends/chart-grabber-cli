@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033. Ports u_ReadWriteStateInternal.pas, u_ReadWriteStateInternalByOther.pas,
+// Ports u_ReadWriteStateInternal.pas, u_ReadWriteStateInternalByOther.pas,
 // u_ReadWriteStateStatic.pas (no DUnit suite exists; cases derived from the Pascal).
 #include "cg/core/read_write_state_internal.h"
 #include "cg/core/read_write_state_internal_by_other.h"

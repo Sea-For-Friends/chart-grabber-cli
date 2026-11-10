@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-013. docs/specs/net.md §7.2, §2.4 isServerExists table.
+// The download results and the isServerExists table.
 #include "cg/net/download_result.h"
 
 #include <gtest/gtest.h>

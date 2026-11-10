@@ -6,10 +6,9 @@
 // Ports: i_StorageState.pas, i_StorageStateInternal.pas, u_StorageStateInternal.pas,
 //        u_StorageStateStatic.pas
 //
-// docs/specs/storage.md §2.7 (:503-530). IStorageStateStatic + IStorageStateChangeble/
-// IStorageStateInternal collapse into one pair: an immutable StorageState published through
-// core::Snapshot, and StorageStateHolder, the mutable object that publishes it. Legacy's IsSame
-// (u_StorageStateStatic.pas) becomes operator==.
+// IStorageStateStatic + IStorageStateChangeble/IStorageStateInternal collapse into one pair: an
+// immutable StorageState published through core::Snapshot, and StorageStateHolder, the mutable
+// object that publishes it. Legacy's IsSame (u_StorageStateStatic.pas) becomes operator==.
 
 #include "cg/core/changeable.h"
 #include "cg/core/snapshot.h"
@@ -21,7 +20,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-001. Ports IStorageStateStatic.
+// Ports IStorageStateStatic.
 struct StorageState {
     bool readAccess = false;
     bool scanAccess = false;
@@ -33,15 +32,14 @@ struct StorageState {
 };
 using StorageStatePtr = std::shared_ptr<const StorageState>;
 
-// Ports IStorageStateChangeble + IStorageStateInternal + TStorageStateInternal, collapsed
-// (idioms.md 4): one mutable holder that publishes an immutable StorageState snapshot and fires
+// Ports IStorageStateChangeble + IStorageStateInternal + TStorageStateInternal, collapsed: one
+// mutable holder that publishes an immutable StorageState snapshot and fires
 // Changeable::changed() (via fireChanged()) on a real transition.
 //
 // u_StorageStateInternal.pas quirk, reproduced verbatim: SetScanAccess/SetAddAccess/
 // SetDeleteAccess/SetReplaceAccess each AND the requested value with the constructor-supplied
 // ability before storing it, but SetReadAccess does NOT -- it stores the requested value
-// unconditionally, even above the ability ceiling. This is not a typo to "fix": legacy wins
-// (protocol rule 5); see docs/parity/deviations.md.
+// unconditionally, even above the ability ceiling. This is not a typo to "fix": legacy wins.
 class StorageStateHolder final : public core::Changeable {
 public:
     explicit StorageStateHolder(TileStorageAbilities abilities);

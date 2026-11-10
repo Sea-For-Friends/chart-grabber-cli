@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (held open). Ports Test/u_MarkCategoryListToTree_Test.pas
-// (TestSimpleList, TestTree, verbatim: same names, same expected shape and order) and
-// u_MarkSystemHelpers.pas:303-441. The cases after the two DUnit ports pin the path rules the legacy suite
-// does not reach.
+// Ports Test/u_MarkCategoryListToTree_Test.pas (TestSimpleList, TestTree, verbatim: same names, same
+// expected shape and order) and u_MarkSystemHelpers.pas:303-441. The cases after the two DUnit ports pin
+// the path rules the legacy suite does not reach.
 #include "cg/core/platform/test_support.h"
 #include "cg/marks/mark_category.h"
 #include "cg/marks/mark_category_list.h"
@@ -132,7 +131,7 @@ TEST(CategoryListToTree, TestTree) {
 
 // ---- rules the DUnit suite does not reach (u_MarkSystemHelpers.pas:303-441) ----
 
-TEST(CategoryListToTree, EmptyOrNullListGivesNull) { // L-159: legacy raises EStringListError on Strings[0]
+TEST(CategoryListToTree, EmptyOrNullListGivesNull) { // Legacy raises EStringListError on Strings[0]
     EXPECT_EQ(categoryListToCategoryTree(nullptr), nullptr);
     EXPECT_EQ(
         categoryListToCategoryTree(std::make_shared<const MarkCategoryList>(std::vector<MarkCategoryPtr>{})),
@@ -207,7 +206,7 @@ TEST(CategoryListToTree, RussianNamesWithSpacesKeepTheirSpaces) {
     const auto river = cat(QStringLiteral("Берег"));
     const auto roads = cat(QStringLiteral("Мои метки"));
     const auto house = cat(QStringLiteral("Мои метки\\Дом"));
-    const auto ctrl = cat(QStringLiteral("Ящик") + QChar(1) + QStringLiteral("2")); // L-160
+    const auto ctrl = cat(QStringLiteral("Ящик") + QChar(1) + QStringLiteral("2"));
     const auto tree = treeOf({house, roads, river, ctrl});
     ASSERT_EQ(tree->subItemCount(), 3);
     EXPECT_EQ(tree->subItem(2)->name(), QStringLiteral("Ящик 2")) << "U+0001 comes back as a space";
@@ -223,8 +222,7 @@ TEST(CategoryListToTree, RussianNamesWithSpacesKeepTheirSpaces) {
 // The pin for the sort: scrambled input; the same result under any process locale (LC_ALL=C included).
 TEST(CategoryListToTree, SortOrder) {
     if (cg::core::platform::kIsApple) {
-        GTEST_SKIP()
-            << "the native macOS QCollator orders punctuation differently from the ICU root order (T-0396)";
+        GTEST_SKIP() << "the native macOS QCollator orders punctuation differently from the ICU root order";
     }
     const auto trips2024 = cat(QStringLiteral("Trips 2024"));
     const auto lower = cat(QStringLiteral("b"));

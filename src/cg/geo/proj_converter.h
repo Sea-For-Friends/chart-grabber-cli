@@ -9,13 +9,13 @@
 // else that needs a CRS PROJ knows about but the built-in projection types (projection_type.h)
 // don't implement. The interface is unchanged from legacy. Nothing above this header knows PROJ
 // exists -- `proj/proj_converter.cpp` is the only translation unit in the project allowed to
-// include the PROJ C header (docs/specs/geo.md §7.1, ADR-0006 decision 3).
+// include the PROJ C header.
 //
 // Legacy raises on failure and returns a bare TDoublePoint; the port returns std::optional
 // because CoordToStringConverter already has a defined "NaN" behavior for failure and an
 // exception across that boundary would be worse.
 //
-// FEAT-GEO-002 (custom CRS via PROJ4 strings / EPSG).
+// Used for custom CRS display (PROJ4 strings / EPSG).
 
 #include "cg/geo/geo_types.h"
 
@@ -29,8 +29,8 @@
 
 // CG_HAVE_PROJ is a build-configuration macro (CMake's `find_package(PROJ 9 QUIET)`, mirrored by
 // a pkg-config probe in tools/nocmake_build.sh), not a platform #ifdef; it never leaks past this
-// header + proj/proj_converter.cpp (docs/specs/geo.md §7 Notes). Absent -> 0, so a build without
-// PROJ still compiles this header and the stub factory below.
+// header + proj/proj_converter.cpp. Absent -> 0, so a build without PROJ still compiles this
+// header and the stub factory below.
 #ifndef CG_HAVE_PROJ
 #define CG_HAVE_PROJ 0
 #endif
@@ -48,7 +48,7 @@ using ProjConverterPtr = std::shared_ptr<const IProjConverter>;
 
 // Ports TProjConverterFactory. A build without PROJ (CG_HAVE_PROJ=0) still links: isAvailable()
 // is false and byEpsg/byInitString always return nullptr, so custom-CRS display is disabled
-// rather than the app failing to build or start (ADR-0006 "Consequences").
+// rather than the app failing to build or start.
 class ProjConverterFactory {
 public:
     ProjConverterFactory();
@@ -61,9 +61,9 @@ public:
     [[nodiscard]] bool isAvailable() const noexcept;
 
 private:
-    // D-10 / ADR-0006 decision 9: legacy re-parsed the init string on every call (a projection
-    // per status-bar update); the port interns one ProjConverter per init string instead, behind
-    // a weak_ptr so an unused CRS is freed once nothing references it.
+    // Legacy re-parsed the init string on every call (a projection per status-bar update); the
+    // port interns one ProjConverter per init string instead, behind a weak_ptr so an unused CRS
+    // is freed once nothing references it.
     mutable std::mutex mutex_;
     mutable std::unordered_map<QByteArray, std::weak_ptr<const IProjConverter>> cache_;
 

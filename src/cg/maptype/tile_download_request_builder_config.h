@@ -6,11 +6,11 @@
 // Ports: i_TileDownloadRequestBuilderConfig.pas, u_TileDownloadRequestBuilderConfig.pas
 //
 // The three strings a ZMP gives the request builder: URL template, server-name list and request
-// header (spec maptype.md 2.7.3). The text is an AnsiString in legacy; here the QByteArray holds
-// UTF-8 bytes (the INI side is read/written as QString). The URL passes through StrToUrl (trim,
-// space -> %20) and the header through StrToHeader (the two characters \r\n -> CR LF) on every
-// entry, the ZMP value included; the INI form of the header escapes CR LF back. `ServerNames` is
-// read from Maps.ini but never written (docs/parity/legacy-defects.md, L-140).
+// header. The text is an AnsiString in legacy; here the QByteArray holds UTF-8 bytes (the INI
+// side is read/written as QString). The URL passes through StrToUrl (trim, space -> %20) and the
+// header through StrToHeader (the two characters \r\n -> CR LF) on every entry, the ZMP value
+// included; the INI form of the header escapes CR LF back. `ServerNames` is read from Maps.ini
+// but never written.
 
 #include "cg/core/config_element.h"
 
@@ -30,7 +30,6 @@ struct TileDownloadRequestBuilderConfigStatic { // i_/u_TileDownloadRequestBuild
 using TileDownloadRequestBuilderConfigStaticPtr =
     std::shared_ptr<const TileDownloadRequestBuilderConfigStatic>;
 
-// FEAT-NET-004
 class TileDownloadRequestBuilderConfig final : public core::ConfigElement {
 public:
     explicit TileDownloadRequestBuilderConfig(const TileDownloadRequestBuilderConfigStaticPtr& defaults);
@@ -53,7 +52,7 @@ protected:
     void doWriteConfig(const core::IConfigWriterPtr& dst) const override;
 
 private:
-    // doReadConfig runs inside the write lock (core.md 2.16).
+    // doReadConfig runs inside the write lock.
     void setUrlBaseLocked(const QByteArray& v);
     void setServerNamesLocked(const QByteArray& v);
     void setRequestHeaderLocked(const QByteArray& v);

@@ -1,4 +1,4 @@
-; T-0015D golden: mapservices.com.ua.map.zmp - IntToHex (8 digits, upper-case) + chained
+; Golden: mapservices.com.ua.map.zmp - IntToHex (8 digits, upper-case) + chained
 ; else-if with NO final else: outside [0,12] for (GetZ-6), ResultURL is never assigned and
 ; stays '' (buildRequest clears it before the run) - a normal 'tile does not exist' outcome.
 ; zz := GetZ-6

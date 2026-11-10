@@ -16,8 +16,7 @@ namespace cg::bitmap {
 
 Bitmap32StaticFactory::Bitmap32StaticFactory(Bitmap32BufferFactoryPtr bufferFactory)
     : bitmapFactory_(std::move(bufferFactory)) {
-    // unreachable in legacy (u_GlobalState.pas:555-563 passes the buffer factory it has just created); no
-    // register row
+    // unreachable in legacy (u_GlobalState.pas:555-563 passes the buffer factory it has just created)
     if (!bitmapFactory_) {
         throw std::invalid_argument("Bitmap32StaticFactory: null buffer factory");
     }

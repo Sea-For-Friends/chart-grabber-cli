@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports u_LayerDrawConfig.pas; docs/specs/maptype.md §2.7.2, §7.2 item 6.
+// Ports u_LayerDrawConfig.pas.
 #include "cg/maptype/layer_draw_config.h"
 
 #include <gtest/gtest.h>

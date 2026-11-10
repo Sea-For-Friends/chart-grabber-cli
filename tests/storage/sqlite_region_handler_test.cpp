@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-018. Ports the open/schema/discovery half of
+// Ports the open/schema/discovery half of
 // Src/TileStorage/SQLite/u_TileStorageSQLiteHandler.pas (:353-400, :486-525, :1040-1074) and
-// Src/TileStorage/SQLite/u_TileStorageSQLiteHolder.pas (:102-305); see docs/specs/storage.md
-// §2.16.1, §2.16.2, §2.16.4, §7.4.
+// Src/TileStorage/SQLite/u_TileStorageSQLiteHolder.pas (:102-305).
 #include "cg/storage/map_version.h"
 #include "cg/storage/sqlite/sqlite_region_handler.h"
 #include "cg/storage/sqlite/sqlite_region_schema.h"
@@ -51,7 +50,7 @@ QByteArray readPragma(SqliteRegionHandler& handler, const char* pragma) {
 } // namespace
 
 TEST(SqliteRegionHandler, OverrideFixtureAppliesCustomPragmasAndFiveColumnSchema) {
-    // §7.4: the hand-made s.sql/t.sql/e.sql fixture. schema's storagePath is the read-only fixture
+    // The hand-made s.sql/t.sql/e.sql fixture. schema's storagePath is the read-only fixture
     // directory (only *.sql is read from it); the actual .sqlitedb lives in a scratch temp dir.
     const QString overridesDir =
         QDir(cgStorageFixture(QStringLiteral("cache/sqlite_overrides"))).absolutePath() + QStringLiteral("/");
@@ -77,10 +76,10 @@ TEST(SqliteRegionHandler, OverrideFixtureAppliesCustomPragmasAndFiveColumnSchema
     // e.sql ("PRAGMA optimize") ran: if it had failed, the constructor would have aborted and
     // isOpened() would be false (already asserted above).
 
-    // T-0022B2 review finding 4: contentTypeFromDb goes through the content-type registry (not a
-    // same-text passthrough). "image/jpeg" is a registered ALIAS whose canonical type is
-    // "image/jpg" (content_type.cpp); an unregistered MIME string yields null/empty, matching
-    // legacy's FContentTypeManager.GetInfo returning nil for an unknown type.
+    // contentTypeFromDb goes through the content-type registry (not a same-text passthrough).
+    // "image/jpeg" is a registered ALIAS whose canonical type is "image/jpg" (content_type.cpp);
+    // an unregistered MIME string yields null/empty, matching legacy's
+    // FContentTypeManager.GetInfo returning nil for an unknown type.
     EXPECT_EQ(schema->contentTypeFromDb(QByteArrayView("image/jpeg")), QByteArray("image/jpg"));
     EXPECT_TRUE(schema->contentTypeFromDb(QByteArrayView("application/x-bogus")).isEmpty());
     EXPECT_EQ(schema->contentTypeFromDb(QByteArrayView()), QByteArray("image/jpg")); // NULL -> main
@@ -126,14 +125,14 @@ TEST(SqliteRegionHandler, RepoFixtureDiscoveredAsEightColumnsWithIntegerVersion)
     EXPECT_TRUE(handler.columnInfo().hasContentType);
     EXPECT_TRUE(handler.columnInfo().hasCrc);
 
-    // T-0022B2 review finding 3: a SQL failure while opening (including one surfacing only once
-    // discovery's SELECT actually executes) must fail the open, not leave a half-initialised
-    // handler. A second connection holding the file's `locking_mode=EXCLUSIVE` OS-level lock on a
-    // fresh copy of the same fixture reproduces this deterministically for the whole construction
-    // -- a plain `BEGIN EXCLUSIVE` does not: the fixture is WAL-mode (as every region file this
-    // schema opens becomes), where WAL readers are not blocked by a writer's transaction, only by
-    // an actual exclusive file lock. SqliteDb::open's sqlite3_busy_timeout (5s) is unconditional,
-    // so this blocks the locked handler's whole open() call.
+    // A SQL failure while opening (including one surfacing only once discovery's SELECT actually
+    // executes) must fail the open, not leave a half-initialised handler. A second connection
+    // holding the file's `locking_mode=EXCLUSIVE` OS-level lock on a fresh copy of the same
+    // fixture reproduces this deterministically for the whole construction -- a plain
+    // `BEGIN EXCLUSIVE` does not: the fixture is WAL-mode (as every region file this schema opens
+    // becomes), where WAL readers are not blocked by a writer's transaction, only by an actual
+    // exclusive file lock. SqliteDb::open's sqlite3_busy_timeout (5s) is unconditional, so this
+    // blocks the locked handler's whole open() call.
     const QString lockedDbPath = QDir(dir.path()).filePath(QStringLiteral("locked.sqlitedb"));
     ASSERT_TRUE(QFile::copy(src, lockedDbPath));
     auto locker =
@@ -162,7 +161,7 @@ TEST(SqliteRegionSchema, LogErrorWritesOneFormattedLineWhenLoggingEnabled) {
     ASSERT_TRUE(log.open(QIODevice::ReadOnly));
     const QString content = QString::fromUtf8(log.readAll());
 
-    // §2.16.4: "yyyy-mm-dd hh:nn:ss.zzzz<TAB>(select)<TAB>boom".
+    // "yyyy-mm-dd hh:nn:ss.zzzz<TAB>(select)<TAB>boom".
     static const QRegularExpression kLineRe(
         QStringLiteral(R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+\t\(select\)\tboom\r\n$)"));
     EXPECT_TRUE(kLineRe.match(content).hasMatch()) << content.toStdString();

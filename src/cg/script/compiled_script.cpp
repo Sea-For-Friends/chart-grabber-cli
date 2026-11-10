@@ -55,8 +55,8 @@ core::Result<std::shared_ptr<const CompiledScript>> CompiledScript::compile(cons
     core::Result<Program*> parsed = parser.parse(diagnostics);
     if (!parsed.has_value()) {
         // u_ResStrings.pas:109 'Compilation error in script '#13#10'%0:s' (the space before CR LF is
-        // part of the literal); u_PascalScriptCompiler.pas:87 appends CR LF after every message.
-        // The message bodies are the port's own diagnostics (ADR-0003).
+        // part of the literal); u_PascalScriptCompiler.pas:87 appends CR LF after every message. The
+        // message bodies are the port's own diagnostics.
         QString text = QStringLiteral("Compilation error in script \r\n");
         for (const Diagnostic& diagnostic : diagnostics) {
             text += diagnostic.toString() + QStringLiteral("\r\n");

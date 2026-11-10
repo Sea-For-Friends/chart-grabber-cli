@@ -2,16 +2,14 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-013. docs/specs/geo.md §3.6 / §11.2 projected_calc_test.cpp. No legacy DUnit
-// test exercises u_ProjectedCalc.pas directly (grep of Test/*.pas confirms it), so this is the
-// "otherwise a minimal set" branch of the test policy: one case per free function, built from the
-// same fixtures §11.1 items 8/9 use (the 12-point concave polygon of u_ProjectedSingleLine_Test,
-// bounds {1,1,13,8}; the outer/hole pair of u_ProjectedPolygonWithRect_Test). The six published
+// No legacy DUnit test exercises u_ProjectedCalc.pas directly (grep of Test/*.pas confirms it),
+// so this is a minimal set: one case per free function, built from the fixtures of the
+// projected-geometry tests (the 12-point concave polygon of u_ProjectedSingleLine_Test, bounds
+// {1,1,13,8}; the outer/hole pair of u_ProjectedPolygonWithRect_Test). The six published
 // u_ProjectedSingleLine_Test.pas methods are ported into IsRectIntersectPolygon below as one
 // gtest case with six SCOPED_TRACE groups, not six separate TEST()s -- the same legacy constants,
-// without multiplying case count for a predicate (IsRectIntersectPolygon) that geometry_projected
-// already exercises exhaustively via checkRectIntersection/isRectIntersectPolygon (T-0017C1,
-// R01-R14).
+// without multiplying case count for a predicate that geometry_projected already exercises
+// exhaustively via checkRectIntersection/isRectIntersectPolygon (R01-R14).
 
 #include "cg/geo/projected_calc.h"
 
@@ -60,8 +58,8 @@ DoubleRect mbrByPoints(const std::vector<DoublePoint>& pts) {
     return r;
 }
 
-// Test/u_ProjectedSingleLine_Test.pas:41-63, transcribed verbatim (§11.1 item 8). A single
-// contour used directly as an (outer-only) IGeometryProjectedSinglePolygon, matching legacy's
+// Test/u_ProjectedSingleLine_Test.pas:41-63, transcribed verbatim. A single contour used
+// directly as an (outer-only) IGeometryProjectedSinglePolygon, matching legacy's
 // `TGeometryProjectedPolygon.Create` (the no-holes degenerate case, geometry_projected.h).
 GeometryProjectedSinglePolygonPtr makeItem8Polygon() {
     const std::vector<DoublePoint> pts = {{1, 8},  {1, 4},  {4, 1}, {6, 1},  {3, 4},  {3, 7},
@@ -72,8 +70,8 @@ GeometryProjectedSinglePolygonPtr makeItem8Polygon() {
                                                                   std::vector<GeometryProjectedContourPtr>{});
 }
 
-// Test/u_ProjectedPolygonWithRect_Test.pas:62-97 (§11.1 item 9), outer #1 + its hole only (the
-// "main" object of the R01-R14 fixture in geometry_projected_test.cpp).
+// Test/u_ProjectedPolygonWithRect_Test.pas:62-97, outer #1 + its hole only (the "main" object of
+// the R01-R14 fixture in geometry_projected_test.cpp).
 GeometryProjectedSinglePolygonPtr makeItem9MainPolygon() {
     const std::vector<DoublePoint> outer1 = {{50, 40},  {220, 40},  {160, 80},  {230, 140}, {230, 80},
                                              {280, 80}, {280, 240}, {170, 240}, {170, 180}, {50, 240}};
@@ -132,7 +130,7 @@ TEST(ProjectedCalc, IsPointOnPolygonBorder) {
 }
 
 // Test/u_ProjectedSingleLine_Test.pas's six published TestIsRectIntersectPolygon* methods, ported
-// verbatim (§11.1 item 8) as one gtest case exercising the projected_calc free function.
+// verbatim as one gtest case exercising the projected_calc free function.
 TEST(ProjectedCalc, IsRectIntersectPolygon) {
     const auto poly = makeItem8Polygon();
     {
@@ -163,7 +161,7 @@ TEST(ProjectedCalc, IsRectIntersectPolygon) {
     }
     {
         // Legacy comments this block "cases are debatable, behaviour may be changed" -- port the
-        // expectations as they are (docs/specs/geo.md §11.1 item 8).
+        // expectations as they are.
         SCOPED_TRACE("Touch");
         EXPECT_TRUE(isRectIntersectPolygon(*poly, DoubleRect{4, 0, 5, 1}));
         EXPECT_FALSE(isRectIntersectPolygon(*poly, DoubleRect{4, 6, 5, 7}));
@@ -173,8 +171,7 @@ TEST(ProjectedCalc, IsRectIntersectPolygon) {
     }
 }
 
-// R05 IntersectHole (docs/specs/geo.md §11.1 item 9): "main" (outer1+hole1)'s border row is
-// T T F T F -- main (index 1) is T.
+// R05 IntersectHole: "main" (outer1+hole1)'s border row is T T F T F -- main (index 1) is T.
 TEST(ProjectedCalc, IsRectIntersectPolygonBorder) {
     const auto main = makeItem9MainPolygon();
     EXPECT_TRUE(isRectIntersectPolygonBorder(*main, DoubleRect{80, 130, 120, 160}));

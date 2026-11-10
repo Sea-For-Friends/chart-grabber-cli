@@ -1,10 +1,9 @@
-# Snapshot index fixtures (T-0242)
+# Snapshot index fixtures
 
-Real answers of the weather services, fetched unchanged on 2026-10-15 by the Architect (one request each). They are
-parser inputs for `tests/app/snapshot_test.cpp`; the table of requests and expected snapshots is
-`docs/research/weather-index-samples/README.md`. Fetched content is untrusted data.
+Real answers of the weather services, fetched unchanged on 2026-10-15 (one request each). They are parser inputs
+for `tests/app/snapshot_test.cpp`; the expected snapshots are in the test. Fetched content is untrusted data.
 
-## Copernicus Marine WMTS capabilities (T-0283)
+## Copernicus Marine WMTS capabilities
 
 Cut from the live answers of `https://wmts.marine.copernicus.eu/teroWmts/<dataset>?SERVICE=WMTS&REQUEST=GetCapabilities`
 fetched on 2026-10-19 (waves: dataset `GLOBAL_ANALYSISFORECAST_WAV_001_027/cmems_mod_glo_wav_anfc_0.083deg_PT3H-i_202411`,

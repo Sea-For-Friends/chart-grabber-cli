@@ -1,4 +1,4 @@
-; T-0015D golden: _osm/Gps_tiles.zmp - leading-slash concatenation (GetURLBase already ends
+; Golden: _osm/Gps_tiles.zmp - leading-slash concatenation (GetURLBase already ends
 ; in '/', script prepends another '/' -> '//' in the URL, kept verbatim).
 ; ResultURL := GetURLBase+'/'+IntToStr(GetZ-1)+'/'+IntToStr(GetX)+'/'+IntToStr(GetY)+'.png'
 ; RequestHead is pre-filled from params.txt and never touched by the script.

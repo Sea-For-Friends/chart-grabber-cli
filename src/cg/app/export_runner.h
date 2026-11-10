@@ -5,11 +5,10 @@
 #pragma once
 // Ports: nothing.
 // New code (no legacy unit). Inherits: RegionProcess/u_ExportProviderAbstract.pas:182-202 (call sequence).
-// docs/specs/app-cli.md 1.5, 3.10, 5.2; docs/specs/region-export.md 9.
 //
 // One MBTiles export on its own thread into "<file>.part"; the file is renamed to its name only after the
-// empty-result check (C-10) passed. An interrupted or failed export deletes the .part file and its SQLite
-// side files (C-13). Prints no result line (the caller does).
+// empty-result check passed. An interrupted or failed export deletes the .part file and its SQLite side
+// files. Prints no result line (the caller does).
 
 #include "cg/app/app_context.h"
 #include "cg/app/console.h"

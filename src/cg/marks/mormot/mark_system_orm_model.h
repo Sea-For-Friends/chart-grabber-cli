@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// FEAT-GEO-034 (held open). Ports: Src/MarksDB/mORMot/u_MarkSystemORMModel.pas
-// (docs/specs/marks.md §2.9.1, §2.9.3 steps B-9...B-12, §2.9.14).
+// Ports: Src/MarksDB/mORMot/u_MarkSystemORMModel.pas.
 //
 // Legacy declares ten ORM row classes and lets the mORMot library derive the schema of Marks.db3
 // from them. No ORM is ported: this unit holds the model as the statements mORMot issues for it
@@ -49,7 +48,7 @@ struct OrmTableDef {
 // CreateModelSQLite3 (:190-207): the ten tables in model order.
 [[nodiscard]] std::span<const OrmTableDef> createModelSqlite3() noexcept;
 
-// B-9...B-11. Ports the call TRestServerDB.CreateMissingTables(0, [itoNoIndex4TID]) of
+// Ports the call TRestServerDB.CreateMissingTables(0, [itoNoIndex4TID]) of
 // u_MarkSystemImplORMClientProvider.pas:191 (mORMot orm/mormot.orm.sqlite3.pas:1520-1600): inside
 // one transaction creates every model table that is missing, adds every model column an existing
 // table lacks, then the automatic index of the unique field of each table it created. Nothing is
@@ -57,8 +56,8 @@ struct OrmTableDef {
 // error. Returns the number of statements issued (BEGIN and COMMIT included).
 [[nodiscard]] core::Result<int> createMissingTablesSqlite3(storage::sqlite::SqliteDb& db);
 
-// B-12. Ports CreateMissingIndexesSQLite3 (:326-343) with _CreateMissingIndexes (:245-324): the
-// ten SAS indexes, each in autocommit, a failing statement ignored. Legacy defect (LC-8): the
+// Ports CreateMissingIndexesSQLite3 (:326-343) with _CreateMissingIndexes (:245-324): the ten
+// SAS indexes, each in autocommit, a failing statement ignored. Legacy defect: the
 // "does it exist already" test never matches, so all ten are requested on every call; IF NOT
 // EXISTS makes that harmless. The index-name query feeding that test is therefore not ported.
 void createMissingIndexesSqlite3(storage::sqlite::SqliteDb& db);

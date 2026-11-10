@@ -18,7 +18,7 @@ namespace cg::region {
 namespace {
 
 // GetMBTilesContentType of a map's type. The null branch is unreachable in legacy (fr_ExportMBTiles.pas:390
-// dereferences the type unguarded; the MapType constructor throws first, map_type.cpp:82); no register row.
+// dereferences the type unguarded; the MapType constructor throws first, map_type.cpp:82).
 MbtilesContentType contentTypeOf(const core::ContentTypeInfo* info) {
     return info != nullptr ? mbtilesContentType(info->type) : MbtilesContentType::Unknown;
 }
@@ -64,8 +64,8 @@ bool directTilesCopy(const ExportMbtilesParams& p) {
     if (p.addVisibleLayers || p.addVisibleOverlays || p.useRecolor || p.usePrevZoom) {
         return false;
     }
-    // :410-415: exactly one of the map and the overlay is selected.
-    // :417 (the format is automatic) always holds in stage 0: there is no format input.
+    // :410-415: exactly one of the map and the overlay is selected. :417 (the format is automatic)
+    // always holds: there is no format input.
     if (p.map && !p.overlay) {
         return isValidMap(*p.map);
     }

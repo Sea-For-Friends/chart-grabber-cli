@@ -4,9 +4,9 @@
 
 #pragma once
 // Ports: Src/Basic/u_NetworkStrFunc.pas:69-403 (the raw-blob helpers); the script-facing wrappers
-// port Src/PascalScript/u_PascalScriptUtils.pas:88-119. T-0028: moved here from
-// src/cg/net/http_headers.{h,cpp} (T-0012B) so both `cg::net` and `cg::script` -- which the
-// module DAG forbids from linking each other -- can share the single implementation via `core`.
+// port Src/PascalScript/u_PascalScriptUtils.pas:88-119. Moved here from
+// src/cg/net/http_headers.{h,cpp} so both `cg::net` and `cg::script` -- which the module DAG
+// forbids from linking each other -- can share the single implementation via `core`.
 //
 // All operations here work on a raw CRLF header blob that MAY start with an HTTP status line and
 // MAY end with a blank line. A "line" ends at the first byte < ' ' (any control char, not just
@@ -14,7 +14,7 @@
 // Only the first matching line is ever acted on. `upName` must already be UPPER-CASE ASCII;
 // matching is 7-bit-ASCII case-insensitive and a PREFIX match with no delimiter required, so
 // "CONTENT-TYPE" also matches a "Content-Type-Options: ..." line -- legacy behavior, not a bug,
-// and the 48-script ZMP corpus depends on it (docs/specs/net.md §2.11).
+// and the 48-script ZMP corpus depends on it.
 
 #include <QByteArray>
 #include <QByteArrayView>
@@ -29,8 +29,8 @@ namespace cg::core {
 [[nodiscard]] bool idemPChar(QByteArrayView headers, qsizetype start, QByteArrayView upName);
 
 // Returns "" both for "absent" and for "present but empty" -- indistinguishable, and the
-// Content-Length gate (docs/specs/net.md §2.12.1) relies on that. Trailing whitespace is not
-// trimmed; leading whitespace/colons are skipped.
+// Content-Length gate relies on that. Trailing whitespace is not trimmed; leading
+// whitespace/colons are skipped.
 [[nodiscard]] QByteArray getHeaderValueUp(QByteArrayView headers, QByteArrayView upName);
 
 // Replaces the value text in place, preserving the name, separator and the line's CRLF. Rejects
@@ -44,7 +44,7 @@ void deleteHeaderValueUp(QByteArray& headers, QByteArrayView upName);
 
 // The three script-facing wrappers behind GetHeaderValue/SetHeaderValue/DeleteHeaderEntry
 // (u_PascalScriptUtils.pas:88-119), used by `cg::script`'s GetHeaderValue/SetHeaderValue/
-// DeleteHeaderEntry builtins (F29-F31).
+// DeleteHeaderEntry builtins.
 
 // = getHeaderValueUp(headers, name.toUpper()).
 [[nodiscard]] QByteArray scriptGetHeaderValue(QByteArrayView headers, QByteArrayView name);

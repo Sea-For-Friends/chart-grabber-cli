@@ -70,7 +70,7 @@ core::Result<void> ExportTaskToMbtiles::processRegion() {
 
     const bool doDirectCopy = directTilesCopy_ && tileStorage_ != nullptr; // :188
     if (!doDirectCopy) {
-        // DC-2: the recompose branch (:190-193, :207-212, :241, :252-263) is absent.
+        // The recompose branch (:190-193, :207-212, :241, :252-263) is absent.
         return core::fail(core::ErrorCode::Unsupported,
                           QStringLiteral("MBTiles export with tile re-encoding is not ported"));
     }

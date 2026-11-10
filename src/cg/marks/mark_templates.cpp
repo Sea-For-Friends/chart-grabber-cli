@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <utility>
 
-// Ports u_MarkTemplates.pas (T-0091). The legacy assertions (Assert(Supports(...)), Assert(Assigned(...)))
-// are compiled out in the shipped build (SASPlanet.dproj:92), so a wrong appearance kind is accepted and the
+// Ports u_MarkTemplates.pas. The legacy assertions (Assert(Supports(...)), Assert(Assigned(...))) are
+// compiled out in the shipped build (SASPlanet.dproj:92), so a wrong appearance kind is accepted and the
 // facet stays nil: the same here. Nil name generator / appearance are refused, see the header.
 
 namespace cg::marks {

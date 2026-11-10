@@ -9,7 +9,7 @@
 // set of three ordinals; here it is QFlags with the port's own bits (1, 2, 4). Not traced: whether the
 // ordinals are persisted (the names are used in frm_MarksExport.pas:207-436 and the Simple list only).
 // A nil legacy list is an empty vector: count() is 0 (u_VectorItemTreeExporterList.pas:127-131).
-// item() outside 0..count()-1 answers null (D row of T-0141).
+// item() outside 0..count()-1 answers null (a deviation from legacy).
 
 #include "cg/core/changeable.h"
 #include "cg/vector/export_config.h"

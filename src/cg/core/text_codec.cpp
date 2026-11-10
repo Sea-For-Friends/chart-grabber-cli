@@ -16,9 +16,9 @@ namespace {
 constexpr QByteArrayView utf8Bom = "\xEF\xBB\xBF";
 
 // CP1251 -> Unicode for the high half; the low half is ASCII. Qt 6 no longer ships the legacy
-// codecs and Qt6::Core5Compat is a dependency this project will not take (spec 2.11).
-// 0x98 is unassigned in CP1251 and maps to U+0098, as in the WHATWG windows-1251 index, so that
-// every byte value round-trips.
+// codecs and Qt6::Core5Compat is a dependency this project will not take. 0x98 is unassigned in
+// CP1251 and maps to U+0098, as in the WHATWG windows-1251 index, so that every byte value
+// round-trips.
 constexpr std::array<char16_t, 128> cp1251ToUnicode = {
     0x0402, 0x0403, 0x201A, 0x0453, 0x201E, 0x2026, 0x2020, 0x2021, 0x20AC, 0x2030, 0x0409, 0x2039, 0x040A,
     0x040C, 0x040B, 0x040F, 0x0452, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x0098, 0x2122,
@@ -43,7 +43,7 @@ constexpr std::array<char16_t, 128> cp1251ToUnicode = {
 
 // `ok`, when non-null, is set to false if any character had no CP1251 representation and was
 // substituted with '?'. The caller decides whether that is acceptable (encodeConfigText(),
-// best-effort) or a failure (encodeConfigTextChecked(), spec §4 "nothing is ever swallowed").
+// best-effort) or a failure (encodeConfigTextChecked(): nothing is ever swallowed).
 [[nodiscard]] QByteArray encodeCp1251(const QString& text, bool* ok = nullptr) {
     QByteArray raw;
     raw.reserve(text.size());
@@ -73,11 +73,11 @@ constexpr std::array<char16_t, 128> cp1251ToUnicode = {
     return raw;
 }
 
-// Finding 6 (T-0002A rework): a bare QStringDecoder never sees an explicit "end of stream", so a
-// file truncated mid multi-byte sequence read as valid; QString::fromUtf8() substitutes U+FFFD
-// for it, and the byte-identical round trip broke silently. Round-tripping through toUtf8() and
-// comparing against the input catches that (and any other non-canonical sequence) without
-// depending on QStringDecoder's streaming-flush semantics.
+// A bare QStringDecoder never sees an explicit "end of stream", so a file truncated mid
+// multi-byte sequence read as valid; QString::fromUtf8() substitutes U+FFFD for it, and the
+// byte-identical round trip broke silently. Round-tripping through toUtf8() and comparing
+// against the input catches that (and any other non-canonical sequence) without depending on
+// QStringDecoder's streaming-flush semantics.
 [[nodiscard]] bool isValidUtf8(const QByteArray& raw) {
     return QString::fromUtf8(raw).toUtf8() == raw;
 }

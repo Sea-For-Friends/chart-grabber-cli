@@ -3,7 +3,6 @@
 // SAS.Planet development team; modified.
 
 // Ports: the share-handle wiring referenced by Src/Network/Curl/u_CurlHttpClient.pas.
-// docs/specs/net.md §2.8.2.
 #include "cg/net/curl_share.h"
 
 namespace cg::net {

@@ -406,8 +406,7 @@ private:
 };
 
 // TEnumDoublePointLine2Poly. Field-for-field port of u_EnumDoublePointLine2Poly.pas:81-256 --
-// see docs/handoffs/T-0017B.md for the forward/return-trip trace that pins the 5/11-point test
-// fixtures (§11.1 item 6).
+// for the forward/return-trip trace that pins the 5/11-point test fixtures.
 class Line2PolyStream final : public IPointStream {
 public:
     Line2PolyStream(PointStreamPtr source, double radius, const IProjection& projection,

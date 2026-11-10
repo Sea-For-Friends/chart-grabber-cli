@@ -5,13 +5,12 @@
 #pragma once
 // Ports: i_ValueToStringConverter.pas, u_ValueToStringConverter.pas,
 // i_ValueToStringConverterConfig.pas, u_ValueToStringConverterConfig.pas, t_CommonTypes.pas:39-74,
-// the unit strings in u_ResStrings.pas:330-360. docs/specs/geo.md:2227-2311 (§6.5, §6.5.1).
-// FEAT-GEO-016.
+// the unit strings in u_ResStrings.pas:330-360.
 //
 // Turns raw doubles (metres, sq. metres, km/h, kB) into the exact display strings legacy showed:
 // unit thresholds, per-threshold decimal counts, and the distance-format-derives-the-speed-unit
-// rule (§6.5 point 3). `geo` has no tr(): every unit suffix below is the literal ASCII legacy
-// source string; `ui` wraps them in tr() at the call site, same split as coord_to_string.h.
+// rule. `geo` has no tr(): every unit suffix below is the literal ASCII legacy source string;
+// `ui` wraps them in tr() at the call site, same split as coord_to_string.h.
 
 #include "cg/core/config_provider.h"
 #include "cg/core/config_writer.h"
@@ -79,12 +78,12 @@ class ValueToStringConverter {
 public:
     explicit ValueToStringConverter(ValueFormatSettings settings);
 
-    // DataSizeConvert, u_ValueToStringConverter.pas:214-224. The one conversion with no NaN guard
-    // (spec §6.5 closing note) -- reproduce, add none.
+    // DataSizeConvert, u_ValueToStringConverter.pas:214-224. The one conversion with no NaN guard --
+    // reproduce, add none.
     [[nodiscard]] QString dataSizeConvert(double sizeInKb) const;
 
     // DistConvert, u_ValueToStringConverter.pas:226-283. Formats Abs(metres) and prepends a single
-    // '-' to the whole result when the input was negative (§6.5.1 point 1) -- never per-part.
+    // '-' to the whole result when the input was negative -- never per-part.
     [[nodiscard]] QString distConvert(double metres) const;
 
     // DistPerPixelConvert, u_ValueToStringConverter.pas:285-290: distConvert(v) + "/pixel", no
@@ -92,12 +91,12 @@ public:
     [[nodiscard]] QString distPerPixelConvert(double metresPerPixel) const;
 
     // AreaConvert, u_ValueToStringConverter.pas:128-212. Compares the SIGNED input, unlike
-    // distConvert (§6.5.1 point 2) -- a negative area (never produced by GeoCalc today, but not
-    // guarded against) takes the "small" branch of every threshold.
+    // distConvert -- a negative area (never produced by GeoCalc today, but not guarded against)
+    // takes the "small" branch of every threshold.
     [[nodiscard]] QString areaConvert(double sqm) const;
 
     // SpeedConvert, u_ValueToStringConverter.pas:342-357. The unit is derived from `dist`, never
-    // stored (§6.5.1 point 3).
+    // stored.
     [[nodiscard]] QString speedConvert(double kmph) const;
 
     // AltitudeConvert, u_ValueToStringConverter.pas:150-157. Always metres, 1 decimal, regardless

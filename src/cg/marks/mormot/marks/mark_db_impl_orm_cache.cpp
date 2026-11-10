@@ -27,8 +27,8 @@ constexpr int kAppearanceItemSize = 24;
 constexpr int kViewItemSize = 25;
 constexpr int kIdIndexItemSize = 32;
 // TOrmMarkCache (limited, 30 %): instance 152 (the field list of the view cache above, derived in
-// mark_system_orm_cache_base.h) and the packed TOrmMarkRow: MarkId 8 + Name 8 + Desc 8 + GeoType 1 +
-// GeoCount 4 = 29 (docs/specs/marks.md §2.9.7).
+// mark_system_orm_cache_base.h) and the packed TOrmMarkRow: MarkId 8 + Name 8 + Desc 8 + GeoType
+// 1 + GeoCount 4 = 29.
 constexpr int kMarkInstanceSize = 152;
 constexpr int kMarkItemSize = 29;
 
@@ -47,10 +47,9 @@ OrmMarkImageRow* OrmMarkImageCache::find(qint64 id) {
     return i >= 0 ? &rows()[static_cast<size_t>(i)] : nullptr;
 }
 
-// TOrmMarkImageCache.Find by name (:345-363): first row in id order whose name is AnsiSameText.
-// D-80, the name-lookup deviation (spec §2.9.11, DV-5): AnsiSameText (CompareStringW, user locale, ignore
-// case) becomes QString::compare(Qt::CaseInsensitive), see OrmCategoryCache::find for the cases that come out
-// differently.
+// TOrmMarkImageCache.Find by name (:345-363): first row in id order whose name is AnsiSameText. The
+// name-lookup deviation: AnsiSameText (CompareStringW, user locale, ignore case) becomes
+// QString::compare(Qt::CaseInsensitive), see OrmCategoryCache::find for the cases that come out differently.
 OrmMarkImageRow* OrmMarkImageCache::find(const QString& name) {
     ormLogEnter("OrmMarkImageCache::find");
     for (OrmMarkImageRow& row : rows()) {
@@ -169,7 +168,7 @@ void OrmMarkViewCache::addOrUpdate(qint64 markId, qint64 viewId, qint64 category
 // TOrmMarkViewCache.AddPrepared (:983-1047). categoryId > 0: the category joins the prepared list and the
 // rows whose mark id is not cached yet are added (the cached ones keep their values); any other value
 // (0 = the whole table): the cache is replaced by `rows` and flagged prepared. The ids inside `rows` are not
-// de-duplicated among themselves (L-157).
+// de-duplicated among themselves.
 void OrmMarkViewCache::addPrepared(qint64 categoryId, const std::vector<OrmMarkViewRow>& rowsToAdd) {
     ormLogEnter("OrmMarkViewCache::addPrepared");
     checkCacheSize();
@@ -256,10 +255,10 @@ void OrmMarkIdIndex::addPrepared(const std::vector<OrmMarkIdIndexRec>& rowsToAdd
 }
 
 // TOrmMarkIdIndex.AddArray (:582-635): adds the rows of the window whose mark id is not cached yet; no
-// CheckCacheSize, the prepared flag is not touched.
-// D-66: a negative startIndex, or a window running over the end of the array, is limited to the array;
-// legacy reads AArray[AStartIndex+I] out of range (:613, :626; mORMot AddArray called at :605, :619). No
-// legacy caller passes a window (u_MarkDbImplORMHelper.pas:1443 passes the whole array).
+// CheckCacheSize, the prepared flag is not touched. A negative startIndex, or a window running over the
+// end of the array, is limited to the array; legacy reads AArray[AStartIndex+I] out of range (:613,
+// :626; mORMot AddArray called at :605, :619). No legacy caller passes a window
+// (u_MarkDbImplORMHelper.pas:1443 passes the whole array).
 void OrmMarkIdIndex::addArray(const std::vector<OrmMarkIdIndexRec>& array, int startIndex, int count) {
     ormLogEnter("OrmMarkIdIndex::addArray");
     if (startIndex < 0) {
@@ -405,7 +404,7 @@ void OrmMarkCache::addOrUpdate(const OrmMarkRec& rec) {
 // TOrmMarkCache.AddPrepared (:827-902). CheckCacheSize first. categoryId > 0: the category joins the
 // prepared list and only the rows whose mark id is not cached yet are added (their text counts); any other
 // value: Reset, the whole table replaces the content and is flagged prepared. The ids inside `rows` are
-// not de-duplicated among themselves (L-157).
+// not de-duplicated among themselves.
 void OrmMarkCache::addPrepared(qint64 categoryId, const std::vector<OrmMarkRow>& rowsToAdd) {
     ormLogEnter("OrmMarkCache::addPrepared");
     checkCacheSize();
@@ -469,12 +468,12 @@ OrmMarkRow OrmMarkCache::markRecToMarkRow(const OrmMarkRec& rec) {
 OrmMarkGeometryCache::OrmMarkGeometryCache(qint64 maxCacheSize)
     : maxCacheSize_(maxCacheSize), geometryArray_(maxCacheSize) {}
 
-// L-158 FIX, the one place of it. Legacy keeps FIsPrepared / FPreparedCategories after the inner array
-// emptied itself (CheckCacheSize first in Add / AddArray, u_MarkSystemORMCacheBase.pas:430-442, :488-492,
-// :629-642), so IsCategoryPrepared / IsPrepared stay true for geometries that are gone and the helper
-// (u_MarkDbImplORMHelper.pas:1521, :1536) never refills them. The inner array resets exactly when its
-// size() is over its limit at the start of the call; the same test is made here, one statement before the
-// call, and then the prepared state goes with the rows.
+// The legacy-defect fix, the one place of it. Legacy keeps FIsPrepared / FPreparedCategories after the
+// inner array emptied itself (CheckCacheSize first in Add / AddArray,
+// u_MarkSystemORMCacheBase.pas:430-442, :488-492, :629-642), so IsCategoryPrepared / IsPrepared stay true
+// for geometries that are gone and the helper (u_MarkDbImplORMHelper.pas:1521, :1536) never refills them.
+// The inner array resets exactly when its size() is over its limit at the start of the call; the same
+// test is made here, one statement before the call, and then the prepared state goes with the rows.
 void OrmMarkGeometryCache::forgetPreparedState() {
     isPrepared_ = false;
     preparedCategories_.reset();
@@ -507,7 +506,7 @@ void OrmMarkGeometryCache::addOrUpdate(qint64 markId, qint32 size, const geo::Ge
 
 // TOrmMarkGeometryCache.AddPrepared (:1105-1133): the rows go in with AddArray (ids already cached keep
 // their data), then the category (> 0) or the whole table counts as prepared. The ids inside `rows` are
-// not de-duplicated among themselves (L-157).
+// not de-duplicated among themselves.
 void OrmMarkGeometryCache::addPrepared(qint64 categoryId, const std::vector<OrmMarkGeometryRec>& rows) {
     ormLogEnter("OrmMarkGeometryCache::addPrepared");
     std::vector<RecWithPointer<const geo::IGeometryLonLat>> array;
@@ -534,7 +533,7 @@ void OrmMarkGeometryCache::remove(qint64 markId) {
 
 // TOrmMarkGeometryCache.Reset (:1146-1155). Legacy clears the array and the category list but never
 // FIsPrepared; the helper calls it after deleting marks (u_MarkDbImplORMHelper.pas:547), so the whole-table
-// flag would outlive the rows. Cleared here as part of the L-158 fix.
+// flag would outlive the rows. Cleared here as part of the legacy-defect fix.
 void OrmMarkGeometryCache::reset() {
     ormLogEnter("OrmMarkGeometryCache::reset");
     geometryArray_.reset();

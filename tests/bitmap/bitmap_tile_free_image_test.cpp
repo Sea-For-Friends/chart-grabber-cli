@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of T-0161: Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas (loader :195-268, constructors :272-346,
-// saver base :350-371, Save :373-495 for the 24 and 32 bit branches, BMP :499-511, PNG :532-556);
-// Includes/FreeImage/FreeBitmap.pas:954-975 (the loader sniffs the bytes), FreeImage.pas:593-599.
-// FEAT-RND-041 (loader base, PNG saver), FEAT-RND-038 (BMP saver)
+// Tests of Src/BitmapTileSaveLoad/u_BitmapTileFreeImage.pas (loader :195-268, constructors :272-346, saver
+// base :350-371, Save :373-495 for the 24 and 32 bit branches, BMP :499-511, PNG :532-556); Includes/
+// FreeImage/FreeBitmap.pas:954-975 (the loader sniffs the bytes), FreeImage.pas:593-599.
+// Covers: the loader base, the PNG saver and the BMP saver.
 #include "cg/bitmap/bitmap32_buffer_factory_simple.h"
 #include "cg/bitmap/bitmap32_static_factory.h"
 #include "cg/bitmap/bitmap_codec_error.h"
@@ -180,7 +180,7 @@ std::string messageOfLoad(const QByteArray& data) {
 
 // ---- loader
 
-// Proof 1: the sizes are read from the files with file(1); the loader is the same class whatever the name.
+// The sizes are read from the files with file(1); the loader is the same class whatever the name.
 TEST(FreeImageLoader, FixturesDecodeToTheirSize) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     struct Case {
@@ -197,8 +197,8 @@ TEST(FreeImageLoader, FixturesDecodeToTheirSize) {
     }
 }
 
-// Proof 1: straight alpha (legacy ConvertTo32Bits keeps colour and alpha unpremultiplied). Values of
-// test2.png (RGBA 91 x 69): pixel (81, 2) is r=24 g=16 b=8 a=57; (0, 0) has alpha 0; (45, 34) is opaque.
+// Straight alpha (legacy ConvertTo32Bits keeps colour and alpha unpremultiplied). Values of test2.png
+// (RGBA 91 x 69): pixel (81, 2) is r=24 g=16 b=8 a=57; (0, 0) has alpha 0; (45, 34) is opaque.
 TEST(FreeImageLoader, Rgba8PngKeepsStraightAlpha) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     const auto bmp = BitmapTileFreeImageLoaderPng(staticFactory()).load(readFixture("test2.png"));
@@ -209,7 +209,7 @@ TEST(FreeImageLoader, Rgba8PngKeepsStraightAlpha) {
     EXPECT_EQ(px[34 * 91 + 45], 0xFFEFB58CU);
 }
 
-// Proof 1 and the L row of T-0161: the registered format is ignored, the bytes decide.
+// A legacy defect, reproduced: the registered format is ignored, the bytes decide.
 TEST(FreeImageLoader, PngLoaderDecodesJpeg) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));
     const auto bmp = BitmapTileFreeImageLoaderPng(staticFactory()).load(readFixture("test.jpg"));
@@ -242,7 +242,7 @@ TEST(FreeImageLoader, RefusedBufferGivesNullptr) {
     EXPECT_EQ(BitmapTileFreeImageLoaderPng(factory).load(readFixture("test.png")), nullptr);
 }
 
-// Proof 2: row 0 of the bitmap is the top row of the file (legacy flips FreeImage's bottom-up rows; QImage is
+// Row 0 of the bitmap is the top row of the file (legacy flips FreeImage's bottom-up rows; QImage is
 // top-down, so the port copies row i to row i).
 TEST(FreeImageLoader, RowsKeepFileOrder) {
     const Color32 want[6] = {0xFF102030U, 0xFF405060U, 0xFF708090U, 0xFFA0B0C0U, 0xFFD0E0F0U, 0xFF010203U};
@@ -267,7 +267,7 @@ TEST(FreeImageLoader, RowsKeepFileOrder) {
 
 // ---- PNG saver
 
-// Proof 3: structure of the output. Opaque 32-bit input -> colour type 2.
+// Structure of the output. Opaque 32-bit input -> colour type 2.
 TEST(FreeImageSaverPng, OpaqueInputIsColourType2) {
     const auto tile = makeTile(40, 30, false);
     const QByteArray out = BitmapTileFreeImageSaverPng(6, 32).save(tile);
@@ -282,7 +282,7 @@ TEST(FreeImageSaverPng, OpaqueInputIsColourType2) {
     expectSamePixels(decodeQt(out, "PNG"), tile, false);
 }
 
-// One pixel with alpha FE switches to colour type 6 (:456-467, spec §2.5); the alpha survives exactly.
+// One pixel with alpha FE switches to colour type 6; the alpha survives exactly.
 TEST(FreeImageSaverPng, OneNonOpaquePixelIsColourType6) {
     const auto tile = makeTile(40, 30, false, 0xFE);
     const QByteArray out = BitmapTileFreeImageSaverPng(6, 32).save(tile);
@@ -322,8 +322,8 @@ TEST(FreeImageSaverPng, ChunkListAndPhys) {
     }
 }
 
-// Every scanline starts with a filter byte of NONE (0), SUB (1) or PAETH (4) (png_set_filter, spec §2.5).
-// The second tile repeats one row, where libpng would pick UP (2) if it were allowed.
+// Every scanline starts with a filter byte of NONE (0), SUB (1) or PAETH (4) (png_set_filter). The second
+// tile repeats one row, where libpng would pick UP (2) if it were allowed.
 TEST(FreeImageSaverPng, FilterBytesAreNoneSubPaeth) {
     const int w = 50;
     const int h = 60;
@@ -395,14 +395,14 @@ TEST(FreeImageSaverPng, InvalidArgumentsThrow) {
     EXPECT_THROW(BitmapTileFreeImageSaverPng(6, 8), BitmapCodecError);
 }
 
-// D row of T-0161: a null bitmap is a BitmapCodecError (legacy: access violation at :391).
+// A deviation from legacy: a null bitmap is a BitmapCodecError (legacy: access violation at :391).
 TEST(FreeImageSaverPng, NullBitmapThrows) {
     EXPECT_THROW((void)BitmapTileFreeImageSaverPng(6, 32).save(nullptr), BitmapCodecError);
 }
 
 // ---- BMP saver
 
-// T-0177: the file legacy writes, FreeImage PluginBMP.cpp Save for a 32 bpp dib (unverified against the DLL).
+// The file legacy writes, FreeImage PluginBMP.cpp Save for a 32 bpp dib (unverified against the DLL).
 TEST(FreeImageSaverBmp, HeaderFieldsAtTheirOffsets) {
     const QByteArray out = BitmapTileFreeImageSaverBmp().save(makeTile(40, 30, false));
     ASSERT_EQ(out.size(), 54 + 40 * 30 * 4);
@@ -434,8 +434,8 @@ TEST(FreeImageSaverBmp, PixelBytesAreBgraBottomUp) {
     EXPECT_EQ(std::memcmp(out.constData() + 54, want, 16), 0);
 }
 
-// Round trip through the port's own BMP loader (opaque: the alpha of a 32 bpp BI_RGB file on load is the
-// first D row of T-0161, out of scope here).
+// Round trip through the port's own BMP loader (opaque: the alpha of a 32 bpp BI_RGB file on load is a
+// separate deviation from legacy, out of scope here).
 TEST(FreeImageSaverBmp, RoundTripsThroughTheBmpLoader) {
     const auto tile = makeTile(40, 30, false);
     const QByteArray out = BitmapTileFreeImageSaverBmp().save(tile);
@@ -451,7 +451,7 @@ TEST(FreeImageSaverBmp, NullBitmapThrows) {
     EXPECT_THROW((void)BitmapTileFreeImageSaverBmp().save(nullptr), BitmapCodecError);
 }
 
-// ---- Proof 5: loaders and savers are stateless. The latch starts all threads together; with --tsan this
+// ---- Loaders and savers are stateless. The latch starts all threads together; with --tsan this
 // shows that the objects hold no state, and every result must equal the single-thread one.
 TEST(FreeImageThreads, SharedObjectsGiveEqualResults) {
     CG_SKIP_IF_NO_FIXTURE(fixturesDir() + QStringLiteral("/legacy-test-data/bitmaps/test.png"));

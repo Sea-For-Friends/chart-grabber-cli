@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests for core::Mutex (src/cg/core/sync.h, platform/shared_mutex.h; new code, T-0335). On Windows the MinGW
+// Tests for core::Mutex (src/cg/core/sync.h, platform/shared_mutex.h; new code). On Windows the MinGW
 // std::shared_mutex let two writers in at once: these tests fail with it.
 #include "cg/core/sync.h"
 

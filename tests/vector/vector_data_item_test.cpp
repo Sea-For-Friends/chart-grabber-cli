@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-037. Ports u_VectorDataItemBase.pas, u_VectorDataFactorySimple.pas;
-// docs/specs/vector.md §2.4, §2.5, §7.2.
+// Ports u_VectorDataItemBase.pas, u_VectorDataFactorySimple.pas.
 #include "cg/vector/appearance_of_mark_line.h"
 #include "cg/vector/vector_data_factory_simple.h"
 #include "cg/vector/vector_data_item_base.h"
@@ -215,8 +214,8 @@ TEST(VectorDataFactorySimple, ItemHashChainsMainInfoThenAppearanceHash) {
     EXPECT_EQ(factory.buildItem(mi, app, geom)->appearance(), app);
 }
 
-// D-52 (T-0051): legacy dereferences nil here (access violation, u_VectorDataFactorySimple.pas:95-96);
-// the port throws in every build.
+// Legacy dereferences nil here (access violation, u_VectorDataFactorySimple.pas:95-96); the port
+// throws in every build.
 TEST(VectorDataFactorySimple, NullMainInfoOrGeometryThrows) {
     const VectorDataFactorySimple factory;
     EXPECT_THROW((void)factory.buildItem(nullptr, nullptr, pointAt(1, 0, 0)), std::invalid_argument);

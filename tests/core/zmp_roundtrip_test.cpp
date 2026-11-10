@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-200 (real-corpus anchor); docs/specs/core.md 7.19
-// The two remaining cases of 7.19 (GuidValuesParse, MimeTypeSubstValuesParse) need
-// IConfigProvider::readUuid and ContentTypeSubst, which land with T-0002B.
+// A real-corpus anchor. The two remaining legacy cases (GuidValuesParse, MimeTypeSubstValuesParse)
+// need IConfigProvider::readUuid and ContentTypeSubst.
 #include "cg/core/ini_file.h"
 
 #include <QByteArray>

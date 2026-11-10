@@ -18,7 +18,7 @@ struct Magic {
     qsizetype n;
 };
 
-// Evaluated strictly in this order (docs/specs/net.md §2.13).
+// Evaluated strictly in this order.
 constexpr std::array<Magic, 7> kMagic = {{
     {"image/jpeg", {0xFF, 0xD8, 0x00, 0x00}, 2},
     {"image/png", {0x89, 0x50, 0x4E, 0x47}, 4},

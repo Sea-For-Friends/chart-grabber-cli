@@ -9,7 +9,7 @@
 //
 // A vector of (key, value) kept ordered by key ascending with the legacy binary search `Find`
 // (leftmost equal element, otherwise the insertion point == std::lower_bound). Not synchronised
-// (legacy neither). Capacity / SetCount of the legacy class are not ported (see T-0055 handoff).
+// (legacy neither). Capacity / SetCount of the legacy class are not ported.
 
 #include <algorithm>
 #include <cstddef>

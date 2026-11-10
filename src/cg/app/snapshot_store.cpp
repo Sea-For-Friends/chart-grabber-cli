@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit). See snapshot_store.h. docs/specs/weather-sources.md section 4.2.
+// New code (no legacy unit). See snapshot_store.h.
 #include "cg/app/snapshot_store.h"
 
 #include "cg/core/config_provider_ini.h"
@@ -22,7 +22,7 @@ namespace cg::app {
 
 namespace {
 
-// T-0357: the store file is <guid>.conf; <guid>.ini is the name of the versions before.
+// The store file is <guid>.conf; <guid>.ini is the name of the versions before.
 QString storeFile(const QString& dir, const QString& guid) {
     return dir + QLatin1Char('/') + guid + QStringLiteral(".conf");
 }
@@ -31,8 +31,8 @@ QString oldStoreFile(const QString& dir, const QString& guid) {
     return dir + QLatin1Char('/') + guid + QStringLiteral(".ini");
 }
 
-// T-0357: only <guid>.ini exists -> one atomic rename to <guid>.conf and one stderr note; both exist -> the
-// .conf wins, the .ini stays and one note per file and process says so. A failed rename reads the old file.
+// Only <guid>.ini exists -> one atomic rename to <guid>.conf and one stderr note; both exist -> the .conf
+// wins, the .ini stays and one note per file and process says so. A failed rename reads the old file.
 // Returns the file to read.
 QString fileToRead(const QString& dir, const QString& guid) {
     QString path = storeFile(dir, guid);
@@ -114,7 +114,7 @@ std::optional<Snapshot> loadSnapshot(const QString& dir, const QString& guid) {
         s.time = parsed->time;
         s.dateOnly = parsed->dateOnly;
     }
-    // T-0443: a missing / empty / unreadable key stays invalid
+    // A missing / empty / unreadable key stays invalid
     const auto readRun = [&section](QStringView key) {
         const QString text = section->readString(key, {}).trimmed();
         const auto parsed = snapshotFromText(QStringLiteral("x"), text);

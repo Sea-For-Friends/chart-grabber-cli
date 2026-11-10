@@ -11,15 +11,15 @@
 
 namespace cg::storage {
 
-// FEAT-STO-007. u_TileFileNameGM3.pas:54,60-66 GetTileFileName. No leading 'z' (unlike GM1/GM2).
-// (!) Y first, X last.
+// u_TileFileNameGM3.pas:54,60-66 GetTileFileName. No leading 'z' (unlike GM1/GM2). (!) Y first, X
+// last.
 QString Gm3TileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     return QStringLiteral("%1/%2/%3").arg(int(zoom)).arg(xy.y()).arg(xy.x());
 }
 
 // u_TileFileNameGM3.pas:35,70-91 GetTilePoint. c_GM3_Expr with '\\' -> '/' -- identical shape to
-// MOBAC/OsmAnd+/TMS's regex (§2.10.1: "regexes 6, 7, 8 and 9 are identical"), only the value
-// mapping differs. See gm1's parse() comment for the overflow-rejection rationale.
+// MOBAC/OsmAnd+/TMS's regex, only the value mapping differs. See gm1's parse() comment for the
+// overflow-rejection rationale.
 bool Gm3TileNameCodec::parse(QStringView relativePath, geo::PointI& xy, quint8& zoom) const {
     static const QRegularExpression re(QStringLiteral(R"(^(.+/)?(\d\d?)/(\d+)/(\d+)(\..+)?$)"));
     const QRegularExpressionMatch m = core::platform::matchView(re, relativePath);

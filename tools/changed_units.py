@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""T-0090: select the translation units a developer's static analysis must look at.
+"""Select the translation units a developer's static analysis must look at.
 
 Usage: changed_units.py --base REV --kind nocmake|ninja --builddir DIR < candidate-units.txt
 
 stdin: candidate src/*.cpp paths (one per line, relative to the repo root, already module-scoped).
 stdout: the subset to analyse, one per line; the single word ALL when the changed set touches something that
 changes the analysis of every unit (tidy config, build files, the gate scripts) or when the base cannot be
-resolved -- the caller then analyses everything, exactly like the landing gate.
+resolved -- the caller then analyses everything.
 
 Subset = candidates that are changed against REV (committed, staged, unstaged or untracked)
        + candidates whose last compile recorded a dependency on a changed file (direct or indirect include):

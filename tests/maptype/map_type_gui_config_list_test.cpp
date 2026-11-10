@@ -4,8 +4,8 @@
 
 // Ports u_MapTypeGUIConfigList.pas and i_MapTypeGUIConfigList.pas: the three orders (the two stable sorts
 // of u_SortFunc.pas, read not ported), the submenu key of ByMapName, the [MapsList] SortOrder key with the
-// DV-11 fallback, the language-switch bracket and the snapshots. Spec maptype.md 2.11.5, 4.1, 7.2 (OQ-10),
-// DV-11 (ruling OQ-12). Corpus: tests/fixtures/zmp/sas.maps (514 stock ZMPs) and the stock Maps.ini.
+// fallback for an out-of-range value (a deviation from legacy), the language-switch bracket and the
+// snapshots. Corpus: tests/fixtures/zmp/sas.maps (514 stock ZMPs) and the stock Maps.ini.
 #include "cg/core/content_type.h"
 #include "cg/core/ini_file.h"
 #include "cg/core/language_manager.h"
@@ -278,8 +278,8 @@ TEST(MapTypeGuiConfigListCorpus, ByMapNumberIsTheStableOrderOfTheStockPnum) {
     EXPECT_EQ(listOf(list->orderedMapGuidList()), expected);
 }
 
-// OQ-10: the stock pnum values are the oracle for ByMapName (MapTypesMainList renumbers pnum 1..N in list
-// order, u_MapTypesMainList.pas:400-405). On the stock corpus the two orders agree at all 514 positions; a
+// The stock pnum values are the oracle for ByMapName (MapTypesMainList renumbers pnum 1..N in list order,
+// u_MapTypesMainList.pas:400-405). On the stock corpus the two orders agree at all 514 positions; a
 // mismatch fails.
 TEST(MapTypeGuiConfigListCorpus, ByMapNameIsThePermutationOfTheCorpusAndTheStockPnumOrder) {
     CG_SKIP_IF_NO_CORPUS();
@@ -324,7 +324,7 @@ TEST(MapTypeGuiConfigListCorpus, ALanguageSwitchEmitsExactlyOneListNotification)
     EXPECT_EQ(fired, 2);
 }
 
-// --- the submenu key, the SortOrder key, DV-11 -------------------------------------------------------
+// --- the submenu key, the SortOrder key -------------------------------------------------------
 
 TEST(MapTypeGuiConfigList, ByMapNameOrdersSubmenusAsFoldersAndIgnoresCase) {
     CG_SKIP_IF_NO_CORPUS();
@@ -335,8 +335,8 @@ TEST(MapTypeGuiConfigList, ByMapNameOrdersSubmenusAsFoldersAndIgnoresCase) {
     EXPECT_EQ(listOf(list->orderedMapGuidList()), h.guidsAt(kByNameOrder));
 }
 
-// SortOrder values of [MapsList]: 0, 1, 2 read as written; 7 and -1 fall back to by-name (DV-11, OQ-12) with
-// one warning, and the value is written back unchanged. The stored value is the one read.
+// SortOrder values of [MapsList]: 0, 1, 2 read as written; 7 and -1 fall back to by-name with one warning,
+// and the value is written back unchanged. The stored value is the one read.
 struct SortOrderCase {
     int stored;
     std::vector<int> expected;
@@ -445,7 +445,7 @@ TEST(MapTypeGuiConfigList, DestructionRemovesTheLanguageSubscriptions) {
     h.env.languages->setCurrentLanguageCode(u"ru"_s); // no list left to notify
 }
 
-// --- nil inputs (D-rows, see the handoff) -----------------------------------------------------------
+// --- nil inputs -----------------------------------------------------------------------------------------
 
 // Legacy reads AMapsSet.Count without a nil check (u_MapTypeGUIConfigList.pas:97): an access violation.
 TEST(MapTypeGuiConfigList, NilMapSetGivesAnEmptyListNotAnAccessViolation) {
@@ -477,17 +477,16 @@ TEST(MapTypeGuiConfigList, NilMapGuiConfigZmpOrLanguageManagerThrowsLogicError) 
     EXPECT_THROW(std::make_shared<MapTypeGuiConfigList>(nullptr, h.set), std::logic_error);
 }
 
-// --- thread safety (D-row for LD-15; run under --tsan by the gate) ----------------------------------
+// --- thread safety (run under --tsan by the gate) ---
 
 // Legacy reads the ordered and hot-key fields without the lock that the rebuild writes them under. The port
-// publishes both as snapshots: a reader always gets a complete list while the writer rebuilds.
-// Two threads on one list: one toggles the sort order (the list's own lock), one changes a child's name
-// (the child's lock, then the list's batch token). Both rebuild under rebuildMutex_. A barrier starts every
-// round of both threads together (T-0340: the earlier "the two calls overlapped" counter depended on timing
-// and failed in loaded full runs; a sleep is no synchronisation, and the overlap itself cannot be forced
-// from outside). At the end the published order must equal a fresh list built on the same set with the same
-// sort order. Only ThreadSanitizer can fail the data-race side; the rebuild-order side fails on a stale
-// publish.
+// publishes both as snapshots: a reader always gets a complete list while the writer rebuilds. Two threads
+// on one list: one toggles the sort order (the list's own lock), one changes a child's name (the child's
+// lock, then the list's batch token). Both rebuild under rebuildMutex_. A barrier starts every round of
+// both threads together (the earlier "the two calls overlapped" counter depended on timing and failed in
+// loaded full runs; a sleep is no synchronisation, and the overlap itself cannot be forced from outside).
+// At the end the published order must equal a fresh list built on the same set with the same sort order.
+// Only ThreadSanitizer can fail the data-race side; the rebuild-order side fails on a stale publish.
 TEST(MapTypeGuiConfigList, ConcurrentSortOrderAndChildChangesEndOnAFreshRebuild) {
     CG_SKIP_IF_NO_CORPUS();
     HandMade h;

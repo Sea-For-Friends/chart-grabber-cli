@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-002. Ports u_MapAbilitiesConfig.pas, u_MapAbilitiesConfigStatic.pas;
-// docs/specs/maptype.md §2.7, §2.7.1, §7.2 item 6.
+// Ports u_MapAbilitiesConfig.pas, u_MapAbilitiesConfigStatic.pas.
 #include "cg/maptype/map_abilities_config.h"
 
 #include <QString>
@@ -27,7 +26,7 @@ std::shared_ptr<const MapAbilitiesConfigStatic> defaults(bool show, bool downloa
 }
 
 TEST(MapAbilitiesConfig, UnchangedElementWritesNoKeyAndDeletesStaleOnes) {
-    // §7.2 item 6: constructed from the ZMP values and saved unchanged -> nothing in the section.
+    // Constructed from the ZMP values and saved unchanged -> nothing in the section.
     const auto root = iniFrom("[{G}]\r\nCanShowOnSmMap=0\r\nUseDwn=0\r\nKeep=1\r\n");
     MapAbilitiesConfig c(defaults(true, true));
     c.writeConfig(root->orCreateSubItem(u"{G}"));

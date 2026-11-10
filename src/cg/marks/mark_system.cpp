@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: u_MarkSystem.pas (class MarkSystem, declared in mark_system.h; ticket T-0137)
+// Ports: u_MarkSystem.pas (class MarkSystem, declared in mark_system.h)
 #include "cg/marks/mark_system.h"
 
 #include "cg/marks/mark_system_helpers.h"
@@ -18,7 +18,7 @@ namespace {
 
 // A published backend always holds both databases (its constructor builds them:
 // u_MarkSystemImplORM.pas:155-197), so a null one is refused here, as the facades refuse it
-// (mark_db_by_impl.cpp dbOf). Not reachable with the landed backend.
+// (mark_db_by_impl.cpp dbOf). Not reachable with the SQLite backend.
 template <class Db> void requireDatabase(const std::shared_ptr<Db>& db) {
     if (!db) {
         throw std::runtime_error("MarkSystem: the mark system has no mark database");
@@ -36,12 +36,12 @@ MarkSystem::MarkSystem(core::PathConfigPtr basePath, std::shared_ptr<IMarkSystem
                        vector::VectorItemSubsetBuilderFactoryPtr vectorItemSubsetBuilderFactory,
                        std::stop_token appStarted, std::stop_token appClosing,
                        vector::HtmlToHintTextConverterPtr hintConverter) {
-    // :140 FNotifierInternal: errorNotifier_, default-constructed. :142-146 the counters: DV-1, not ported.
+    // :140 FNotifierInternal: errorNotifier_, default-constructed. :142-146 the counters: not ported.
     // :148-159 the factory list (the hash function is not a parameter, see mark_system.h).
     implFactoryList_ = std::make_shared<MarkSystemImplFactoryListStatic>(
         std::move(markPictureList), std::move(appearanceOfMarkFactory), vectorGeometryLonLatFactory,
         std::move(vectorItemSubsetBuilderFactory), markFactory, std::move(hintConverter));
-    // :161-169 the changeable system; the two notifiers are passed on as stop tokens (Ruling A.2).
+    // :161-169 the changeable system; the two notifiers are passed on as stop tokens.
     systemImpl_ = std::make_shared<MarkSystemImplChangeable>(std::move(basePath), std::move(config),
                                                              implFactoryList_, errorNotifier_,
                                                              std::move(appStarted), std::move(appClosing));
@@ -52,7 +52,7 @@ MarkSystem::MarkSystem(core::PathConfigPtr basePath, std::shared_ptr<IMarkSystem
         std::make_shared<MarkCategoryDbByImpl>(systemImpl_, std::move(markCategoryFactory), errorNotifier_);
 }
 
-// The join of the build comes before any facade is released (D-57 widened): see the class comment.
+// The join of the build comes before any facade is released (a deviation from legacy): see the class comment.
 MarkSystem::~MarkSystem() {
     systemImpl_->shutdown();
 }

@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-206; docs/specs/core.md 2.17, test plan 7.14
 #include "cg/core/config_element_complex.h"
 
 #include <QStringList>
@@ -35,7 +34,7 @@ public:
     std::vector<QString>* order_;
     std::vector<IConfigProviderPtr> readSources;
     mutable std::vector<IConfigWriterPtr> writeDests;
-    int beforeChangeNotifyCalls = 0; // rework: proves finishWrite() runs the hook on every path
+    int beforeChangeNotifyCalls = 0; // proves finishWrite() runs the hook on every path
 
 protected:
     void doReadConfig(const IConfigProviderPtr& src) override {
@@ -124,7 +123,7 @@ TEST(ConfigElementComplex, EmptySlotUsesParentProvider) {
 TEST(ConfigElementComplex, ChildChangeNotifiesParentOnce) {
     ComplexUnderTest parent;
     auto child = std::make_shared<LeafElement>(QStringLiteral("Child"));
-    ConfigElementChildFlags flags; // listenToChanges is what this test needs (finding 3: defaults
+    ConfigElementChildFlags flags; // listenToChanges is what this test needs (defaults
     flags.listenToChanges = true;  // are all-false now, so opt in explicitly)
     parent.addChild(child, SaveLoadSlot{}, flags);
     int notifications = 0;
@@ -142,7 +141,7 @@ TEST(ConfigElementComplex, DoSubItemChangeRunsBeforeParentNotification) {
     parent.order = &order;
     auto child = std::make_shared<LeafElement>(QStringLiteral("Child"));
     ConfigElementChildFlags flags;
-    flags.listenToChanges = true; // finding 3: defaults are all-false now
+    flags.listenToChanges = true; // Defaults are all-false now
     parent.addChild(child, SaveLoadSlot{}, flags);
     const auto sub = parent.changed().subscribe([&] { order.push_back(1); });
     {
@@ -162,7 +161,7 @@ TEST(ConfigElementComplex, LockPropagationFollowsFlags) {
     flagsOn.propagateBatch = true;
     flagsOn.listenToChanges = true;
     parent.addChild(flagged, SaveLoadSlot{}, flagsOn);
-    parent.addChild(unflagged, SaveLoadSlot{}); // defaults: all flags false (finding 3)
+    parent.addChild(unflagged, SaveLoadSlot{}); // defaults: all flags false
 
     std::atomic<bool> parentShouldRelease{false};
     std::atomic<bool> flaggedAcquired{false};
@@ -243,9 +242,9 @@ TEST(ConfigElementComplex, DestructorUnsubscribesFromChildren) {
 }
 
 TEST(ConfigElementComplex, DefaultFlagsAllowChildAccessInsideParentWriteScope) {
-    // finding 3: with the pre-fix all-true ChildFlags defaults, this self-deadlocks -- the
-    // parent's writeLock() would already hold the child's (non-recursive) mutex via propagation,
-    // so a second writeLock() on the same child from inside the parent's scope never returns.
+    // With the pre-fix all-true ChildFlags defaults, this self-deadlocks -- the parent's
+    // writeLock() would already hold the child's (non-recursive) mutex via propagation, so a
+    // second writeLock() on the same child from inside the parent's scope never returns.
     ComplexUnderTest parent;
     auto child = std::make_shared<LeafElement>(QStringLiteral("Child"));
     parent.addChild(child, SaveLoadSlot{}); // defaults: no propagation

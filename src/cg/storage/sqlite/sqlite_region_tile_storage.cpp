@@ -116,8 +116,8 @@ core::Result<TileInfo> SqliteRegionTileStorage::tileInfoInternal(geo::PointI xy,
     core::Result<TileInfo> result = notExists(nullptr);
     if (base_.state().get()->readAccess) {
         result = notExists(version);
-        // DEVIATION D-160 (T-0276, L-75): a file that exists but cannot be opened is an error (legacy: a nil
-        // handler, NotExists, cached -- u_TileStorageSQLiteHelper.pas InternalGetHandler).
+        // DEVIATION: a file that exists but cannot be opened is an error (legacy: a nil handler, NotExists,
+        // cached -- u_TileStorageSQLiteHelper.pas InternalGetHandler).
         QString openError;
         pool_->run(
             dbPath(xy, zoom), kindOf(zoom), false, std::stop_token{},
@@ -138,7 +138,6 @@ core::Result<TileInfo> SqliteRegionTileStorage::tileInfoInternal(geo::PointI xy,
     return result;
 }
 
-// FEAT-STO-018
 core::Result<TileInfo> SqliteRegionTileStorage::tileInfo(geo::PointI xy, quint8 zoom,
                                                          const MapVersionInfoPtr& version,
                                                          LoadMode mode) const {
@@ -209,7 +208,6 @@ core::Result<bool> SqliteRegionTileStorage::saveTile(geo::PointI xy, quint8 zoom
     return saveTile(xy, zoom, version, loadDate, contentType, data, flags);
 }
 
-// FEAT-STO-018
 core::Result<bool> SqliteRegionTileStorage::saveTile(geo::PointI xy, quint8 zoom,
                                                      const MapVersionInfoPtr& version, TileDate loadDate,
                                                      QByteArrayView contentType, const QByteArray& data,
@@ -240,11 +238,10 @@ core::Result<bool> SqliteRegionTileStorage::saveTile(geo::PointI xy, quint8 zoom
         }
         memCache_->add(xy, zoom, version, std::move(info));
     }
-    base_.notifyTileUpdate(xy, zoom, version); // no lock held -- spec §3.1 rule 3
+    base_.notifyTileUpdate(xy, zoom, version); // no lock held
     return true;
 }
 
-// FEAT-STO-018
 core::Result<bool> SqliteRegionTileStorage::deleteTile(geo::PointI xy, quint8 zoom,
                                                        const MapVersionInfoPtr& version) {
     if (!base_.state().get()->deleteAccess) {
@@ -268,10 +265,9 @@ core::Result<bool> SqliteRegionTileStorage::deleteTile(geo::PointI xy, quint8 zo
     return true;
 }
 
-// FEAT-STO-018
 core::Result<EnumTileInfoPtr> SqliteRegionTileStorage::scanTiles(bool ignoreTne,
                                                                  bool /*ignoreMultiVersionTiles*/) {
-    // Stored and never read by the enumerator (legacy defect L-91).
+    // Stored and never read by the enumerator (legacy defect).
     if (!base_.state().get()->scanAccess) {
         return EnumTileInfoPtr{};
     }

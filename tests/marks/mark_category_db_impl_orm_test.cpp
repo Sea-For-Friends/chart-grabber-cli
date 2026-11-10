@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (both held open). Ports no legacy test (there is none):
-// u_MarkCategoryDbImplORM.pas (docs/specs/marks.md §2.9.6, §2.9.12) against a copy of
+// Ports no legacy test (there is none): u_MarkCategoryDbImplORM.pas against a copy of
 // tests/fixtures/marks/Marks.db3 and an empty database. Expected values are literals read back with plain SQL
 // on a second connection, never through the unit's own caches. The provider is wrapped in a spy that records
 // the transaction calls and counts the accesses to the connection mutex (the proof of the lock modes).
@@ -196,7 +195,7 @@ void breakViewTable(Env& env) {
 
 } // namespace
 
-// ---- update list: pairing (spec §2.9.6, :291-375) ----------------------------------------------------
+// ---- update list: pairing ----------------------------------------------------
 
 namespace {
 struct PairCase {
@@ -394,7 +393,7 @@ TEST(MarkCategoryDbImplORM, BothListsNullThrowsInsideTheTransactionAndRollsBack)
     env.real().transaction().rollBack(rec);
 }
 
-// LC-17 (spec §5, L-213 family): the caches are written before the commit and not undone on a rollback.
+// A legacy defect: the caches are written before the commit and not undone on a rollback.
 TEST(MarkCategoryDbImplORM, FailedInsertRollsBackButTheCategoryCacheKeepsTheRow) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     Env env(true);
@@ -680,7 +679,7 @@ TEST(MarkCategoryDbImplORM, ReadersOnColdCachesAndNoTransactions) {
     }
     EXPECT_FALSE(env.db().getCategoryById(77));
     // by name, both spellings of the interface: cache not prepared -> SQL, where SYSTEMNOCASE folds ASCII
-    // only (LC-12 / L-187: Cyrillic differing in case is a different name for SQL)
+    // only (a legacy defect: Cyrillic differing in case is a different name for SQL)
     EXPECT_FALSE(env.db().firstCategoryByName(kTownLower));
     EXPECT_EQ(env.db().firstCategoryByName(kTown)->name(), kTown);
     EXPECT_EQ(env.db().getFirstCategoryByName(QStringLiteral("zETA"))->name(), QStringLiteral("Zeta"));
@@ -735,7 +734,7 @@ TEST(MarkCategoryDbImplORM, IsCategoryFromThisDbTable) {
     EXPECT_FALSE(env.db().isCategoryFromThisDb(nullptr));
 }
 
-// ---- lock modes (spec §2.9.12): observed through the accesses to the connection mutex ----------------
+// ---- lock modes: observed through the accesses to the connection mutex ----------------
 
 namespace {
 

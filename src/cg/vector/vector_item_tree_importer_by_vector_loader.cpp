@@ -52,7 +52,7 @@ VectorItemTreeImporterByVectorLoader::processImport(std::stop_token /*stop*/, co
     if (!loaded) {
         return std::unexpected(loaded.error());
     }
-    // Legacy: TVectorItemTree.Create('', VVectorData, nil) (:103). The subset may be null (LV-10).
+    // Legacy: TVectorItemTree.Create('', VVectorData, nil) (:103). The subset may be null.
     VectorItemTreePtr tree =
         std::make_shared<VectorItemTree>(QString(), *loaded, std::vector<VectorItemTreePtr>{});
     return tree;

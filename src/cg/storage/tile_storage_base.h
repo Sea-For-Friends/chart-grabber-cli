@@ -7,12 +7,11 @@
 // NotifyTileUpdate; GetTileFileName/GetTileInfo/GetTileInfoEx/GetTileRectInfo/DeleteTile/SaveTile
 // stay `virtual; abstract` in legacy and are each backend's own job).
 //
-// docs/specs/storage.md §2.6.3. A small non-virtual helper holding what every backend shares: the
-// type abilities, the storage state, the tile-pyramid notifier, the projection set, the storage
-// path and the map-version factory. Concrete backends hold this as a MEMBER ("prefer it as a
-// member") and implement ITileStorage themselves -- it exists only because eight backends would
-// otherwise repeat these eleven lines each. No backend lands in this ticket (Scope out), so
-// nothing constructs one yet.
+// A small non-virtual helper holding what every backend shares: the type abilities, the storage
+// state, the tile-pyramid notifier, the projection set, the storage path and the map-version
+// factory. Concrete backends hold this as a MEMBER ("prefer it as a member") and implement
+// ITileStorage themselves -- it exists only because eight backends would otherwise repeat these
+// eleven lines each.
 //
 // The two legacy virtual-but-not-abstract defaults (GetListOfTileVersions -> empty list,
 // ScanTiles -> nil) are not methods here: they carry no state, so a backend that wants the
@@ -58,8 +57,8 @@ public:
         return mapVersionFactory_;
     }
 
-    // Ports TTileStorageAbstract.NotifyTileUpdate: called after every successful saveTile/
-    // deleteTile, outside the backend's own lock (spec §3.1 rule 3).
+    // Ports TTileStorageAbstract.NotifyTileUpdate: called after every successful
+    // saveTile/deleteTile, outside the backend's own lock.
     void notifyTileUpdate(geo::PointI tile, quint8 zoom, const MapVersionInfoPtr& version);
 
 private:

@@ -11,7 +11,7 @@
 
 #include <utility>
 
-// Ports u_MarkPolyTemplateConfig.pas (T-0098). The format text is SAS_STR_NewPoly (u_ResStrings.pas,
+// Ports u_MarkPolyTemplateConfig.pas. The format text is SAS_STR_NewPoly (u_ResStrings.pas,
 // 'FormatString').
 
 using namespace Qt::StringLiterals;

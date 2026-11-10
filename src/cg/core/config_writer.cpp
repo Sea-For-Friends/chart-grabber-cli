@@ -17,23 +17,23 @@ void IConfigWriter::writeInt(QStringView id, qint32 value) {
 }
 
 void IConfigWriter::writeBool(QStringView id, bool value) {
-    writeValue(id, QVariant(value ? QStringLiteral("1") : QStringLiteral("0"))); // Q15
+    writeValue(id, QVariant(value ? QStringLiteral("1") : QStringLiteral("0")));
 }
 
 void IConfigWriter::writeFloat(QStringView id, double value) {
-    writeValue(id, QVariant(valuecodec::formatFloat(value))); // Q17
+    writeValue(id, QVariant(valuecodec::formatFloat(value)));
 }
 
 void IConfigWriter::writeDate(QStringView id, QDate value) {
-    writeValue(id, QVariant(valuecodec::formatDate(value))); // Q18
+    writeValue(id, QVariant(valuecodec::formatDate(value)));
 }
 
 void IConfigWriter::writeTime(QStringView id, QTime value) {
-    writeValue(id, QVariant(valuecodec::formatTime(value))); // Q18
+    writeValue(id, QVariant(valuecodec::formatTime(value)));
 }
 
 void IConfigWriter::writeDateTime(QStringView id, const QDateTime& value) {
-    writeValue(id, QVariant(valuecodec::formatDateTime(value))); // Q18
+    writeValue(id, QVariant(valuecodec::formatDateTime(value)));
 }
 
 void IConfigWriter::writeUuid(QStringView id, const QUuid& value) {

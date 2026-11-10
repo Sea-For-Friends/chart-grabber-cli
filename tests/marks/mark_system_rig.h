@@ -3,10 +3,10 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Shared rig of the SQLite system tests (mark_system_impl_orm_test.cpp, T-0133; mark_system_test.cpp,
-// T-0137): the collaborators a system is built from, the impl config of the SQLite backend, plain SQL on a
-// closed database file, and the sorted name lists the tests compare. Hoisted from
-// mark_system_impl_orm_test.cpp unchanged.
+// Shared rig of the SQLite system tests (mark_system_impl_orm_test.cpp; mark_system_test.cpp): the
+// collaborators a system is built from, the impl config of the SQLite backend, plain SQL on a closed
+// database file, and the sorted name lists the tests compare. Hoisted from mark_system_impl_orm_test.cpp
+// unchanged.
 
 #include "cg/marks/mark_factory.h"
 #include "cg/marks/mark_system_impl_factory_changeable.h"

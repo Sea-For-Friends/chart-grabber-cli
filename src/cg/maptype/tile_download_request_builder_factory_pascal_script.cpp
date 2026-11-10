@@ -70,7 +70,7 @@ TileDownloadRequestBuilderFactoryPascalScript::buildRequestBuilder(const net::ID
                                     QString::fromUtf8(e.what()));
                 }
             }
-            // A failed compile leaves compiled_ null: the builder below is template-only (LD-18).
+            // A failed compile leaves compiled_ null: the builder below is template-only.
             compiled = compiled_;
             defProjConverter = defProjConverter_;
         } else {

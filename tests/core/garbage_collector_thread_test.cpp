@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-026 (the application GC tick on a non-GUI thread). Ports
-// Src/System/u_GarbageCollectorThread.pas; no legacy DUnit exists.
+// The application GC tick on a non-GUI thread. Ports Src/System/u_GarbageCollectorThread.pas; no
+// legacy DUnit exists.
 #include "cg/core/garbage_collector_thread.h"
 
 #include <gtest/gtest.h>
@@ -70,8 +70,8 @@ TEST(GarbageCollectorThread, DestructionWakesTheSleepAndWaitsForNothingMore) {
     EXPECT_EQ(counter.ticks, 1);
 }
 
-// L-132: an exception escaping a tick ends the thread for good (legacy's try/except wraps the whole
-// loop); the process survives, whatever the exception type (legacy's `except` catches everything).
+// An exception escaping a tick ends the thread for good (legacy's try/except wraps the whole loop);
+// the process survives, whatever the exception type (legacy's `except` catches everything).
 TEST(GarbageCollectorThread, AnExceptionInATickEndsTheThreadForGoodWithoutTerminate) {
     for (const bool stdException : {true, false}) {
         cg::core::Notifier notifier;

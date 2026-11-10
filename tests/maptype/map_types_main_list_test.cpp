@@ -2,13 +2,12 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MapTypesMainList.pas (TMapTypesMainList, EMapTypesNoMaps), ticket T-0150, docs/specs/maptype.md
-// 2.11.7. FEAT-NET-001 (loadMaps) and FEAT-NET-030 (renumbering, saveMaps): contributes to both, closes
-// neither. Real objects: the 514 stock ZMPs (tests/fixtures/zmp/sas.maps) with the stock Maps.ini, real
-// MapType objects with their download subsystems, real RAM tile storages (CacheType=9) for nextMapWithTile, a
-// real TileStorageTypeListSimple. Scripted: an idle transport (no request is ever sent), a content-type
-// registry that lacks a type (a MapType whose constructor throws), and a writer that logs the order of its
-// calls. Expected values are literals taken from the Pascal text (u_MapTypesMainList.pas line numbers in the
+// Ports u_MapTypesMainList.pas (TMapTypesMainList, EMapTypesNoMaps): loadMaps, renumbering and saveMaps. Real
+// objects: the 514 stock ZMPs (tests/fixtures/zmp/sas.maps) with the stock Maps.ini, real MapType objects
+// with their download subsystems, real RAM tile storages (CacheType=9) for nextMapWithTile, a real
+// TileStorageTypeListSimple. Scripted: an idle transport (no request is ever sent), a content-type registry
+// that lacks a type (a MapType whose constructor throws), and a writer that logs the order of its calls.
+// Expected values are literals taken from the Pascal text (u_MapTypesMainList.pas line numbers in the
 // comments).
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/content_type.h"
@@ -57,7 +56,7 @@ using namespace cg::maptype;
 
 namespace {
 
-// docs/specs/net.md 7.0: no test may reach the real network.
+// No test may reach the real network.
 struct ForceNoExternalNetwork {
     ForceNoExternalNetwork() { qputenv("CG_NET_NO_EXTERNAL_NETWORK", "1"); }
 };
@@ -264,7 +263,7 @@ const std::vector<std::pair<QByteArray, int>> kFivePnums = {
     {kMapA, 50}, {kMapB, 7}, {kLayer, 200}, {kMapC, 300}, {kMapD, 120},
 };
 
-// --- proof 1: the corpus ----------------------------------------------------------------------------------
+// --- The corpus ----------------------------------------------------------------------------------
 
 // Literal counts: `asLayer=1` occurs in 190 of the 514 params.txt (one line each, none in a second section),
 // so 324 maps and 190 layers.
@@ -292,7 +291,7 @@ TEST(MapTypesMainListCorpus, TheStock514ZmpsGiveTheMapsAndTheLayersAndNoError) {
     EXPECT_EQ(list->defaultMainMapGuid(), uuid(kGoogle));                       // :183-200
     EXPECT_EQ(list->guiConfigList()->orderedMapGuidList()->size(), 514u);
 
-    // OQ-10: the stock pnum is an oracle for the default ByMapName order; mismatches are reported, not
+    // The stock pnum is an oracle for the default ByMapName order; mismatches are reported, not
     // failed.
     int mismatches = 0;
     std::string firstMismatches;
@@ -308,11 +307,11 @@ TEST(MapTypesMainListCorpus, TheStock514ZmpsGiveTheMapsAndTheLayersAndNoError) {
         }
     }
     RecordProperty("OQ10_pnum_mismatches", mismatches);
-    std::cout << "[OQ-10] pnum mismatches against the stock Maps.ini: " << mismatches << " of 514\n"
+    std::cout << "[pnum] pnum mismatches against the stock Maps.ini: " << mismatches << " of 514\n"
               << firstMismatches;
 }
 
-// --- proof 2: the default and the first main map
+// --- The default and the first main map
 // --------------------------------------------------------------
 
 struct DefaultRow {
@@ -364,7 +363,7 @@ TEST(MapTypesMainListDefault, TheFirstOfTheThreeThatIsAMapElseTheFirstMapOfTheMe
     }
 }
 
-// --- proof 3: the renumbering -----------------------------------------------------------------------------
+// --- The renumbering -----------------------------------------------------------------------------
 
 TEST(MapTypesMainListRenumbering, PnumIsOneToNInMenuOrderAndTheListNotifiesOnceForTheWholeRun) {
     Env env;
@@ -416,7 +415,7 @@ TEST(MapTypesMainListRenumbering, PnumIsOneToNInMenuOrderAndTheListNotifiesOnceF
     EXPECT_EQ(order->notifications.load(), 2);
 }
 
-// --- proof 4: saveMaps and the fixed point
+// --- saveMaps and the fixed point
 // -------------------------------------------------------------------
 
 TEST(MapTypesMainListSave, OneSectionPerMapInMenuOrderThenTheListAndSaveLoadSaveIsAFixedPoint) {
@@ -464,7 +463,7 @@ TEST(MapTypesMainListSave, OneSectionPerMapInMenuOrderThenTheListAndSaveLoadSave
     EXPECT_EQ(listAgain->file().toBytes(), listOut->file().toBytes());
 }
 
-// --- proof 5: the failures
+// --- The failures
 // ------------------------------------------------------------------------------------
 
 TEST(MapTypesMainListFailures, OneBrokenZmpIsReportedOnceAndTheOthersLoad) {
@@ -542,7 +541,7 @@ TEST(MapTypesMainListFailures, TheOnlyMapFailingWhileALayerLoadsIsTheMainMapAbor
     EXPECT_EQ(errors.size(), 1);
 }
 
-// --- proof 6: nextMapWithTile
+// --- nextMapWithTile
 // ----------------------------------------------------------------------------------
 
 // The view: Google projection, zoom 5, centred at 30.0 E 60.0 N. The tile there (top-left rounded, legacy
@@ -651,7 +650,7 @@ TEST(MapTypesMainListNext, TheTileAskedIsTheTopLeftRoundedOneAtTheZoomOfTheView)
     EXPECT_EQ(found->guid(), uuid(kMapC));
 }
 
-// --- proof 8: destruction (run it under --tsan)
+// --- Destruction (run it under --tsan)
 // --------------------------------------------------------------------
 
 // Proves: no hang and a quiet TSan with 514 live download subsystems, and that the list owns the maps (the

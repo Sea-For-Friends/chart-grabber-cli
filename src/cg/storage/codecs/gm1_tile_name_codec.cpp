@@ -11,19 +11,19 @@
 
 namespace cg::storage {
 
-// FEAT-STO-005. u_TileFileNameGM1.pas:54,60-68 GetTileFileName. (!) Y first, X last.
+// u_TileFileNameGM1.pas:54,60-68 GetTileFileName. (!) Y first, X last.
 QString Gm1TileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     return QStringLiteral("z%1/%2/%3").arg(int(zoom)).arg(xy.y()).arg(xy.x());
 }
 
 // u_TileFileNameGM1.pas:35,70-91 GetTilePoint. c_GM1_Expr with '\\' -> '/'.
 //
-// Deviation (gap flagged for T-0021C): legacy's StrToIntA raises EConvertError on a numeric
-// capture that overflows a 32-bit Integer; Qt's QString::toInt() with no `ok` argument instead
-// silently returns 0. Every capture used as a coordinate here is converted with the checked
-// overload and rejected (parse() returns false) on overflow, matching legacy's "this tile name
-// cannot be used" outcome without adopting exception-based control flow the ITileNameCodec
-// interface does not have.
+// Deviation: legacy's StrToIntA raises EConvertError on a numeric capture that overflows a
+// 32-bit Integer; Qt's QString::toInt() with no `ok` argument instead silently returns 0.
+// Every capture used as a coordinate here is converted with the checked overload and rejected
+// (parse() returns false) on overflow, matching legacy's "this tile name cannot be used"
+// outcome without adopting exception-based control flow the ITileNameCodec interface does not
+// have.
 bool Gm1TileNameCodec::parse(QStringView relativePath, geo::PointI& xy, quint8& zoom) const {
     static const QRegularExpression re(QStringLiteral(R"(^(.+/)?[zZ](\d\d?)/(\d+)/(\d+)(\..+)?$)"));
     const QRegularExpressionMatch m = core::platform::matchView(re, relativePath);

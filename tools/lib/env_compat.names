@@ -1,5 +1,5 @@
-# T-0313: the SAS_* tool variables that were renamed to CG_* (one name per line, without the prefix).
-# Read by tools/lib/env_compat.sh and tools/lib/env_compat.py; tools/rename_env_vm.sh rewrites exactly these names.
+# The SAS_* tool variables that were renamed to CG_* (one name per line, without the prefix). Read by
+# tools/lib/env_compat.sh and tools/lib/env_compat.py; tools/rename_env_vm.sh rewrites exactly these names.
 # REMOVE-AFTER: next release (together with the two files above).
 BUILD_ONLY
 CCACHE

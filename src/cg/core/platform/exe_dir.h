@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors.
 
 #pragma once
-// Ports: nothing (T-0396, macOS port). The directory of the running executable, for the bundled proj.db
-// (T-0376).
+// Ports: nothing (macOS port). The directory of the running executable, for the bundled proj.db.
 
 #include <QString>
 

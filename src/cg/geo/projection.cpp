@@ -92,8 +92,7 @@ void ProjectionBasic256x256::internalValidatePixelPosFloat(DoublePoint& p) const
 
 namespace {
 // One clamp rule (never wraps, silently saturates at each edge/axis) applied to all four rect
-// edges instead of transcribed once per edge (T-0016 review finding 14: "the clamp is one rule
-// applied eight times").
+// edges instead of transcribed once per edge.
 template <class Rect, class T> void clampRectEdges(Rect& r, T lo, T hi) noexcept {
     r.left = std::clamp(r.left, lo, hi);
     r.top = std::clamp(r.top, lo, hi);
@@ -229,8 +228,8 @@ RectI ProjectionBasic256x256::pixelRect2TileRect(const RectI& r) const {
     internalValidatePixelRect(clamped);
     // u_ProjectionBasic256x256.pas:1331-1341 ("shr 8"/"(x+255) shr 8"). Computed in qint64 so the
     // zoom-23 boundary (pixels_ == INT_MAX) never triggers signed overflow; the true (unwrapped)
-    // value is what "shr 8" on the non-negative bit pattern already produces (docs/specs/geo.md
-    // §2.5.2: the tile rect *covers* the pixel rect -- left/top round in, right/bottom round out).
+    // value is what "shr 8" on the non-negative bit pattern already produces (the tile rect
+    // *covers* the pixel rect -- left/top round in, right/bottom round out).
     const qint64 left = static_cast<qint64>(clamped.left) / 256;
     const qint64 top = static_cast<qint64>(clamped.top) / 256;
     const qint64 right = (static_cast<qint64>(clamped.right) + 255) / 256;
@@ -315,7 +314,7 @@ RectI ProjectionBasic256x256::tileRect2PixelRect(const RectI& r) const {
     RectI clamped = r;
     internalValidateTileRect(clamped);
     // u_ProjectionBasic256x256.pas:1560-1578: Left/Top are NOT guarded, only Right/Bottom are --
-    // reproduced exactly, including that asymmetry (docs/specs/geo.md §2.5.1).
+    // reproduced exactly, including that asymmetry.
     const int left = wrapInt32(static_cast<qint64>(clamped.left) * 256);
     const int top = wrapInt32(static_cast<qint64>(clamped.top) * 256);
     int right = wrapInt32(static_cast<qint64>(clamped.right) * 256);
@@ -429,7 +428,7 @@ void ProjectionBasic256x256::validateTileRect(RectI& r) const {
 
 void ProjectionBasic256x256::validatePixelPos(PointI& p, bool cycleMap) const {
     // u_ProjectionBasic256x256.pas:1627-1653.
-    // *** Legacy bug D-1, reproduced on purpose (docs/specs/geo.md §2.5.3, §10 D-1): the Y branch
+    // *** Legacy bug, reproduced on purpose: the Y branch
     // is missing its "> pixels_" test, so EVERY non-negative Y is replaced by pixels_. Do not fix
     // this -- ValidatePixelPosReproducesLegacyYBug pins it, and the port must move the map under
     // the cursor by the same (wrong) amount the Windows build does. ***
@@ -445,7 +444,8 @@ void ProjectionBasic256x256::validatePixelPos(PointI& p, bool cycleMap) const {
     }
 }
 void ProjectionBasic256x256::validatePixelPosStrict(PointI& p, bool cycleMap) const {
-    // u_ProjectionBasic256x256.pas:1715-1743: correct (no D-1 bug here).
+    // u_ProjectionBasic256x256.pas:1715-1743: correct (the clamping defect of the other conversions is absent
+    // here).
     if (p.x() < 0) {
         p.setX(cycleMap ? p.x() % pixels_ + pixels_ : 0);
     } else if (p.x() >= pixels_) {
@@ -459,7 +459,7 @@ void ProjectionBasic256x256::validatePixelPosStrict(PointI& p, bool cycleMap) co
 }
 void ProjectionBasic256x256::validatePixelPosFloat(DoublePoint& p, bool cycleMap) const {
     // u_ProjectionBasic256x256.pas:1655-1683. Int() is truncation toward zero: std::trunc, never
-    // std::floor and never std::fmod (docs/specs/geo.md §2.5.3).
+    // std::floor and never std::fmod.
     if (p.x() < 0) {
         p.setX(cycleMap ? p.x() - std::trunc(p.x() / pixelsFloat_) * pixelsFloat_ + pixelsFloat_ : 0.0);
     } else if (p.x() > pixelsFloat_) {
@@ -494,8 +494,7 @@ void ProjectionBasic256x256::validatePixelRectFloat(DoubleRect& r) const {
 // --- test without clamping (public Check*) -----------------------------------------------------
 
 namespace {
-// One in-range rule (T-0016 review finding 14), applied per axis/edge instead of transcribed once
-// per Check* method.
+// One in-range rule, applied per axis/edge instead of transcribed once per Check* method.
 template <class T> [[nodiscard]] bool inRange(T v, T lo, T hi) noexcept {
     return v >= lo && v <= hi;
 }

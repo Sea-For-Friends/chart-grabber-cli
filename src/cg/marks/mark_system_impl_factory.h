@@ -38,8 +38,8 @@ using MarkSystemImplFactoryListElementPtr = std::shared_ptr<const IMarkSystemImp
 class IMarkSystemImplFactoryListStatic {
 public:
     virtual ~IMarkSystemImplFactoryListStatic() = default;
-    // IEnumGUID: the guids in ascending GUID order (CompareGUIDs), not registration order (spec marks.md §2.6
-    // Ruling A.1: the legacy list is a sorted GUID set).
+    // IEnumGUID: the guids in ascending GUID order (CompareGUIDs), not registration order (the legacy list is
+    // a sorted GUID set).
     [[nodiscard]] virtual std::vector<QUuid> guidEnum() const = 0;
     [[nodiscard]] virtual MarkSystemImplFactoryListElementPtr
     get(const QUuid& guid) const = 0; // null when unknown

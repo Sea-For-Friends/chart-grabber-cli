@@ -7,8 +7,7 @@
 //
 // Ten bytes, little-endian: bytes 0..7 hold the 64-bit significand with an EXPLICIT integer bit (bit 63),
 // bytes 8..9 hold the sign (bit 15) and the 15-bit exponent biased by 16383. Conversion is explicit, never
-// through `long double` or a memcpy into a floating type. See docs/handoffs/T-0109.md for what is and is not
-// established about the files that real Win32/Win64 builds wrote.
+// through `long double` or a memcpy into a floating type.
 
 #include <cstdint>
 

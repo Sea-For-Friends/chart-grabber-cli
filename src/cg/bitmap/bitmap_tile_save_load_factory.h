@@ -4,10 +4,9 @@
 
 #pragma once
 // Ports: Src/BitmapTileSaveLoad/i_BitmapTileSaveLoadFactory.pas:31-105 (the two enums and the interface) and
-// Src/BitmapTileSaveLoad/u_BitmapTileSaveLoadFactory.pas:36-335 (TBitmapTileSaveLoadFactory),
-// docs/specs/bitmap.md §2.6. Not ported in stage 0: the 32-to-8 converter and the format-id provider of the
-// constructor (:150-155), the performance counter lists (GetValidPerfCounterList :131-138), the 8-bit PNG
-// branch (group O-3, a refusal here).
+// Src/BitmapTileSaveLoad/u_BitmapTileSaveLoadFactory.pas:36-335 (TBitmapTileSaveLoadFactory). Not ported:
+// the 32-to-8 converter and the format-id provider of the constructor (:150-155), the performance counter
+// lists (GetValidPerfCounterList :131-138), the 8-bit PNG branch (a refusal here).
 
 #include "cg/bitmap/bitmap32_buffer_factory.h"
 #include "cg/bitmap/bitmap_tile_save_load.h"

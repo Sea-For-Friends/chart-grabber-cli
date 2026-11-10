@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T-0062 / FEAT-GEO-034 (held open): vectors for the SYSTEMNOCASE collation of Marks.db3.
+"""Vectors for the SYSTEMNOCASE collation of Marks.db3.
 
 Writes tests/fixtures/marks/system_nocase_vectors.tsv. The comparison below is transcribed from the
 Pascal source of mORMot 2 (checkout 2.4.17538, head b770705, 2026-10-11) statement by statement and

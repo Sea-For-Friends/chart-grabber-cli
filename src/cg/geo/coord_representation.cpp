@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_CoordRepresentation.pas (persisted-id mapping), u_CoordRepresentationConfig.pas (the
-// value half). docs/specs/geo.md:1896-1968. FEAT-GEO-004.
+// value half).
 #include "cg/geo/coord_representation.h"
 
 #include <cstddef>

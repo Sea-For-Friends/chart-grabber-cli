@@ -9,7 +9,7 @@
 //
 // lon/lat <-> "relative" (the unit square, (0,0) = north-west, (1,1) = south-east) for the three
 // native formulas the app ships built in. Everything else in cg::geo is built on relative space.
-// Immutable snapshot, no locks (docs/specs/geo.md §8.1).
+// Immutable snapshot, no locks.
 
 #include "cg/core/hash.h"
 #include "cg/geo/datum.h"
@@ -114,7 +114,7 @@ public:
         return {(relative.x() - 0.5) * mul, (0.5 - relative.y()) * mul};
     }
     [[nodiscard]] LonLat metr2LonLat(DoublePoint p) const final {
-        // u_ProjectionTypeBase.pas:316-325 -- the legacy sign defect, reproduced (§13 Q-3):
+        // u_ProjectionTypeBase.pas:316-325 -- the legacy sign defect, reproduced:
         // `x * mul - 0.5` is NOT the inverse of `(relative.x - 0.5) * mul` above (that would be
         // `x * mul + 0.5`). Metr2LonLatIsNotTheInverse pins this exactly.
         const double mul = 1.0 / (2.0 * std::numbers::pi * datum_->radiusA());
@@ -194,7 +194,7 @@ private:
     // override of the public validateLonLatPos/Rect has no effect on lonLat2Relative,
     // lonLatRect2RelativeRect or lonLat2Metr/metr2LonLat (they all call these Internal helpers).
     // Legacy asserts here in a debug build and clamps silently in release; the port never
-    // Q_ASSERT()s (docs/specs/geo.md §2.5.3) -- real maps do reach these paths through rounding.
+    // Q_ASSERT()s -- real maps do reach these paths through rounding.
     void validateLonLatPosInternal(LonLat& p) const noexcept {
         p.lon = std::clamp(p.lon, validLonLatRect_.left, validLonLatRect_.right);
         p.lat = std::clamp(p.lat, validLonLatRect_.bottom, validLonLatRect_.top);

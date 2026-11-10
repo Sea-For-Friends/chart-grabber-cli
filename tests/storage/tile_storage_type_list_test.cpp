@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-001 (cache-type id -> storage type),
-// FEAT-STO-018 (SQLite region), FEAT-STO-019/020/021 (single-file SQLite), FEAT-STO-026 (GC tick).
-// Ports u_TileStorageTypeListSimple.pas / u_TileStorageTypeList.pas / u_TileStorageTypeListItem.pas;
-// no legacy DUnit exists. Each case has its own temporary cache and its own list.
+// Covers: cache-type id -> storage type, the SQLite region and single-file SQLite types, the GC
+// tick. Ports u_TileStorageTypeListSimple.pas / u_TileStorageTypeList.pas /
+// u_TileStorageTypeListItem.pas; no legacy DUnit exists. Each case has its own temporary cache and
+// its own list.
 #include "cg/core/content_type.h"
 #include "cg/core/garbage_collector_thread.h"
 #include "cg/core/path_config.h"
@@ -135,7 +135,7 @@ TEST(TileStorageTypeListSimple, RegistersEveryLandedBackendInLegacyOrder) {
     // OsmAnd+ really defaults into the GlobalMapper folder (legacy GMTilesPath).
     EXPECT_EQ(rig.list.itemByCode(44)->storageType()->basePath(),
               rig.list.itemByCode(4)->storageType()->basePath());
-    // T-0333 (owner 2026-10-21): BerkeleyDB (6) and BerkeleyDB Versioned (61) are not registered any more.
+    // BerkeleyDB (6) and BerkeleyDB Versioned (61) are not registered any more.
     for (const int missing : {5, 6, 7, 8, 51, 61, 99}) {
         EXPECT_EQ(rig.list.itemByCode(missing), nullptr) << missing;
     }
@@ -162,7 +162,7 @@ TEST(TileStorageTypeListSimple, EveryBackendBuiltByIdReadsAndWritesATile) {
         SCOPED_TRACE(static_cast<int>(id));
         const ITileStoragePtr storage = rig.build(id);
         ASSERT_NE(storage, nullptr);
-        // zoom 11 (zero-based): SQLite region files at <= 10 are legacy's "fixed" entries (L-94)
+        // zoom 11 (zero-based): SQLite region files at <= 10 are legacy's "fixed" entries
         const PointI xy{5, 7};
         const QByteArray data("tile bytes");
         const auto saved =
@@ -194,10 +194,10 @@ TEST(TileStorageTypeListSimple, GcTickReachesTheSqliteRegionStorageOnly) {
     rig.gc.notify();
 }
 
-// FEAT-STO-018, FEAT-STO-026. The ticks come from the GC thread while the test thread
-// uses a real storage built through the list: the SQLite region gate runs against save/load, and the last
-// reference to a storage is dropped while ticks continue. Deterministic: every operation succeeds, the
-// process survives (TSan is the judge of the races), the subscriptions are gone at the end.
+// The ticks come from the GC thread while the test thread uses a real storage built through the list: the
+// SQLite region gate runs against save/load, and the last reference to a storage is dropped while ticks
+// continue. Deterministic: every operation succeeds, the process survives (TSan is the judge of the
+// races), the subscriptions are gone at the end.
 template <class Pred> bool waitFor(Pred done) { // bounded: a condition, never a fixed sleep
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
     while (!done()) {

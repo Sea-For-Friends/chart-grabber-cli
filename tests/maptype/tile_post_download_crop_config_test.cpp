@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-033. Ports Network/u_TilePostDownloadCropConfigStatic.pas;
-// docs/specs/maptype.md §2.6.6, §7.3 (crop/cut validity), §7.2 (corpus keys).
+// Ports Network/u_TilePostDownloadCropConfigStatic.pas: crop/cut validity and the corpus keys.
 #include "cg/core/config_provider_ini.h"
 #include "cg/maptype/tile_post_download_crop_config.h"
 
@@ -89,10 +88,9 @@ TEST(TilePostDownloadCropConfigStatic, CutSkipItemMatchesTheItemAndTheItemMinusC
     EXPECT_FALSE(none.cutSkipItem({1, 1}, {2, 3}));
 }
 
-// Real corpus: the TileRLeft/Top/Right/Bottom and Cut* keys of every stock params.txt. The
-// oracle is a plain `grep -iE '^tiler(left|top|right|bottom)='` over the fixture (2026-10-12):
-// nine ZMPs carry a crop rectangle, all of them (0,0,w,h) with w,h in 180..512; no ZMP has a Cut*
-// key. (Spec §2.6.6's remark "all nine crop rects are 0,0,0,0" is a misreading of the count 9.)
+// Real corpus: the TileRLeft/Top/Right/Bottom and Cut* keys of every stock params.txt. The oracle
+// is a plain `grep -iE '^tiler(left|top|right|bottom)='` over the fixture (2026-10-12): nine ZMPs
+// carry a crop rectangle, all of them (0,0,w,h) with w,h in 180..512; no ZMP has a Cut* key.
 TEST(TilePostDownloadCropConfigStatic, StockCorpusHasNineCropsAndNoCuts) {
     CG_SKIP_IF_NO_CORPUS();
     const std::map<QString, RectI> expected = {

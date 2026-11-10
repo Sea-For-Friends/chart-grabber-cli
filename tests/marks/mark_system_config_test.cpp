@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (held open). Ports u_MarkSystemConfig.pas,
-// u_MarkSystemImplConfigBase.pas, SML/u_MarkSystemImplConfigSML.pas, mORMot/u_MarkSystemImplConfigORM.pas;
-// docs/specs/marks.md section 2.6.
+// Ports u_MarkSystemConfig.pas, u_MarkSystemImplConfigBase.pas, SML/u_MarkSystemImplConfigSML.pas,
+// mORMot/u_MarkSystemImplConfigORM.pas.
 #include "cg/core/config_provider_ini.h"
 #include "cg/core/ini_file.h"
 #include "cg/marks/c_mark_system.h"
@@ -60,7 +59,7 @@ TEST(MarkSystemConfig, FixtureRoundTripIsByteIdentical) {
     EXPECT_EQ(root->file().toBytes(), original);
 }
 
-// LC-6 (spec section 8, reproduced): ActiveIndex stores an id, ids are re-issued densely on load.
+// A legacy defect, reproduced: ActiveIndex stores an id, ids are re-issued densely on load.
 TEST(MarkSystemConfig, ActiveIndexIsAnIdReissuedOnLoad) {
     m::MarkSystemConfig config;
     const auto sml = std::make_shared<m::MarkSystemImplConfigSML>(QStringLiteral("a.sml"), false);
@@ -136,7 +135,7 @@ TEST(MarkSystemConfig, WritesSmlAndOrmItemsAndReadsThemBack) {
     EXPECT_EQ(orm->forcedSchemaName(), QStringLiteral("sch"));
 }
 
-// Read errors (:214-256), missing ActiveIndex (-1, :210), a second read accumulates (L row).
+// Read errors (:214-256), missing ActiveIndex (-1, :210), a second read accumulates.
 TEST(MarkSystemConfig, ReadSkipsBadItemsAndAccumulatesOnSecondRead) {
     const QByteArray text = "[MarkSystemConfig]\r\n"
                             "Count=3\r\n"
@@ -195,7 +194,7 @@ TEST(MarkSystemConfig, DeleteActiveMovesToSmallestIdAndNotifiesOnlyOnChange) {
 
     EXPECT_EQ(config.add(m::cSMLMarksDbGUID, QStringLiteral("y"), impl, false), 4); // ids are not reused
     EXPECT_EQ(config.add(m::cSMLMarksDbGUID, QStringLiteral("z"), nullptr, false),
-              0); // D-77: nil impl ignored
+              0); // nil impl ignored
     config.update(4, m::cSMLMarksDbGUID, QStringLiteral("w"), nullptr);
     EXPECT_EQ(config.byId(4)->displayName(), QStringLiteral("y"));
     EXPECT_EQ(config.count(), 1);

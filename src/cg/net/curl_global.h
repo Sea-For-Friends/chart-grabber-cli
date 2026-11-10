@@ -4,12 +4,13 @@
 
 #pragma once
 // Ports: the process-wide libcurl init/cleanup implied by Src/Network/Curl/u_CurlHttpClient.pas
-// (legacy calls LibCurlInitialize([giAll], GDllName.Curl) once at startup). docs/specs/net.md
-// §2.8.1. FEAT-NET-009.
+// (legacy calls LibCurlInitialize([giAll], GDllName.Curl) once at startup).
 //
 // Must be called exactly once, from main(), BEFORE any worker thread starts, and cleaned up once
-// after every worker has joined (docs/specs/net.md §2.8.1 rule 1). We link libcurl rather than
-// dlopen it [D-7], so this is curl_global_init/cleanup directly, not a DLL load.
+// after every worker has joined. We link libcurl rather than dlopen it, so this is
+// curl_global_init/cleanup directly, not a DLL load.
+
+#include <QByteArray>
 
 namespace cg::net {
 
@@ -17,5 +18,7 @@ void curlGlobalInit();
 void curlGlobalCleanup();
 
 [[nodiscard]] unsigned curlVersionNum(); // curl_version_info()->version_num
+// The User-Agent of the 403 retry (no legacy counterpart): "curl/" + curl_version_info()->version, read once.
+[[nodiscard]] QByteArray curlUserAgent();
 
 } // namespace cg::net

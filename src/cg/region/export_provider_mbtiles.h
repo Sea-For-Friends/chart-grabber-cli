@@ -5,7 +5,7 @@
 #pragma once
 // Ports: Src/RegionProcess/Export/MBTiles/u_ExportProviderMBTiles.pas:188-256 (PrepareTask). The provider's
 // frame plumbing (GetProvider, PrepareBitmapTileProviders :154-186, the recompose arguments) is not ported:
-// the recompose path is held open (FEAT-REG-069). docs/specs/region-export.md 2.7.
+// the recompose path is not ported.
 
 #include "cg/geo/geometry_lonlat.h"
 #include "cg/geo/tile_count.h"

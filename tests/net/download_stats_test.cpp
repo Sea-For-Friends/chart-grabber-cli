@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0156: DownloadInfo start values (u_DownloadInfoSimple.pas:62-73, Add :75-87, Reset :109-118).
+// DownloadInfo start values (u_DownloadInfoSimple.pas:62-73, Add :75-87, Reset :109-118).
 #include "cg/net/download_stats.h"
 
 #include <gtest/gtest.h>

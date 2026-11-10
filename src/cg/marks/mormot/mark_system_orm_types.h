@@ -3,9 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// FEAT-GEO-034 (held open). Ports: Src/MarksDB/mORMot/t_MarkSystemORM.pas
-// (docs/specs/marks.md §2.9.14). TID is qint64; TIDDynArray / the *DynArray aliases are
-// std::vector at their users.
+// Ports: Src/MarksDB/mORMot/t_MarkSystemORM.pas. TID is qint64; TIDDynArray / the
+// *DynArray aliases are std::vector at their users.
 
 #include "cg/geo/geometry_lonlat.h"
 #include "cg/marks/mormot/mark_system_orm_model.h"

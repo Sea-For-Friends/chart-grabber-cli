@@ -5,7 +5,6 @@
 #pragma once
 // Ports: the three libcurl callback functions of Src/Network/Curl/u_CurlHttpClient.pas:110-175
 // (CurlWriteHeaderCallBack, CurlWriteDataCallBack, CurlProgressCallBack/CurlProgressCallBack2).
-// docs/specs/net.md §2.8.4. FEAT-NET-009.
 //
 // Free functions, not member functions: libcurl calls them through a C function pointer, and
 // userdata carries the CurlSession* (CURLOPT_HEADERDATA/WRITEDATA/XFERINFODATA/PROGRESSDATA all
@@ -33,8 +32,8 @@ std::size_t curlWriteCallback(char* data, std::size_t size, std::size_t nmemb, v
 int curlXferInfoCallback(void* userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
                          curl_off_t ulnow);
 
-// CURLOPT_PROGRESSFUNCTION (pre-7.32.0 fallback; deprecated by libcurl but the branch is kept per
-// docs/specs/net.md §2.8.3 row 19-20). Same abort contract, old (double) signature.
+// CURLOPT_PROGRESSFUNCTION (pre-7.32.0 fallback; deprecated by libcurl but the branch is kept).
+// Same abort contract, old (double) signature.
 int curlProgressCallback(void* userdata, double dltotal, double dlnow, double ultotal, double ulnow);
 
 } // namespace cg::net

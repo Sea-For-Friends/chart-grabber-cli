@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-034 (held open). Ports no legacy test (there is none): the write half of
-// u_MarkDbImplORMHelper.pas :230-774 against a copy of tests/fixtures/marks/Marks.db3 (docs/specs/marks.md
-// §2.9.8 W-1, W-3, W-4; statements S-20 ... S-2D, S-40, S-42). Expected values are literals read back with
-// plain SQL on a second connection, never through the helper's caches (except where a test is about a cache).
+// Ports no legacy test (there is none): the write half of u_MarkDbImplORMHelper.pas :230-774 against a copy
+// of tests/fixtures/marks/Marks.db3. Expected values are literals read back with plain SQL on a second
+// connection, never through the helper's caches (except where a test is about a cache).
 #include "cg/geo/geometry_factory.h"
 #include "cg/marks/mormot/mark_system_impl_orm_client_provider.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"
@@ -37,7 +36,7 @@ using cg::marks::MarkSystemORMError;
 using cg::marks::OrmGeoType;
 using cg::marks::OrmMarkRec;
 
-// ---- insert (W-1, S-20 ... S-2D) ---------------------------------------------------------------------
+// ---- insert ---------------------------------------------------------------------
 
 namespace {
 struct InsertCase {
@@ -266,13 +265,12 @@ TEST(MarkDbImplORMHelperWrite, InsertFillsTheCachesAsLegacy) {
     EXPECT_FALSE(cache.markIdByCategoryIndex->find(9, ids, count));
 }
 
-TEST(MarkDbImplORMHelperWrite, FtsRowFailureThrowsAndRollsBackTechLeadRuling) {
+TEST(MarkDbImplORMHelperWrite, FtsRowFailureThrowsAndRollsBack) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // Tech Lead ruling 2026-10-13 (user may overturn): a dangling MarkFTS row with the id of the next mark
-    // makes S-24 fail. Legacy would NOT fail (forced-id Add seeds its result from the sent id,
-    // mormot.orm.sqlite3.pas :1431, :1468-1469, :1805-1809) and would commit the mark without its FTS row;
-    // the port throws and the helper (useTransactions) rolls everything back. Caches keep the entry (legacy
-    // :764-771 does not undo them).
+    // A dangling MarkFTS row with the id of the next mark makes the FTS insert fail. Legacy would NOT fail
+    // (forced-id Add seeds its result from the sent id, mormot.orm.sqlite3.pas :1431, :1468-1469,
+    // :1805-1809) and would commit the mark without its FTS row; the port throws and the helper
+    // (useTransactions) rolls everything back. Caches keep the entry (legacy :764-771 does not undo them).
     Env env;
     env.exec("INSERT INTO MarkFTS (RowID,mName,mDesc) VALUES (1,'x','y')");
     auto helper = env.helper();
@@ -301,9 +299,10 @@ TEST(MarkDbImplORMHelperWrite, FtsRowFailureThrowsAndRollsBackTechLeadRuling) {
 
 TEST(MarkDbImplORMHelperWrite, FailedMetaInsertRollsBackAndTheStaleCachesGiveTheNextMarkDanglingIds) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // S-2D is checked by legacy (CheckID, :756): a MarkMeta row that already exists for the id (unique mMark)
-    // makes it return 0. The helper rolls back because useTransactions is true; with false the caller does
-    // (u_MarkDbImplORM.pas:717-719). The caches written before the failure stay (L2, spec candidate LC-17).
+    // The meta insert is checked by legacy (CheckID, :756): a MarkMeta row that already exists for the id
+    // (unique mMark) makes it return 0. The helper rolls back because useTransactions is true; with false the
+    // caller does (u_MarkDbImplORM.pas:717-719). The caches written before the failure stay (a legacy defect,
+    // reproduced).
     Env env;
     env.exec("INSERT INTO MarkMeta (mMark,mMeta) VALUES (1,x'00')");
     auto helper = env.helper();
@@ -338,7 +337,7 @@ TEST(MarkDbImplORMHelperWrite, FailedMetaInsertRollsBackAndTheStaleCachesGiveThe
     EXPECT_EQ(env.count("MarkAppearance"), 0);
 }
 
-// ---- picture and appearance de-duplication (S-20, S-21, S-28, S-29) -------------------------------
+// ---- picture and appearance de-duplication -------------------------------
 
 TEST(MarkDbImplORMHelperWrite, ImagesAndAppearancesAreSharedAndLookedUpNoCase) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -363,7 +362,7 @@ TEST(MarkDbImplORMHelperWrite, ImagesAndAppearancesAreSharedAndLookedUpNoCase) {
 
 TEST(MarkDbImplORMHelperWrite, ColdCacheFindsTheStoredRowsBySql) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
-    // a fresh helper has empty caches: S-20 and S-28 answer, the lookup is SYSTEMNOCASE
+    // a fresh helper has empty caches: the database answers, the lookup is SYSTEMNOCASE
     Env env;
     {
         auto first = env.helper();
@@ -379,7 +378,7 @@ TEST(MarkDbImplORMHelperWrite, ColdCacheFindsTheStoredRowsBySql) {
     EXPECT_EQ(b.appearanceId, 1);
     EXPECT_EQ(env.images(), QStringList{QString::fromUtf8("1|Café.png")}); // the stored spelling stays
     EXPECT_EQ(env.count("MarkAppearance"), 1);
-    // and the second helper cached what S-20 answered, under the requested spelling
+    // and the second helper cached what the database answered, under the requested spelling
     EXPECT_NE(
         MarkDbImplORMHelperTestAccess::cache(second).markImageCache->find(QString::fromUtf8("CAFÉ.PNG")),
         nullptr);
@@ -471,7 +470,7 @@ TEST(MarkDbImplORMHelperWrite, ReadOfAMissingImageOrAppearanceThrowsIdIsEmpty) {
     }
 }
 
-// ---- delete one (W-3, S-40) ----------------------------------------------------------------------
+// ---- delete one ----------------------------------------------------------------------
 
 namespace {
 // Three marks: 1 (category 7, hidden, with meta), 2 (category 8), 3 (category 7).
@@ -626,7 +625,7 @@ TEST(MarkDbImplORMHelperWrite, DeleteOneWorksOnAColdCache) {
     EXPECT_EQ(env.rows("SELECT RowID FROM MarkRTree ORDER BY RowID"), (QStringList{"1", "3"}));
 }
 
-// ---- delete many (W-4, S-42) -----------------------------------------------------------------------
+// ---- delete many -----------------------------------------------------------------------
 
 TEST(MarkDbImplORMHelperWrite, DeleteManyOfAnEmptyListIsTrueAndTouchesNothing) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
@@ -704,7 +703,7 @@ TEST(MarkDbImplORMHelperWrite, DeleteFiveHundredAndOneMarksTakesTwoChunks) {
 TEST(MarkDbImplORMHelperWrite, DeleteManyRollsBackOnFailureAndStillClearsTheCaches) {
     CG_SKIP_IF_NO_FIXTURE(cgMarksFixture(QStringLiteral("marks/Marks.db3")));
     // A trigger makes the Mark delete fail after the side tables were deleted in the chunk: the whole
-    // transaction is rolled back (S-42 order: RTree, FTS, Meta, View, Mark).
+    // transaction is rolled back (delete order: RTree, FTS, Meta, View, Mark).
     Env env;
     auto helper = env.helper();
     insertThree(helper);

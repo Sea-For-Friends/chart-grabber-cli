@@ -5,10 +5,10 @@
 #pragma once
 // Ports: u_TileStorageOfMapType.pas
 //
-// docs/specs/storage.md §2.22.3-§2.22.6. The only ITileStorage a map type holds: it owns no tiles, holds ONE
-// current backend built from the map's cache-type code and path, replaces it when the code or the path
-// changes at run time, and forwards every call to whatever backend is current (or answers "nothing").
-// The tile notifier, the mem-cache and the state object survive every replacement.
+// The only ITileStorage a map type holds: it owns no tiles, holds ONE current backend built from the map's
+// cache-type code and path, replaces it when the code or the path changes at run time, and forwards every
+// call to whatever backend is current (or answers "nothing"). The tile notifier, the mem-cache and the state
+// object survive every replacement.
 
 #include "cg/core/content_type.h"
 #include "cg/core/path_config.h"
@@ -31,21 +31,21 @@
 
 namespace cg::storage {
 
-// FEAT-STO-001. Ports TTileStorageOfMapType.
+// Ports TTileStorageOfMapType.
 //
 // Lock order: storageMutex_ -> (the backend type's locks; the mem-cache lock; the state proxy's lock; the
 // version changeable's lock). The backend is built, and the state notification fires (setTarget), INSIDE
-// the non-recursive write lock of storageMutex_, as in legacy (L-c3). A state listener must not call the
-// storage (any member of it, on the same thread): that deadlocks, as in legacy. The tile full-update
-// notification fires after the lock is released.
+// the non-recursive write lock of storageMutex_, as in legacy. A state listener must not call the storage
+// (any member of it, on the same thread): that deadlocks, as in legacy. The tile full-update notification
+// fires after the lock is released.
 //
 // Lifetime: the subscriptions capture `this`; the owner must not destroy the object while a config it
-// listens to can still fire on another thread (legacy: listeners without reference counting, L-c6).
+// listens to can still fire on another thread (legacy: listeners without reference counting).
 class TileStorageOfMapType final : public ITileStorage {
 public:
     // `cacheTileInfo` null: the map has no mem-cache. `mainContentType` null: no backend is ever built; it
     // is owned by the content type registry, which must outlive this object. The performance counter list
-    // of legacy is dropped (core.md:92-94).
+    // of legacy is dropped.
     TileStorageOfMapType(std::shared_ptr<GlobalCacheConfig> globalCacheConfig,
                          geo::ProjectionSetPtr projectionSet, ITileStorageTypeListPtr tileStorageTypeList,
                          std::shared_ptr<IMapVersionFactoryChangeableInternal> versionFactory,
@@ -81,8 +81,8 @@ public:
     [[nodiscard]] core::Result<EnumTileInfoPtr> scanTiles(bool ignoreTne,
                                                           bool ignoreMultiVersionTiles) override;
 
-    // D-165 (T-0275, L-44): the text of the last failed build (path, cache type, cause) while the current
-    // backend is empty because of it; nullopt after a good build and when no build was attempted.
+    // The text of the last failed build (path, cache type, cause) while the current backend is empty
+    // because of it; nullopt after a good build and when no build was attempted.
     [[nodiscard]] std::optional<QString> buildError() const;
     // The cache folder of the current backend (ends with '/'); empty before the first build.
     [[nodiscard]] QString path() const;
@@ -114,8 +114,8 @@ private:
     std::atomic<bool> storageNeedUpdate_{false};
     CacheTypeId currentTypeCode_ = CacheTypeId::Default; // a new Delphi object is zeroed
     QString currentPath_;
-    std::atomic<bool> recordSkipped_{false}; // T-0352: switched on by the run of a snapshot source
-    std::mutex skippedMutex_;                // T-0351: guards skipped_
+    std::atomic<bool> recordSkipped_{false}; // Switched on by the run of a snapshot source
+    std::mutex skippedMutex_;                // Guards skipped_
     std::vector<std::tuple<quint8, int, int, MapVersionInfoPtr, SkippedSave>> skipped_;
     ITileStoragePtr storage_;               // guarded by storageMutex_
     std::optional<QString> lastBuildError_; // guarded by storageMutex_

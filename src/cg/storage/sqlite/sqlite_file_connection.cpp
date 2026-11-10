@@ -164,9 +164,9 @@ core::Result<void> SqliteFileConnection::initialize(SqliteFileInfoPtr existingIn
     if (isReadOnly_) {
         mode = sqlite::SqliteDb::OpenMode::ReadOnly;
         // ports ":218-222" -- 'file:///' + AFileName + '?immutable=1', verbatim (no escaping;
-        // matches legacy, which does none either). legacy-defects.md L-39: a literal '#' or '?' in
-        // the path truncates it (and '?' also drops "immutable"), and '%HH' is percent-decoded --
-        // reproduced verbatim, not sanitised.
+        // matches legacy, which does none either). A literal '#' or '?' in the path truncates it
+        // (and '?' also drops "immutable"), and '%HH' is percent-decoded -- reproduced verbatim,
+        // not sanitised.
         openPath = QStringLiteral("file:///") + fileName_ + QStringLiteral("?immutable=1");
     }
 
@@ -191,10 +191,9 @@ core::Result<void> SqliteFileConnection::initialize(SqliteFileInfoPtr existingIn
     }
 
     if (existingInfo == nullptr) {
-        // ports ":232-240". Legacy reads TFile.GetCreationTime; POSIX has no creation time and
-        // this project already has one approved substitute for it (ADR-0005, docs/specs/storage.md
-        // §8 D-6's neighbouring row; core::platform::file_times.h's own doc comment: "no POSIX
-        // analogue of the ftCreationTime fallback (mtime-only, already an approved ADR-0005 row)").
+        // ports ":232-240". Legacy reads TFile.GetCreationTime; POSIX has no creation time and this
+        // project already has one approved substitute for it, the mtime (see
+        // core::platform::file_times.h).
         auto mtimeSecs = core::platform::fileMTime(fileName_);
         if (!mtimeSecs) {
             return core::Unexpected(mtimeSecs.error());
@@ -215,13 +214,14 @@ core::Result<void> SqliteFileConnection::initialize(SqliteFileInfoPtr existingIn
         fileDate_ = fileInfo_->fileDate();
     }
 
-    // Ports `FEnabled := FTileDataStmt.CheckPrepared(FSQLite3DB) and
-    // FTileInfoStmt.CheckPrepared(FSQLite3DB)` (MBTiles :226-228, same shape in RMaps :283-285 and
-    // OruxMaps :191-193) -- unconditional, on every connection, not only the first one to a file.
-    // Short-circuit `and`: TileInfoStmt is never touched once TileDataStmt comes back cached-false
-    // (F3, legacy-defects L-40). A fresh failure of either raises out of the flavour's constructor
-    // in legacy (uncaught, all the way out through Pool.Acquire -- F1's "Create reached through
-    // Acquire"); ensurePrepared's error Result reproduces that by failing initialize() itself.
+    // Ports
+    // `FEnabled := FTileDataStmt.CheckPrepared(FSQLite3DB) and FTileInfoStmt.CheckPrepared(FSQLite3DB)`
+    // (MBTiles :226-228, same shape in RMaps :283-285 and OruxMaps :191-193) -- unconditional, on
+    // every connection, not only the first one to a file. Short-circuit `and`: TileInfoStmt is
+    // never touched once TileDataStmt comes back cached-false (a legacy defect, reproduced). A
+    // fresh failure of either raises out of the flavour's constructor in legacy (uncaught, all the
+    // way out through Pool.Acquire); ensurePrepared's error Result reproduces that by failing
+    // initialize() itself.
     if (tileDataStmt_ == nullptr || tileInfoStmt_ == nullptr) {
         enabled_ = false;
         return {};
@@ -244,12 +244,12 @@ core::Result<void> SqliteFileConnection::initialize(SqliteFileInfoPtr existingIn
 }
 
 QByteArray SqliteFileConnection::tileContentType(const QByteArray& data) const {
-    // Ports GetTileContentTypeInfo (:264-280), wired in by T-0022C2: sniff the tile's magic bytes
-    // (cg::core::detectContentType, moved from cg::net to cg::core by T-0033), map a match
-    // through contentTypeManager_ (nullptr from the registry counts as "unknown", same as legacy's
-    // FContentTypeManager.GetInfo returning nil), and fall back to the connection's main content
-    // type when the data is empty/null, nothing is sniffed, or the sniffed type is unknown to the
-    // registry -- matches legacy's `if Result = nil then Result := FMainContentType` exactly.
+    // Ports GetTileContentTypeInfo (:264-280): sniff the tile's magic bytes
+    // (cg::core::detectContentType), map a match through contentTypeManager_ (nullptr from the
+    // registry counts as "unknown", same as legacy's FContentTypeManager.GetInfo returning nil),
+    // and fall back to the connection's main content type when the data is empty/null, nothing is
+    // sniffed, or the sniffed type is unknown to the registry -- matches legacy's
+    // `if Result = nil then Result := FMainContentType` exactly.
     if (!data.isEmpty()) {
         const QByteArray detected = core::detectContentType(data);
         if (!detected.isEmpty()) {
@@ -277,12 +277,12 @@ core::Result<TileInfo> SqliteFileConnection::fetchOne(geo::PointI xy, quint8 zoo
         return notFound;
     }
     // Legacy asserts FTileDataStmt/FTileInfoStmt already prepared here (:301, :305) instead of
-    // calling CheckPrepared -- guaranteed by initialize()'s F3 step whenever enabled_ is true.
+    // calling CheckPrepared -- guaranteed by initialize()'s prepare step whenever enabled_ is true.
 
     core::Result<void> bound =
         withData ? tileDataStmt_->bindParams(xy, zoom) : tileInfoStmt_->bindParams(xy, zoom);
     if (!bound) {
-        // Ports ":310-312": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit (F1).
+        // Ports ":310-312": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit.
         return core::Unexpected(bound.error());
     }
 
@@ -325,16 +325,16 @@ core::Result<TileRectInfoPtr> SqliteFileConnection::fetchRectInfo(geo::RectI rec
     }
     auto prep = rectInfoStmt_->ensurePrepared(*db_);
     if (!prep) {
-        // Fresh failure: ports ":353" -> CheckPrepared's raise (:639), uncaught (F1).
+        // Fresh failure: ports ":353" -> CheckPrepared's raise (:639), uncaught.
         return core::Unexpected(prep.error());
     }
     if (!*prep) {
-        // Cached failure: ports ":353-356" -- `FEnabled := False; Exit` (legacy-defects L-40).
+        // Cached failure: ports ":353-356" -- `FEnabled := False; Exit`.
         enabled_ = false;
         return TileRectInfoPtr{};
     }
     if (auto bound = rectInfoStmt_->bindParams(rect, zoom); !bound) {
-        // Ports ":358-360": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit (F1).
+        // Ports ":358-360": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit.
         return core::Unexpected(bound.error());
     }
 
@@ -350,8 +350,7 @@ core::Result<TileRectInfoPtr> SqliteFileConnection::fetchRectInfo(geo::RectI rec
         if (!step || *step != sqlite::SqliteStmt::StepResult::Row) {
             // Ports the loop condition itself: `while StepPrepared = SQLITE_ROW` (:368) ends on
             // DONE or on any step error alike -- legacy never distinguishes them here. Falls
-            // through to the (possibly partial) result below instead of failing the whole call
-            // (legacy-defects L-41, F4).
+            // through to the (possibly partial) result below instead of failing the whole call.
             if (!step) {
                 qCWarning(core::logStorage)
                     << "SqliteFileConnection::fetchRectInfo: step failed:" << step.error().what();
@@ -393,13 +392,13 @@ core::Result<bool> SqliteFileConnection::fetchNext(TileInfo& out, geo::PointI& x
     if (fetchNextState_ == FetchNextState::None) {
         auto prep = enumTilesStmt_->ensurePrepared(*db_);
         if (!prep) {
-            // Fresh failure: ports ":413" -> CheckPrepared's raise (:639), uncaught (F1). Legacy's
+            // Fresh failure: ports ":413" -> CheckPrepared's raise (:639), uncaught. Legacy's
             // raise happens before the `FFetchNextState := fnsError` line, so the state stays
             // fnsNone here too -- the next call re-enters this branch and gets the cached result.
             return core::Unexpected(prep.error());
         }
         if (!*prep) {
-            // Cached failure: ports ":413-419" (legacy-defects L-40).
+            // Cached failure: ports ":413-419".
             fetchNextState_ = FetchNextState::Error;
             enabled_ = false;
             return false;
@@ -453,8 +452,8 @@ core::Result<bool> SqliteFileConnection::fetchNext(TileInfo& out, geo::PointI& x
 }
 
 core::Result<bool> SqliteFileConnection::tileExistsForWrite(geo::PointI xy, quint8 zoom) {
-    // Legacy asserts FTileInfoStmt already prepared here (:474) -- guaranteed by initialize()'s F3
-    // step, same as fetchOne().
+    // Legacy asserts FTileInfoStmt already prepared here (:474) -- guaranteed by initialize()'s
+    // prepare step, same as fetchOne().
     if (auto bound = tileInfoStmt_->bindParams(xy, zoom); !bound) {
         // Ports ":476-478": `FSQLite3DB.RaiseSQLite3Error`. Uncaught here, but the ONE caller
         // (insertOrUpdate) invokes this from inside Insert's own try, so it is caught there.
@@ -479,7 +478,7 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
     }
 
     // Ports ":541", OUTSIDE legacy's try/except: a BEGIN failure raises all the way out of Insert,
-    // uncaught (F1) -- nothing to roll back, since no transaction was ever opened.
+    // uncaught -- nothing to roll back, since no transaction was ever opened.
     if (auto begin = db_->exec(QByteArrayView("BEGIN")); !begin) {
         return core::Unexpected(begin.error());
     }
@@ -487,10 +486,10 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
     // legacy sets Result False FIRST, so if RollbackTransaction itself then raises -- reachable
     // when SQLite already auto-rolled back the whole transaction (FULL/IOERR/NOMEM on the write
     // step, then a fall-through COMMIT also fails, H:535-543) -- that new exception replaces the
-    // assignment and escapes Insert uncaught (review finding 3, legacy-defects.md L-46). Same
-    // convention as the BEGIN failure above (:479-481): propagate as an error Result instead of
-    // swallowing it to False; every call site below is a use of this one shared except handler,
-    // exactly as legacy shares the one except block across every raise path in the try.
+    // assignment and escapes Insert uncaught. Same convention as the BEGIN failure above
+    // (:479-481): propagate as an error Result instead of swallowing it to False; every call site
+    // below is a use of this one shared except handler, exactly as legacy shares the one except
+    // block across every raise path in the try.
     const auto rollbackAndFail = [this]() -> core::Result<bool> {
         if (auto r = db_->exec(QByteArrayView("ROLLBACK")); !r) {
             return core::Unexpected(r.error());
@@ -498,9 +497,9 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
         return false;
     };
     // `FSQLite3DB.CommitTransaction` (:551, :561) is the unconditional LAST statement inside
-    // legacy's try, for every branch that reaches it (including the two N1 branches below) -- so a
-    // COMMIT failure itself is still caught by the except and rolls back, exactly like every other
-    // in-try failure.
+    // legacy's try, for every branch that reaches it (including the two non-raising branches
+    // below) -- so a COMMIT failure itself is still caught by the except and rolls back, exactly
+    // like every other in-try failure.
     const auto commit = [this]() -> bool { return db_->exec(QByteArrayView("COMMIT")).has_value(); };
 
     // Everything from here to CommitTransaction sits inside legacy's try/except (:542-562): a
@@ -508,8 +507,7 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
     // and Insert returns False. A write statement that fails WITHOUT raising -- a CACHED prepare
     // failure, or `StepPrepared <> SQLITE_DONE` for any reason, error or not -- instead falls
     // through to legacy's own unconditional CommitTransaction call, unchanged, and Insert still
-    // returns False (T-0022C1-review.md confirmation review, note N1). Reproduced at both the
-    // update and insert call sites below, not rolled back.
+    // returns False. Reproduced at both the update and insert call sites below, not rolled back.
     auto exists = tileExistsForWrite(xy, zoom);
     if (!exists) {
         return rollbackAndFail();
@@ -518,10 +516,9 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
     if (*exists) {
         if (!overwrite) {
             // Ports the "// Ignore" Exit (:547-550): no COMMIT, no ROLLBACK -- the transaction
-            // stays open on this connection until its next statement. legacy-defects.md L-38,
-            // reproduced verbatim (Rule 3: data-destroying but well-defined, not the Rule 2
-            // crash/UB exception -- see docs/handoffs/T-0022C1-review.md's "open transaction on
-            // Insert-ignore" recommendation).
+            // stays open on this connection until its next statement. A legacy defect,
+            // reproduced verbatim: data-destroying but well-defined, not a crash or undefined
+            // behaviour.
             return false;
         }
 
@@ -533,8 +530,7 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
         }
         if (!*prep) {
             // Cached failure: ports ":517-520" -- `FEnabled := False; Exit` (no raise): UpdateTile
-            // returns False and Insert falls through to CommitTransaction (N1), not the except.
-            // legacy-defects L-40.
+            // returns False and Insert falls through to CommitTransaction, not the except.
             enabled_ = false;
             if (!commit()) {
                 return rollbackAndFail();
@@ -554,7 +550,7 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
         }
         if (!updateStep || *updateStep != sqlite::SqliteStmt::StepResult::Done) {
             // `StepPrepared <> SQLITE_DONE` (:562-equivalent), error or not: UpdateTile returns
-            // False without raising either way (N1) -> falls through to CommitTransaction.
+            // False without raising either way -> falls through to CommitTransaction.
             if (!commit()) {
                 return rollbackAndFail();
             }
@@ -572,7 +568,7 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
         return rollbackAndFail();
     }
     if (!*prep) {
-        // Cached failure: ports ":494-497" (N1, same shape as the update branch above).
+        // Cached failure: ports ":494-497" (same shape as the update branch above).
         enabled_ = false;
         if (!commit()) {
             return rollbackAndFail();
@@ -594,13 +590,13 @@ core::Result<bool> SqliteFileConnection::insertOrUpdate(geo::PointI xy, quint8 z
     if (insertDone) {
         // Ports "if Result then Self.UpdateMetadata(AXY, AZoom)" (:555). A failure here raises in
         // both flavours (MBTiles' invalid zoom, RMaps' RaiseSQLite3Error), caught by the same
-        // except -- Insert rolls back and returns False, discarding the tile just inserted (F2).
+        // except -- Insert rolls back and returns False, discarding the tile just inserted.
         auto meta = updateMetadata(xy, zoom);
         if (!meta) {
             return rollbackAndFail();
         }
     }
-    // `StepPrepared <> SQLITE_DONE` falls through here too (N1): no rollback, straight to commit.
+    // `StepPrepared <> SQLITE_DONE` falls through here too: no rollback, straight to commit.
     if (!commit()) {
         return rollbackAndFail();
     }
@@ -613,16 +609,16 @@ core::Result<bool> SqliteFileConnection::deleteTile(geo::PointI xy, quint8 zoom)
     }
     auto prep = deleteStmt_->ensurePrepared(*db_);
     if (!prep) {
-        // Fresh failure: ports ":578" -> CheckPrepared's raise (:639), uncaught (F1).
+        // Fresh failure: ports ":578" -> CheckPrepared's raise (:639), uncaught.
         return core::Unexpected(prep.error());
     }
     if (!*prep) {
-        // Cached failure: ports ":578-581" (legacy-defects L-40).
+        // Cached failure: ports ":578-581".
         enabled_ = false;
         return false;
     }
     if (auto bound = deleteStmt_->bindParams(xy, zoom); !bound) {
-        // Ports ":583-585": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit (F1).
+        // Ports ":583-585": `FSQLite3DB.RaiseSQLite3Error`, uncaught in this unit.
         return core::Unexpected(bound.error());
     }
 

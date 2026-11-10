@@ -8,8 +8,8 @@
 //
 // The session record of one region download: map type and version objects, the zoom and its zoom
 // list, the polygon, the replace / check flags and the progress counters. One pure interface and
-// its one implementation in this header (brief 6a). Not thread-safe: the progress info of the
-// download (RD-6) is its lock. save / load are declared here and ported by T-0165.
+// its one implementation in this header. Not thread-safe: the progress info of the download is
+// its lock. save / load are declared here and defined in download_session_save_load.cpp.
 
 #include "cg/core/config_provider.h"
 #include "cg/geo/geo_types.h"
@@ -132,10 +132,11 @@ public:
     void setAutosavePrefix(const QString& value) override;
     [[nodiscard]] int autosaveInterval() const override;
     void setAutosaveInterval(int value) override;
-    void save(core::IConfigWriter& sessionSection) override; // placeholder until T-0165
+    void save(core::IConfigWriter& sessionSection) override; // defined in download_session_save_load.cpp
     void load(const core::IConfigProviderPtr& sessionSection, const maptype::IMapTypeSet& fullMapsSet,
               const net::IGlobalDownloadConfig& downloadConfig,
-              const geo::GeometryLonLatFactory& lonLatFactory) override; // placeholder until T-0165
+              const geo::GeometryLonLatFactory& lonLatFactory) override; // defined in
+                                                                         // download_session_save_load.cpp
 
 private:
     // _InitSession (:201-228)

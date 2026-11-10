@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-014, FEAT-GEO-015. Ports: Src/GeoCalc/{i_GeoCalc,u_GeoCalc}.pas (docs/specs/geo.md
-// §5). No legacy DUnit test exercises TGeoCalc directly. "Otherwise minimal" per the test policy:
-// the length/perimeter composition rules (open line vs. closed contour, multi sums parts) pinned
-// against a hand-derived value, one perimeter and one area case against a hand-computed value.
+// Ports: Src/GeoCalc/{i_GeoCalc,u_GeoCalc}.pas. No legacy DUnit test exercises TGeoCalc directly.
+// "Otherwise minimal" per the test policy: the length/perimeter composition rules (open line vs.
+// closed contour, multi sums parts) pinned against a hand-derived value, one perimeter and one area
+// case against a hand-computed value.
 //
 // The perimeter/line-length values below are hand-derived from elementary spherical geometry, not
 // from running this port's own code: on a perfect sphere (flattening 0), a geodesic IS a great

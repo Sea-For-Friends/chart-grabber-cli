@@ -2,10 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Tests of src/cg/app/tile_estimate (new code; inherits
-// Src/RegionProcess/Download/frm_ProgressDownload.pas:395-408 GetLenEnd, fr_TilesDownload.pas:205-241
-// GetZoomInfo, u_ThreadDownloadTiles.pas:318-321 classification). T-0190, proofs 1-4, 6, 7 (estimate half).
-// No FEAT tag: the estimate is new behaviour.
+// Tests of src/cg/app/tile_estimate (new code; inherits Src/RegionProcess/Download/
+// frm_ProgressDownload.pas:395-408 GetLenEnd, fr_TilesDownload.pas:205-241 GetZoomInfo,
+// u_ThreadDownloadTiles.pas:318-321 classification). The estimate is new behaviour.
 //
 // Geometry and storage contents: see tile_estimate_rig.h (z6 rectangle: 80 tiles, 10 present of sizes summing
 // to 15000, 6 markers).
@@ -41,7 +40,7 @@ protected:
 
 } // namespace
 
-// Proof 1: tiles is the count the real iterator yields; bbox is the legacy frame's count. Rectangle: z6 80
+// `tiles` is the count the real iterator yields; `bbox` is the legacy frame's count. Rectangle: z6 80
 // tiles, z3 2 tiles, bbox the same (a tile-aligned-by-rounding rectangle has no tile outside its box).
 TEST_F(TileEstimateTest, RectangleTilesAndBboxMatchTheIteratorAndTheHandProduct) {
     const auto area = rect(kLonLeft, kLatTop, kLonRight, kLatBottom);
@@ -58,8 +57,8 @@ TEST_F(TileEstimateTest, RectangleTilesAndBboxMatchTheIteratorAndTheHandProduct)
     EXPECT_EQ(static_cast<size_t>((*result)[1].tiles), iterate(3, area).size());
 }
 
-// Proof 1: a diagonal corridor (parallelogram whose bounding box is the rectangle above): tiles is what the
-// iterator yields, strictly fewer than the 80 of the box; bbox is the box.
+// A diagonal corridor (parallelogram whose bounding box is the rectangle above): tiles is what the iterator
+// yields, strictly fewer than the 80 of the box; bbox is the box.
 TEST_F(TileEstimateTest, DiagonalCorridorHasFewerTilesThanItsBox) {
     const auto area =
         polygon({LonLat{-135.0, 30.0}, LonLat{-120.0, 30.0}, LonLat{-45.0, 10.0}, LonLat{-60.0, 10.0}});
@@ -77,7 +76,7 @@ TEST_F(TileEstimateTest, DiagonalCorridorHasFewerTilesThanItsBox) {
     EXPECT_EQ(storage_->calls.size(), iterated);
 }
 
-// Proof 2: fewer than 500 tiles, every tile is looked up once: exact shares, mean of the present sizes,
+// Fewer than 500 tiles, every tile is looked up once: exact shares, mean of the present sizes,
 // bytes = missing count x mean (GetLenEnd: mean x tiles still to load). A marker is not a present tile; a
 // NotExists / unknown tile is neither; tiles outside the area or at another zoom are not looked at.
 TEST_F(TileEstimateTest, SmallZoomIsSampledInFullAndBytesAreMissingTimesMean) {
@@ -94,8 +93,8 @@ TEST_F(TileEstimateTest, SmallZoomIsSampledInFullAndBytesAreMissingTimesMean) {
     expectMetadataOnlyCalls();
 }
 
-// T-0217 item 5: --replace requests the present tiles again (u_ThreadDownloadTiles.pas:322-325), so they are
-// part of "to download": (80 - 6 markers) x 1500 mean. The "present" share stays what the cache holds.
+// --replace requests the present tiles again (u_ThreadDownloadTiles.pas:322-325), so they are part of
+// "to download": (80 - 6 markers) x 1500 mean. The "present" share stays what the cache holds.
 TEST_F(TileEstimateTest, ReplaceCountsPresentTilesAsToDownload) {
     fillZ6(*storage_);
     const auto result = run({6}, rect(kLonLeft, kLatTop, kLonRight, kLatBottom), 7, {}, true);
@@ -106,10 +105,9 @@ TEST_F(TileEstimateTest, ReplaceCountsPresentTilesAsToDownload) {
     EXPECT_EQ(e.bytesToDownload, 111000);
 }
 
-// T-0217 item 5: with a date (:328-332) a present tile that is not older than it is skipped. Of the ten
-// present tiles two are newer (June 2024), one is older (2023), seven have no load date (requested again, as
-// the worker's dateAtLeast treats an invalid date): 72 x 1500. The same date without --replace changes
-// nothing.
+// With a date (:328-332) a present tile that is not older than it is skipped. Of the ten present tiles two
+// are newer (June 2024), one is older (2023), seven have no load date (requested again, as the worker's
+// dateAtLeast treats an invalid date): 72 x 1500. The same date without --replace changes nothing.
 TEST_F(TileEstimateTest, ReplaceWithADateSkipsTilesNotOlderThanIt) {
     fillZ6(*storage_);
     const auto dated = [&](int x, int y, quint32 size, const QDate& day) {
@@ -134,8 +132,8 @@ TEST_F(TileEstimateTest, ReplaceWithADateSkipsTilesNotOlderThanIt) {
     EXPECT_EQ((*plain)[0].bytesToDownload, 96000);
 }
 
-// T-0252: --retry-missing requests the TNE markers again (u_ThreadDownloadTiles.pas:335-338): without the
-// flag the bytes stay 96000; with it the six markers count as to download: = (64 + 6) x 1500.
+// --retry-missing requests the TNE markers again (u_ThreadDownloadTiles.pas:335-338): without the flag
+// the bytes stay 96000; with it the six markers count as to download: = (64 + 6) x 1500.
 TEST_F(TileEstimateTest, RetryMissingCountsMarkersAsToDownload) {
     fillZ6(*storage_);
     const auto area = rect(kLonLeft, kLatTop, kLonRight, kLatBottom);
@@ -151,9 +149,9 @@ TEST_F(TileEstimateTest, RetryMissingCountsMarkersAsToDownload) {
     EXPECT_EQ((*retried)[0].bytesToDownload, 105000);
 }
 
-// T-0252: with a date (:340-344) a marker that is not older than it is skipped. Of the six markers one is
-// newer (June 2024), one is older (2023), four have no load date (requested again, as the worker's
-// dateAtLeast treats an invalid date): 64 + 5 = 69 x 1500. The date without --retry-missing changes nothing.
+// With a date (:340-344) a marker that is not older than it is skipped. Of the six markers one is newer
+// (June 2024), one is older (2023), four have no load date (requested again, as the worker's dateAtLeast
+// treats an invalid date): 64 + 5 = 69 x 1500. The date without --retry-missing changes nothing.
 TEST_F(TileEstimateTest, RetryMissingWithADateSkipsMarkersNotOlderThanIt) {
     fillZ6(*storage_);
     const auto dated = [&](int x, int y, const QDate& day) {
@@ -177,7 +175,7 @@ TEST_F(TileEstimateTest, RetryMissingWithADateSkipsMarkersNotOlderThanIt) {
     EXPECT_EQ((*plain)[0].bytesToDownload, 96000);
 }
 
-// Proof 2: each zoom uses the mean of its own sample (z3: 4000 from one tile; z6: 1500), not the job's mean.
+// Each zoom uses the mean of its own sample (z3: 4000 from one tile; z6: 1500), not the job's mean.
 TEST_F(TileEstimateTest, EachZoomUsesItsOwnMeanSize) {
     fillZ6(*storage_);
     storage_->put(3, 1, 3, presentTile(4000));
@@ -190,8 +188,8 @@ TEST_F(TileEstimateTest, EachZoomUsesItsOwnMeanSize) {
     EXPECT_FALSE((*result)[1].assumed);
 }
 
-// Proof 2/4: a zoom without any present tile takes the job's overall mean (1500) when another zoom has a
-// sample; it is NOT "assumed". Zooms are answered in the given (unsorted) order.
+// A zoom without any present tile takes the job's overall mean (1500) when another zoom has a sample; it
+// is NOT "assumed". Zooms are answered in the given (unsorted) order.
 TEST_F(TileEstimateTest, ZoomWithoutSampleTakesTheJobMeanNotTheAssumedSize) {
     fillZ6(*storage_);
     const auto result = run({6, 3}, rect(kLonLeft, kLatTop, kLonRight, kLatBottom), 7);
@@ -205,8 +203,8 @@ TEST_F(TileEstimateTest, ZoomWithoutSampleTakesTheJobMeanNotTheAssumedSize) {
     EXPECT_FALSE((*result)[1].assumed);
 }
 
-// Proof 3: 1200 tiles (z10, x 100..139, y 500..529): step ceil(1200 / 500) = 3, so 400 lookups, of the tiles
-// at iteration index 0, 3, 6, ... The tiles between (index % 3 != 0) are present with a decoy size: a wrong
+// 1200 tiles (z10, x 100..139, y 500..529): step ceil(1200 / 500) = 3, so 400 lookups, of the tiles at
+// iteration index 0, 3, 6, ... The tiles between (index % 3 != 0) are present with a decoy size: a wrong
 // step reads them. Of the 400 sampled, 100 are present (2000), 100 markers, 200 unknown: shares 0.25 / 0.25.
 TEST_F(TileEstimateTest, TwelveHundredTilesAreSampledEveryThirdTile) {
     const auto area = rect(-144.84375, 4.214943141390642, -130.78125, -6.315298538330036);
@@ -238,7 +236,7 @@ TEST_F(TileEstimateTest, TwelveHundredTilesAreSampledEveryThirdTile) {
     expectMetadataOnlyCalls();
 }
 
-// Proof 4: an empty cache: every zoom is assumed, bytes = tiles x assumeTileKb x 1024.
+// An empty cache: every zoom is assumed, bytes = tiles x assumeTileKb x 1024.
 TEST_F(TileEstimateTest, EmptyCacheUsesTheAssumedTileSizeEverywhere) {
     const auto result = run({3, 6}, rect(kLonLeft, kLatTop, kLonRight, kLatBottom), 7);
     ASSERT_TRUE(result.has_value());
@@ -251,9 +249,9 @@ TEST_F(TileEstimateTest, EmptyCacheUsesTheAssumedTileSizeEverywhere) {
     EXPECT_DOUBLE_EQ((*result)[1].shareMarkedMissing, 0.0);
 }
 
-// T-0243 (weather-sources.md 5.1): assumeEmptyCache -- a cache full of tiles and markers is not looked at (no
-// storage call), nothing counts as present, marked, replaced or retried even with --replace /
-// --retry-missing, every figure is the assumed size; the tile counts are still those of the area.
+// assumeEmptyCache -- a cache full of tiles and markers is not looked at (no storage call), nothing counts as
+// present, marked, replaced or retried even with --replace / --retry-missing, every figure is the assumed
+// size; the tile counts are still those of the area.
 TEST_F(TileEstimateTest, AssumeEmptyCacheLooksAtNoStorageAndAssumesEveryTile) {
     fillZ6(*storage_);
     const auto area = rect(kLonLeft, kLatTop, kLonRight, kLatBottom);
@@ -277,8 +275,8 @@ TEST_F(TileEstimateTest, AssumeEmptyCacheLooksAtNoStorageAndAssumesEveryTile) {
     EXPECT_TRUE((*result)[1].assumed);
 }
 
-// Proof 4: markers do not give a size: one marker and no present tile anywhere is still "assumed", and the
-// marker is taken out of the tiles to load.
+// Markers do not give a size: one marker and no present tile anywhere is still "assumed", and the marker
+// is taken out of the tiles to load.
 TEST_F(TileEstimateTest, MarkersAloneDoNotMakeAMeanSize) {
     storage_->put(6, 10, 28, markerTile());
     const auto result = run({6}, rect(kLonLeft, kLatTop, kLonRight, kLatBottom), 3);
@@ -288,8 +286,8 @@ TEST_F(TileEstimateTest, MarkersAloneDoNotMakeAMeanSize) {
     EXPECT_EQ((*result)[0].bytesToDownload, 242688); // 79 x 3 x 1024
 }
 
-// Proof 6: a storage error reaches the caller at once (no partial result, no further lookups). The failing
-// call is the first of the second zoom (ordinal 3 after the two tiles of z3).
+// A storage error reaches the caller at once (no partial result, no further lookups). The failing call is
+// the first of the second zoom (ordinal 3 after the two tiles of z3).
 TEST_F(TileEstimateTest, StorageErrorIsReturnedAndEndsTheJob) {
     storage_->failAtCall = 3;
     const auto result = run({3, 6}, rect(kLonLeft, kLatTop, kLonRight, kLatBottom));
@@ -299,7 +297,7 @@ TEST_F(TileEstimateTest, StorageErrorIsReturnedAndEndsTheJob) {
     EXPECT_EQ(storage_->calls.size(), 3U);
 }
 
-// Proof 6: stop requested before the call: Cancelled, no lookup at all.
+// Stop requested before the call: Cancelled, no lookup at all.
 TEST_F(TileEstimateTest, StopRequestedBeforeTheCallReturnsAtOnce) {
     std::stop_source source;
     source.request_stop();
@@ -309,7 +307,7 @@ TEST_F(TileEstimateTest, StopRequestedBeforeTheCallReturnsAtOnce) {
     EXPECT_EQ(storage_->calls.size(), 0U);
 }
 
-// Proof 6: stop requested during the walk (while the third lookup runs): the fourth tile is not looked up.
+// Stop requested during the walk (while the third lookup runs): the fourth tile is not looked up.
 TEST_F(TileEstimateTest, StopRequestedDuringTheWalkEndsItBetweenTiles) {
     std::stop_source source;
     storage_->onCall = [&source](int ordinal) {
@@ -323,7 +321,7 @@ TEST_F(TileEstimateTest, StopRequestedDuringTheWalkEndsItBetweenTiles) {
     EXPECT_EQ(storage_->calls.size(), 3U);
 }
 
-// S-13: the caller refuses when no zoom has a tile.
+// The caller refuses when no zoom has a tile.
 TEST(TileEstimateHelpers, AnyTileIsFalseOnlyWhenEveryZoomIsEmpty) {
     ZoomEstimate empty;
     ZoomEstimate some;
@@ -351,10 +349,9 @@ private:
 
 } // namespace
 
-// Proof 7: the golden text of a small estimate. Layout (handoff): columns zoom, z+1 (1-based), tiles, bbox,
-// present, marked missing, to download; shares in percent with one decimal; bytes through dataSizeConvert
-// with
-// "~" (4000 / 1024 = 3.9 KB; 97000 / 1024 = 94.7 KB; total 101000 / 1024 = 98.6 KB); two blanks between
+// The golden text of a small estimate. Layout: columns zoom, z+1 (1-based), tiles, bbox, present, marked
+// missing, to download; shares in percent with one decimal; bytes through dataSizeConvert with "~"
+// (4000 / 1024 = 3.9 KB; 97000 / 1024 = 94.7 KB; total 101000 / 1024 = 98.6 KB); two blanks between
 // right-aligned columns; a total row summing tiles, bbox and bytes.
 TEST_F(TableLocale, EstimateTableGolden) {
     ZoomEstimate a;
@@ -379,8 +376,7 @@ TEST_F(TableLocale, EstimateTableGolden) {
     EXPECT_EQ(estimateTable({a, b}, converter).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
 }
 
-// Proof 7: an assumed row carries "(assumed)" after its bytes, and so does the total (560 KB = 573440 /
-// 1024).
+// An assumed row carries "(assumed)" after its bytes, and so does the total (560 KB = 573440 / 1024).
 TEST_F(TableLocale, EstimateTableMarksAssumedSizes) {
     ZoomEstimate a;
     a.zoom = 6;
@@ -400,7 +396,7 @@ namespace {
 using BytesOnDiskTest = TileEstimateTest;
 }
 
-// T-0202 proof 3a: bytesOnDisk = round(tiles x (1 - shareMarkedMissing) x mean), mean as bytesToDownload's.
+// bytesOnDisk = round(tiles x (1 - shareMarkedMissing) x mean), mean as bytesToDownload's.
 // z6: 80 tiles, 6 markers (0.075), mean 1500 -> 80 x 0.925 x 1500 = 111000 (the present tiles count: they are
 // on disk; only the markers are not). z3 has no sample: the job mean 1500 -> 2 x 1 x 1500 = 3000.
 TEST_F(BytesOnDiskTest, CountsEveryTileThatIsNotMarkedMissingAtTheMeanSize) {
@@ -424,10 +420,10 @@ TEST_F(BytesOnDiskTest, UsesTheAssumedTileSizeWhenNoTileIsPresent) {
     EXPECT_EQ((*result)[0].bytesOnDisk, 530432);
 }
 
-// T-0241: legacy rule, kept. CreateProjectedPolygonByLonLatPolygon (u_GeometryProjectedFactory.pas:438-473)
-// drops every vertex within 1 pixel of the previous one (TEnumDoublePointFilterEqual.Next,
-// u_EnumDoublePointFilterEqual.pas: 93-125), and a one-vertex polygon has an empty bounding rectangle, which
-// IntersecProjectedRect (u_GeoFunc.pas: 503-506, 528-538) reports as no intersection, so
+// Legacy rule, kept. CreateProjectedPolygonByLonLatPolygon (u_GeometryProjectedFactory.pas:438-473) drops
+// every vertex within 1 pixel of the previous one (TEnumDoublePointFilterEqual.Next,
+// u_EnumDoublePointFilterEqual.pas:93-125), and a one-vertex polygon has an empty bounding rectangle, which
+// IntersecProjectedRect (u_GeoFunc.pas:503-506, 528-538) reports as no intersection, so
 // CalcTileCountInProjectedSinglePolygon (u_GeometryFunc.pas:733-800) gives 0 tiles. 0.5 x 0.4 degrees at 50.5
 // N is 0.36 x 0.45 pixel at zoom 0 and 0.71 x 0.90 pixel at zoom 1, so those two zooms count 0; at zoom 2
 // (1.4 x 1.8 pixel) the vertices survive. The legacy bbox frame (bboxTiles) still counts the one tile, and
@@ -446,9 +442,8 @@ TEST_F(TileEstimateTest, RectangleSmallerThanOnePixelHasNoTilesLikeLegacyButTheB
     }
 }
 
-// T-0241: the same corner of the world, wide enough (1.5 degrees = 1.07 pixel at zoom 0) to keep its
-// vertices: the one tile is counted, so the empty answer above comes from the 1-pixel filter and nothing
-// else.
+// The same corner of the world, wide enough (1.5 degrees = 1.07 pixel at zoom 0) to keep its vertices:
+// the one tile is counted, so the empty answer above comes from the 1-pixel filter and nothing else.
 TEST_F(TileEstimateTest, RectangleJustOverOnePixelWideCountsItsTileAtZoomZero) {
     const auto area = rect(-1.5, 50.9, 0.0, 50.5);
     const auto result = run({0}, area);

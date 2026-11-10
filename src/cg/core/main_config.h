@@ -19,7 +19,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-004
 [[nodiscard]] Result<IConfigWriterPtr> makeMainConfigProvider(const AppPaths& paths);
 
 // The IniFile behind it, for the explicit save at shutdown (legacy saved in the destructor; the

@@ -3,19 +3,17 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_GeometryLonLatFactory.pas, u_GeometryLonLatFactory.pas (LonLat half,
-// docs/specs/geo.md §3.5), i_/u_GeometryProjectedFactory.pas (the projected half, §3.5.1/§3.5.2,
-// T-0017C2), i_/u_GeometryProjectedProvider.pas (the per-frame cache, §3.5.3, T-0017C2).
-// createLineByStream/createPolygonByLine/createPolygonByLineAndFilter (T-0017B, this file's
-// extension) need IPointStream/ILonLatPointFilter (point_stream.h), which T-0017A did not yet
-// have -- see docs/handoffs/T-0017A.md and T-0017A-review.md F8.
+// Ports: i_GeometryLonLatFactory.pas, u_GeometryLonLatFactory.pas (LonLat half),
+// i_/u_GeometryProjectedFactory.pas (the projected half), i_/u_GeometryProjectedProvider.pas
+// (the per-frame cache). createLineByStream/createPolygonByLine/createPolygonByLineAndFilter
+// need IPointStream/ILonLatPointFilter (point_stream.h).
 //
-// The LonLat factory/builders are `idioms.md` §13 purpose-(b) factories: they intern nothing, but
-// they DO compute the hash and the bounding box, which the geometry objects (geometry_lonlat.h)
-// then hold as immutable members. The projected factory/builders (below) are the same shape minus
-// hash() (geometry_projected.h has none, §3.3): addLine/addOuter/addHole always take the caller-
-// computed bounds, no compute-it-for-me overload (spec §3.5.1) -- i_GeometryProjectedFactory.pas
-// declares only the one AddLine/AddOuter/AddHole signature, each with ABounds required.
+// The LonLat factory/builders are factories that intern nothing, but they DO compute the hash and
+// the bounding box, which the geometry objects (geometry_lonlat.h) then hold as immutable
+// members. The projected factory/builders (below) are the same shape minus hash()
+// (geometry_projected.h has none): addLine/addOuter/addHole always take the caller-computed
+// bounds, no compute-it-for-me overload -- i_GeometryProjectedFactory.pas declares only the one
+// AddLine/AddOuter/AddHole signature, each with ABounds required.
 
 #include "cg/core/hash.h"
 #include "cg/core/sync.h"
@@ -44,8 +42,8 @@ public:
     void addLine(LonLatPointsPtr points, PointsMeta meta = {}); // bounds computed here
     void addLine(const IGeometryLonLatLine& line);              // single or multi
 
-    // Degenerate-collapse rule (docs/specs/geo.md §3.5): a single line comes back as-is; two or
-    // more come back as an IGeometryLonLatMultiLine; nothing added comes back nullptr.
+    // Degenerate-collapse rule: a single line comes back as-is; two or more come back as an
+    // IGeometryLonLatMultiLine; nothing added comes back nullptr.
     [[nodiscard]] GeometryLonLatPtr makeStaticAndClear();
     [[nodiscard]] GeometryLonLatPtr makeStaticCopy() const;
 
@@ -78,7 +76,6 @@ private:
     std::vector<GeometryLonLatSinglePolygonPtr> polygons_;
 };
 
-// FEAT-GEO-010
 class GeometryLonLatFactory {
 public:
     explicit GeometryLonLatFactory(HashSeed hash = {});
@@ -116,14 +113,13 @@ public:
                                                                  const LonLatPointFilter& filter) const;
 
     // CreateLonLatPolygonByLine (u_GeometryLonLatFactory.pas:874-893): legacy selects between two
-    // implementations at construction time (u_GeometryLonLatFactory.pas:23); per D-3
-    // (docs/specs/geo.md §10/§3.5.2) the port always uses the streaming bisector buffer
-    // (line2Poly), never the un-ported Clipper-Minkowski generator (u_LonLatPolygonGenerator.pas).
-    // line2Poly needs a *live* IProjection for its pixel-space math (it derives its IDatum from
-    // the projection, same as legacy's own TEnumDoublePointLine2Poly) -- the spec's illustrative
-    // signature (IDatum, line, radius) has no projection and would make the datum a redundant,
-    // unused parameter under D-3; this signature drops IDatum and adds IProjection instead. See
-    // docs/handoffs/T-0017B.md Open questions.
+    // implementations at construction time (u_GeometryLonLatFactory.pas:23); as a deviation from
+    // legacy the port always uses the streaming bisector buffer (line2Poly), never the un-ported
+    // Clipper-Minkowski generator (u_LonLatPolygonGenerator.pas). line2Poly needs a *live*
+    // IProjection for its pixel-space math (it derives its IDatum from the projection, same as
+    // legacy's own TEnumDoublePointLine2Poly) -- a signature of (IDatum, line, radius) would have
+    // no projection and would make the datum a redundant, unused parameter under that deviation;
+    // this signature drops IDatum and adds IProjection instead.
     [[nodiscard]] GeometryLonLatPtr createPolygonByLine(const IGeometryLonLatLine& line, double radiusMetres,
                                                         const IProjection& projection,
                                                         std::vector<DoublePoint>& scratch) const;
@@ -136,7 +132,7 @@ private:
 };
 
 // =================================================================================================
-// The projected factory (docs/specs/geo.md §3.5.1, T-0017C2)
+// The projected factory
 // =================================================================================================
 
 // Ports IGeometryProjectedLineBuilder / TGeometryProjectedLineBuilder
@@ -177,7 +173,6 @@ private:
 };
 
 // Ports IGeometryProjectedFactory / TGeometryProjectedFactory (u_GeometryProjectedFactory.pas).
-// FEAT-GEO-013
 class GeometryProjectedFactory {
 public:
     [[nodiscard]] GeometryProjectedLineBuilder makeLineBuilder() const;
@@ -196,20 +191,20 @@ public:
                                  std::vector<DoublePoint>& scratch) const;
 };
 
-// Ports i_/u_GeometryProjectedProvider.pas -- docs/specs/geo.md §3.5.3. The one mutable, locked
-// object in `cg::geo` (§8.1): a cache from (line-or-polygon hash, projection hash) to the
-// projected geometry, computed lazily. "Per-frame" describes how it is *queried* (once per
-// visible mark per frame by the renderer), not how it is rebuilt -- entries live for the life of
-// the provider, subject to the capacity below.
+// Ports i_/u_GeometryProjectedProvider.pas. The one mutable, locked object in `cg::geo`: a cache
+// from (line-or-polygon hash, projection hash) to the projected geometry, computed lazily.
+// "Per-frame" describes how it is *queried* (once per visible mark per frame by the renderer),
+// not how it is rebuilt -- entries live for the life of the provider, subject to the capacity
+// below.
 //
 // Legacy's 2Q cache (u_HashInterfaceCache2Q.pas, bounded, three internal queues) is not ported
-// structure-for-structure -- Tech Lead ruling T-0017C2: no ported 2Q/HashCacheWithQueues helper
-// exists yet in cg::core (checked), so this stays a plain mutex-guarded map, but it MUST be
-// bounded like legacy, not the unbounded map an earlier draft of this file had. Capacity is
-// legacy's total live-item count -- AFirstUseCount + AMultiUseCount + AFirstOutCount = 1000 +
-// 4000 + 1000 = 6000 (u_GeometryProjectedProvider.pas:99-107) -- with a plain FIFO/clear-oldest
-// eviction instead of legacy's 2Q promotion between its FirstIn/Multi/FirstOut queues. See
-// docs/parity/deviations.md D-16: eviction order differs from legacy's 2Q, capacity is identical.
+// structure-for-structure: no ported 2Q/HashCacheWithQueues helper exists yet in cg::core
+// (checked), so this stays a plain mutex-guarded map, but it MUST be bounded like legacy, not the
+// unbounded map an earlier draft of this file had. Capacity is legacy's total live-item count --
+// AFirstUseCount + AMultiUseCount + AFirstOutCount = 1000 + 4000 + 1000 = 6000
+// (u_GeometryProjectedProvider.pas:99-107) -- with a plain FIFO/clear-oldest eviction instead of
+// legacy's 2Q promotion between its FirstIn/Multi/FirstOut queues. Eviction order differs from
+// legacy's 2Q, capacity is identical.
 class GeometryProjectedProvider {
 public:
     GeometryProjectedProvider() = default;

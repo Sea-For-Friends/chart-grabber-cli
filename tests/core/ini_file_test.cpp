@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-200; docs/specs/core.md 2.12 (quirks Q1-Q24), test plan 7.5
 #include "cg/core/ini_file.h"
 
 #include <QByteArray>
@@ -172,8 +171,8 @@ TEST(IniFile, Q13_ReadIntDecimalHexAndFailure) {
 }
 
 TEST(IniFile, Q13_ReadIntUppercaseHexPrefix) {
-    // Minor 10 (T-0002A rework): only the lower-case "0x" branch was pinned; "0X" is implemented
-    // identically (ini_file.cpp: case-insensitive check) but was unexercised.
+    // Only the lower-case "0x" branch was pinned; "0X" is implemented identically (ini_file.cpp:
+    // case-insensitive check) but was unexercised.
     const IniFile ini = parse("[T]\r\nA=0X1F\r\n");
     EXPECT_EQ(ini.readInt(u"T", u"A", -1), 31);
 }
@@ -215,22 +214,22 @@ TEST(IniFile, Q16_ReadFloatCommaNanAndFailure) {
 }
 
 TEST(IniFile, Q16_ReadFloatRejectsInfLikeDelphi) {
-    // Finding 5 (T-0002A rework): Delphi StrToFloat has no "Inf"/"Infinity" spelling and raises
-    // EConvertError (-> default) for them; QString::toDouble() would otherwise accept them.
+    // Delphi StrToFloat has no "Inf"/"Infinity" spelling and raises EConvertError (-> default) for
+    // them; QString::toDouble() would otherwise accept them.
     const IniFile ini = parse("[F]\r\nA=inf\r\nB=-INF\r\nC=Infinity\r\nD=nan\r\nE=INF\r\n");
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"A", -1.0), -1.0);
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"B", -1.0), -1.0);
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"C", -1.0), -1.0);
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"D", -1.0), -1.0);
-    // Q17 writes non-finite values as exactly "INF"/"-INF"/"NAN"; only the exact-text "NAN" is a
-    // legacy-recognised read spelling, so a value the port itself wrote as "INF" still reads back
-    // as the default, matching legacy (spec §4 divergence, documented as such, not "improved").
+    // The port writes non-finite values as exactly "INF"/"-INF"/"NAN"; only the exact-text "NAN"
+    // is a legacy-recognised read spelling, so a value the port itself wrote as "INF" still reads
+    // back as the default, matching legacy (a documented divergence, not "improved").
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"E", -1.0), -1.0);
 }
 
 TEST(IniFile, Q16_ReadFloatOnlyReplacesFirstComma) {
-    // Minor 10 (T-0002A rework): a second comma was never exercised. Q16 replaces only the
-    // *first* comma with a dot; "1,2,3" still has a comma left over and must fail to parse.
+    // A second comma was never exercised. Q16 replaces only the *first* comma with a dot; "1,2,3"
+    // still has a comma left over and must fail to parse.
     const IniFile ini = parse("[F]\r\nA=1,2,3\r\n");
     EXPECT_DOUBLE_EQ(ini.readFloat(u"F", u"A", -1.0), -1.0);
 }
@@ -357,7 +356,7 @@ TEST(IniFile, Q24_ModifiedFileKeepsCommentsAndOrder) {
     EXPECT_TRUE(bytes.contains("NoEqualsLineHere"));
 }
 
-// --- Finding 3 (T-0002A rework): eraseSection() / save() / saveAs() / setSourcePath() were
+// --- eraseSection() / save() / saveAs() / setSourcePath() were
 // entirely uncovered. All persistence tests use a QTemporaryDir so nothing touches the repo.
 
 TEST(IniFile, EraseSectionRemovesOnlyFirstOfDuplicateSections) {
@@ -425,8 +424,8 @@ TEST(IniFile, SaveAsReloadRoundTripsByteIdenticalAndReplacesAtomically) {
     const QByteArray bytes = onDisk.readAll();
     EXPECT_EQ(bytes, ini.toBytes());
     EXPECT_FALSE(bytes.contains("stale content"));
-    // QSaveFile::commit() renames its staging file over the target -- nothing else should be
-    // left beside it in the directory (ADR-0010 atomic write via QSaveFile, spec §2.12.3).
+    // QSaveFile::commit() renames its staging file over the target -- nothing else should be left
+    // beside it in the directory (atomic write via QSaveFile).
     EXPECT_EQ(QDir(dir.path()).entryList(QDir::Files | QDir::NoDotAndDotDot).size(), 1);
 
     auto reloaded = IniFile::fromFile(path);
@@ -438,9 +437,8 @@ TEST(IniFile, SaveAsReloadRoundTripsByteIdenticalAndReplacesAtomically) {
 
 TEST(IniFile, SaveAsFailsAndLeavesFileUntouchedWhenValueNotRepresentableInCp1251) {
     CG_SKIP_IF_NO_CORPUS();
-    // Finding 2 (T-0002A rework): a Cp1251 settings file that later receives a character with no
-    // Cp1251 representation must fail loudly (spec §4 "nothing is ever swallowed") and must not
-    // corrupt the file with a '?' substitution.
+    // A Cp1251 settings file that later receives a character with no Cp1251 representation must
+    // fail loudly and must not corrupt the file with a '?' substitution.
     const QByteArray original =
         readFixtureBytes(QStringLiteral("zmp/sas.maps/_Coverage/Beeline/Beeline_IoT.zmp/params.txt"));
     QTemporaryDir dir;

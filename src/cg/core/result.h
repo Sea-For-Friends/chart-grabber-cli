@@ -16,7 +16,7 @@
 #include <utility>
 
 #if !defined(__cpp_lib_expected)
-#error "cg::core requires <expected> (libstdc++ 13+ in C++23 mode); see docs/handoffs/T-0002A.md"
+#error "cg::core requires <expected> (libstdc++ 13+ in C++23 mode)"
 #endif
 
 namespace cg::core {

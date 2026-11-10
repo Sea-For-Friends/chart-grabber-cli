@@ -4,8 +4,6 @@
 
 #pragma once
 // Ports: Src/RegionProcess/Export/u_ExportTaskAbstract.pas:34-102
-//
-// docs/specs/region-export.md §2.4.
 
 #include "cg/core/result.h"
 #include "cg/region/region_process_task_abstract.h"

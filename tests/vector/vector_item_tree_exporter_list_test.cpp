@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT id (the T-0141 row assigns none). Ports u_VectorItemTreeExporterList.pas
-// (GetCount :127-131, GetItem :134-139) and the item class of i_VectorItemTreeExporterList.pas;
-// docs/specs/vector.md §2.11.
+// Ports u_VectorItemTreeExporterList.pas (GetCount :127-131, GetItem :134-139) and the item class
+// of i_VectorItemTreeExporterList.pas.
 #include "cg/vector/vector_item_tree_exporter_list.h"
 
 #include <QString>
@@ -90,7 +89,7 @@ TEST(ExporterListStatic, InsertionOrderAndOutOfRange) {
 }
 
 TEST(ExporterListStatic, EmptyListIsTheNilListRegression) {
-    VectorItemTreeExporterListStatic list({}); // D row: legacy nil list
+    VectorItemTreeExporterListStatic list({}); // A deviation from legacy: legacy nil list
     EXPECT_EQ(list.count(), 0);
     EXPECT_EQ(list.item(0), nullptr);
 }

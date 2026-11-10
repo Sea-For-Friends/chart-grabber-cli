@@ -146,7 +146,6 @@ bool ProgressDownload::createFileUnique(QString& fileName) { // :474-527
     return i < kTryCount;
 }
 
-// FEAT-REG-017
 void ProgressDownload::saveSession(const QString& targetFileName) { // DoSaveSession :451-470
     if (targetFileName.isEmpty()) {
         return;
@@ -163,7 +162,6 @@ void ProgressDownload::saveSession(const QString& targetFileName) { // DoSaveSes
     memo_(QStringLiteral("Session saved to file: ") + targetFileName);
 }
 
-// FEAT-REG-016
 void ProgressDownload::checkSessionAutosave() { // :472-577
     const int interval = progressInfo_->sessionAutosaveInterval();
     if (interval <= 0) {
@@ -190,7 +188,7 @@ void ProgressDownload::checkSessionAutosave() { // :472-577
             sessionFileNameBack_ = changeExtToBk(sessionFileName_);
             // frm_ProgressDownload.pas:556-559: DeleteFile of the old backup, then RenameFile (which fails
             // when the target exists, as QFile::rename does on every OS): the target was removed above, so no
-            // replace semantics are needed here (T-0335).
+            // replace semantics are needed here.
             if (!QFile::rename(sessionFileName_, sessionFileNameBack_)) {
                 sessionFileNameBack_ = sessionFileName_;
             }

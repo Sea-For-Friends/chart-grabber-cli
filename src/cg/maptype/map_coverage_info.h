@@ -5,7 +5,7 @@
 #pragma once
 // Ports: i_MapCoverageInfo.pas, u_MapCoverageInfo.pas
 //
-// Where a map has data: the ZMP key MapCenter = "lon,lat,zoom" (spec maptype.md §2.6.6).
+// Where a map has data: the ZMP key MapCenter = "lon,lat,zoom".
 // Immutable. Legacy leaves bounds/polygon/zoom range as a to-do; so does the port.
 
 #include "cg/geo/geo_types.h"
@@ -17,7 +17,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class MapCoverageInfo final {
 public:
     // Any parse failure (not exactly three comma-separated items, bad number) gives an empty
@@ -25,8 +24,8 @@ public:
     explicit MapCoverageInfo(const QString& center);
 
     [[nodiscard]] geo::DoublePoint centerPos() const { return centerPos_; }
-    // Legacy keeps the zoom as Integer and returns it through a Byte: 256 reads as 0, -1 as 255
-    // (docs/parity/legacy-defects.md L-122).
+    // Legacy keeps the zoom as Integer and returns it through a Byte: 256 reads as 0, -1 as 255 (a
+    // legacy defect, reproduced).
     [[nodiscard]] quint8 centerZoom() const { return static_cast<quint8>(centerZoom_); }
 
 private:

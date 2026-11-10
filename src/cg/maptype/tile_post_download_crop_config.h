@@ -6,7 +6,7 @@
 // Ports: Network/i_TilePostDownloadCropConfig.pas, Network/u_TilePostDownloadCropConfigStatic.pas
 //
 // What to do with a downloaded image before it is saved: crop to a rectangle and/or cut into
-// several tiles (spec maptype.md §2.6.6). Immutable; the constructor validates the ZMP values.
+// several tiles. Immutable; the constructor validates the ZMP values.
 
 #include "cg/geo/geo_types.h"
 
@@ -16,7 +16,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-033
 class TilePostDownloadCropConfigStatic final {
 public:
     // Crop is kept iff left,top >= 0, right > left, bottom > top and right,bottom < 10000, else

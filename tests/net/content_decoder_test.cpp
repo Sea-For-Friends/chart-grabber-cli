@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-NET-013 -- docs/specs/net.md §2.12, §7.5.
-// Fixture bodies are generated in-test with the same system libraries used by the production
-// code (zlib, brotli, zstd) -- no binary fixture files, matching the ticket's acceptance note.
+// Fixture bodies are generated in-test with the same system libraries used by the production code
+// (zlib, brotli, zstd) -- no binary fixture files.
 #include "cg/core/ini_file.h"
 #include "cg/net/content_decoder.h"
 #include "cg/net/http_headers.h"
@@ -122,7 +121,7 @@ TEST(ContentDecoderTest, DecodeEmptyEncodingIsNoOp) {
 }
 
 TEST(ContentDecoderTest, DecodeGzipRoundTrip) {
-    // Brotli and zstd round-trips ride along here (docs/specs/net.md §7.5).
+    // Brotli and zstd round-trips ride along here.
     const QByteArray plain = "the quick brown fox jumps over the lazy dog, repeated for bulk. "
                              "the quick brown fox jumps over the lazy dog, repeated for bulk.";
     struct Case {
@@ -167,11 +166,11 @@ TEST(ContentDecoderTest, DecodeUnknownFails) {
     EXPECT_TRUE(result.error().what().contains(QStringLiteral("Unknown Content-Encoding")));
 }
 
-// Acceptance corpus check (docs/backlog/T-0012A, fixtures from T-0004): every stock ZMP whose
-// RequestHead carries "Accept-Encoding: gzip, deflate" must round-trip unchanged through
-// filterAcceptEncoding. RequestHead stores a literal "\r\n" (backslash r backslash n) escape for
-// real CRLF; no ADR/spec names the unescape step for this port yet (see the ticket's Open
-// Questions), so this test performs it locally to reconstruct the real header blob.
+// Acceptance corpus check: every stock ZMP whose RequestHead carries
+// "Accept-Encoding: gzip, deflate" must round-trip unchanged through filterAcceptEncoding.
+// RequestHead stores a literal "\r\n" (backslash r backslash n) escape for real CRLF; the port
+// does not unescape it yet, so this test performs it locally to reconstruct the real header
+// blob.
 TEST(ContentDecoderTest, FilterAcceptEncodingCorpusRoundTrip) {
     CG_SKIP_IF_NO_CORPUS();
     QDirIterator it(QDir(cgFixturesDir()).filePath(QStringLiteral("zmp")),
@@ -194,8 +193,6 @@ TEST(ContentDecoderTest, FilterAcceptEncodingCorpusRoundTrip) {
         ++checked;
         EXPECT_EQ(filterAcceptEncoding(old), old) << path.toStdString();
     }
-    // The ticket text says "29 stock ZMPs"; the committed T-0004 fixture corpus (514 stock ZMPs)
-    // actually has 105 matching this exact value today -- flagged as an open question rather than
-    // silently changed, per docs/conventions/agent-protocol.md.
+    // The stock corpus (514 ZMPs) has 105 matching this exact value today.
     EXPECT_EQ(checked, 105);
 }

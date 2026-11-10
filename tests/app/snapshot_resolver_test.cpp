@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// New code (no legacy unit): tests of snapshot_resolver, snapshot_store and refusalForSnapshot (T-0243,
-// docs/specs/weather-sources.md 3.1, 3.4, 4.1, 4.2, 5.3; ticket acceptance 10-12). No FEAT tag (Features
-// none). Legacy fact applySnapshot mirrors: the map settings dialog sets the version of the map's version
-// request (frm_MapTypeEdit.pas:286); the request defaults to ShowOtherVersions = True
-// (u_MapVersionRequestConfig.pas: 96-102). resolveSnapshot goes through net::simpleHttpRequest (port of
+// New code (no legacy unit): tests of snapshot_resolver, snapshot_store and refusalForSnapshot. Legacy
+// fact applySnapshot mirrors: the map settings dialog sets the version of the map's version request
+// (frm_MapTypeEdit.pas:286); the request defaults to ShowOtherVersions = True
+// (u_MapVersionRequestConfig.pas:96-102). resolveSnapshot goes through net::simpleHttpRequest (port of
 // u_SimpleHttpDownloader.pas:100-121: status of a result without server respond is 0, data only for an Ok
 // result). Rig: the HttpTestServer, a real AppContext with a ZMP set written by cli_test_util.h.
 #include "cg/app/app_context.h"
@@ -173,9 +172,9 @@ protected:
 
 } // namespace
 
-// Acceptance 11: applySnapshot sets the version of the request and turns the other versions off, for a
-// request that has the legacy default ShowOtherVersions = True; a second call replaces the first; Maps.ini is
-// not written (the program never saves it), not even at shutdown.
+// applySnapshot sets the version of the request and turns the other versions off, for a request that has the
+// legacy default ShowOtherVersions = True; a second call replaces the first; Maps.ini is not written (the
+// program never saves it), not even at shutdown.
 TEST_F(SnapshotResolverTest, ApplySnapshotSetsTheVersionHidesOtherVersionsAndWritesNothing) {
     const auto before = map(0)->versionRequest()->getStatic();
     EXPECT_TRUE(before->showOtherVersions);
@@ -198,7 +197,7 @@ TEST_F(SnapshotResolverTest, ApplySnapshotSetsTheVersionHidesOtherVersionsAndWri
     EXPECT_EQ(slurp(maps() + u"/Maps.ini"_s), kMapsIni);
 }
 
-// Acceptance 12 (first half): the answer is parsed as the index of the definition; one request, GET.
+// The answer is parsed as the index of the definition; one request, GET.
 TEST_F(SnapshotResolverTest, ResolveTakesTheLastFrameOfTheIndexWithOneGetRequest) {
     server_.addReply("/index.json", jsonReply(kIndexA));
     const auto taken = resolve();
@@ -211,8 +210,7 @@ TEST_F(SnapshotResolverTest, ResolveTakesTheLastFrameOfTheIndexWithOneGetRequest
     EXPECT_TRUE(log[0].startsWith("GET /index.json HTTP/1.1\r\n")) << log[0].constData();
 }
 
-// Acceptance 12: the body limit is 8 MiB of the received data: exactly 8 MiB is read, one byte more is
-// refused with the text of 3.4.
+// The body limit is 8 MiB of the received data: exactly 8 MiB is read, one byte more is refused.
 TEST_F(SnapshotResolverTest, ABodyOfEightMebibytesIsReadAndOneByteMoreIsRefused) {
     constexpr qsizetype kLimit = qsizetype{8} * 1024 * 1024;
     QByteArray exact = kIndexA;
@@ -230,8 +228,8 @@ TEST_F(SnapshotResolverTest, ABodyOfEightMebibytesIsReadAndOneByteMoreIsRefused)
     EXPECT_EQ(refused.error().what(), u"the answer of %1 is larger than 8 MiB"_s.arg(tooBig->url));
 }
 
-// Acceptance 12 and the texts of 3.4 "network": every refusal carries the URL. A 500 and a connection that is
-// reset are results without server respond (status 0); a 404 has one.
+// The "network" refusal texts: every refusal carries the URL. A 500 and a connection that is reset are
+// results without server respond (status 0); a 404 has one.
 TEST_F(SnapshotResolverTest, NetworkRefusalsHaveTheTextsOfTheSpec) {
     struct Case {
         const char* name;
@@ -272,8 +270,8 @@ TEST_F(SnapshotResolverTest, ANoAnswerFromAClosedPortIsStatusZero) {
     EXPECT_EQ(taken.error().what(), u"no answer from %1"_s.arg(closedUrl));
 }
 
-// Acceptance 12: a termination that fired before the call is Cancelled, not "no answer" (the downloader
-// reports status 0 for it too), and nothing was sent.
+// A termination that fired before the call is Cancelled, not "no answer" (the downloader reports status
+// 0 for it too), and nothing was sent.
 TEST_F(SnapshotResolverTest, AStoppedTokenIsCancelledAndSendsNothing) {
     server_.addReply("/index.json", jsonReply(kIndexA));
     std::stop_source source;
@@ -284,9 +282,9 @@ TEST_F(SnapshotResolverTest, AStoppedTokenIsCancelledAndSendsNothing) {
     EXPECT_EQ(server_.requestCount(), 0);
 }
 
-// 5.3 / 4.1: the refusal of a snapshot source. A static source is never refused, whatever its cache; a
-// snapshot source needs the versioned storage (the effective default is SQLite, the shipped definitions say
-// 71); invalid keys carry the detail of snapshotDefinition.
+// The refusal of a snapshot source. A static source is never refused, whatever its cache; a snapshot source
+// needs the versioned storage (the effective default is SQLite, the shipped definitions say 71); invalid
+// keys carry the detail of snapshotDefinition.
 TEST_F(SnapshotResolverTest, RefusalForSnapshotCoversCacheAndKeys) {
     const QString noVersions =
         u"a snapshot source needs a cache that keeps tile versions (SQLite 71); its cache type is %1"_s;
@@ -294,7 +292,7 @@ TEST_F(SnapshotResolverTest, RefusalForSnapshotCoversCacheAndKeys) {
     EXPECT_EQ(refusalForSnapshot(*map(1)), std::nullopt); // static on a cache without versions
     EXPECT_EQ(refusalForSnapshot(*map(2)), std::nullopt); // snapshot, default cache = SQLite
     EXPECT_EQ(refusalForSnapshot(*map(3)), std::nullopt); // 71
-    // 61: T-0333 (owner 2026-10-21) removed the BerkeleyDB backend; no storage, no versions -> refused
+    // 61: the BerkeleyDB backend is removed; no storage, no versions -> refused
     EXPECT_EQ(refusalForSnapshot(*map(4)), u"\"Snapshot Berkeley\": "_s + noVersions.arg(61));
     EXPECT_EQ(refusalForSnapshot(*map(5)), u"\"Snapshot Sas Cache\": "_s + noVersions.arg(2));
     EXPECT_EQ(refusalForSnapshot(*map(6)), u"\"Snapshot Other Cache\": "_s + noVersions.arg(1));
@@ -303,7 +301,7 @@ TEST_F(SnapshotResolverTest, RefusalForSnapshotCoversCacheAndKeys) {
         u"\"Snapshot Bad Keys\": the snapshot keys are invalid: SnapshotIndex=ftp://x/ is not an http(s) URL"_s);
 }
 
-// snapshot_store.cpp (4.2)
+// snapshot_store.cpp
 // ------------------------------------------------------------------------------------
 
 class SnapshotStoreTest : public ::testing::Test {
@@ -313,8 +311,8 @@ protected:
     QTemporaryDir root_;
 };
 
-// The exact text of the spec: LF, no BOM, the five lines; the resolve time is written in UTC whatever the
-// zone of the argument (21:04:05 at +03:00 is 18:04:05Z); the directory is created with its parents.
+// The exact file text: LF, no BOM, the five lines; the resolve time is written in UTC whatever the zone
+// of the argument (21:04:05 at +03:00 is 18:04:05Z); the directory is created with its parents.
 TEST_F(SnapshotStoreTest, SaveWritesTheFileOfTheSpecInUtc) {
     Snapshot s;
     s.version = u"/v2/radar/7b6bac246650"_s;
@@ -393,8 +391,8 @@ TEST_F(SnapshotStoreTest, LoadReadsBackWhatSaveWrote) {
     EXPECT_FALSE(loadSnapshot(dir(), u"{G}x"_s).has_value()); // another source: no file
 }
 
-// T-0357: a <guid>.ini of an older version is renamed to <guid>.conf once and used; with both files the .conf
-// wins and the .ini stays.
+// A <guid>.ini of an older version is renamed to <guid>.conf once and used; with both files the .conf wins
+// and the .ini stays.
 TEST_F(SnapshotStoreTest, OldIniIsRenamedOnceAndConfWinsWhenBothExist) {
     ASSERT_TRUE(QDir().mkpath(dir()));
     const auto put = [](const QString& path, const char* version) {
@@ -423,7 +421,7 @@ TEST_F(SnapshotStoreTest, OldIniIsRenamedOnceAndConfWinsWhenBothExist) {
     EXPECT_TRUE(left.readAll().contains("stale"));
 }
 
-// T-0357: when the rename fails (a read-only directory) the .ini is still read and nothing is created.
+// When the rename fails (a read-only directory) the .ini is still read and nothing is created.
 TEST_F(SnapshotStoreTest, OldIniIsStillReadWhenTheRenameFails) {
     ASSERT_TRUE(QDir().mkpath(dir()));
     const QString old = dir() + u"/{G}.ini"_s;

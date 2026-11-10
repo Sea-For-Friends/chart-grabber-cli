@@ -3,7 +3,6 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_ValueToStringConverter.pas, u_ValueToStringConverterConfig.pas.
-// docs/specs/geo.md:2227-2311 (§6.5, §6.5.1). FEAT-GEO-016.
 #include "cg/geo/value_to_string.h"
 
 #include <QLocale>
@@ -17,18 +16,18 @@ namespace {
 constexpr const char* kInvalidValue = "NaN"; // CInvalidValue, u_ValueToStringConverter.pas:85
 
 // ValToNum, u_ValueToStringConverter.pas:87-90: `FloatToStrF(AValue, ffNumber, 15, ADigits) + ' '
-// + AUnits`. ffNumber means grouped thousands and the locale's own decimal separator -- spec
-// §6.5's own primitive, `QLocale().toString(value, 'f', digits)`, does both, using the *current*
-// QLocale (deliberately locale-dependent, unlike coord_to_string's hard-pinned '.': see
-// LocaleAffectsGroupingAndSeparator in value_to_string_test.cpp). QLocale's 'f' format rounds an
-// exact decimal tie half away from zero, matching Delphi's `FormatFloat` convention -- verified
-// empirically on Qt 6.11 (docs/handoffs/T-0019A2-review.md).
+// + AUnits`. ffNumber means grouped thousands and the locale's own decimal separator.
+// The primitive used here, `QLocale().toString(value, 'f', digits)`, does both, using the
+// *current* QLocale (deliberately locale-dependent, unlike coord_to_string's hard-pinned '.':
+// see LocaleAffectsGroupingAndSeparator in value_to_string_test.cpp). QLocale's 'f' format
+// rounds an exact decimal tie half away from zero, matching Delphi's `FormatFloat` convention --
+// verified empirically on Qt 6.11.
 QString valToNum(double value, const QString& units, int digits = 2) {
     return QLocale().toString(value, 'f', digits) + QLatin1Char(' ') + units;
 }
 
 // GetSpeedStrFormat, u_ValueToStringConverter.pas:318-340: the speed unit is derived from the
-// distance format, never stored on its own (§6.5.1 point 3).
+// distance format, never stored on its own.
 SpeedStrFormat speedStrFormatFor(DistStrFormat dist) {
     switch (dist) {
     case DistStrFormat::KmAndM:
@@ -67,7 +66,7 @@ void ValueFormatSettings::write(core::IConfigWriter& dst) const {
 ValueToStringConverter::ValueToStringConverter(ValueFormatSettings settings) : settings_(settings) {}
 
 QString ValueToStringConverter::dataSizeConvert(double sizeInKb) const {
-    // u_ValueToStringConverter.pas:214-224. No NaN guard here -- reproduce, add none (§6.5).
+    // u_ValueToStringConverter.pas:214-224. No NaN guard here -- reproduce, add none.
     if (sizeInKb > 1048576) {
         return valToNum(sizeInKb / 1048576, QStringLiteral("GB"), 1);
     }
@@ -130,8 +129,8 @@ QString ValueToStringConverter::distConvert(double metres) const {
         break;
     }
 
-    // §6.5.1 point 1: Abs-then-format, then a single '-' prefixes the WHOLE string --
-    // -1500 m -> "-1 km 500.00 m", never "-1 km -500.00 m".
+    // Abs-then-format, then a single '-' prefixes the WHOLE string -- -1500 m -> "-1 km 500.00 m",
+    // never "-1 km -500.00 m".
     if (metres < 0) {
         result.prepend(QLatin1Char('-'));
     }
@@ -148,7 +147,7 @@ QString ValueToStringConverter::areaConvert(double sqm) const {
         return QString::fromLatin1(kInvalidValue);
     }
 
-    // §6.5.1 point 2: compares the SIGNED input, unlike distConvert.
+    // Compares the SIGNED input, unlike distConvert.
     switch (settings_.area) {
     case AreaStrFormat::Auto:
         if (sqm <= 1000000) {

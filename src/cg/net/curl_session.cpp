@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: Src/Network/Curl/t_CurlHttpClient.pas, u_CurlHttpClient.pas. docs/specs/net.md §2.8.
-// FEAT-NET-009.
+// Ports: Src/Network/Curl/t_CurlHttpClient.pas, u_CurlHttpClient.pas.
 #include "cg/net/curl_session.h"
 
 #include "cg/core/log.h"
@@ -31,8 +30,7 @@ constexpr const char* kMethodStr[] = {"HEAD", "GET", "POST"}; // indexed by Meth
 
 // CURLOPT_DEBUGFUNCTION -- not one of the two byte-exact callbacks in curl_callbacks.h (those are
 // the header/write callbacks the acceptance tests assert on); this one only ever runs when
-// cg.net's debug logging is enabled (docs/specs/net.md §2.8.3 row 22-24), replacing legacy's
-// {$IFDEF WRITE_HTTP_LOG}.
+// cg.net's debug logging is enabled, replacing legacy's {$IFDEF WRITE_HTTP_LOG}.
 int curlDebugCallback(CURL* /*handle*/, curl_infotype /*type*/, char* data, std::size_t size,
                       void* /*userdata*/) {
     qCDebug(cg::core::logNet).noquote() << QByteArray(data, static_cast<qsizetype>(size));
@@ -40,9 +38,9 @@ int curlDebugCallback(CURL* /*handle*/, curl_infotype /*type*/, char* data, std:
 }
 
 #ifndef NDEBUG
-// T-0144, debug only: marks the session as "a thread is inside" for the duration of a call (also when an
-// exception leaves it) and asserts that no other thread already is. Mutual exclusion, not thread affinity:
-// legacy runs one handle on whichever thread holds FCS (u_DownloaderHttpWithTTL.pas:102-138).
+// Debug only: marks the session as "a thread is inside" for the duration of a call (also when an exception
+// leaves it) and asserts that no other thread already is. Mutual exclusion, not thread affinity: legacy
+// runs one handle on whichever thread holds FCS (u_DownloaderHttpWithTTL.pas:102-138).
 class UseGuard {
 public:
     explicit UseGuard(std::atomic<bool>& inUse) : inUse_(inUse) {
@@ -88,8 +86,8 @@ std::size_t curlWriteCallback(char* data, std::size_t size, std::size_t nmemb, v
 // Ports CurlProgressCallBack (u_CurlHttpClient.pas:159-175) EXACTLY: if not aborted, forward the
 // counters to the caller's progress fn (when one is installed) and return 0; if aborted, forward
 // nothing and return 1. The callback itself is now installed unconditionally (see curlSetup()) so
-// it also works as libcurl's documented abort heartbeat when no ProgressFn is set -- T-0010B
-// rework finding 2 / [D-17]; onProgress_ only gates the forwarding, never the installation.
+// it also works as libcurl's documented abort heartbeat when no ProgressFn is set (a deviation
+// from legacy); onProgress_ only gates the forwarding, never the installation.
 int curlXferInfoCallback(void* userdata, curl_off_t dltotal, curl_off_t dlnow, curl_off_t /*ultotal*/,
                          curl_off_t /*ulnow*/) {
     auto* self = static_cast<CurlSession*>(userdata);
@@ -139,8 +137,8 @@ void CurlSession::attachShare(CurlShare& share) {
 }
 
 void CurlSession::disconnect() noexcept {
-    // The one member callable off the owning thread (docs/specs/net.md §3): sets the flag the
-    // three callbacks poll, which is how a transfer aborts mid-flight.
+    // The one member callable off the owning thread: sets the flag the three callbacks poll, which
+    // is how a transfer aborts mid-flight.
     abort_.store(true, std::memory_order_release);
 }
 
@@ -180,8 +178,8 @@ void CurlSession::curlSetup() {
     curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(cachedOptions_.connectTimeoutMs));
     curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, cachedOptions_.followLocation ? 1L : 0L);
 
-    // CURLOPT_CAINFO: unset (system CA store, [D-2]) unless the caller supplied an explicit
-    // bundle path, exactly as legacy (u_CurlHttpClient.pas:316-321: `if FCertFileName <> ''`).
+    // CURLOPT_CAINFO: unset (system CA store) unless the caller supplied an explicit bundle
+    // path, exactly as legacy (u_CurlHttpClient.pas:316-321: `if FCertFileName <> ''`).
     // Nothing in this worktree constructs a CurlSession with a non-empty caBundlePath_ yet.
     if (!caBundlePath_.isEmpty()) {
         curl_easy_setopt(curl_, CURLOPT_CAINFO, caBundlePath_.constData());
@@ -195,25 +193,24 @@ void CurlSession::curlSetup() {
     }
 
     curl_easy_setopt(curl_, CURLOPT_ACCEPT_ENCODING,
-                     static_cast<const char*>(nullptr)); // §2.12: we decode ourselves
+                     static_cast<const char*>(nullptr)); // We decode ourselves
 
     if (!cachedProxy_.address.isEmpty()) {
         curl_easy_setopt(curl_, CURLOPT_PROXY, cachedProxy_.address.constData());
     } else {
         // Deliberately left UNSET, not set to "" -- an explicit empty CURLOPT_PROXY disables
         // libcurl's own http_proxy/https_proxy/all_proxy/no_proxy env-var handling
-        // (https://curl.se/libcurl/c/CURLOPT_PROXY.html), which is exactly the "let curl read the
-        // environment itself" path docs/specs/net.md §2.8.3 row 9 and §2.18 describe for the
-        // Linux port -- unlike legacy, which always calls this setopt with PAnsiChar(''), an
-        // explicit "" (Windows has no such env convention to preserve). Approved deviation
-        // [D-16], docs/specs/net.md §8 (Tech Lead ruling on the T-0010B review, 2026-09-19).
+        // (https://curl.se/libcurl/c/CURLOPT_PROXY.html), which is exactly the
+        // "let curl read the environment itself" path the Linux port wants -- unlike legacy,
+        // which always calls this setopt with PAnsiChar(''), an explicit "" (Windows has no such
+        // env convention to preserve). A deviation from legacy.
     }
     curl_easy_setopt(curl_, CURLOPT_NOPROXY, cachedProxy_.noProxy.constData());
     curl_easy_setopt(curl_, CURLOPT_PROXYAUTH, cachedProxy_.authMask);
     const QByteArray proxyUserPwd = curlProxyUserPwd(cachedProxy_);
-    // T-0293: an empty "" counts as credentials for libcurl < 8.2x (it answers a 407 by itself with empty
-    // Basic auth); legacy passes '' (u_CurlHttpClient.pas:339) and relies on the 407 reaching the caller.
-    // NULL keeps that on every libcurl.
+    // An empty "" counts as credentials for libcurl < 8.2x (it answers a 407 by itself with empty Basic
+    // auth); legacy passes '' (u_CurlHttpClient.pas:339) and relies on the 407 reaching the caller. NULL
+    // keeps that on every libcurl.
     curl_easy_setopt(curl_, CURLOPT_PROXYUSERPWD,
                      proxyUserPwd.isEmpty() ? nullptr : proxyUserPwd.constData());
 
@@ -222,22 +219,22 @@ void CurlSession::curlSetup() {
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curlWriteCallback);
     curl_easy_setopt(curl_, CURLOPT_WRITEDATA, this);
 
-    // T-0010B rework finding 2 / [D-17]: installed UNCONDITIONALLY, not only when onProgress_ is
-    // set. libcurl's abort heartbeat (a non-zero return tears down easy_perform) is the only way
-    // to cancel a transfer that is connecting, stalled, or waiting on a slow server -- the header
-    // and write callbacks fire only once bytes arrive. Production builds a CurlSession with a
-    // null ProgressFn for tile downloads (matching legacy, u_DownloaderHttpWithTTL.pas:114), so
-    // gating the callback on onProgress_ (as legacy does, `Assigned(FCurlProgressCallBack)`,
-    // u_CurlHttpClient.pas:348-356) would make disconnect() a no-op in exactly that configuration.
-    // Costs nothing to set unconditionally, same reasoning as CURLOPT_NOSIGNAL [D-6]. onProgress_
-    // still gates only whether curlXferInfoCallback/curlProgressCallback FORWARD the counters
-    // (finding 1) -- it never gates whether the heartbeat itself is installed.
+    // Installed UNCONDITIONALLY, not only when onProgress_ is set. libcurl's abort heartbeat (a
+    // non-zero return tears down easy_perform) is the only way to cancel a transfer that is
+    // connecting, stalled, or waiting on a slow server -- the header and write callbacks fire only
+    // once bytes arrive. Production builds a CurlSession with a null ProgressFn for tile downloads
+    // (matching legacy, u_DownloaderHttpWithTTL.pas:114), so gating the callback on onProgress_
+    // (as legacy does, `Assigned(FCurlProgressCallBack)`, u_CurlHttpClient.pas:348-356) would make
+    // disconnect() a no-op in exactly that configuration. Costs nothing to set unconditionally,
+    // same reasoning as CURLOPT_NOSIGNAL. onProgress_ still gates only whether
+    // curlXferInfoCallback/curlProgressCallback FORWARD the counters -- it never gates whether the
+    // heartbeat itself is installed.
     if (curlVersionNum() > 0x072000U) {
         curl_easy_setopt(curl_, CURLOPT_XFERINFOFUNCTION, curlXferInfoCallback);
         curl_easy_setopt(curl_, CURLOPT_XFERINFODATA, this);
     } else {
-        // libcurl deprecates CURLOPT_PROGRESSFUNCTION in favour of XFERINFOFUNCTION above;
-        // the branch is kept for pre-7.32 libcurl per docs/specs/net.md §2.8.3 row 19-20.
+        // libcurl deprecates CURLOPT_PROGRESSFUNCTION in favour of XFERINFOFUNCTION above; the
+        // branch is kept for pre-7.32 libcurl.
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -256,10 +253,10 @@ void CurlSession::curlSetup() {
         curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
     }
 
-    // Additions beyond the legacy 32, each a recorded deviation (docs/specs/net.md §2.8.3).
-    curl_easy_setopt(curl_, CURLOPT_MAXREDIRS, 10L);              // [D-5]
-    curl_easy_setopt(curl_, CURLOPT_NOSIGNAL, 1L);                // [D-6]
-    curl_easy_setopt(curl_, CURLOPT_PROTOCOLS_STR, "http,https"); // [D-6]
+    // Additions beyond the legacy 32, each a recorded deviation.
+    curl_easy_setopt(curl_, CURLOPT_MAXREDIRS, 10L);
+    curl_easy_setopt(curl_, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl_, CURLOPT_PROTOCOLS_STR, "http,https");
 
     if (share_ != nullptr) {
         // curl_easy_reset() (called just before curlSetup() runs) clears CURLOPT_SHARE along with
@@ -317,17 +314,17 @@ bool CurlSession::perform(const CurlRequest& request, CurlResponse& response) {
     curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, methodStr);
     curl_easy_setopt(curl_, CURLOPT_URL, request.url.constData());
 
-    // KEPT LEGACY QUIRK [D-18] (T-0010B rework finding 3): curl_easy_reset() above (when doSetup
-    // fired) clears CURLOPT_HTTPHEADER along with everything else, and curlSetup() never
-    // re-applies it -- it is only ever set from rebuildHeaderList() below, and only when method or
-    // the header blob actually changed. So a doSetup that is triggered by something OTHER than a
-    // method/header change (e.g. curl_downloader.cpp's 407 proxy-credential retry, which only
-    // mutates CurlProxy fields) sends its request with NO custom headers at all -- no User-Agent,
-    // no Accept-Encoding, no Referer. Legacy has the identical gap: CurlSetup
-    // (u_CurlHttpClient.pas:300-364) never sets coHTTPHeader either, and the slist block is
-    // guarded by the same `(FReq.Method <> FReqMethod) or (FReq.Headers <> FReqHeaders)` condition
-    // (:483-495). Ported 1:1, not fixed -- see the sibling note on the user-abort branch below,
-    // which keeps the same slist/cachedHeaders_ memo quirk for the same reason.
+    // KEPT LEGACY QUIRK: curl_easy_reset() above (when doSetup fired) clears CURLOPT_HTTPHEADER
+    // along with everything else, and curlSetup() never re-applies it -- it is only ever set from
+    // rebuildHeaderList() below, and only when method or the header blob actually changed. So a
+    // doSetup that is triggered by something OTHER than a method/header change (e.g.
+    // curl_downloader.cpp's 407 proxy-credential retry, which only mutates CurlProxy fields) sends
+    // its request with NO custom headers at all -- no User-Agent, no Accept-Encoding, no Referer.
+    // Legacy has the identical gap: CurlSetup (u_CurlHttpClient.pas:300-364) never sets
+    // coHTTPHeader either, and the slist block is guarded by the same
+    // `(FReq.Method <> FReqMethod) or (FReq.Headers <> FReqHeaders)` condition (:483-495). Ported
+    // 1:1, not fixed -- see the sibling note on the user-abort branch below, which keeps the same
+    // slist/cachedHeaders_ memo quirk for the same reason.
     if (request.method != cachedMethod_ || request.headers != cachedHeaders_) {
         rebuildHeaderList(request.headers, request.method == Method::Post);
         cachedMethod_ = request.method;

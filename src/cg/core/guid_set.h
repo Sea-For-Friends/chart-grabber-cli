@@ -10,9 +10,9 @@
 // (u_GUIDTool.pas:30-110): Data1 as an UNSIGNED 32-bit number, then Data2, Data3 (unsigned 16-bit),
 // then Data4[0..7] byte by byte -- field by field, not the memory bytes and not the textual form.
 // Add keeps an existing value, Replace overwrites or inserts, Remove of an absent key is a no-op,
-// GetByGUID of an absent key is null. Not synchronised (legacy neither): callers lock.
-// The legacy enumerators (IEnumGUID / IEnumUnknown) become snapshot vectors (idioms.md section 11).
-// Not ported: Capacity (a reserve hint), the Count setter, the enumerator Skip/Reset/Clone ABI.
+// GetByGUID of an absent key is null. Not synchronised (legacy neither): callers lock. The legacy
+// enumerators (IEnumGUID / IEnumUnknown) become snapshot vectors. Not ported: Capacity (a reserve
+// hint), the Count setter, the enumerator Skip/Reset/Clone ABI.
 //
 // Legacy IInterface becomes the template parameter: the interface set stores std::shared_ptr<T>
 // (T may be const-qualified, e.g. GuidInterfaceSet<const IMark>); the object set stores T*.
@@ -34,7 +34,6 @@ struct GuidLess {
     bool operator()(const QUuid& a, const QUuid& b) const noexcept { return compareGuids(a, b) < 0; }
 };
 
-// FEAT-GEO-033, FEAT-GEO-034
 template <class T> class IGuidInterfaceSet {
 public:
     using Ptr = std::shared_ptr<T>;

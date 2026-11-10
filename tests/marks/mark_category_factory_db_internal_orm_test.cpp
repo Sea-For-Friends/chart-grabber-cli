@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkCategoryFactoryDbInternalORM.pas: both CreateCategory overloads stamp the factory's dbId
-// (docs/specs/marks.md §2.9.6). Only the object identity needed by the isSame table is checked here.
+// Ports u_MarkCategoryFactoryDbInternalORM.pas: both CreateCategory overloads stamp the factory's
+// dbId. Only the object identity needed by the isSame table is checked here.
 #include "cg/marks/mormot/categories/mark_category_db_internal_orm.h"
 #include "cg/marks/mormot/categories/mark_category_factory_db_internal_orm.h"
 #include "cg/marks/mormot/categories/mark_category_internal_orm.h"

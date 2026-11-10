@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: u_TileFileNameTMS.pas -- the Tile Map Service (TMS) folder cache (CacheType id 45),
-// default root folder `cache_tms`. FEAT-STO-010.
+// default root folder `cache_tms`.
 
 #include "cg/storage/tile_name_codec.h"
 

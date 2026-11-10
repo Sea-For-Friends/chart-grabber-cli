@@ -6,10 +6,10 @@
 // Ports: Src/Vector/i_AppearanceHelper.pas (IColorSetHelper, IIntegerSetHelper, IIconSetHelper,
 // IAppearanceHelper) and Src/Vector/u_AppearanceHelper.pas (TAppearanceHelper).
 //
-// T-0142 (spec vector.md §2.14). Used only by the XML import path (i_XmlVectorObjects.pas). Mutable,
-// single-threaded, one instance per parse. The three concrete set helpers (TColorSetHelper,
-// TIntegerSetHelper, TIconSetHelper) stay private to appearance_helper.cpp. The Redefine functions
-// reproduce the legacy force-flag pairing, including LV-1 (line and polygon force flags).
+// Used only by the XML import path (i_XmlVectorObjects.pas). Mutable, single-threaded, one instance
+// per parse. The three concrete set helpers (TColorSetHelper, TIntegerSetHelper, TIconSetHelper)
+// stay private to appearance_helper.cpp. The Redefine functions reproduce the legacy force-flag
+// pairing, including a legacy defect (line and polygon force flags).
 
 #include "cg/core/color32.h"
 #include "cg/vector/appearance.h"

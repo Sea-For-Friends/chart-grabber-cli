@@ -2,12 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-015. No legacy DUnit test exercises TileIterator/*.pas directly (grep of
-// Test/*.pas finds only u_CalcTilesInPolygon_Test.pas, which is tile_count.cpp, slice B of this
-// ticket's Tech Lead split). "Otherwise minimal" branch of the test policy: row-major order,
-// Int64 widening, empty rect, reset/start-point-wrap semantics (§4.2.1), the spiral order asserted
-// tile-by-tile for one odd- and one even-sized rect (§4.2.2), and one polygon-clipped column-major
-// case (§4.2.3).
+// No legacy DUnit test exercises TileIterator/*.pas directly (grep of Test/*.pas finds only
+// u_CalcTilesInPolygon_Test.pas, which is tile_count.cpp). A minimal set: row-major order, Int64
+// widening, empty rect, reset/start-point-wrap semantics, the spiral order asserted tile-by-tile
+// for one odd- and one even-sized rect, and one polygon-clipped column-major case.
 
 #include "cg/geo/datum.h"
 #include "cg/geo/geometry_projected.h"
@@ -102,11 +100,11 @@ TEST(TileIteratorByRect, EmptyRectYieldsNothing) {
 }
 
 TEST(TileIteratorByRect, ResetAndStartPointWrapsToRectLeftNotStartX) {
-    // docs/specs/geo.md §4.2.1: "from here, row-major, N tiles" -- the X wrap on overflow resets
-    // to rect.left, never to the supplied start X, and termination is by processed count, not by
-    // reaching the start row again. Rect {2,5,6,8} (width 4, height 3, area 12), start (4,5),
-    // tilesToProcess=5: (4,5),(5,5) fill the rest of the start row, then wrap to x=2 (not x=4) on
-    // row 6 for the remaining 3.
+    // "from here, row-major, N tiles" -- the X wrap on overflow resets to rect.left, never to the
+    // supplied start X, and termination is by processed count, not by reaching the start row
+    // again. Rect {2,5,6,8} (width 4, height 3, area 12), start (4,5), tilesToProcess=5:
+    // (4,5),(5,5) fill the rest of the start row, then wrap to x=2 (not x=4) on row 6 for the
+    // remaining 3.
     TileIteratorByRect iter(makeRect({2, 5, 6, 8}), 5, PointI{4, 5});
     EXPECT_EQ(iter.tilesTotal(), 5); // tilesToProcess overwrites the area (12) since area > 0.
     const std::vector<PointI> expected = {{4, 5}, {5, 5}, {2, 6}, {3, 6}, {4, 6}};
@@ -127,7 +125,7 @@ TEST(TileIteratorSpiralByRect, OddSizedRectClockwiseOrder) {
     // rejected by CheckPoint before EOI -- they produce no extra output.
     TileIteratorSpiralByRect iter(makeRect({-1, -1, 2, 2}));
     EXPECT_EQ(iter.scanOrder(), ScanOrder::Spiral);
-    EXPECT_EQ(iter.tilesTotal(), 9); // rect area, per spec never consulted by next().
+    EXPECT_EQ(iter.tilesTotal(), 9); // rect area, never consulted by next().
     const std::vector<PointI> expected = {{0, 0},  {1, -1}, {1, 0},   {1, 1}, {0, 1},
                                           {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}};
     EXPECT_EQ(collectAll(iter), expected);

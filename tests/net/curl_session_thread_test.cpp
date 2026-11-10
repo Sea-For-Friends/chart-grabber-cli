@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// T-0144: CurlSession belongs to ONE THREAD AT A TIME, not to one thread for life -- docs/specs/net.md
-// §2.8 rule 2 / §3 as corrected. Legacy rule: mutual exclusion, not affinity (u_DownloaderHttpWithTTL.pas
-// :102-138 builds, uses and frees the TCurlHttpClient under FCS by whichever thread calls; the handle itself:
-// u_CurlHttpClient.pas:258-262 Destroy -> :292-298 CurlClose, :430 easy_init inside DoRequest).
+// CurlSession belongs to ONE THREAD AT A TIME, not to one thread for life. Legacy rule: mutual exclusion, not
+// affinity (u_DownloaderHttpWithTTL.pas :102-138 builds, uses and frees the TCurlHttpClient under FCS by
+// whichever thread calls; the handle itself: u_CurlHttpClient.pas:258-262 Destroy -> :292-298 CurlClose, :430
+// easy_init inside DoRequest).
 #include "cg/core/content_type.h"
 #include "cg/core/notifier.h"
 #include "cg/net/curl_downloader.h"
@@ -117,7 +117,7 @@ HttpTestServer::Reply body(const QByteArray& text) {
 
 } // namespace
 
-// Proof 1: built and used on thread A (joined), used again on thread B (joined), destroyed on this thread.
+// Built and used on thread A (joined), used again on thread B (joined), destroyed on this thread.
 TEST_F(CurlSessionThreadTest, DownloaderBuiltOnOneThreadUsedOnAnotherDestroyedOnThird) {
     server_.addReply("/first", body("alpha"));
     server_.addReply("/second", body("bravo-Город"));
@@ -139,7 +139,7 @@ TEST_F(CurlSessionThreadTest, DownloaderBuiltOnOneThreadUsedOnAnotherDestroyedOn
     EXPECT_EQ(second.data, QByteArray("bravo-Город"));
 }
 
-// Proof 2: TtlDownloader over the real factory. Request on thread A, the clock moved past the TTL, the tick
+// TtlDownloader over the real factory. Request on thread A, the clock moved past the TTL, the tick
 // delivered from thread B drops (destroys) the handle, a request on thread C rebuilds it and succeeds.
 TEST_F(CurlSessionThreadTest, TtlTrimFromAnotherThreadThenRebuildOnAThirdThread) {
     server_.addReply("/ttl", body("one"));
@@ -168,11 +168,10 @@ TEST_F(CurlSessionThreadTest, TtlTrimFromAnotherThreadThenRebuildOnAThirdThread)
     EXPECT_EQ(second.data, QByteArrayLiteral("two"));
 }
 
-// Proof 3: two threads inside the session at once are still caught (debug builds only: the marker does not
-// exist in a release build). The first thread is held INSIDE perform() by the server's delayed response; it
-// is known to be inside because its progress callback (which runs on the performing thread, inside perform())
-// has fired. Death tests re-execute the binary (threadsafe style), so the server and the threads are built in
-// the child.
+// Two threads inside the session at once are still caught (debug builds only: the marker does not exist in a
+// release build). The first thread is held INSIDE perform() by the server's delayed response; it is known to
+// be inside because its progress callback (which runs on the performing thread, inside perform()) has fired.
+// Death tests re-execute the binary (threadsafe style), so the server and the threads are built in the child.
 #ifndef NDEBUG
 namespace {
 

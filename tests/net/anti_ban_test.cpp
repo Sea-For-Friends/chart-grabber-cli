@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-012 -- docs/specs/net.md §2.14, §7.13.
 #include "cg/net/anti_ban.h"
 #include "cg/net/download_request.h"
 #include "cg/net/download_result.h"
@@ -25,8 +24,8 @@ using cg::net::ResultKind;
 
 namespace {
 
-// Records every doRequest() it is given; scripted to always return Ok. Stands in for the plain
-// GET fetcher PreloadPageAntiBan::processAntiBan uses (spec [D-14]).
+// Records every doRequest() it is given; scripted to always return Ok. Stands in for the plain GET
+// fetcher PreloadPageAntiBan::processAntiBan uses.
 class RecordingDownloader final : public IDownloader {
 public:
     DownloadResult doRequest(const DownloadRequest& request, std::stop_token /*stop*/) override {

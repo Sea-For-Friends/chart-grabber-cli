@@ -3,18 +3,17 @@
 // SAS.Planet development team; modified.
 
 // Tests of src/cg/region/storage_export_to_mbtiles (SqliteStorageMbtilesClassic and its base),
-// ported from Src/RegionProcess/Export/MBTiles/u_StorageExportToMBTiles.pas :173-546. T-0170 (E2 of
-// docs/specs/region-export.md); T-0172 tags the feature id.
+// ported from Src/RegionProcess/Export/MBTiles/u_StorageExportToMBTiles.pas :173-546.
 //
 // Rig: write into a QTemporaryDir, read the finished file back with storage::sqlite::SqliteDb.
 // Expected values are literals taken from the Pascal. The expected sqlite_master texts were made by
 // running the Pascal DDL / index texts (:404-410, :415) once in the sqlite3 command-line tool (SQLite
 // stores them without "IF NOT EXISTS"), not by reading what the class produced.
 //
-// Register rows (the L rows of T-0170): LC-1 = the tiles table has no unique key, so OR REPLACE /
-// OR IGNORE never fire and duplicates are kept (:409, :412-415); LC-2 = metadata values are spliced
-// between quotes without escaping (:250); LC-3 = the centre of an appended file is taken from the NEW
-// rect with the merged minimum zoom (:465 vs :474).
+// Legacy defects, reproduced: the tiles table has no unique key, so OR REPLACE / OR IGNORE never fire
+// and duplicates are kept (:409, :412-415); metadata values are spliced between quotes without
+// escaping (:250); the centre of an appended file is taken from the NEW rect with the merged minimum
+// zoom (:465 vs :474).
 #include "cg/core/content_type.h"
 #include "cg/core/platform/test_support.h"
 #include "cg/core/result.h"
@@ -287,7 +286,7 @@ TEST(MbtilesClassic, TilesStoredWithFlippedYForTmsAndUnchangedForXyz) {
     }
 }
 
-// T-0179 / FEAT-REG-069: legacy binds a nil buffer for a zero-size tile (:537) -> SQL NULL
+// Legacy binds a nil buffer for a zero-size tile (:537) -> SQL NULL
 TEST(MbtilesClassic, ZeroByteTileIsStoredAsNullNotAsEmptyBlob) {
     QTemporaryDir d;
     ASSERT_TRUE(d.isValid());
@@ -304,7 +303,7 @@ TEST(MbtilesClassic, AppendMergesBoundsZoomsAndCentersOnTheNewRect) {
         QString minzoom, maxzoom, center;
     };
     // first export: rect A, zooms 3..5. Second: rect B. Union(A, B) = left -122.5 (A), bottom 47.0 (B),
-    // right -121.0 (B), top 48.0 (B). Centre of B is (-121.25, 47.5); the union's would be -121.75 (LC-3).
+    // right -121.0 (B), top 48.0 (B). Centre of B is (-121.25, 47.5); the union's would be -121.75.
     const std::vector<Case> cases = {
         {{4, 4}, "3", "5", "-121.25000000,47.50000000,3"}, // existing 3 is smaller, existing 5 is larger
         {{1, 9}, "1", "9", "-121.25000000,47.50000000,1"}, // new values win
@@ -452,7 +451,7 @@ TEST(MbtilesClassic, AppendRefusesAFileOfAnotherFormatTypeOrScheme) {
     }
 }
 
-// ---- 5. LC-1 and forceDropTarget (:409, :412-415, :380-388) ------------------------------------------
+// ---- 5. duplicates kept, and forceDropTarget (:409, :412-415, :380-388)
 
 TEST(MbtilesClassic, DuplicateTilesAreKeptBecauseTheTilesTableHasNoUniqueKey) {
     for (const bool replace : {true, false}) {
@@ -460,7 +459,7 @@ TEST(MbtilesClassic, DuplicateTilesAreKeptBecauseTheTilesTableHasNoUniqueKey) {
         ASSERT_TRUE(d.isValid());
         Cfg c;
         c.replace = replace;
-        // LC-1 (register row of T-0170): same tile twice in one run ...
+        // Same tile twice in one run ...
         ASSERT_TRUE(
             exportOnce(d, c, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}, {PointI(1, 1), 3, kJpg}}).has_value())
             << replace;
@@ -517,13 +516,13 @@ TEST(MbtilesClassic, ForceDropTargetOnAFileThatCannotBeDeletedIsAnIoError) {
     EXPECT_EQ(r.error().what(), "Can't delete database: " + fileOf(d));
 }
 
-// ---- 6. LC-2: no escaping of metadata values (:248-251) ----------------------------------------------
+// ---- 6. No escaping of metadata values (:248-251) ----------------------------------------------
 
 TEST(MbtilesClassic, ApostropheInTheNameFailsOpenAndLeavesTablesWithNoMetadata) {
     QTemporaryDir d;
     ASSERT_TRUE(d.isValid());
     Cfg c;
-    c.name = QStringLiteral("O'Brien"); // LC-2 (register row of T-0170)
+    c.name = QStringLiteral("O'Brien");
     {
         auto w = makeWriter(d, c);
         const std::vector<quint8> zooms = {3, 5};
@@ -595,7 +594,7 @@ TEST(MbtilesClassic, DestroyingAnOpenWriterDoesNotCommitTheLastTransaction) {
     EXPECT_EQ(tilesOf(fileOf(d)), expected);
 }
 
-// ---- 8. read-back with the landed cache connector ----------------------------------------------------
+// ---- 8. read-back with the cache connector ----------------------------------------------------
 
 TEST(MbtilesClassic, FileIsReadBackByMbtilesConnectionWithTheSameBytesAtTheSameXyz) {
     using namespace cg;

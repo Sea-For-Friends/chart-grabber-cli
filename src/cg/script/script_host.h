@@ -11,13 +11,11 @@
 // i_CoordConverterSimple.pas / i_ProjConverter.pas / i_ProjConverterFactory.pas /
 // i_SimpleHttpDownloader.pas (the 7 script-visible interfaces).
 //
-// T-0015A: grows the Slice A record-only stub to the full spec 2.7 surface - the 7 pure-abstract
-// interfaces, IScriptHost (the host facade the registered free functions in interpreter.cpp call
-// through) and ScriptVars (the 26 bound variables). Declarations only: no implementation lives
-// here (the production host is a later ticket; the test double is tests/script/script_host_fake.h).
-// Method calls on an interface variable stay ErrorCode::Unsupported until T-0015B. This is the
-// only header cg::maptype includes (spec 2.7 preamble) - every interface is pure abstract, no
-// data members, and mentions no `net`/`storage`/`geo` type.
+// The 7 pure-abstract interfaces, IScriptHost (the host facade the registered free functions in
+// interpreter.cpp call through) and ScriptVars (the 26 bound variables). Declarations only: no
+// implementation lives here (the production host is in maptype; the test double is
+// tests/script/script_host_fake.h). This is the only header cg::maptype includes - every interface
+// is pure abstract, no data members, and mentions no `net`/`storage`/`geo` type.
 
 #include <QByteArray>
 #include <QDateTime>
@@ -68,7 +66,7 @@ struct TileInfo {
     QByteArray data;
 };
 
-// --- the 7 script-visible interfaces (spec 2.7) -------------------------------------------------
+// --- the 7 script-visible interfaces -------------------------------------------------
 
 class ICoordConverter {
 public:
@@ -103,13 +101,12 @@ public:
 class IHttpDownloader {
 public:
     virtual ~IHttpDownloader() = default;
-    // FEAT-NET-016. Blocking. Called on the download worker thread that is running the script,
-    // with the per-map script lock held - see spec 8. 5 script-visible arguments, not 3 returning
-    // a record (T-0013 review D-2, ruled 2026-09-18): corpus-verified across GGC/*,
+    // Blocking. Called on the download worker thread that is running the script, with the per-map script lock
+    // held. 5 script-visible arguments, not 3 returning a record: corpus-verified across GGC/*,
     // Google/GoogleSat.zmp, the 4 token-service maps and Yandex/YaTraf.zmp, which all pass exactly 5. The two
-    // `var` output parameters are observable independently of the result - a script reads
-    // `responseHeader` after the call even when the Cardinal result is non-zero - so they cannot
-    // be folded into a return-by-value record; legacy is truth over an earlier record-shape draft.
+    // `var` output parameters are observable independently of the result - a script reads `responseHeader`
+    // after the call even when the Cardinal result is non-zero - so they cannot be folded into a
+    // return-by-value record; legacy is truth over an earlier record-shape draft.
     [[nodiscard]] virtual quint32 doHttpRequest(const QByteArray& url, const QByteArray& requestHeader,
                                                 const QByteArray& postData, QByteArray& responseHeader,
                                                 QByteArray& responseData) = 0;
@@ -118,7 +115,7 @@ public:
 class IScriptGlobal {
 public:
     virtual ~IScriptGlobal() = default;
-    // FEAT-NET-018. Per ZMP (shared by its download slots). Variant -> Value (value.h).
+    // Per ZMP (shared by its download slots). Variant -> Value (value.h).
     virtual void setVar(int varId, const Value& v) = 0;
     [[nodiscard]] virtual Value getVar(int varId) const = 0; // Empty when absent
     [[nodiscard]] virtual bool exists(int varId) const = 0;
@@ -134,13 +131,12 @@ public:
 class IScriptLogger {
 public:
     virtual ~IScriptLogger() = default;
-    virtual void write(const QByteArray& text) = 0; // FEAT-NET-020
+    virtual void write(const QByteArray& text) = 0;
 };
 
 class IScriptTileCache {
 public:
     virtual ~IScriptTileCache() = default;
-    // FEAT-NET-017
     [[nodiscard]] virtual TileInfo read(int x, int y, int zoom, const QByteArray& version,
                                         bool withData) const = 0;
     virtual bool write(int x, int y, int zoom, const QByteArray& version, const QByteArray& contentType,
@@ -154,18 +150,17 @@ class IScriptHost {
 public:
     virtual ~IScriptHost() = default;
 
-    // FEAT-NET-004 via TemplateToUrl: the {x}/{y}/{z}/{-y}/{q}/{bbox}/{s}/{timestamp}/{ver}/
-    // {lang}/{sas_path} mini-language, owned by maptype (spec 5.5). Out of this ticket's scope;
-    // the fake host substitutes only {x}/{y}/{z}.
+    // TemplateToUrl: the {x}/{y}/{z}/{-y}/{q}/{bbox}/{s}/{timestamp}/{ver}/{lang}/{sas_path}
+    // mini-language, owned by maptype. The fake host substitutes only {x}/{y}/{z}.
     [[nodiscard]] virtual QByteArray templateToUrl(const QByteArray& tmpl) const = 0;
 
-    // SaveToLocalFile (F36). Returns the byte count written, or 0 on any failure -- never a
-    // negative code (legacy u_PascalScriptUtils.pas:197-199; spec 2.7).
+    // SaveToLocalFile. Returns the byte count written, or 0 on any failure -- never a negative code
+    // (legacy u_PascalScriptUtils.pas:197-199).
     virtual int saveToLocalFile(const QString& fullPath, const QByteArray& data) = 0;
     [[nodiscard]] virtual bool fileExists(const QString& fullPath) const = 0;
 
-    // WriteLn - the IDE console / stderr sink. Distinct from IScriptLogger (FEAT-NET-020), which
-    // is the per-ZMP log file the script reaches through the `Logger` bound variable.
+    // WriteLn - the IDE console / stderr sink. Distinct from IScriptLogger, which is the per-ZMP
+    // log file the script reaches through the `Logger` bound variable.
     virtual void writeLn(const QByteArray& text) = 0;
 
     // Unix seconds. Injected so the corpus tests can freeze time.
@@ -178,7 +173,7 @@ public:
 // --- the 26 bound variables (u_TileDownloadRequestBuilderPascalScriptVars.pas:106-155) ----------
 // Field order here has no significance of its own (unlike the record types above) - the
 // interpreter binds each field to a fixed slot index 0..25 in registration order (not by name),
-// which is what carries the spec 5.1 registration order.
+// which is what carries the registration order.
 struct ScriptVars {
     // in
     qint32 getX = 0, getY = 0;
@@ -192,7 +187,7 @@ struct ScriptVars {
 
     // in/out
     QByteArray requestHead;  // pre-filled from params.txt, script may rewrite
-    QByteArray scriptBuffer; // persists across calls for this map (FEAT-NET-019)
+    QByteArray scriptBuffer; // persists across calls for this map
 
     // out
     QByteArray resultUrl; // empty => tile does not exist (NOT an error)

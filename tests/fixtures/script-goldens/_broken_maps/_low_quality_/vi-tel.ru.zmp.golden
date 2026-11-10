@@ -1,4 +1,4 @@
-; T-0015D golden: vi-tel.ru.zmp - '18-GetZ' used twice.
+; Golden: vi-tel.ru.zmp - '18-GetZ' used twice.
 ; ResultURL := GetURLBase+IntToStr(18-GetZ)+'/x'+IntToStr(GetX)+'y'+IntToStr(GetY)+'z'+
 ;   IntToStr(18-GetZ)+'.png'
 

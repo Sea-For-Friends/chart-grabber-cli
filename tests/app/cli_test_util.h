@@ -3,9 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// T-0193: helpers shared by cli_main_test.cpp and cli_end_to_end_test.cpp (no production code).
-// runCapture runs cg::app::runCli with file descriptors 1 and 2 redirected to temporary files, because
-// Console writes to the process's stdout / stderr.
+// Helpers shared by cli_main_test.cpp and cli_end_to_end_test.cpp (no production code). runCapture
+// runs cg::app::runCli with file descriptors 1 and 2 redirected to temporary files, because Console
+// writes to the process's stdout / stderr.
 #include "cg/app/cli_main.h"
 #include "cg/core/platform/log_noise.h"
 
@@ -24,8 +24,8 @@
 
 namespace cg::app::test {
 
-// T-0396 (macOS only, see log_noise.h): the tests compare the CLI's stderr; the rule is set before main()
-// (env rules survive QLoggingCategory::setFilterRules()).
+// macOS only (see log_noise.h): the tests compare the CLI's stderr; the rule is set before main() (env
+// rules survive QLoggingCategory::setFilterRules()).
 inline const bool kQuietQtPlatformNoise = [] {
     cg::core::platform::silenceQtPlatformLogNoise();
     return true;
@@ -108,8 +108,8 @@ struct ZmpSpec {
     QByteArray ext = ".png";
     QByteArray script{};
     bool layer = false;
-    std::optional<QByteArray> nameInCache{}; // T-0275: unset = "cache" + the folder stem
-    QByteArray extra{}; // more [PARAMS] lines, each ending in CRLF (T-0198: CacheType, MemCacheCapacity)
+    std::optional<QByteArray> nameInCache{}; // unset = "cache" + the folder stem
+    QByteArray extra{}; // more [PARAMS] lines, each ending in CRLF (CacheType, MemCacheCapacity)
 };
 
 inline void writeZmp(const QString& mapsDir, const ZmpSpec& spec) {

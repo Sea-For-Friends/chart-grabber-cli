@@ -3,12 +3,9 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: u_GeometryFunc.pas (LonLat-only helpers, docs/specs/geo.md §3.8).
-// Out of scope for T-0017A (see docs/handoffs/T-0017A.md): isProjectedPolygonSimpleRect,
-// tryProjectedPolygonToTileRect and CalcTileCountIn* (the projected side, T-0017C/T-0018).
-// geometryToPlainText lands here in T-0019A2 -- it needed CoordToStringConverter (T-0019A1),
-// which had not been ported when this file was first written (ownership per T-0017A review F8,
-// docs/handoffs/T-0017A-review.md: "no other ticket claims it").
+// Ports: u_GeometryFunc.pas (LonLat-only helpers). The projected side
+// (isProjectedPolygonSimpleRect, tryProjectedPolygonToTileRect and CalcTileCountIn*) is ported
+// elsewhere. geometryToPlainText is here too; it needs CoordToStringConverter.
 
 #include "cg/geo/coord_to_string.h"
 #include "cg/geo/geo_types.h"
@@ -22,10 +19,9 @@ class IProjection;
 
 // GetGeometryLonLatNearestPoint (u_GeometryFunc.pas:38-45, 393-432): the vertex of `geometry`
 // nearest `currMapPixel` in map-pixel space, or an empty LonLat when none is within
-// `maxDistInMapPixel` pixels. Iterates points() directly rather than through an enumerator
-// (point streams are T-0017B) -- behaviorally identical, since a contour's synthesized closing
-// vertex only ever duplicates points()[0] and so never changes which vertex is nearest.
-// FEAT-GEO-011
+// `maxDistInMapPixel` pixels. Iterates points() directly rather than through an enumerator --
+// behaviorally identical, since a contour's synthesized closing vertex only ever duplicates
+// points()[0] and so never changes which vertex is nearest.
 [[nodiscard]] LonLat nearestPoint(const IGeometryLonLat& geometry, const IProjection& projection,
                                   DoublePoint currentMapPixel, double maxDistInMapPixel);
 

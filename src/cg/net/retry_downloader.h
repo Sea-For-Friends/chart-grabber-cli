@@ -6,7 +6,6 @@
 // Ports: Src/Network/u_TileDownloaderSimple.pas:117-318 (the retry loop and the pacing). The loop
 // runs over three things the job supplies -- build, send (the slot's wrapped IDownloader) and
 // save; the builders, the ITileRequest/ITileRequestResult layers and the saver are maptype's job.
-// docs/specs/net.md §2.15. FEAT-NET-010.
 
 #include "cg/net/download_stats.h"
 #include "cg/net/downloader.h"
@@ -25,15 +24,14 @@
 namespace cg::net {
 
 // Ports TTileDownloaderSimple: retry + the sleep-since-last-download pacing that live OUTSIDE the
-// HTTP client (net.md §2.15, §3 -- "owned by one Worker": single-threaded use, so no lock is
-// needed around the retry loop itself, only around the interruptible sleep).
+// HTTP client (owned by one worker: single-threaded use, so no lock is needed around the retry
+// loop itself, only around the interruptible sleep).
 //
-// std::mutex/std::condition_variable, not QMutex/QWaitCondition (the spec's own suggestion,
-// net.md §2.15, offers either): std::condition_variable::wait's stop_token overload (C++20) is the
-// exact primitive this needs, and folding the interruptible-sleep predicate through it is safer
-// than hand-rolling the wake-on-cancel plumbing a second time (download_queue.cpp needs the same
-// shape for its own blocking waits).
-// How run() ended; the four legacy exits of the loop that need distinct tile-request results.
+// std::mutex/std::condition_variable, not QMutex/QWaitCondition: std::condition_variable::wait's
+// stop_token overload (C++20) is the exact primitive this needs, and folding the
+// interruptible-sleep predicate through it is safer than hand-rolling the wake-on-cancel plumbing
+// a second time (download_queue.cpp needs the same shape for its own blocking waits). How run()
+// ended; the four legacy exits of the loop that need distinct tile-request results.
 enum class RetryEnd : std::uint8_t {
     CanceledBeforeBuild, // :179-181 -- the soft cancel fired before BuildRequest (also :260/:266/:272, the
                          // outer checks)
@@ -63,7 +61,7 @@ public:
     // "Static config used because of bug: mantis #3029"). Do not add a live config reference.
     RetryDownloader(IDownloaderPtr send, int tryCount, quint32 sleepOnResetMs, quint32 waitIntervalMs);
 
-    // FEAT-NET-010. Ports TTileDownloaderSimple.Download's loop (:152-274): per attempt, pacing
+    // Ports TTileDownloaderSimple.Download's loop (:152-274): per attempt, pacing
     // sleep -> cancel check -> build -> (nothing? stop) -> cancel check -> send -> stamp time ->
     // canceled? return unsaved -> store the response head in `lastResponse` (the slot's
     // LastResponseInfo, owned by the job's slot state) -> save; `until not wasConnectError or

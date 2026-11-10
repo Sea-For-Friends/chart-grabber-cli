@@ -1,4 +1,4 @@
-; T-0015D golden: belgeodesy.zmp - static array [1..50] (low bound 1), two top-level 'var'
+; Golden: belgeodesy.zmp - static array [1..50] (low bound 1), two top-level 'var'
 ; sections, 'while' string padding, index out of the INITIALISED range at P4.
 ; dx/dy filled only for indices 1..9; xx:=IntToStr(GetX-dx[GetZ-6]), yy similarly, each
 ; left-zero-padded to 4 via a 'while length(s)<4 do s:="0"+s' loop.
@@ -7,17 +7,16 @@
 ;   '-3403' (len 5, no padding applied since the while condition length<4 is already false),
 ;   yy=IntToStr(5678-2553)='3125' (len 4, no padding needed).
 ; P4 (GetZ-6=12, WITHIN the array's [1..50] declared bounds but past the filled 1..9, so
-;   I1 zero-init applies, not an out-of-range fault): dx[12]=dy[12]=0 -> xx='131071',
+;   zero-initialisation applies, not an out-of-range fault): dx[12]=dy[12]=0 -> xx='131071',
 ;   yy='87654' (both already len>=4, unpadded) -> the golden records legacy's behaviour, not
 ;   a 'sensible' one.
 ; P1 (GetZ-6=-5) and P2 (GetZ-6=-4) index BELOW the array's declared low bound 1. This is NOT
-; undefined (docs/handoffs/T-0015D-review.md finding 2, correcting the earlier "no compiler
-; stack layout" reasoning below): the scripts run in the PascalScript VM, not compiled Delphi
-; code, and the VM range-checks every static-array index at run time
-; (uPSRuntime.pas:7127-7135/:7289-7297, `if Param >= Size then CMD_Err2(erCustomError,
-; 'Static array index out of bounds (%d). Length is %d.')`).
-; T-0032 CORRECTION (superseding the two ErrorText values T-0015D wrote): `Param` here is NOT
-; the script's raw index. For a non-constant index expression (`dx[GetZ-6]` - GetZ is a runtime
+; undefined (this corrects the earlier "no compiler stack layout" reasoning below): the scripts
+; run in the PascalScript VM, not compiled Delphi code, and the VM range-checks every
+; static-array index at run time (uPSRuntime.pas:7127-7135/:7289-7297,
+; `if Param >= Size then CMD_Err2(erCustomError, 'Static array index out of bounds (%d). Length is %d.')`).
+; CORRECTION (superseding the two ErrorText values first written): `Param` here is NOT the script's raw
+; index. For a non-constant index expression (`dx[GetZ-6]` - GetZ is a runtime
 ; bound variable, not a compile-time literal), the COMPILER itself subtracts the array's declared
 ; low bound BEFORE the generic array-access opcode ever runs: `TPSPascalCompiler`'s array-index
 ; codegen (uPSCompiler.pas ~6965-6988) builds `TPSBinValueOp(otSub){Val1:=<index expr>,
@@ -37,13 +36,12 @@
 ; "Static array index out of bounds (4294967291). Length is 50." at P2 - and `buildRequest`
 ; fails before `xx`/`yy` are ever computed. Added below as expected-error sections.
 ;
-; PD-1 (port defect, renamed from PD-101 - see docs/handoffs/T-0015D.md, finding 3): the
-; interpreter (src/sas/script/interpreter.cpp evalIndex/IndexAssign) supported element indexing
-; ('s[i]') only on ValueKind::Str/Empty; ValueKind::Array (any 'arr[i]' or 'arr[i]:=v', including
-; this script's very first statement dx[1]:=36) returned ErrorCode::Unsupported, so every section
-; of this map failed end-to-end through UrlScript::buildRequest - P3/P4's value goldens and
-; P1/P2's expected-error goldens alike, before either the arithmetic or the range check above ever
-; ran. FIXED by T-0032 - see docs/handoffs/T-0032.md.
+; A port defect: the interpreter (src/cg/script/interpreter.cpp evalIndex/IndexAssign) supported
+; element indexing ('s[i]') only on ValueKind::Str/Empty; ValueKind::Array (any 'arr[i]' or
+; 'arr[i]:=v', including this script's very first statement dx[1]:=36) returned
+; ErrorCode::Unsupported, so every section of this map failed end-to-end through
+; UrlScript::buildRequest - P3/P4's value goldens and P1/P2's expected-error goldens alike, before
+; either the arithmetic or the range check above ever ran. FIXED.
 
 [P1]
 GetX=0

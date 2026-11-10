@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-033, FEAT-GEO-034 (held open). Compile check of every interface header of ticket M1
-// (docs/specs/marks.md sections 2.1-2.3, 2.6) and the constants of c_MarkSystem.pas.
+// Compile check of every mark interface header and the constants of c_MarkSystem.pas.
 #include "cg/marks/c_mark_system.h"
 #include "cg/marks/mark_category_db.h"
 #include "cg/marks/mark_category_db_impl.h"

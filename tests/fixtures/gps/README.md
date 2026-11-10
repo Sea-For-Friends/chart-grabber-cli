@@ -12,7 +12,7 @@ either source).
 track (see `../sessions/README.md` for the same pattern with download sessions: this appears to
 be a lightly-used install with almost no user-generated state).
 
-**Per protocol rule 10**: no fixture file is provided here rather than fabricating a track log.
-Flagged as an open question for the Tech Lead: obtain a real recorded/imported track (`.plt` is
-the legacy native format per `vsagps`; `.gpx`/`.kml` are import formats) from another source
-before the GPS-track module's fixtures/tests are considered complete.
+No fixture file is provided here rather than fabricating a track log (fixtures are real, never
+synthetic). A real recorded or imported track (`.plt` is the legacy native format per `vsagps`;
+`.gpx`/`.kml` are import formats) is still needed before the GPS-track module's fixtures/tests
+are complete.

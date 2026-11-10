@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports: i_InetConfig.pas, u_InetConfig.pas:94-176,263-343, u_InetConfigStatic.pas,
-// c_InetConfig.pas:26-28. docs/specs/net.md §2.2. FEAT-NET-007.
+// c_InetConfig.pas:26-28.
 #include "cg/net/inet_config.h"
 
 #include "cg/core/config_element_complex.h"
@@ -17,12 +17,11 @@ InetConfig::InetConfig() : proxy_(std::make_shared<ProxyConfig>()) {
     // (u_InetConfig.pas:107-108). Legacy's 2-arg Add() overload defaults every ChildFlags bool to
     // True (propagate read/write lock + batch + listen), but nothing in this port ever calls a
     // child accessor from inside InetConfig's own writeLock() scope, and core's own test suite
-    // (config_element_complex_test.cpp, "finding 3") demonstrates that all-true propagation
-    // self-deadlocks the instant that happens on our non-recursive mutex. listenToChanges is the
-    // one flag with an observable effect here (the composite InetSettings snapshot must be rebuilt
-    // when Proxy changes, matching the legacy comment "the downloader list is rebuilt on change"),
-    // so it stays true; the lock/batch propagation flags stay at their safe, core.md-documented
-    // default of false. See docs/handoffs/T-0011A.md.
+    // (config_element_complex_test.cpp) demonstrates that all-true propagation self-deadlocks the
+    // instant that happens on our non-recursive mutex. listenToChanges is the one flag with an
+    // observable effect here (the composite InetSettings snapshot must be rebuilt when Proxy
+    // changes, matching the legacy comment "the downloader list is rebuilt on change"), so it
+    // stays true; the lock/batch propagation flags stay at their safe default of false.
     cg::core::ConfigElementChildFlags flags;
     flags.listenToChanges = true;
     addChild(proxy_, cg::core::SaveLoadSlot{QStringLiteral("Proxy")}, flags);
@@ -129,9 +128,9 @@ void InetConfig::doReadConfig(const cg::core::IConfigProviderPtr& src) {
     }
     sleepOnResetConnectionMs_ = static_cast<quint32>(
         src->readInt(u"SleepOnResetConnection", static_cast<qint32>(sleepOnResetConnectionMs_)));
-    // [D-1]: read and discarded, never written -- belongs to the retired WinInet engine split.
+    // Read and discarded, never written -- belongs to the retired WinInet engine split.
     [[maybe_unused]] const qint32 networkEngine = src->readInt(u"NetworkEngine", 1);
-    ignoreTlsErrors_ = src->readBool(u"IgnoreTlsErrors", ignoreTlsErrors_); // [D-2] new key
+    ignoreTlsErrors_ = src->readBool(u"IgnoreTlsErrors", ignoreTlsErrors_); // New key
     setChanged(); // unconditional, matches u_InetConfig.pas:161 (SetChanged after every read)
 }
 
@@ -145,8 +144,8 @@ void InetConfig::doWriteConfig(const cg::core::IConfigWriterPtr& dst) const {
     dst->writeInt(u"DownloadTryCount", downloadTryCount_);
     dst->writeInt(u"SleepOnResetConnection", static_cast<qint32>(sleepOnResetConnectionMs_));
     dst->writeBool(u"IgnoreTlsErrors", ignoreTlsErrors_);
-    // NetworkEngine, BrowserEngine, PreInitBrowserEngine: never written here ([D-1]; the latter two
-    // belong to ui/ADR-0008 and are not read here either).
+    // NetworkEngine, BrowserEngine, PreInitBrowserEngine: never written here (a deviation from
+    // legacy; the latter two belong to the ui browser and are not read here either).
 }
 
 void InetConfig::doBeforeChangeNotify() {

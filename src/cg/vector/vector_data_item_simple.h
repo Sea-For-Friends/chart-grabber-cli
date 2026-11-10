@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/Vector/i_VectorDataItemSimple.pas
 //
-// FEAT-GEO-037. A vector item is a geometry plus main info (name, description) plus an optional
-// appearance; point / line / polygon is decided by the dynamic type of geometry().
+// A vector item is a geometry plus main info (name, description) plus an optional appearance;
+// point / line / polygon is decided by the dynamic type of geometry().
 
 #include "cg/core/hash.h"
 #include "cg/geo/geometry_lonlat.h"

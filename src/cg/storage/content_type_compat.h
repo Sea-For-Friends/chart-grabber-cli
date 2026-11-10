@@ -7,10 +7,9 @@
 //
 // Shared by every backend's saveTile: `u_TileStorageFileSystem.pas:SaveTile` and
 // `u_TileStorageInRAM.pas:300` both call `FMainContentType.CheckOtherForSaveCompatible(AContentType)`
-// before accepting a save with real data, and raise on a mismatch. T-0021F1 review finding 1
-// resolved what "compatible" means (same ContentKind + same defaultExt, looked up via the registry,
-// not MIME string equality); this header is the one place that rule lives, so a second backend
-// reuses it instead of re-deriving it (T-0021F1 review "For F2/F3" note).
+// before accepting a save with real data, and raise on a mismatch. "Compatible" means the same
+// ContentKind and the same defaultExt, looked up via the registry, not MIME string equality; this
+// header is the one place that rule lives, so a second backend reuses it instead of re-deriving it.
 
 #include "cg/core/content_type.h"
 

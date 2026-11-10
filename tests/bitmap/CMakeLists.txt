@@ -1,10 +1,10 @@
-# tests of the bitmap module (docs/specs/bitmap.md section 9). Later bitmap tickets append here.
+# tests of the bitmap module. Test files are added here as the module grows.
 set(CG_BITMAP_TEST_SRCS
-  bitmap32_factories_test.cpp # T-0155
-  bitmap_tile_lib_jpeg_test.cpp # T-0160
-  bitmap_tile_free_image_test.cpp # T-0161
-  bitmap_tile_free_image_webp_test.cpp # T-0162
-  bitmap_tile_save_load_factory_test.cpp # T-0163
+  bitmap32_factories_test.cpp
+  bitmap_tile_lib_jpeg_test.cpp
+  bitmap_tile_free_image_test.cpp
+  bitmap_tile_free_image_webp_test.cpp
+  bitmap_tile_save_load_factory_test.cpp
 )
 find_package(JPEG REQUIRED) # the test decodes with libjpeg directly as its reference
 find_package(PkgConfig REQUIRED)

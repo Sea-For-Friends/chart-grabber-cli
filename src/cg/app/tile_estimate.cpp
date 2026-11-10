@@ -20,7 +20,7 @@ namespace cg::app {
 
 namespace {
 
-constexpr qint64 kSampleSize = 500; // spec 3.7: up to 500 tiles per zoom
+constexpr qint64 kSampleSize = 500; // Up to 500 tiles per zoom
 
 struct Sample {
     qint64 looked = 0;
@@ -67,7 +67,7 @@ estimateTiles(const maptype::IMapType& map, const geo::IGeometryLonLatPolygon& a
         estimate.bboxTiles = bbox ? bbox->tilesCount : 0;
 
         Sample sample;
-        if (estimate.tiles > 0 && !assumeEmptyCache) { // T-0243: no storage call, nothing counted as present
+        if (estimate.tiles > 0 && !assumeEmptyCache) { // No storage call, nothing counted as present
             const qint64 step =
                 std::max<qint64>(1, static_cast<qint64>(std::ceil(static_cast<double>(estimate.tiles) /
                                                                   static_cast<double>(kSampleSize))));

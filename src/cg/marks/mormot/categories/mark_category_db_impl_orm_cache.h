@@ -3,13 +3,12 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMCache.pas (docs/specs/marks.md §2.9.6).
-// Line numbers below are those of that unit. The caches have no lock of their own: they are reached
-// only under the write lock of their database (§2.9.12).
+// Ports: Src/MarksDB/mORMot/Categories/u_MarkCategoryDbImplORMCache.pas. Line numbers below are those
+// of that unit. The caches have no lock of their own: they are reached only under the write lock of
+// their database.
 //
-// Row layout: the landed cache base (mormot/mark_system_orm_cache_base.h) keys a row by its member `id`,
-// the FIRST field of the legacy record; spec §2.9.6 draws it as `categoryId`, the landed base wins.
-// For OrmCategoryViewRow the key `id` is the legacy `CategoryId`.
+// Row layout: the cache base (mormot/mark_system_orm_cache_base.h) keys a row by its member `id`, the
+// FIRST field of the legacy record. For OrmCategoryViewRow the key `id` is the legacy `CategoryId`.
 
 #include "cg/marks/mormot/mark_system_orm_cache_base.h"
 #include "cg/marks/mormot/mark_system_orm_types.h"

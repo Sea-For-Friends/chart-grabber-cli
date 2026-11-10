@@ -7,10 +7,10 @@
 //        u_TileStorageSQLiteFileConnectionBuilder.pas:81-178 (Create, MakeNewConnection),
 //        u_EnumTileInfoBySQLiteFile.pas.
 //
-// docs/specs/storage.md §2.17 (intro), §2.6, §3.1. One ITileStorage over one single-file SQLite
-// cache (MBTiles, OsmAnd, Locus, RMaps, OruxMaps): every method acquires a connection from the
-// pool, runs one operation under the storage's read or write lock, and releases it. Versions are
-// ignored. The format dispatch (MakeNewConnection) is a private builder defined in the .cpp.
+// One ITileStorage over one single-file SQLite cache (MBTiles, OsmAnd, Locus, RMaps, OruxMaps):
+// every method acquires a connection from the pool, runs one operation under the storage's read
+// or write lock, and releases it. Versions are ignored. The format dispatch (MakeNewConnection)
+// is a private builder defined in the .cpp.
 
 #include "cg/core/content_type.h"
 #include "cg/core/sync.h"
@@ -28,7 +28,7 @@ namespace cg::storage::sqlite {
 
 class SqliteFileConnectionBuilder;
 
-// FEAT-STO-019, FEAT-STO-020, FEAT-STO-021. Ports TTileStorageSQLiteFile.
+// Ports TTileStorageSQLiteFile.
 class SqliteFileTileStorage final : public ITileStorage {
 public:
     // `memCache` may be null (legacy Assigned() checks). `path` is passed through prepareFileName().

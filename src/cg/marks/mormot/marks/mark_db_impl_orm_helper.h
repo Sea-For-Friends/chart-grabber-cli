@@ -3,26 +3,23 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMHelper.pas, the write half (docs/specs/marks.md §2.9.8
-// W-1, W-3, W-4; statements S-20 ... S-2D, S-40, S-42 of §2.9.5). Line numbers in the sources are those of
-// that unit.
+// Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMHelper.pas, the write half. Line numbers in the sources
+// are those of that unit.
 //
-// Scope of this file: ticket T-0095 (O12): the constructor (:230-259), the destructor (:261-265, the cache
-// frees itself), the picture / appearance helpers (:333-454), DeleteMarkSQL (:456-616) and InsertMarkSQL
-// (:618-774); ticket T-0100 (O13): UpdateMarkSQL (:776-1010), UpdateMarkView (:1176-1264),
-// SetMarksInCategoryVisibleSQL (:1266-1347), the two geometry decoders (:267-299, the constructor now
-// carries the geometry factory); ticket T-0105 (O14): ReadMarkSQL (:1012-1174), the four _FillPrepare*
-// functions (:1349-1644), GetMarkRecArray (:1646-1751) and, with them, the read-only branch of
-// SetMarksInCategoryVisibleSQL (:1321-1344). The geometry encoders (:301-331) are the free functions of
-// cg/geo/wkb.h.
-// ticket T-0111 (O15): _GetMarkIDArrayByRectSQL (:1753-1819), GetMarkRecArrayByRect (:1968-2070),
+// Scope of this file: the constructor (:230-259), the destructor (:261-265, the cache frees itself), the
+// picture / appearance helpers (:333-454), DeleteMarkSQL (:456-616) and InsertMarkSQL (:618-774);
+// UpdateMarkSQL (:776-1010), UpdateMarkView (:1176-1264), SetMarksInCategoryVisibleSQL (:1266-1347), the two
+// geometry decoders (:267-299, the constructor now carries the geometry factory); ReadMarkSQL (:1012-1174),
+// the four _FillPrepare* functions (:1349-1644), GetMarkRecArray (:1646-1751) and, with them, the read-only
+// branch of SetMarksInCategoryVisibleSQL (:1321-1344). The geometry encoders (:301-331) are the free
+// functions of cg/geo/wkb.h. Also _GetMarkIDArrayByRectSQL (:1753-1819), GetMarkRecArrayByRect (:1968-2070),
 // _GetMarkRecArrayByTextSQLite3 (:2072-2106), GetMarkRecArrayByText (:2159-2269) and SetReadOnly
-// (:2271-2279). Not ported (spec 2.9.8): :1821-1966 (DBMS and MongoDB rectangle), :2108-2157 (the non-SQLite
-// text search), :584-606 and every non-SQLite branch.
+// (:2271-2279). Not ported: :1821-1966 (DBMS and MongoDB rectangle), :2108-2157 (the non-SQLite text
+// search), :584-606 and every non-SQLite branch.
 //
-// Every method is called with the write lock of the owning mark database held (§2.9.12); the helper and its
-// caches have no lock of their own. The helper starts a transaction only where legacy does; each statement
-// runs under the connection's dbMutex.
+// Every method is called with the write lock of the owning mark database held; the helper and its caches
+// have no lock of their own. The helper starts a transaction only where legacy does; each statement runs
+// under the connection's dbMutex.
 
 #include "cg/geo/geo_types.h"
 #include "cg/geo/geometry_factory.h"
@@ -67,14 +64,15 @@ public:
     int getMarkRecArray(qint64 categoryId, bool includeHidden, bool includeGeometry, bool includeAppearance,
                         std::vector<OrmMarkRec>& out);
 
-    // :1968-2070. S-41 over the R-tree (bounding boxes only), then readMarkSql for every id; hidden marks
+    // :1968-2070. A query over the R-tree (bounding boxes only), then readMarkSql for every id; hidden marks
     // only with includeHidden. `categoryIds`: empty = every category; 128 or more are filtered in memory and
     // the list is sorted in place (as legacy sorts the caller's array). `out` is cleared first; returns
     // out.size().
     int getMarkRecArrayByRect(std::vector<qint64>& categoryIds, const geo::DoubleRect& rect,
                               bool includeHidden, const geo::DoublePoint& lonLatSize,
                               std::vector<OrmMarkRec>& out);
-    // :2159-2269. S-43 on mName, then on mDesc; the text is lower-cased and sent as an FTS query (bound).
+    // :2159-2269. The FTS query on mName, then on mDesc; the text is lower-cased and sent as an FTS query
+    // (bound).
     int getMarkRecArrayByText(const QString& text, int maxCount, bool includeHidden, bool searchInDescription,
                               std::vector<OrmMarkRec>& out);
 
@@ -91,21 +89,21 @@ private:
 
     friend struct MarkDbImplORMHelperTestAccess; // tests/marks: the caches and the private helpers
 
-    qint64 addMarkImage(const QString& picName); // :333-361  cache -> S-20 -> S-21
-    void readMarkImage(OrmMarkRec& rec);         // :363-389  points only; cache -> S-22
+    qint64 addMarkImage(const QString& picName); // :333-361 cache -> read -> add
+    void readMarkImage(OrmMarkRec& rec);         // :363-389 points only; cache, then the database
     qint64 addMarkAppearance(quint32 color1, quint32 color2, qint32 scale1, qint32 scale2); // :391-426
-    void readMarkAppearance(OrmMarkRec& rec); // :428-454  cache -> S-2A
+    void readMarkAppearance(OrmMarkRec& rec); // :428-454 cache, then the database
 
-    int fillPrepareMarkIdIndex(qint64 categoryId);        // :1349-1452  S-3A / S-3B
-    void fillPrepareMarkIdCache(qint64 categoryId);       // :1454-1497  S-3C
-    void fillPrepareMarkGeometryCache(qint64 categoryId); // :1499-1591  S-3D + S-3E
-    void fillPrepareMarkViewCache(qint64 categoryId);     // :1593-1644  S-3F
+    int fillPrepareMarkIdIndex(qint64 categoryId);        // :1349-1452
+    void fillPrepareMarkIdCache(qint64 categoryId);       // :1454-1497
+    void fillPrepareMarkGeometryCache(qint64 categoryId); // :1499-1591
+    void fillPrepareMarkViewCache(qint64 categoryId);     // :1593-1644
 
-    // :1753-1819  S-41. `out` is cleared first; returns out.size().
+    // :1753-1819. `out` is cleared first; returns out.size().
     int getMarkIdArrayByRectSql(const std::vector<qint64>& categoryIds, const geo::DoubleRect& rect,
                                 quint32 lonSize, quint32 latSize, bool receiveCategoryId,
                                 std::vector<MarkWithCategoryId>& out);
-    // :2072-2106  S-43. Returns the number of ids found in both columns together.
+    // :2072-2106. Returns the number of ids found in both columns together.
     int getMarkRecArrayByTextSqlite3(const QString& search, int maxCount, bool searchInDescription,
                                      std::vector<qint64>& nameIds, std::vector<qint64>& descIds);
 

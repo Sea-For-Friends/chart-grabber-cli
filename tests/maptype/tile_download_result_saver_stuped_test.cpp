@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_TileDownloadResultSaverStuped.pas (docs/specs/maptype.md 2.13.5, OQ-14, OQ-16), the non-bitmap
-// path. Expectations are read from the temp directory of a real FileSystemTileStorage (layout gm1: tile (3,7)
-// zoom 5 is z5/7/3.<ext>, the TNE marker z5/7/3.tne) as literals; line numbers are those of the Pascal unit.
+// Ports u_TileDownloadResultSaverStuped.pas, the non-bitmap path. Expectations are read from the temp
+// directory of a real FileSystemTileStorage (layout gm1: tile (3,7) zoom 5 is z5/7/3.<ext>, the TNE marker
+// z5/7/3.tne) as literals; line numbers are those of the Pascal unit.
 #include "cg/core/content_type.h"
 #include "cg/core/content_type_subst.h"
 #include "cg/core/notifier.h"
@@ -203,7 +203,7 @@ bool isOk(const maptype::ITileRequestResultPtr& r) {
 
 // :258-261, :487-510: an OK result is converted (simple copies only) and stored with the map's content type.
 // :426-427: the per-map substitution runs first. The BadMIME text is u_ResStrings.pas:102; a pair legacy
-// converts with a bitmap codec / an archive converter has no converter here (OQ-14) and ends in that text.
+// converts with a bitmap codec / an archive converter has no converter here and ends in that text.
 TEST(TileDownloadResultSaverStuped, OkResultsAreStoredWithTheMapsContentTypeOrRejected) {
     struct Row {
         const char* name;
@@ -437,9 +437,8 @@ TEST(TileDownloadResultSaverStuped, AStorageErrorIsTheTextOfTheErrorResult) {
     EXPECT_FALSE(isOk(out));
 }
 
-// :434-435, :436-486 (OQ-16, spec bitmap.md §1.7 M-1): crop / cut on a bitmap map: the received-type checks
-// of legacy run, then the refusal (the port has no crop / cut, R-13) is a readable SaveTileDownloadError. A
-// vector map ignores the config.
+// :434-435, :436-486: crop / cut on a bitmap map: the received-type checks of legacy run, then the refusal
+// (the port has no crop / cut) is a readable SaveTileDownloadError. A vector map ignores the config.
 TEST(TileDownloadResultSaverStuped, CropOrCutOnABitmapMapIsRefusedWithAReadableError) {
     const auto cropOn = std::make_shared<maptype::TilePostDownloadCropConfigStatic>(
         geo::RectI{0, 0, 100, 100}, geo::PointI{0, 0}, geo::PointI{0, 0}, geo::PointI{0, 0}, QString());
@@ -475,9 +474,9 @@ TEST(TileDownloadResultSaverStuped, CropOrCutOnABitmapMapIsRefusedWithAReadableE
 }
 
 // Proves the crop config of the stock corpus only (the saves use a fixed PNG map, not each ZMP's own save
-// type). The stock corpus (514 ZMPs, tests/fixtures/zmp/sas.maps): 9 have a crop rect (T-0044 handoff:
-// independent grep), none has a cut. Each of the nine is refused with the readable error on a bitmap map
-// until R-13.
+// type). The stock corpus (514 ZMPs, tests/fixtures/zmp/sas.maps): 9 have a crop rect (an independent
+// grep), none has a cut. Each of the nine is refused with the readable error on a bitmap map, as crop is
+// not ported.
 TEST(TileDownloadResultSaverStuped, StockZmpsWithCropOrCutAreRefused) {
     CG_SKIP_IF_NO_CORPUS();
     const maptype::test::ZmpEnv env;
@@ -573,8 +572,8 @@ QByteArray solidImage(bool png) {
 
 } // namespace
 
-// Proof 7, :487-495, :506: a JPEG result for a PNG map is re-encoded before it is stored; the request result
-// keeps the original; a synonym target stores the received bytes unchanged.
+// :487-495, :506: a JPEG result for a PNG map is re-encoded before it is stored; the request result keeps
+// the original; a synonym target stores the received bytes unchanged.
 TEST(TileDownloadResultSaverStuped, ConvertedBytesAreStoredAndTheOriginalResultIsReturned) {
     const QByteArray jpeg = solidImage(false);
     {
@@ -600,7 +599,7 @@ TEST(TileDownloadResultSaverStuped, ConvertedBytesAreStoredAndTheOriginalResultI
     }
 }
 
-// Proof 8, :507-509: no converter -> the BadMIME text, nothing stored.
+// :507-509: no converter -> the BadMIME text, nothing stored.
 TEST(TileDownloadResultSaverStuped, MissingConverterIsTheBadMimeError) {
     const QString bad = u"Server returned type \"%1\", this is not bitmap image"_s;
     const QByteArray png = solidImage(true);
@@ -620,7 +619,7 @@ TEST(TileDownloadResultSaverStuped, MissingConverterIsTheBadMimeError) {
     }
 }
 
-// Proof 9, :489 + :262-269: the loader raises, the text is the error of the result, nothing stored.
+// :489 + :262-269: the loader raises, the text is the error of the result, nothing stored.
 TEST(TileDownloadResultSaverStuped, ConverterExceptionIsTheTextOfTheErrorResult) {
     RecordingRig rig(kJpg);
     const auto out =
@@ -631,8 +630,8 @@ TEST(TileDownloadResultSaverStuped, ConverterExceptionIsTheTextOfTheErrorResult)
     EXPECT_TRUE(rig.storage->saved.empty());
 }
 
-// Proof 10, :490-495: the empty-tile predicate sees the CONVERTED bytes; a hit stores the TNE marker (option
-// on) and the request result stays Ok(original), :261.
+// :490-495: the empty-tile predicate sees the CONVERTED bytes; a hit stores the TNE marker (option on) and
+// the request result stays Ok(original), :261.
 TEST(TileDownloadResultSaverStuped, EmptyTilePredicateSeesTheConvertedBytes) {
     std::vector<QByteArray> seen;
     RecordingRig rig(kJpg, [&](const QByteArray& d) {

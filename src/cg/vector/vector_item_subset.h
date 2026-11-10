@@ -5,9 +5,9 @@
 #pragma once
 // Ports: Src/Vector/i_VectorItemSubset.pas, u_VectorItemSubset.pas
 //
-// FEAT-GEO-037. An immutable ordered list of vector items with a running hash. A null
-// VectorItemSubsetPtr means "no items" throughout (the builder returns null for an empty list).
-// GetEnum (IEnumUnknown) is not ported: callers index 0 .. count()-1.
+// An immutable ordered list of vector items with a running hash. A null VectorItemSubsetPtr
+// means "no items" throughout (the builder returns null for an empty list). GetEnum
+// (IEnumUnknown) is not ported: callers index 0 .. count()-1.
 
 #include "cg/vector/vector_data_item_simple.h"
 

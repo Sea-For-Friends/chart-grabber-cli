@@ -2,10 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-STO-019 (OruxMaps flavour). Ports
-// Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionOruxMaps.pas; see
-// docs/specs/storage.md §2.17.3. No legacy DUnit exists for this unit (ticket's own Tests
-// section) -- this is the ticket's minimal list: without a sibling `*.otrk2.xml` the open fails
+// Ports Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionOruxMaps.pas. No legacy DUnit
+// exists for this unit; this is a minimal list: without a sibling `*.otrk2.xml` the open fails
 // with legacy's exact message; with a calibration already decoded (see below), a tile and a rect
 // read back through the per-zoom base-point offset; every write on the opened connection is a
 // no-op `false`, never an exception. One process per case (ctest), each on its own QTemporaryDir.
@@ -14,8 +12,7 @@
 // stores `base_points` itself, as legacy does (FetchMetadata, :202-218); the tests below write a
 // small real-shaped XML for that. The defect regression test needs a layer Zoom the XML parser
 // never yields (> 23), so it hands OruxmapsConnection::open() a pre-populated `existingInfo` whose
-// base64 blob `encodeCalibration()` builds independently of `oruxmaps_connection.cpp`'s decoder
-// (ticket rule 10).
+// base64 blob `encodeCalibration()` builds independently of `oruxmaps_connection.cpp`'s decoder.
 #include "cg/core/content_type.h"
 #include "cg/geo/datum.h"
 #include "cg/geo/geo_types.h"
@@ -259,17 +256,17 @@ TEST(OruxmapsConnection, ReadsCalibratedTileAndRect) {
     EXPECT_EQ(stillThere->type, TileInfoType::Exists);
 }
 
-// --- §7.5 item 6: a real OruxMaps .db plus its .otrk2.xml, made by the OruxMaps application ---
+// --- A real OruxMaps .db plus its .otrk2.xml, made by the OruxMaps application ---
 
 TEST(OruxmapsConnection, RealOruxMapsSample) {
     const QString path = cgStorageFixture(QStringLiteral("cache/foreign/sample_oruxmaps.db"));
     if (!QFileInfo::exists(path)) {
         GTEST_SKIP() << "missing fixture: " << path.toStdString()
-                     << " (docs/specs/storage.md §7.5 item 6: an OruxMaps .db plus its .otrk2.xml, "
+                     << " (an OruxMaps .db plus its .otrk2.xml, "
                         "small, any map -- requested from the user, see "
                         "tests/fixtures/cache/README.md)";
     }
-    // Next (T-0022C4): open with existingInfo=nullptr and read one tile.
+    // Next: open with existingInfo=nullptr and read one tile.
 }
 
 // --- a sibling XML that does not describe a calibration (:213) -------------------------------
@@ -289,7 +286,7 @@ TEST(OruxmapsConnection, RejectsUnreadableXml) {
     EXPECT_EQ(opened.error().what(), QStringLiteral("OruxMaps: Error reading XML file!"));
 }
 
-// --- L-80: a zoom outside 0..23 whose low bits alias a valid one (legacy indexes out of bounds) ---
+// --- A zoom outside 0..23 whose low bits alias a valid one (legacy indexes out of bounds) ---
 
 TEST(OruxmapsConnection, AliasedZoomStaysInBounds) {
     QTemporaryDir dir;

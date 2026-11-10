@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-008; docs/specs/net.md §2.18.1 (a proxy given by environment bypasses the resolver),
-// T-0201
+// A proxy given by the environment bypasses the resolver.
 #include "cg/net/proxy_resolver.h"
 
 #include <QByteArray>

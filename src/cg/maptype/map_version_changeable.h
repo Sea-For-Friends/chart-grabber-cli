@@ -5,9 +5,9 @@
 #pragma once
 // Ports: i_MapVersionChangeable.pas, u_MapVersionChangeable.pas
 //
-// Yields the storage::MapVersionInfo of a MapVersionConfig built by the current factory
-// (spec maptype.md section 2.9). Legacy never instantiates it; see L-152 for the unassigned
-// static, reproduced here.
+// Yields the storage::MapVersionInfo of a MapVersionConfig built by the current factory.
+// Legacy never instantiates it. Its never-assigned static (a legacy defect) is reproduced
+// here.
 
 #include "cg/core/changeable.h"
 #include "cg/core/notifier.h"
@@ -19,7 +19,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class MapVersionChangeable final : public core::Changeable {
 public:
     MapVersionChangeable(std::shared_ptr<MapVersionConfig> config,

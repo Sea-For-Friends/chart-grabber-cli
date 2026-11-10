@@ -30,7 +30,7 @@ namespace {
 
 // u_LocalCoordConverterFactorySimpe.pas: every changeProjection* method that must reproject one
 // map-pixel point from the old projection to the new one repeats this same-type/relative shortcut
-// vs. general lon/lat round-trip choice (T-0016 review finding 14).
+// vs. general lon/lat round-trip choice.
 [[nodiscard]] DoublePoint reprojectMapPixel(const ProjectionPtr& from, const ProjectionPtr& to,
                                             DoublePoint p) {
     if (from->projectionType()->isSame(*to->projectionType())) {
@@ -84,7 +84,7 @@ DoublePoint LocalCoordConverter::localPixel2MapPixelFloat(PointI p) const {
 DoublePoint LocalCoordConverter::localPixelFloat2MapPixelFloat(DoublePoint p) const {
     // u_LocalCoordConverter.pas:486-491 / 584-589 / 678-683 -- the one formula (scale_ == 1.0 is
     // the fast path: division by 1.0 is exact, so no branch is needed for correctness, only for
-    // clarity per docs/specs/geo.md §2.7).
+    // clarity).
     if (scale_ == 1.0) {
         return {p.x() + mapPixelAtLocalZero_.x(), p.y() + mapPixelAtLocalZero_.y()};
     }

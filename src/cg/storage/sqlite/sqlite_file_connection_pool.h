@@ -5,10 +5,9 @@
 #pragma once
 // Ports: Src/TileStorage/SQLiteFile/u_TileStorageSQLiteFileConnectionPool.pas:51-104.
 //
-// docs/specs/storage.md §2.17 ("a LIFO free list under a mutex; empty list -> the maker builds a
-// new connection"). A connection is used by exactly one thread at a time (SqliteDb is opened
-// NOMUTEX; D-10's last sentence). There is no idle-close and no maximum size here -- legacy's pool
-// has neither (ticket T-0022C1 scope: base + pool only, no per-format sweep timer).
+// A LIFO free list under a mutex; an empty list -> the maker builds a new connection. A connection
+// is used by exactly one thread at a time (SqliteDb is opened NOMUTEX). There is no idle-close and
+// no maximum size here -- legacy's pool has neither.
 
 #include "cg/storage/sqlite/sqlite_file_connection.h"
 
@@ -20,13 +19,13 @@
 namespace cg::storage::sqlite {
 
 // Ports TTileStorageSQLiteFileConnectionPool. `maker` ports
-// ITileStorageSQLiteFileConnectionBuilder.MakeNewConnection -- T-0022C4 supplies the actual format
-// dispatch; this class only calls it when the free list is empty. `maker` returns a
-// core::Result (T-0022C1-review.md F1): legacy's `Create` (reached through this pool's own
-// `Acquire`, `ConnectionPool.pas:87`) can raise -- the same "Create reached through Acquire" case
-// F1 lists for the connection base -- and MakeNewConnection has no try/except of its own, so the
-// exception is uncaught and propagates straight out of Acquire. An error Result here reproduces
-// that: acquire() propagates it to its own caller instead of returning a connection.
+// ITileStorageSQLiteFileConnectionBuilder.MakeNewConnection -- sqlite_file_tile_storage.cpp
+// supplies the actual format dispatch; this class only calls it when the free list is empty.
+// `maker` returns a core::Result: legacy's `Create` (reached through this pool's own `Acquire`,
+// `ConnectionPool.pas:87`) can raise -- the same case as for the connection base -- and
+// MakeNewConnection has no try/except of its own, so the exception is uncaught and propagates
+// straight out of Acquire. An error Result here reproduces that: acquire() propagates it to its
+// own caller instead of returning a connection.
 class SqliteFileConnectionPool final {
 public:
     using ConnectionMaker = std::function<core::Result<std::unique_ptr<SqliteFileConnection>>()>;

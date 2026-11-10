@@ -13,7 +13,6 @@
 
 namespace cg::vector {
 
-// FEAT-GEO-037
 VectorDataItemMainInfoFactory::VectorDataItemMainInfoFactory(HtmlToHintTextConverterPtr hintConverter)
     : hintConverter_(std::move(hintConverter)) {
     Q_ASSERT(hintConverter_ != nullptr);
@@ -27,7 +26,6 @@ VectorDataItemMainInfoPtr VectorDataItemMainInfoFactory::buildMainInfo(IdData* /
     return std::make_shared<VectorDataItemMainInfo>(hash, hintConverter_, name, desc);
 }
 
-// FEAT-GEO-037
 VectorDataItemPtr VectorDataFactorySimple::buildItem(const VectorDataItemMainInfoPtr& mainInfo,
                                                      const AppearancePtr& appearance,
                                                      const geo::GeometryLonLatPtr& geometry) const {

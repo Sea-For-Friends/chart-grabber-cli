@@ -7,9 +7,9 @@
 //        u_ConfigDataWriteProviderByIniFile.pas
 //
 // The INI model behind every legacy settings file and every .zmp params.txt. It is line-oriented
-// on purpose (ADR-0010): reading and rewriting a file the user has not changed must reproduce the
-// original bytes, comments, blank lines and key order included, which TMemIniFile does not do.
-// Reads reproduce the Delphi parsing quirks exactly (spec core.md 2.12.2, Q1-Q24).
+// on purpose: reading and rewriting a file the user has not changed must reproduce the original
+// bytes, comments, blank lines and key order included, which TMemIniFile does not do. Reads
+// reproduce the Delphi parsing quirks exactly.
 
 #include "cg/core/result.h"
 #include "cg/core/text_codec.h"
@@ -27,7 +27,6 @@
 
 namespace cg::core {
 
-// FEAT-UI-200
 class IniFile {
 public:
     IniFile();
@@ -75,7 +74,7 @@ public:
     [[nodiscard]] bool isDirty() const noexcept;
 
     // --- serialising --------------------------------------------------------
-    // Byte-identical to the loaded bytes when nothing was written (ADR-0010).
+    // Byte-identical to the loaded bytes when nothing was written.
     [[nodiscard]] QByteArray toBytes() const;
     [[nodiscard]] Result<void> save(); // to sourcePath(), atomic rename
     [[nodiscard]] Result<void> saveAs(const QString& path);

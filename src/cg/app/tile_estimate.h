@@ -6,8 +6,8 @@
 // New code (no legacy unit). Inherits: Src/RegionProcess/Download/frm_ProgressDownload.pas:395-408
 // (GetLenEnd: size left = (downloadedSize / downloaded) x (total - processed), with the cache sample in place
 // of the session counters), Src/RegionProcess/Download/fr_TilesDownload.pas:205-241 (GetZoomInfo, the bbox
-// column; ported by T-0181), Src/RegionProcess/Download/u_ThreadDownloadTiles.pas:318-356 (the worker's tile
-// classification). Ports: nothing. docs/specs/app-cli.md 3.7.
+// column), Src/RegionProcess/Download/u_ThreadDownloadTiles.pas:318-356 (the worker's tile classification).
+// Ports: nothing.
 //
 // Tile count and byte estimate before a download starts. Read-only towards the cache: LoadMode::WithoutData
 // only.
@@ -46,12 +46,12 @@ struct ZoomEstimate {
     bool assumed =
         false; // the mean size is --assume-tile-kb: no zoom of the job had a present tile in its sample
     qint64 bytesOnDisk =
-        0; // T-0202: size when complete = all the area's tiles at this zoom that are not marked
-           // missing, x mean (not what is on disk now: equals bytesToDownload on an empty cache)
+        0; // Size when complete = all the area's tiles at this zoom that are not marked missing, x
+           // mean (not what is on disk now: equals bytesToDownload on an empty cache)
 };
 
 // The legacy tile count of `area` at `zoom` (CalcTileCountInProjectedSinglePolygon, u_GeometryFunc.pas:734);
-// 0 for an empty projected polygon. The download walk is budgeted by this number (T-0259).
+// 0 for an empty projected polygon. The download walk is budgeted by this number.
 [[nodiscard]] qint64 legacyTileCount(const geo::ProjectionPtr& projection,
                                      const geo::IGeometryLonLatPolygon& area, const AppContext& app);
 
@@ -60,12 +60,11 @@ struct ZoomEstimate {
 // `keepNewerThan` is valid (--replace-older-than, :328-332) and the tile's load date is not before it.
 // `retryMissing` = --retry-missing: a TNE marker is requested again (:335-338) unless
 // `retryMissingOlderThan` is valid (--retry-missing-older-than, :340-344) and the marker's load date is not
-// before it.
-// `assumeEmptyCache` (T-0243, weather-sources.md 5.1): no storage call; no tile counts as present or marked
-// missing; every zoom is `assumed` and its bytes are tiles x assumeTileKb x 1024 (the estimate of a snapshot
-// source, whose snapshot is not known before the download).
-// A storage error from tileInfoEx is returned (storage errors end a legacy job too). Stop requested ->
-// ErrorCode::Cancelled (the partial figures are not usable: the mean of the job needs every zoom).
+// before it. `assumeEmptyCache`: no storage call; no tile counts as present or marked missing; every zoom is
+// `assumed` and its bytes are tiles x assumeTileKb x 1024 (the estimate of a snapshot source, whose snapshot
+// is not known before the download). A storage error from tileInfoEx is returned (storage errors end a
+// legacy job too). Stop requested -> ErrorCode::Cancelled (the partial figures are not usable: the mean of
+// the job needs every zoom).
 [[nodiscard]] core::Result<std::vector<ZoomEstimate>>
 estimateTiles(const maptype::IMapType& map, const geo::IGeometryLonLatPolygon& area,
               std::span<const quint8> zooms, const AppContext& app, int assumeTileKb, bool replace,
@@ -73,7 +72,7 @@ estimateTiles(const maptype::IMapType& map, const geo::IGeometryLonLatPolygon& a
               const storage::TileDate& retryMissingOlderThan, const std::stop_token& stop,
               bool assumeEmptyCache = false);
 
-// S-13: false when every zoom has no tile at all (the caller refuses with exit 3).
+// False when every zoom has no tile at all (the caller refuses with exit 3).
 [[nodiscard]] bool anyTile(const std::vector<ZoomEstimate>& estimates);
 
 // stdout lines: header, one row per zoom (0-based zoom, then the 1-based "z+1"), a total row. Byte figures

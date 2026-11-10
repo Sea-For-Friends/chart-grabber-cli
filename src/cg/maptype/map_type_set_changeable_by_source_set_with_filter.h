@@ -4,7 +4,7 @@
 
 #pragma once
 // Ports: u_MapTypeSetChangeableBySourceSetWithFilter.pas (the base class and its three subclasses, as the
-//        unit does; docs/backlog/T-0146 is the specification, maptype.md 2.11.8 is an outline)
+//        unit does)
 //
 // A set of maps that follows a source set and keeps only the maps passing a filter. The listener of the
 // source republishes only when a map that passes the filter was added or removed.

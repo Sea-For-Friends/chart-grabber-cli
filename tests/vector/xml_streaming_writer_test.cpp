@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_XmlStreamingWriter.pas; docs/specs/vector.md §2.13 (no legacy DUnit; the expected bytes are
-// worked out by hand from the unit, line numbers in the comments). No FEAT id: enabler of the exporters.
+// Ports u_XmlStreamingWriter.pas (no legacy DUnit; the expected bytes are worked out by hand from the
+// unit, line numbers in the comments). The exporters build on it.
 #include "cg/vector/xml_streaming_writer.h"
 
 #include <QBuffer>

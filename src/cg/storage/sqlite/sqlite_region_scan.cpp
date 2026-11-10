@@ -216,7 +216,8 @@ private:
             where +=
                 versionFieldIsEqual(columnInfo_.versionMode, lastSelectedVersion_->storeString().toUtf8());
         } else {
-            // Deviation D-44 (legacy L-92): legacy re-issues this SELECT for ever; here once per file.
+            // A deviation from legacy for a legacy defect: legacy re-issues this SELECT for ever; here once
+            // per file.
             if (plainSelectDone_) {
                 return QByteArray();
             }
@@ -234,7 +235,7 @@ private:
 
     // Ports TTileStorageSQLiteFetcherComplex.Fetch (:390-406) and the base Fetch (:154-157):
     // one step under the file's mutex. The re-open loop ends because selectEntire() returns an
-    // empty string once the file's SELECTs are used up (D-44); it never spins under the mutex.
+    // empty string once the file's SELECTs are used up; it never spins under the mutex.
     bool fetch(TileInfo& out) {
         bool result = false;
         lease_->run([&](SqliteRegionHandler& handler) {

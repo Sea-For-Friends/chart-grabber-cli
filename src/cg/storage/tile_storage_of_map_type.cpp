@@ -45,9 +45,8 @@ QString buildErrorText(const QString& path, CacheTypeId typeCode, const QString&
 
 void TileStorageOfMapType::buildStorage(const SimpleTileStorageConfigStaticPtr& config, CacheTypeId typeCode,
                                         const QString& path) {
-    storage_.reset(); // B1: the old backend goes first, before the new one is built
-    // DEVIATION D-165 (T-0275, L-44): the cause is kept for the CLI; the build itself and the "remembered"
-    // state stay legacy (L-246)
+    storage_.reset(); // The old backend goes first, before the new one is built
+    // DEVIATION: the cause is kept for the CLI; the build itself and the "remembered" state stay legacy
     lastBuildError_.reset();
     try {
         currentTypeCode_ = typeCode;
@@ -67,14 +66,14 @@ void TileStorageOfMapType::buildStorage(const SimpleTileStorageConfigStaticPtr& 
                     storage_ = *built;
                     versionFactory_->setFactory(type->mapVersionFactory());
                 } else {
-                    // legacy is silent (D-c2); an error Result stands for legacy's raised exception
+                    // legacy is silent; an error Result stands for legacy's raised exception
                     qCWarning(core::logStorage) << "cannot build the tile storage" << path << "cache type"
                                                 << static_cast<int>(typeCode) << built.error().what();
                     lastBuildError_ = buildErrorText(path, typeCode, built.error().what());
                 }
             } else if (typeCode == CacheTypeId::Bdb || typeCode == CacheTypeId::BdbVersioned) {
-                // T-0333 (owner 2026-10-21): the BerkeleyDB backend is removed; legacy would build it. The
-                // other unsupported types (Ge, GeoCacher, Dbms) stay silent, as before.
+                // The BerkeleyDB backend is removed; legacy would build it. The other unsupported types
+                // (Ge, GeoCacher, Dbms) stay silent, as before.
                 lastBuildError_ = buildErrorText(
                     path, typeCode,
                     QStringLiteral("BerkeleyDB caches (cache types 6 and 61) are no longer supported"));
@@ -91,7 +90,7 @@ void TileStorageOfMapType::buildStorage(const SimpleTileStorageConfigStaticPtr& 
                                     << static_cast<int>(typeCode) << "unknown exception";
         lastBuildError_ = buildErrorText(path, typeCode, QStringLiteral("unknown exception"));
     }
-    storageState_.setTarget(storage_); // B5: may notify inside storageMutex_ (L-c3)
+    storageState_.setTarget(storage_); // May notify inside storageMutex_, as in legacy
 }
 
 void TileStorageOfMapType::doUpdateStorage() {
@@ -179,7 +178,7 @@ void TileStorageOfMapType::updateActualPath() {
         base = item->storageType()->basePath();
     }
     // legacy holds the path config's write lock around both setters (:402-408); the port defers the
-    // notification with a batch instead (D-c1).
+    // notification with a batch instead.
     const core::ConfigElement::BatchToken batch(*actualPath_);
     actualPath_->setBasePathConfig(base);
     actualPath_->setPath(cfg->nameInCache);
@@ -233,14 +232,14 @@ QString TileStorageOfMapType::tileFileName(geo::PointI xy, quint8 zoom,
 core::Result<TileInfo> TileStorageOfMapType::tileInfo(geo::PointI xy, quint8 zoom,
                                                       const MapVersionInfoPtr& version, LoadMode mode) const {
     const ITileStoragePtr s = getStorage();
-    return s ? s->tileInfo(xy, zoom, version, mode) : core::Result<TileInfo>(TileInfo{}); // D-106: Unknown
+    return s ? s->tileInfo(xy, zoom, version, mode) : core::Result<TileInfo>(TileInfo{}); // Unknown
 }
 
 core::Result<TileInfo> TileStorageOfMapType::tileInfoEx(geo::PointI xy, quint8 zoom,
                                                         const MapVersionRequest& request,
                                                         LoadMode mode) const {
     const ITileStoragePtr s = getStorage();
-    return s ? s->tileInfoEx(xy, zoom, request, mode) : core::Result<TileInfo>(TileInfo{}); // D-106: Unknown
+    return s ? s->tileInfoEx(xy, zoom, request, mode) : core::Result<TileInfo>(TileInfo{}); // Unknown
 }
 
 core::Result<TileRectInfoPtr> TileStorageOfMapType::tileRectInfo(geo::RectI rect, quint8 zoom,
@@ -259,8 +258,8 @@ core::Result<bool> TileStorageOfMapType::saveTile(geo::PointI xy, quint8 zoom,
         return false;
     }
     auto saved = s->saveTile(xy, zoom, version, loadDate, contentType, data, overwrite);
-    // T-0351: a refused tile with data (a TNE is never skipped). T-0352: only while the run has switched
-    // the record on (a snapshot source); a static map, even with a non-empty Version=, records nothing.
+    // Records a refused tile with data (a TNE is never skipped), only while the run has switched the
+    // record on (a snapshot source); a static map, even with a non-empty Version=, records nothing.
     if (saved && !*saved && !data.isEmpty() && recordSkipped_.load()) {
         const std::lock_guard lock(skippedMutex_);
         skipped_.emplace_back(zoom, xy.x(), xy.y(), version,

@@ -5,10 +5,9 @@
 #pragma once
 // Ports: u_HttpStatusChecker.pas:112-158 (IsOkStatus/IsDownloadErrorStatus/IsContentNotExistStatus
 // only -- IsConnectError/IsDownloadError/IsSecurityError classify WinInet last-error codes, which
-// have no libcurl equivalent and no port: ADR-0004 rules every curl-level failure is
-// ResultKind::UnknownError, full stop). Status codes not in any of the three sets below --
-// including 301/302, 304, 403 and 429 -- are LoadErrorByUnknownStatusCode; there is no
-// not-modified result type in this taxonomy.
+// have no libcurl equivalent and no port: every curl-level failure is ResultKind::UnknownError,
+// full stop). Status codes not in any of the three sets below -- including 301/302, 304, 403 and
+// 429 -- are LoadErrorByUnknownStatusCode; there is no not-modified result type in this taxonomy.
 
 #include <QtGlobal>
 
@@ -24,5 +23,9 @@ namespace cg::net {
 
 // {204,400,404} -- HTTP_STATUS_NO_CONTENT/BAD_REQUEST/NOT_FOUND.
 [[nodiscard]] bool isContentNotExistStatus(quint32 statusCode) noexcept;
+
+// {401,403,451} -- the server understood the request and refuses it (credentials wanted, forbidden,
+// unavailable for legal reasons). No legacy counterpart: a deviation from legacy.
+[[nodiscard]] bool isRefusalStatus(quint32 statusCode) noexcept;
 
 } // namespace cg::net

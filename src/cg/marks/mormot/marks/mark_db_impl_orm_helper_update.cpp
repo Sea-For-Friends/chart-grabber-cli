@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 // Ports: Src/MarksDB/mORMot/Marks/u_MarkDbImplORMHelper.pas :776-1010 (UpdateMarkSQL) and :1176-1347
-// (UpdateMarkView, SetMarksInCategoryVisibleSQL); docs/specs/marks.md §2.9.8 W-2, W-5, W-6; statements
-// S-23 ... S-27, S-2E, S-2F, S-36 ... S-39. The line numbers in the comments are those of that unit.
+// (UpdateMarkView, SetMarksInCategoryVisibleSQL). The line numbers in the comments are those of that
+// unit.
 #include "cg/geo/wkb.h"
 #include "cg/marks/mormot/mark_system_orm_statement.h"
 #include "cg/marks/mormot/mark_system_orm_tools.h"
@@ -68,7 +68,7 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
     }
 
     // :815 calls IsSameGeometry on a nil interface when the new mark has no geometry: an access violation.
-    // A reproduction (no D row): the facade wraps UpdateMark / UpdateMarkList in `except CatchException`
+    // A reproduction: the facade wraps UpdateMark / UpdateMarkList in `except CatchException`
     // (u_MarkDbByImpl.pas:503-516, :518-534); the port throws at the same point, after `markId` was copied
     // and before any statement or cache write. Whether a caller can pass such a mark: not traced. A nil OLD
     // geometry is not an error: TGeometryLonLat*.IsSameGeometry(nil) answers False
@@ -138,7 +138,7 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
             }
 
             if (!fields.isEmpty()) {
-                // update mark: S-2E
+                // update mark
                 checkUpdateResult(runWrite(provider_, fields.statement("Mark"), fields.args(newRec.markId)));
                 // update cache
                 if (updateName || updateDesc || updateGeo) {
@@ -155,7 +155,7 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
             }
 
             if (updateGeo) {
-                // update geometry blob: S-23 (writeWkb never returns an empty blob: the NULL form is not
+                // update geometry blob (writeWkb never returns an empty blob: the NULL form is not
                 // reached)
                 checkUpdateResult(runWrite(provider_, "UPDATE Mark SET mGeoWKB=? WHERE RowID=?",
                                            {geometryPointsBlob, newRec.markId}));
@@ -176,7 +176,7 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
                 fields.add("mDesc", newRec.desc.toLower());
             }
             if (!fields.isEmpty()) {
-                // update name / desc (fts index): S-2F. Legacy detects a failure here (Update returns the
+                // update name / desc (fts index). Legacy detects a failure here (Update returns the
                 // result of MainEngineUpdate, orm.sqlite3.pas:2064-2103), as the port does.
                 checkUpdateResult(
                     runWrite(provider_, fields.statement("MarkFTS"), fields.args(newRec.markId)));
@@ -184,7 +184,7 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
         }
 
         if (updateGeo) {
-            // update rect (rtree index): S-26, all four fields in table order
+            // update rect (rtree index): all four fields in table order
             checkUpdateResult(runWrite(provider_,
                                        "UPDATE MarkRTree SET mLeft=" + doubleLiteral(rect.left) +
                                            ",mRight=" + doubleLiteral(rect.right) +
@@ -202,7 +202,6 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
 
         // update geometry meta blob
         if (updateGeo) {
-            // S-33
             const qint64 metaId =
                 selectRowId(provider_, "SELECT RowID FROM MarkMeta WHERE mMark=? LIMIT 1", {newRec.markId});
             if (geometryMetaBlob.isEmpty()) {
@@ -213,11 +212,11 @@ bool MarkDbImplORMHelper::updateMarkSql(const OrmMarkRec& oldRec, OrmMarkRec& ne
             } else {
                 qint64 rowId = metaId;
                 if (rowId == 0) {
-                    // add new: S-2D
+                    // add new
                     rowId = insertRow(provider_, "INSERT INTO MarkMeta (mMark) VALUES (?)", {newRec.markId});
                     checkId(rowId);
                 }
-                // S-27 (geometryMetaBlob is not empty here: the NULL form is not reached)
+                // The meta blob (geometryMetaBlob is not empty here: the NULL form is not reached)
                 checkUpdateResult(runWrite(provider_, "UPDATE MarkMeta SET mMeta=? WHERE RowID=?",
                                            {geometryMetaBlob, rowId}));
                 result = true;
@@ -249,7 +248,6 @@ bool MarkDbImplORMHelper::updateMarkView(qint64 markId, qint64 categoryId, bool 
             updateCache = (item->categoryId != categoryId) || (item->visible != visible);
         } else if (!(cache_.markViewCache->isPrepared() ||
                      cache_.markViewCache->isCategoryPrepared(categoryId))) {
-            // S-36
             runStatement(
                 provider_,
                 "SELECT RowID,mvCategory,mvVisible FROM MarkView WHERE mvMark=? AND mvUser=? LIMIT 1",
@@ -282,12 +280,12 @@ bool MarkDbImplORMHelper::updateMarkView(qint64 markId, qint64 categoryId, bool 
                     fields.add("mvVisible", qint64{viewVisible ? 1 : 0});
                 }
                 if (!fields.isEmpty()) {
-                    // update db: S-37
+                    // update db
                     result = runWrite(provider_, fields.statement("MarkView"), fields.args(viewId));
                     checkUpdateResult(result);
                 }
             } else if (!visible) {
-                // add to db: S-2C
+                // add to db
                 viewId = insertRow(
                     provider_, "INSERT INTO MarkView (mvUser,mvMark,mvCategory,mvVisible) VALUES (?,?,?,?)",
                     {userId_, markId, categoryId, qint64{visible ? 1 : 0}});
@@ -314,7 +312,7 @@ bool MarkDbImplORMHelper::setMarksInCategoryVisibleSql(qint64 categoryId, bool v
     checkId(categoryId);
 
     if (!isReadOnly_) {
-        // UPDATE: S-38
+        // UPDATE
         cache_.markViewCache->reset();
 
         result = runWrite(provider_,
@@ -325,7 +323,7 @@ bool MarkDbImplORMHelper::setMarksInCategoryVisibleSql(qint64 categoryId, bool v
     }
 
     if (!isReadOnly_ && !visible) {
-        // INSERT: S-39
+        // INSERT
         result = runWrite(provider_,
                           "INSERT OR IGNORE INTO MarkView (mvUser,mvMark,mvCategory,mvVisible) SELECT " +
                               QByteArray::number(userId_) + ",RowID," + QByteArray::number(categoryId) + "," +
@@ -360,10 +358,10 @@ bool MarkDbImplORMHelper::setMarksInCategoryVisibleSql(qint64 categoryId, bool v
             int count = 0;
             if (cache_.markIdByCategoryIndex->find(categoryId, ids, count)) {
                 // `ids` points into the live by-category index. The loop body touches the view cache only
-                // (tryFastUpdate; updateMarkView with no transaction: S-36 and the view cache), never the
-                // by-category index, so the pointer stays valid; no copy is needed. In this branch
-                // (read-only) tryFastUpdate always answers true, so updateMarkView is kept for the shape
-                // of the legacy loop and is not reached.
+                // (tryFastUpdate; updateMarkView with no transaction: the view read and the view cache),
+                // never the by-category index, so the pointer stays valid; no copy is needed. In this
+                // branch (read-only) tryFastUpdate always answers true, so updateMarkView is kept for the
+                // shape of the legacy loop and is not reached.
                 inTransaction(provider_, true, isReadOnly_, [&] {
                     for (int i = 0; i < count; ++i) {
                         const qint64 markId = (*ids)[static_cast<std::size_t>(i)];

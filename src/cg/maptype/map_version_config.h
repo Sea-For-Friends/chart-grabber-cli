@@ -5,9 +5,9 @@
 #pragma once
 // Ports: i_MapVersionConfig.pas, u_MapVersionConfig.pas
 //
-// A config element holding one version string, key `Version` (spec maptype.md section 2.9).
-// Legacy never instantiates it (only TMapVersionChangeable refers to it, and that is unused too);
-// the live element is MapVersionRequestConfig.
+// A config element holding one version string, key `Version`. Legacy never instantiates it (only
+// TMapVersionChangeable refers to it, and that is unused too); the live element is
+// MapVersionRequestConfig.
 
 #include "cg/core/config_element.h"
 
@@ -15,7 +15,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class MapVersionConfig final : public core::ConfigElement {
 public:
     explicit MapVersionConfig(QString version);

@@ -10,8 +10,8 @@
 
 #include <utility>
 
-// Ports u_MarkFactoryConfig.pas (T-0098). The three configs are added with the two-argument Add (all four
-// flags on, u_ConfigDataElementComplexBase.pas:266-272), each under its own sub-item.
+// Ports u_MarkFactoryConfig.pas. The three configs are added with the two-argument Add (all four flags
+// on, u_ConfigDataElementComplexBase.pas:266-272), each under its own sub-item.
 
 namespace cg::marks {
 

@@ -17,7 +17,6 @@ namespace cg::core {
 class IConfigWriter;
 using IConfigWriterPtr = std::shared_ptr<IConfigWriter>;
 
-// FEAT-UI-199
 class IConfigWriter : public IConfigProvider {
 public:
     // Always returns a writable child, creating it lazily on the first write

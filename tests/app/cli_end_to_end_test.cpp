@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// FEAT-NET-002 FEAT-NET-003: end-to-end tests of runCli against a local tile server (T-0193,
-// docs/specs/app-cli.md 8.2). New code (no legacy unit): the expectations are the literals of the spec
-// table 8.2 and of the ticket.
+// End-to-end tests of runCli against a local tile server. New code (no legacy unit): the expected
+// values are the documented CLI outputs, not Pascal results.
 //
 // Rig: HttpTestServer (tests/net, compiled in through http_test_server_shared.cpp) answers one distinct PNG
 // per tile of a pyramid of zooms 0..3, at "/{z}/{x}/{y}.png" and again under "/alt/". Four ZMP folders
@@ -151,7 +150,7 @@ protected:
     }
 
     // chart-grabber.conf of the data directory: `extra` under [Internet]. The system proxy stays ON (the
-    // production default, T-0201), so the downloads go through SystemProxyResolver::resolve.
+    // production default), so the downloads go through SystemProxyResolver::resolve.
     void writeIni(const QByteArray& extra) const {
         ASSERT_TRUE(QDir().mkpath(dataDir()));
         QFile ini(dataDir() + u"/chart-grabber.conf"_s);
@@ -211,7 +210,7 @@ protected:
                common() + more;
     }
 
-    // T-0245: a map of the template map's URLs that stops at zoom 2 (0-based)
+    // A map of the template map's URLs that stops at zoom 2 (0-based)
     void writeMaxTwo() const {
         writeZmp(maps(),
                  {.folder = u"w8.zmp"_s,
@@ -271,7 +270,7 @@ protected:
         return result;
     }
 
-    // The bytes of every session file, by path (T-0278: a stopped run must leave them as they were).
+    // The bytes of every session file, by path (a stopped run must leave them as they were).
     QMap<QString, QByteArray> sessionBytes() const {
         QMap<QString, QByteArray> bytes;
         for (const QString& file : sessionFiles()) {
@@ -291,8 +290,8 @@ protected:
         return f.readAll();
     }
 
-    // T-0445: an interrupted `download` leaves a session; returns the job folder AutoSave/<id> (the parent
-    // of the folder of the .sls), empty when no session was left.
+    // An interrupted `download` leaves a session; returns the job folder AutoSave/<id> (the parent of the
+    // folder of the .sls), empty when no session was left.
     QString leaveSession() {
         servePyramid(400);
         const Captured first = runInterrupted(job(u"download"_s, u"Template Map"_s), 2);
@@ -308,7 +307,7 @@ protected:
     HttpTestServer server_;
 };
 
-// Spec 8.2 row 1: `run`, base map, rectangle, zooms 1-3.
+// `run`, base map, rectangle, zooms 1-3.
 TEST_F(CliEndToEnd, RunBaseMapDownloadsEachTileOnceAndExportsThem) {
     servePyramid();
     const Captured c = runCapture(job(u"run"_s, u"Template Map"_s));
@@ -349,9 +348,9 @@ TEST_F(CliEndToEnd, RunBaseMapDownloadsEachTileOnceAndExportsThem) {
     })) << qPrintable(c.out);
 }
 
-// T-0259: a rectangle of less than one pixel at zooms 0 and 1 (legacy count 0, the download fetches nothing
-// there): the fill report shows `tiles 0` for them, so `--strict` does not exit 4; zoom 2 counts and fetches
-// its one tile.
+// A rectangle of less than one pixel at zooms 0 and 1 (legacy count 0, the download fetches nothing there):
+// the fill report shows `tiles 0` for them, so `--strict` does not exit 4; zoom 2 counts and fetches its one
+// tile.
 TEST_F(CliEndToEnd, StrictDownloadOfSubPixelAreaHasNoFalseMissingAtZoomsWithCountZero) {
     servePyramid();
     const Captured c = runCapture(QStringList{u"download"_s, u"--source"_s, u"Template Map"_s,
@@ -370,7 +369,7 @@ TEST_F(CliEndToEnd, StrictDownloadOfSubPixelAreaHasNoFalseMissingAtZoomsWithCoun
         << qPrintable(c.out);
 }
 
-// Spec 8.2 row 2: --overlay gives a second file whose type is `overlay`.
+// --overlay gives a second file whose type is `overlay`.
 TEST_F(CliEndToEnd, RunWithOverlayWritesTwoFiles) {
     servePyramid();
     const Captured c = runCapture(job(u"run"_s, u"Template Map"_s, {u"--overlay"_s, u"Scripted Layer"_s}));
@@ -385,8 +384,8 @@ TEST_F(CliEndToEnd, RunWithOverlayWritesTwoFiles) {
     EXPECT_EQ(requested(), twice);
 }
 
-// Spec 8.2 row 3: the second `run` sends no request; the existing file is refused without --overwrite and
-// rewritten with it.
+// The second `run` sends no request; the existing file is refused without --overwrite and rewritten with
+// it.
 TEST_F(CliEndToEnd, SecondRunSendsNothingAndRefusesOrReplacesTheFile) {
     servePyramid();
     ASSERT_EQ(runCapture(job(u"run"_s, u"Template Map"_s)).rc, 0);
@@ -407,10 +406,9 @@ TEST_F(CliEndToEnd, SecondRunSendsNothingAndRefusesOrReplacesTheFile) {
     EXPECT_EQ(requestCount(), afterFirst); // the present tiles were not requested again
 }
 
-// Spec 8.2 row 4: two tiles the server does not have (404). A 404 is saved as a "tile does not exist" marker
-// only when the legacy option [Internet] SaveTNE is on (u_GlobalDownloadConfig.pas:63 default False; the spec
-// table assumes it is on), so the test switches it on through chart-grabber.conf: exit 0, 2 marked missing,
-// --strict still 0, the export omits them.
+// Two tiles the server does not have (404). A 404 is saved as a "tile does not exist" marker only when the
+// legacy option [Internet] SaveTNE is on (u_GlobalDownloadConfig.pas:63 default False), so the test switches
+// it on through chart-grabber.conf: exit 0, 2 marked missing, --strict still 0, the export omits them.
 TEST_F(CliEndToEnd, NotFoundTilesAreMarkedWhenSaveTneIsOnAndStrictStillSucceeds) {
     writeIni("SaveTNE=1\r\n");
     servePyramid(0, {{"/3/6/2.png", status(404, "Not Found")}, {"/3/6/3.png", status(404, "Not Found")}});
@@ -445,8 +443,8 @@ TEST_F(CliEndToEnd, StrictFailsWithExitFourOnMissingTilesAndDoesNotExport) {
     EXPECT_EQ(readAll(outFile()), QByteArray("stale")); // no export after a non-zero download
 }
 
-// Spec 8.2 row 5: the server answers 500 for ever, --stall-timeout 2: exit 4 within a few seconds, a session
-// file exists, no output file.
+// The server answers 500 for ever, --stall-timeout 2: exit 4 within a few seconds, a session file exists, no
+// output file.
 TEST_F(CliEndToEnd, ServerErrorForEverStallsWithExitFour) {
     QHash<QByteArray, HttpTestServer::Reply> all;
     for (const QString& path : areaPaths()) {
@@ -464,9 +462,9 @@ TEST_F(CliEndToEnd, ServerErrorForEverStallsWithExitFour) {
     EXPECT_EQ(outFiles(), QStringList());
 }
 
-// T-0271 (deviates from L-271): every zoom-3 tile answers 503, --max-connection-errors 2: exit 4 after two
-// failed tiles (5 s wait each), the error line, a session file, no output. The server then answers 200 for
-// all and the same `run` ends with exit 0, nothing missing, and requests the streak's tiles again.
+// Every zoom-3 tile answers 503, --max-connection-errors 2: exit 4 after two failed tiles (5 s wait each),
+// the error line, a session file, no output. The server then answers 200 for all and the same `run` ends
+// with exit 0, nothing missing, and requests the streak's tiles again.
 TEST_F(CliEndToEnd, ConnectionErrorStreakStopsWithExitFourAndTheSecondRunContinues) {
     QHash<QByteArray, HttpTestServer::Reply> failing;
     for (const QString& path : areaPaths()) {
@@ -501,8 +499,8 @@ TEST_F(CliEndToEnd, ConnectionErrorStreakStopsWithExitFourAndTheSecondRunContinu
     EXPECT_EQ(rows(outFile()), u"9"_s);
 }
 
-// T-0271: one failed tile among good ones is skipped as legacy does (default options): exit 0, one tile
-// missing in the fill report.
+// One failed tile among good ones is skipped as legacy does (default options): exit 0, one tile missing
+// in the fill report.
 TEST_F(CliEndToEnd, OneConnectionErrorTileIsSkippedWithExitZero) {
     servePyramid(0, {{"/3/6/2.png", status(503, "Service Unavailable")}});
     const Captured c = runCapture(job(u"run"_s, u"Template Map"_s));
@@ -513,8 +511,92 @@ TEST_F(CliEndToEnd, OneConnectionErrorTileIsSkippedWithExitZero) {
     EXPECT_EQ(rows(outFile()), u"8"_s);
 }
 
-// Spec 8.2 row 6: the termination arrives after some tiles (server delay 400 ms per tile): exit 130, a
-// session file exists, no output; a second `run` fetches only the rest and ends with exit 0.
+// HTTP 403 is a refusal by the server, not a connection error. A streak of --max-connection-errors
+// refusals stops with exit 4 and says so (offline: the local test server).
+TEST_F(CliEndToEnd, T0471_RefusalStreakStopsWithExitFourAndSaysRefused) {
+    QHash<QByteArray, HttpTestServer::Reply> refused;
+    for (const QString& path : areaPaths()) {
+        if (path.startsWith(u"/3/"_s)) {
+            refused.insert(path.toLatin1(), status(403, "Forbidden"));
+        }
+    }
+    servePyramid(0, refused);
+    const Captured c =
+        runCapture(job(u"run"_s, u"Template Map"_s, {u"--max-connection-errors"_s, u"2"_s, u"-v"_s}));
+    EXPECT_EQ(c.rc, 4) << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"error: the server refused 2 tiles in a row: HTTP 403"_s))
+        << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"Server refused: HTTP 403"_s)) << qPrintable(c.err);
+    EXPECT_FALSE(c.err.contains(u"no connection to the server"_s)) << qPrintable(c.err);
+    EXPECT_FALSE(c.err.contains(u"Error connecting to server"_s)) << qPrintable(c.err);
+    EXPECT_FALSE(sessionFiles().isEmpty());
+    EXPECT_EQ(outFiles(), QStringList());
+}
+
+// Every download answer a refusal: the run completes, the fill report is printed, then the refusal error
+// ends it with exit 4 (before --strict, no export).
+TEST_F(CliEndToEnd, T0471_EveryTileRefusedIsExitFourAfterTheFillReport) {
+    QHash<QByteArray, HttpTestServer::Reply> refused;
+    for (const QString& path : areaPaths()) {
+        refused.insert(path.toLatin1(), status(403, "Forbidden"));
+    }
+    servePyramid(0, refused);
+    const Captured c = runCapture(job(u"run"_s, u"Template Map"_s, {u"--strict"_s}, u"1-2"_s));
+    EXPECT_EQ(c.rc, 4) << qPrintable(c.err);
+    const QStringList totals = totalLines(c.out);
+    ASSERT_EQ(totals.size(), 2) << qPrintable(c.out);
+    EXPECT_TRUE(totals[1].startsWith(u"total 3 0 0 3 "_s)) << qPrintable(totals[1]);
+    QStringList errors;
+    for (const QString& line : c.err.split(u'\n')) {
+        if (line.startsWith(u"error:"_s)) {
+            errors.push_back(line.trimmed());
+        }
+    }
+    ASSERT_FALSE(errors.isEmpty()) << qPrintable(c.err);
+    EXPECT_EQ(errors.last(), u"error: the server refused all 3 requested tiles: HTTP 403"_s);
+    EXPECT_FALSE(c.err.contains(u"--strict"_s)) << qPrintable(c.err);
+    EXPECT_EQ(outFiles(), QStringList());
+}
+
+TEST_F(CliEndToEnd, T0471_OneRefusedTileWarnsAndKeepsExitZero) {
+    servePyramid(0, {{"/3/6/2.png", status(403, "Forbidden")}});
+    const Captured c = runCapture(job(u"run"_s, u"Template Map"_s));
+    ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"warning: the server refused 1 of 9 requested tiles: HTTP 403"_s))
+        << qPrintable(c.err);
+    const QStringList totals = totalLines(c.out);
+    ASSERT_EQ(totals.size(), 2) << qPrintable(c.out);
+    EXPECT_TRUE(totals[1].startsWith(u"total 9 8 0 1 "_s)) << qPrintable(totals[1]);
+    EXPECT_EQ(rows(outFile()), u"8"_s);
+}
+
+// A tile skipped as already stored is not refused, so the second run of the same command, which asks only for
+// the refused gap, warns again and keeps exit 0 (not "refused all").
+TEST_F(CliEndToEnd, T0471_RerunWithOnlyTheRefusedGapLeftWarnsAndKeepsExitZero) {
+    servePyramid(0, {{"/3/6/2.png", status(403, "Forbidden")}});
+    const Captured first = runCapture(job(u"run"_s, u"Template Map"_s));
+    ASSERT_EQ(first.rc, 0) << qPrintable(first.err);
+    EXPECT_TRUE(first.err.contains(u"warning: the server refused 1 of 9 requested tiles: HTTP 403"_s))
+        << qPrintable(first.err);
+    const Captured second = runCapture(job(u"run"_s, u"Template Map"_s, {u"--overwrite"_s}));
+    ASSERT_EQ(second.rc, 0) << qPrintable(second.err);
+    EXPECT_TRUE(second.err.contains(u"warning: the server refused 1 of 9 requested tiles: HTTP 403"_s))
+        << qPrintable(second.err);
+    EXPECT_FALSE(second.err.contains(u"refused all"_s)) << qPrintable(second.err);
+}
+
+TEST_F(CliEndToEnd, T0471_Status401And451AreRefusals) {
+    servePyramid(0,
+                 {{"/3/6/2.png", status(401, "Unauthorized")}, {"/3/6/3.png", status(451, "Unavailable")}});
+    const Captured c = runCapture(job(u"run"_s, u"Template Map"_s));
+    ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"warning: the server refused 2 of 9 requested tiles: HTTP 401"_s) ||
+                c.err.contains(u"warning: the server refused 2 of 9 requested tiles: HTTP 451"_s))
+        << qPrintable(c.err);
+}
+
+// The termination arrives after some tiles (server delay 400 ms per tile): exit 130, a session file
+// exists, no output; a second `run` fetches only the rest and ends with exit 0.
 TEST_F(CliEndToEnd, TerminationLeavesASessionAndTheSecondRunFetchesOnlyTheRest) {
     servePyramid(400);
     std::stop_source termination;
@@ -552,8 +634,8 @@ TEST_F(CliEndToEnd, TerminationLeavesASessionAndTheSecondRunFetchesOnlyTheRest) 
     EXPECT_EQ(rows(outFile()), u"9"_s);
 }
 
-// T-0445: the job's session lock (AutoSave/<id>/run.lock). A lock held by another
-// process refuses the run with exit 3: no request, the session untouched; released, the run continues it.
+// The job's session lock (AutoSave/<id>/run.lock). A lock held by another process refuses the run with
+// exit 3: no request, the session untouched; released, the run continues it.
 TEST_F(CliEndToEnd, T0445_HeldJobLockRefusesTheDownloadAndLeavesTheSessionAlone) {
     const QString jobDir = QDir::cleanPath(leaveSession());
     ASSERT_FALSE(jobDir.isEmpty());
@@ -582,8 +664,8 @@ TEST_F(CliEndToEnd, T0445_HeldJobLockRefusesTheDownloadAndLeavesTheSessionAlone)
     EXPECT_TRUE(sessionFiles().isEmpty());                    // the completed session is removed
 }
 
-// T-0451: a `download` refused by the job lock starts nothing, so it writes no `phase download` record; once
-// the lock is free the same run writes it, after `phase estimate`.
+// A `download` refused by the job lock starts nothing, so it writes no `phase download` record; once the
+// lock is free the same run writes it, after `phase estimate`.
 TEST_F(CliEndToEnd, T0451_RefusedDownloadWritesNoPhaseDownloadRecord) {
     const QString jobDir = QDir::cleanPath(leaveSession());
     ASSERT_FALSE(jobDir.isEmpty());
@@ -669,7 +751,7 @@ TEST_F(CliEndToEnd, T0445_ResumeOfASessionWhoseJobLockIsHeldIsRefused) {
     EXPECT_TRUE(sessionFiles().isEmpty());
 }
 
-// T-0450: a copy of the session file outside AutoSave is locked by the job its AutoSavePrefix names.
+// A copy of the session file outside AutoSave is locked by the job its AutoSavePrefix names.
 TEST_F(CliEndToEnd, T0450_ResumeOfACopyOutsideAutoSaveTakesTheJobLock) {
     const QString jobDir = QDir::cleanPath(leaveSession());
     ASSERT_FALSE(jobDir.isEmpty());
@@ -695,7 +777,7 @@ TEST_F(CliEndToEnd, T0450_ResumeOfACopyOutsideAutoSaveTakesTheJobLock) {
     EXPECT_EQ(again.rc, 0) << qPrintable(again.err);
 }
 
-// T-0450: a session file of AutoSave without an AutoSavePrefix (a GUI session) is locked by its own folder.
+// A session file of AutoSave without an AutoSavePrefix (a GUI session) is locked by its own folder.
 TEST_F(CliEndToEnd, T0450_ResumeOfAFileWithoutPrefixInAutoSaveLocksItsOwnJobFolder) {
     const QString jobDir = QDir::cleanPath(leaveSession());
     ASSERT_FALSE(jobDir.isEmpty());
@@ -729,9 +811,9 @@ TEST_F(CliEndToEnd, T0450_ResumeOfAFileWithoutPrefixInAutoSaveLocksItsOwnJobFold
     EXPECT_EQ(requestCount(), requestsBefore);
 }
 
-// T-0332 e2e: a real TerminationSignal and a real pipe. The "stop" line arrives after two requests: the run
-// ends as after SIGTERM (rc 130 from runCli, exitCode() 143 for main), the session is saved and the second
-// run (without the option) fetches only the rest.
+// A real TerminationSignal and a real pipe. The "stop" line arrives after two requests: the run ends as
+// after SIGTERM (rc 130 from runCli, exitCode() 143 for main), the session is saved and the second run
+// (without the option) fetches only the rest.
 TEST_F(CliEndToEnd, StopLineOnStdinPipeStopsLikeSigtermAndTheSessionIsResumable) {
     servePyramid(400);
     int fds[2];
@@ -770,7 +852,7 @@ TEST_F(CliEndToEnd, StopLineOnStdinPipeStopsLikeSigtermAndTheSessionIsResumable)
     EXPECT_EQ(rows(outFile()), u"9"_s);
 }
 
-// T-0332: EOF (the writer is gone) before the job starts: nothing is requested, exit code 143, no output
+// EOF (the writer is gone) before the job starts: nothing is requested, exit code 143, no output
 TEST_F(CliEndToEnd, EofOnStdinBeforeTheFirstTileIs143AndSendsNothing) {
     servePyramid(0);
     int fds[2];
@@ -799,10 +881,9 @@ TEST_F(CliEndToEnd, EofOnStdinBeforeTheFirstTileIs143AndSendsNothing) {
     EXPECT_EQ(outFiles(), QStringList());
 }
 
-// T-0278 (T-0262 Work 2): a continued `run --overwrite` stopped again during its estimate exits 130 with no
-// session message, sends no request and leaves every session file byte-identical. The stop is requested
-// before the run starts, so the estimate (which walks every tile under --overwrite) is the first stage that
-// sees it.
+// A continued `run --overwrite` stopped again during its estimate exits 130 with no session message, sends
+// no request and leaves every session file byte-identical. The stop is requested before the run starts, so
+// the estimate (which walks every tile under --overwrite) is the first stage that sees it.
 TEST_F(CliEndToEnd, ContinuedRunInterruptedDuringEstimateKeepsTheSessionFile) {
     servePyramid(400);
     const Captured first = runInterrupted(job(u"run"_s, u"Template Map"_s, {u"--overwrite"_s}), 2);
@@ -822,8 +903,8 @@ TEST_F(CliEndToEnd, ContinuedRunInterruptedDuringEstimateKeepsTheSessionFile) {
     EXPECT_EQ(sessionBytes(), before);
 }
 
-// T-0278 (T-0262 Work 2, case b): a continued `run --overwrite` stopped again during its download saves the
-// session once more, so both session warnings follow it (app-cli.md 1.9) and the session file changes.
+// A continued `run --overwrite` stopped again during its download saves the session once more, so both
+// session warnings follow it and the session file changes.
 TEST_F(CliEndToEnd, ContinuedRunInterruptedDuringDownloadWarns) {
     servePyramid(400);
     const Captured first = runInterrupted(job(u"run"_s, u"Template Map"_s, {u"--overwrite"_s}), 2);
@@ -841,10 +922,9 @@ TEST_F(CliEndToEnd, ContinuedRunInterruptedDuringDownloadWarns) {
     EXPECT_NE(sessionBytes(), before);
 }
 
-// T-0272 (L-260 fixed): a route of two <trkseg> is a two-part corridor. The interrupted run leaves a session
-// file that holds both parts (the writer used to lose the second one); `resume FILE` then covers both.
-// Zoom 3: part 1 along lat 45, lon 10..60 -> tiles (4,2) (5,2); part 2 along lat -45, lon -100..-50 -> tiles
-// (1,5) (2,5).
+// A route of two <trkseg> is a two-part corridor. The interrupted run leaves a session file that holds both
+// parts (the writer used to lose the second one); `resume FILE` then covers both. Zoom 3: part 1 along lat
+// 45, lon 10..60 -> tiles (4,2) (5,2); part 2 along lat -45, lon -100..-50 -> tiles (1,5) (2,5).
 TEST_F(CliEndToEnd, ASessionOfARouteWithTwoSegmentsKeepsBothPartsAndResumeCoversThem) {
     servePyramid(400);
     const QString gpx = root_.filePath(u"r.gpx"_s);
@@ -909,9 +989,9 @@ TEST_F(CliEndToEnd, ASessionOfARouteWithTwoSegmentsKeepsBothPartsAndResumeCovers
     EXPECT_EQ(rows(outFile()), u"4"_s);
 }
 
-// T-0202 proof 4: `run --format=tsv`: stdout holds only estimate, fill and written records, in this order;
-// the written path is absolute, the file exists with the stated size. Empty cache: every figure is the
-// assumed size (20 KB default = 20480 bytes per tile).
+// `run --format=tsv`: stdout holds only estimate, fill and written records, in this order; the written
+// path is absolute, the file exists with the stated size. Empty cache: every figure is the assumed size
+// (20 KB default = 20480 bytes per tile).
 TEST_F(CliEndToEnd, RunTsvPrintsOnlyRecordsAndTheWrittenPathIsAbsolute) {
     servePyramid();
     // --out is given relative to the current directory: the record must still carry the absolute path
@@ -950,8 +1030,7 @@ TEST_F(CliEndToEnd, RunTsvPrintsOnlyRecordsAndTheWrittenPathIsAbsolute) {
     EXPECT_GT(QFileInfo(written[2]).size(), 0);
 }
 
-// T-0203 proof 1: `run --progress=lines`: the phases and records in order on stderr, nothing else of
-// progress.
+// `run --progress=lines`: the phases and records in order on stderr, nothing else of progress.
 TEST_F(CliEndToEnd, RunProgressLinesWritesPhasesAndRecordsInOrder) {
     servePyramid();
     QStringList args = job(u"run"_s, u"Template Map"_s, {u"--progress=lines"_s});
@@ -997,8 +1076,8 @@ TEST_F(CliEndToEnd, RunProgressLinesWritesPhasesAndRecordsInOrder) {
     EXPECT_EQ(f[6], u"9"_s);
 }
 
-// T-0202 proof 5: a repeated `run --format=tsv` after an interruption prints one `session` record (file
-// exists, time = the file's modification time before the run) and the stderr warning is still there.
+// A repeated `run --format=tsv` after an interruption prints one `session` record (file exists,
+// time = the file's modification time before the run) and the stderr warning is still there.
 TEST_F(CliEndToEnd, RepeatedRunTsvPrintsOneSessionRecordAndKeepsTheWarning) {
     servePyramid(400);
     const auto interrupted = [&](qsizetype requestsToSee) {
@@ -1009,7 +1088,7 @@ TEST_F(CliEndToEnd, RepeatedRunTsvPrintsOneSessionRecordAndKeepsTheWarning) {
     EXPECT_FALSE(first.out.contains(u"session\t"_s));
     EXPECT_FALSE(first.err.contains(u"continuing the session"_s));
     // the interrupted run leaves final.sls and a timestamped copy; the runner continues the newest file
-    // (modification time, then name: app-cli.md 1.9)
+    // (modification time, then name)
     QStringList before = sessionFiles();
     ASSERT_FALSE(before.isEmpty());
     std::ranges::sort(before, [](const QString& a, const QString& b) {
@@ -1040,8 +1119,8 @@ TEST_F(CliEndToEnd, RepeatedRunTsvPrintsOneSessionRecordAndKeepsTheWarning) {
         << qPrintable(second.err);
 }
 
-// T-0202 (resume half of the session record): `resume FILE --format=tsv` prints the session record of the map
-// the .sls names, then its fill records; the file's modification time is the one it had before the command.
+// The resume half of the session record: `resume FILE --format=tsv` prints the session record of the map the
+// .sls names, then its fill records; the file's modification time is the one it had before the command.
 TEST_F(CliEndToEnd, ResumeTsvPrintsTheSessionRecordOfTheMapTheFileNames) {
     servePyramid(400);
     std::stop_source termination;
@@ -1075,7 +1154,7 @@ TEST_F(CliEndToEnd, ResumeTsvPrintsTheSessionRecordOfTheMapTheFileNames) {
     }
 }
 
-// Spec 8.2 row 7: `export` with an empty cache: exit 5, no file.
+// `export` with an empty cache: exit 5, no file.
 TEST_F(CliEndToEnd, ExportWithAnEmptyCacheIsExitFiveAndLeavesNoFile) {
     servePyramid();
     const Captured c = runCapture(job(u"export"_s, u"Template Map"_s));
@@ -1085,7 +1164,7 @@ TEST_F(CliEndToEnd, ExportWithAnEmptyCacheIsExitFiveAndLeavesNoFile) {
     EXPECT_EQ(requestCount(), 0);
 }
 
-// Spec 8.2 row 8: `estimate` prints the counts of the area and sends nothing.
+// `estimate` prints the counts of the area and sends nothing.
 TEST_F(CliEndToEnd, EstimateCountsTheAreaAndSendsNoRequest) {
     servePyramid();
     const Captured c = runCapture(job(u"estimate"_s, u"Template Map"_s));
@@ -1106,8 +1185,8 @@ TEST_F(CliEndToEnd, EstimateCountsTheAreaAndSendsNoRequest) {
     EXPECT_EQ(outFiles(), QStringList());
 }
 
-// T-0245 (Q-W1, D row): zooms above MaxZoom are skipped with a warning; the server sees zooms 1-2 only and
-// the MBTiles maxzoom is 2.
+// A deviation from legacy: zooms above MaxZoom are skipped with a warning; the server sees zooms 1-2 only
+// and the MBTiles maxzoom is 2.
 TEST_F(CliEndToEnd, RunSkipsTheZoomsAboveMaxZoomWithAWarning) {
     servePyramid();
     writeMaxTwo();
@@ -1188,9 +1267,9 @@ TEST_F(CliEndToEnd, SourcesTsvMaxZoomFieldAndInvalidKeyVerdict) {
               u"\"Max Bad Map\": MaxZoom=24 is not a zoom from 0 to 23"_s);
 }
 
-// Spec 8.2 row 9: a route with --corridor-nm 2: only the tiles on the corridor are requested. The route runs
-// along lat 45 from lon 10 to lon 60: at zoom 3 that is tiles (4,2) and (5,2); a 1 NM half width does not
-// reach the next row (lat 41 is 4 degrees away) or the next column.
+// A route with --corridor-nm 2: only the tiles on the corridor are requested. The route runs along lat 45
+// from lon 10 to lon 60: at zoom 3 that is tiles (4,2) and (5,2); a 1 NM half width does not reach the next
+// row (lat 41 is 4 degrees away) or the next column.
 TEST_F(CliEndToEnd, RouteCorridorRequestsOnlyTheTilesOnTheRoute) {
     servePyramid();
     const QString gpx = root_.filePath(u"r.gpx"_s);
@@ -1211,8 +1290,8 @@ TEST_F(CliEndToEnd, RouteCorridorRequestsOnlyTheTilesOnTheRoute) {
     EXPECT_EQ(rows(outFile()), u"2"_s);
 }
 
-// FEAT-NET-003: the scripted ZMP ("Scripted Layer", DefURLBase deliberately wrong) downloads the same nine
-// tiles as the template map; only GetUrlScript.txt can have built these URLs.
+// The scripted ZMP ("Scripted Layer", DefURLBase deliberately wrong) downloads the same nine tiles as the
+// template map; only GetUrlScript.txt can have built these URLs.
 TEST_F(CliEndToEnd, ScriptedMapDownloadsTheSameTilesAsTheTemplateMap) {
     servePyramid();
     const Captured c = runCapture(job(u"run"_s, u"Scripted Layer"_s));
@@ -1224,7 +1303,7 @@ TEST_F(CliEndToEnd, ScriptedMapDownloadsTheSameTilesAsTheTemplateMap) {
         tilePng(3, 4, 2));
 }
 
-// FEAT-NET-002: the DefURLBase path of params.txt ("/alt/...") is the one the requests use.
+// The DefURLBase path of params.txt ("/alt/...") is the one the requests use.
 TEST_F(CliEndToEnd, ParamsTxtUrlBaseDecidesTheRequestedPaths) {
     servePyramid();
     const Captured c = runCapture(job(u"run"_s, u"Alt Path Map"_s));
@@ -1233,10 +1312,10 @@ TEST_F(CliEndToEnd, ParamsTxtUrlBaseDecidesTheRequestedPaths) {
     EXPECT_EQ(rows(outFile()), u"9"_s);
 }
 
-// ---- T-0200 (UAT F-1; T-0193 review: tests owed) ----
+// ---- two areas ----
 
-// UAT F-1, spec 1.7 S-3: two areas are a refusal (exit 3), the message alone, no usage line; nothing is
-// written and no request is sent. Flags (--bbox with --route) and the job file (BBox with Polygon).
+// Two areas are a refusal (exit 3), the message alone, no usage line; nothing is written and no request
+// is sent. Flags (--bbox with --route) and the job file (BBox with Polygon).
 TEST_F(CliEndToEnd, MoreThanOneAreaIsExitThreeWithoutTheUsageLine) {
     servePyramid();
     const QString jobFile = root_.filePath(u"two.ini"_s);
@@ -1265,8 +1344,8 @@ TEST_F(CliEndToEnd, MoreThanOneAreaIsExitThreeWithoutTheUsageLine) {
     EXPECT_EQ(outFiles(), QStringList());
 }
 
-// T-0277 (app-cli.md 1.7 S-16; legacy L-18): the world at zoom 16 holds more than 2^31-1 tiles, more
-// than the legacy 32-bit count; refused before the first request.
+// A legacy defect: the world at zoom 16 holds more than 2^31-1 tiles, more than the legacy 32-bit
+// count; refused before the first request.
 TEST_F(CliEndToEnd, AreaWhoseTileCountWouldWrapIsExitThreeAndSendsNothing) {
     servePyramid();
     const Captured c = runCapture(QStringList{u"estimate"_s, u"--source"_s, u"Template Map"_s,
@@ -1279,8 +1358,8 @@ TEST_F(CliEndToEnd, AreaWhoseTileCountWouldWrapIsExitThreeAndSendsNothing) {
     EXPECT_EQ(requestCount(), 0);
 }
 
-// Spec 1.7 S-13: the area holds no tile at the chosen zooms -> exit 3, and `run` sends no request. The
-// polygon file is three equal points (an area of no extent).
+// The area holds no tile at the chosen zooms -> exit 3, and `run` sends no request. The polygon file
+// is three equal points (an area of no extent).
 TEST_F(CliEndToEnd, AnAreaWithoutATileIsExitThreeAndSendsNothing) {
     servePyramid();
     const QString hlg = root_.filePath(u"point.hlg"_s);
@@ -1305,7 +1384,7 @@ TEST_F(CliEndToEnd, AnAreaWithoutATileIsExitThreeAndSendsNothing) {
 TEST_F(CliEndToEnd, TerminationWhileTheExportThreadRunsIsExit130AndLeavesNoFile) {
     servePyramid();
     const cg::core::platform::DirectoryWatch watch(
-        outDir()); // T-0335: inotify on Linux, a change notification on Windows
+        outDir()); // inotify on Linux, a change notification on Windows
     ASSERT_TRUE(watch.valid());
     std::stop_source termination;
     std::atomic<bool> sawCreate{false};
@@ -1330,10 +1409,10 @@ TEST_F(CliEndToEnd, TerminationWhileTheExportThreadRunsIsExit130AndLeavesNoFile)
 
 } // namespace
 
-// T-0198 (UAT D-1) proof 2: a CacheType=9 map over nine tiles. The ZMP sets no MemCacheCapacity (the default
-// 100 applies), so this test proves the substitution through the cachew5 directory; the small capacity is
-// the test below (T-0211). Legacy would keep the last tiles in memory and export fewer; the program uses a
-// file cache, so all nine are exported and none is missing.
+// A CacheType=9 map over nine tiles. The ZMP sets no MemCacheCapacity (the default 100 applies), so this
+// test proves the substitution through the cachew5 directory; the small capacity is the test below. Legacy
+// would keep the last tiles in memory and export fewer; the program uses a file cache, so all nine are
+// exported and none is missing.
 TEST_F(CliEndToEnd, RamCacheMapIsDownloadedAndExportedThroughAFileCache) {
     servePyramid();
     writeZmp(maps(),
@@ -1351,8 +1430,8 @@ TEST_F(CliEndToEnd, RamCacheMapIsDownloadedAndExportedThroughAFileCache) {
     EXPECT_TRUE(QFileInfo(root_.filePath(u"cache/cache_sqlite/cachew5"_s)).isDir());
 }
 
-// T-0276 (D-160 row, L-75): a CacheType=9 map (region files under cache_sqlite/cachew5) downloaded once, then
-// every region file overwritten with garbage. Legacy read the failure as "tile does not exist".
+// A CacheType=9 map (region files under cache_sqlite/cachew5) downloaded once, then every region file
+// overwritten with garbage. Legacy read the failure as "tile does not exist".
 void damageRegionFiles(const QString& cacheDir) {
     int damaged = 0;
     QDirIterator it(cacheDir, {u"*.sqlitedb"_s}, QDir::Files, QDirIterator::Subdirectories);
@@ -1366,7 +1445,7 @@ void damageRegionFiles(const QString& cacheDir) {
 }
 
 // `export` first counts what the cache holds (the fill report), so the damaged file ends the run there: exit
-// 1 (app-cli.md 1.11, a storage error of the estimate or fill report), not 5.
+// 1 (a storage error of the estimate or fill report), not 5.
 TEST_F(CliEndToEnd, ExportOverADamagedRegionFileIsExitOneWithTheSqlErrorAndLeavesNoFile) {
     servePyramid();
     writeZmp(maps(),
@@ -1403,7 +1482,7 @@ TEST_F(CliEndToEnd, DownloadOverADamagedRegionFileIsExitOneAndSendsNoRequest) {
     EXPECT_EQ(requestCount(), before) << "the damaged file must not look empty (every tile fetched again)";
 }
 
-// T-0202: the cache cell of a `source` record is the CacheType number of the ZMP (a non-default one, so a
+// The cache cell of a `source` record is the CacheType number of the ZMP (a non-default one, so a
 // constant cannot pass), the same as the text table's cache column.
 TEST_F(CliEndToEnd, SourcesTsvCacheCellIsTheZmpCacheType) {
     const QByteArray url = "http://127.0.0.1:" + QByteArray::number(server_.port()) + "/{z}/{x}/{y}.png";
@@ -1418,13 +1497,13 @@ TEST_F(CliEndToEnd, SourcesTsvCacheCellIsTheZmpCacheType) {
     const QStringList f = tsv.out.split(u'\n').first().split(u'\t');
     ASSERT_EQ(f.size(), 15) << qPrintable(tsv.out);
     EXPECT_EQ(f[6], u"2"_s);
-    EXPECT_EQ(f[13], QString()); // T-0245: no MaxZoom
+    EXPECT_EQ(f[13], QString()); // No MaxZoom
 }
 
-// FEAT-STO-018, T-0211 (UAT D-1 root cause): the same nine tiles with MemCacheCapacity=2 export all nine.
-// Zoom 1 is the only tile of its region file; legacy defect L-94(a) (the creating write leaves the entry
-// unreadable) would answer its read "no tile" once it has left the info cache. The deviation of T-0211
-// (docs/parity/deviations.md) initialises the entry after the creating write.
+// The same nine tiles with MemCacheCapacity=2 export all nine. Zoom 1 is the only tile of its region
+// file; a legacy defect (the creating write leaves the entry unreadable) would answer its read "no tile"
+// once it has left the info cache. A deviation from legacy initialises the entry after the creating
+// write.
 TEST_F(CliEndToEnd, SmallMemCacheCapacityExportsEveryTile) {
     servePyramid();
     writeZmp(maps(),
@@ -1442,8 +1521,8 @@ TEST_F(CliEndToEnd, SmallMemCacheCapacityExportsEveryTile) {
     EXPECT_TRUE(totals[1].startsWith(u"total 9 9 0 0 "_s)) << qPrintable(totals[1]);
 }
 
-// T-0198 proof 4: `sources` prints the same for a RAM map except the cache column (Default = 0, where the ZMP
-// said 9); nothing on stderr; chart-grabber.conf is not rewritten and no Maps.ini appears.
+// `sources` prints the same for a RAM map except the cache column (Default = 0, where the ZMP said 9);
+// nothing on stderr; chart-grabber.conf is not rewritten and no Maps.ini appears.
 TEST_F(CliEndToEnd, SourcesWithRamCacheMapPrintsNothingExtraAndWritesNoConfiguration) {
     const QByteArray url = "http://127.0.0.1:" + QByteArray::number(server_.port()) + "/{z}/{x}/{y}.png";
     writeZmp(maps(), {.folder = u"w5.zmp"_s,
@@ -1474,10 +1553,10 @@ TEST_F(CliEndToEnd, SourcesWithRamCacheMapPrintsNothingExtraAndWritesNoConfigura
     EXPECT_FALSE(QFileInfo::exists(maps() + u"/Maps.ini"_s));
 }
 
-// T-0216: the cg.net debug category is off by default, so libcurl's verbose trace (CURLOPT_VERBOSE, set
-// in curl_session.cpp only when the category is debug-enabled) is not printed; a rule switches it on (what
-// QT_LOGGING_RULES="cg.net.debug=true" does). New code (no legacy unit: the Pascal has no curl trace).
-// The Qt messages are captured by a message handler instead of read from fd 2, because Qt writes to stderr
+// The cg.net debug category is off by default, so libcurl's verbose trace (CURLOPT_VERBOSE, set in
+// curl_session.cpp only when the category is debug-enabled) is not printed; a rule switches it on (what
+// QT_LOGGING_RULES="cg.net.debug=true" does). New code (no legacy unit: the Pascal has no curl trace). The
+// Qt messages are captured by a message handler instead of read from fd 2, because Qt writes to stderr
 // only when QT_LOGGING_TO_CONSOLE is set or stderr is a terminal.
 namespace {
 QMutex gTraceMutex;
@@ -1527,7 +1606,7 @@ TEST_F(CliEndToEnd, CurlTraceIsSilentByDefaultAndShownWhenSasNetDebugIsOn) {
     EXPECT_TRUE(hasCurlTraceLine(loudTrace)) << loudTrace.size();
 }
 
-// T-0220 (app-cli.md 1.6.2): the terms-of-use warning. No FEAT; the D row of the ticket.
+// The terms-of-use warning (a deviation from legacy).
 class CliGreySources : public CliEndToEnd {
 protected:
     void SetUp() override {
@@ -1591,7 +1670,7 @@ TEST_F(CliGreySources, CompletedDownloadOfTwoGreySourcesKeepsExitZero) {
     EXPECT_EQ(requestCount(), 18); // nine tiles for each of the two sources, as without the key
 }
 
-// T-0257 (app-cli.md 1.6.2 item 2): `run` warns once per grey source too, and its exit code is unchanged.
+// `run` warns once per grey source too, and its exit code is unchanged.
 TEST_F(CliGreySources, RunWarnsOnceForAGreySourceAndKeepsExitZero) {
     servePyramid();
     const Captured c = runCapture(job(u"run"_s, u"Grey Base"_s));
@@ -1600,7 +1679,7 @@ TEST_F(CliGreySources, RunWarnsOnceForAGreySourceAndKeepsExitZero) {
     EXPECT_TRUE(c.err.contains(line(u"Grey Base"_s) + u"\n"_s)) << qPrintable(c.err);
 }
 
-// The same grey source as --source and as --overlay is announced once (app-cli.md 1.6.2).
+// The same grey source as --source and as --overlay is announced once.
 TEST_F(CliGreySources, TheSameGreySourceTwiceIsAnnouncedOnce) {
     servePyramid();
     const Captured c = runCapture(job(u"download"_s, u"Grey Layer"_s, {u"--overlay"_s, u"Grey Layer"_s}));
@@ -1639,7 +1718,7 @@ TEST_F(CliGreySources, ResumePrintsOneLinePerSessionFile) {
     EXPECT_TRUE(resumed.err.contains(line(u"Grey Base"_s) + u"\n"_s));
 }
 
-// T-0285 (app-cli.md 1.6.5): the not-for-navigation notice. No FEAT; a key of this project.
+// The not-for-navigation notice. A key of this project.
 class CliNavigationSources : public CliGreySources {
 protected:
     void SetUp() override {
@@ -1715,7 +1794,7 @@ TEST_F(CliNavigationSources, ResumePrintsItOnce) {
     EXPECT_EQ(navCount(resumed.err), 1) << qPrintable(resumed.err);
 }
 
-// T-0199 (docs/specs/app-cli.md 1.9, 6.2, 8.2): `resume`.
+// `resume`.
 class CliResume : public CliEndToEnd {
 protected:
     // A run of `args` that the termination stops once `requests` requests reached the server (the polling
@@ -1776,10 +1855,26 @@ static QStringList requestedTwice(const QStringList& firstPaths, const QStringLi
     return repeated;
 }
 
-// Proof 1: a terminated `run`, then `resume <the file it printed>`. the deviation of T-0226 (deviations.md),
-// was L-265 (the port in region/download_task_provider.cpp getTasksList): the resumed zoom (z3, 0-based 2)
-// used to end one tile early, (6,3), the last in iteration order (x fastest, then y). Now every tile of the
-// area is requested.
+// `resume` reports refusals as `run` does: the stopped run's rest is refused by the server.
+TEST_F(CliResume, T0471_ResumeAgainstARefusingServerEndsWithExitFour) {
+    servePyramid(400);
+    const Captured first = runStoppedAfter(job(u"run"_s, u"Template Map"_s), 2);
+    ASSERT_EQ(first.rc, 130) << qPrintable(first.err);
+    const QString file = resumeFile(first.err);
+    server_.clearReplies();
+    QHash<QByteArray, HttpTestServer::Reply> refused;
+    for (const QString& path : areaPaths()) {
+        refused.insert(path.toLatin1(), status(403, "Forbidden"));
+    }
+    servePyramid(0, refused);
+    const Captured resumed = runCapture(QStringList{u"resume"_s, file} + common());
+    EXPECT_EQ(resumed.rc, 4) << qPrintable(resumed.err);
+    EXPECT_TRUE(resumed.err.contains(u"error: the server refused all "_s)) << qPrintable(resumed.err);
+}
+
+// A terminated `run`, then `resume <the file it printed>`. A former defect of the port
+// (region/download_task_provider.cpp getTasksList): the resumed zoom (z3, 0-based 2) used to end one tile
+// early, (6,3), the last in iteration order (x fastest, then y). Now every tile of the area is requested.
 TEST_F(CliResume, ResumeContinuesRemovesTheSessionAndLeavesNoTileMissing) {
     servePyramid(400);
     const Captured first = runStoppedAfter(job(u"run"_s, u"Template Map"_s), 5); // the 5th is a z3 tile
@@ -1789,11 +1884,11 @@ TEST_F(CliResume, ResumeContinuesRemovesTheSessionAndLeavesNoTileMissing) {
     const QStringList firstPaths = requested();
 
     QStringList resumeArgs = QStringList{u"resume"_s, file} + common();
-    resumeArgs.removeAll(u"--no-progress"_s); // the progress line is what names the map (T-0254)
+    resumeArgs.removeAll(u"--no-progress"_s); // the progress line is what names the map
     const Captured resumed = runCapture(resumeArgs);
     ASSERT_EQ(resumed.rc, 0) << qPrintable(resumed.err);
     EXPECT_TRUE(resumed.err.contains(u"continuing the session of "_s)) << qPrintable(resumed.err);
-    // the progress line of the resume names the session's map: `<source>  z<zoom>  ...` (app-cli.md 1.10)
+    // the progress line of the resume names the session's map: `<source>  z<zoom>  ...`
     EXPECT_TRUE(resumed.err.contains(u"Template Map  z"_s)) << qPrintable(resumed.err);
     const QStringList secondPaths = requested(afterFirst);
 
@@ -1823,9 +1918,9 @@ TEST_F(CliResume, ResumeContinuesRemovesTheSessionAndLeavesNoTileMissing) {
     EXPECT_EQ(rows(outFile()), u"9"_s);
 }
 
-// T-0265: the fill report of `resume` is printed once per (source, zoom list) pair: two sessions of the same
-// map and zooms give one report, a session with other zooms its own. The key is a QByteArray of the zoom list
-// (a std::vector key trips the GCC 14 -Wstringop-overread false positive).
+// The fill report of `resume` is printed once per (source, zoom list) pair: two sessions of the same map and
+// zooms give one report, a session with other zooms its own. The key is a QByteArray of the zoom list (a
+// std::vector key trips the GCC 14 -Wstringop-overread false positive).
 TEST_F(CliResume, ResumeReportsEachSourceAndZoomListOnce) {
     servePyramid(100);
     QStringList files;
@@ -1853,8 +1948,8 @@ TEST_F(CliResume, ResumeReportsEachSourceAndZoomListOnce) {
     EXPECT_EQ(totalLines(resumed.out).size(), 2) << qPrintable(resumed.out);
 }
 
-// T-0291 (app-cli.md 1.6.1, 1.9): a session of a map that exists only in the second --maps folder resumes
-// only when that folder is given again. No FEAT; the D row of the ticket.
+// A session of a map that exists only in the second --maps folder resumes only when that folder is given
+// again (a deviation from legacy).
 TEST_F(CliResume, ResumeNeedsTheFolderThatHoldsTheSessionMap) {
     servePyramid(400);
     const QString folderA = root_.filePath(u"folderA"_s);
@@ -1888,7 +1983,7 @@ TEST_F(CliResume, ResumeNeedsTheFolderThatHoldsTheSessionMap) {
     EXPECT_TRUE(resumed.err.contains(u"continuing the session of "_s)) << qPrintable(resumed.err);
 }
 
-// T-0291 (app-cli.md 1.6.1): `run` without --maps is refused before anything is created.
+// `run` without --maps is refused before anything is created.
 TEST_F(CliResume, RunWithoutMapsIsRefusedAndCreatesNoSessionDirectory) {
     const QString freshData = root_.filePath(u"freshdata"_s);
     const Captured c =
@@ -1900,7 +1995,7 @@ TEST_F(CliResume, RunWithoutMapsIsRefusedAndCreatesNoSessionDirectory) {
     EXPECT_FALSE(QFileInfo::exists(outFile()));
 }
 
-// T-0203: `resume --progress=lines` names the map of the session file in `phase download`.
+// `resume --progress=lines` names the map of the session file in `phase download`.
 TEST_F(CliResume, ResumeProgressLinesStartsWithThePhaseOfTheMapTheFileNames) {
     servePyramid(400);
     const Captured first = runStoppedAfter(job(u"run"_s, u"Template Map"_s), 5);
@@ -1925,8 +2020,8 @@ TEST_F(CliResume, ResumeProgressLinesStartsWithThePhaseOfTheMapTheFileNames) {
     EXPECT_FALSE(resumed.err.contains(u'\r'));
 }
 
-// T-0226 proof 2: the same interruption, then the same `run` repeated (it continues the AutoSave session,
-// app-cli 1.9): the same two assertions, and the session directory is removed at the end.
+// The same interruption, then the same `run` repeated (it continues the AutoSave session): the same two
+// assertions, and the session directory is removed at the end.
 TEST_F(CliResume, RepeatedRunContinuesTheSessionAndLeavesNoTileMissing) {
     servePyramid(400);
     const Captured first = runStoppedAfter(job(u"run"_s, u"Template Map"_s), 5);
@@ -1951,8 +2046,8 @@ TEST_F(CliResume, RepeatedRunContinuesTheSessionAndLeavesNoTileMissing) {
     EXPECT_TRUE(sessionFiles().isEmpty());
 }
 
-// T-0245: the job id hashes the effective zoom list: a run stopped with --zooms 1-3 continues in a run with
-// --zooms 1-2 when the source stops at 2 (both are the list 1,2).
+// The job id hashes the effective zoom list: a run stopped with --zooms 1-3 continues in a run with --zooms
+// 1-2 when the source stops at 2 (both are the list 1,2).
 TEST_F(CliResume, MaxZoomMakesDifferentChosenZoomsOneSession) {
     servePyramid(400);
     writeMaxTwo();
@@ -1965,7 +2060,7 @@ TEST_F(CliResume, MaxZoomMakesDifferentChosenZoomsOneSession) {
     EXPECT_EQ(rows(outFile()), u"3"_s);
 }
 
-// T-0226 proof 3: two workers over a polygon area (not a rectangle, so the polygon iterator runs).
+// Two workers over a polygon area (not a rectangle, so the polygon iterator runs).
 TEST_F(CliResume, ResumeWithTwoWorkersOverAPolygonLeavesNoTileMissing) {
     servePyramid(400);
     const QString hlg = root_.filePath(u"area.hlg"_s);
@@ -2000,8 +2095,8 @@ TEST_F(CliResume, ResumeWithTwoWorkersOverAPolygonLeavesNoTileMissing) {
     EXPECT_TRUE(totals[1].startsWith(u"total 9 9 0 0 "_s)) << qPrintable(totals[1]);
 }
 
-// Proof 2: S-4 ... S-9 are checked before any run starts: a session of the WebP map without --allow-webp is
-// exit 3 naming the file, and the server sees nothing; with --allow-webp the run starts.
+// The source checks run before any run starts: a session of the WebP map without --allow-webp is exit 3
+// naming the file, and the server sees nothing; with --allow-webp the run starts.
 TEST_F(CliResume, ResumeOfAWebpSessionNeedsAllowWebpAndStartsNothingWithout) {
     const QString file = webpSession();
     const qsizetype before = requestCount();
@@ -2019,8 +2114,8 @@ TEST_F(CliResume, ResumeOfAWebpSessionNeedsAllowWebpAndStartsNothingWithout) {
     EXPECT_GT(requestCount(), before);
 }
 
-// Proof 3: a file that cannot be loaded is exit 3 naming it; no run starts even when a good file comes with
-// it (the good file first, so a check after the start would let it run).
+// A file that cannot be loaded is exit 3 naming it; no run starts even when a good file comes with it (the
+// good file first, so a check after the start would let it run).
 TEST_F(CliResume, ResumeOfAnUnreadableOrNonSessionFileIsExitThreeAndStartsNothing) {
     servePyramid(400);
     const Captured first = runStoppedAfter(job(u"run"_s, u"Template Map"_s), 2);
@@ -2041,7 +2136,7 @@ TEST_F(CliResume, ResumeOfAnUnreadableOrNonSessionFileIsExitThreeAndStartsNothin
     EXPECT_TRUE(QFileInfo::exists(good));
 }
 
-// Proof 4: a file outside AutoSave/ that completes stays where it is (the user's file); the session of
+// A file outside AutoSave/ that completes stays where it is (the user's file); the session of
 // AutoSave/ it was copied from is not touched.
 TEST_F(CliResume, ResumeOfAFileOutsideAutoSaveLeavesTheFileInPlace) {
     servePyramid(400);
@@ -2059,9 +2154,9 @@ TEST_F(CliResume, ResumeOfAFileOutsideAutoSaveLeavesTheFileInPlace) {
     EXPECT_TRUE(QFileInfo::exists(original));
 }
 
-// T-0275 (D row, L-44, S-15): a cache folder that cannot be used stops every command at start with the
-// reason, before a request is sent. A path below a regular file cannot be created by anyone, so it also holds
-// as root.
+// A deviation from legacy for a legacy defect: a cache folder that cannot be used stops every command at
+// start with the reason, before a request is sent. A path below a regular file cannot be created by anyone,
+// so it also holds as root.
 TEST_F(CliEndToEnd, CacheBelowARegularFileIsRefusedAtStartForDownloadAndRun) {
     servePyramid();
     const QString file = root_.filePath(u"plainfile"_s);
@@ -2097,9 +2192,9 @@ TEST_F(CliEndToEnd, ReadOnlyCacheFolderIsRefusedAtStartWithoutARequest) {
     EXPECT_EQ(requestCount(), 0);
 }
 
-// T-0275 (S-15): a single-file cache (CacheType 72-76, NameInCache with an extension) lives in the file named
-// by the path (prepareFileName, u_TileStorageSQLiteFileConnectionBuilder.pas:210-214); the check creates
-// nothing, so the file is created by the first save and an existing one is a good cache.
+// A single-file cache (CacheType 72-76, NameInCache with an extension) lives in the file named by the path
+// (prepareFileName, u_TileStorageSQLiteFileConnectionBuilder.pas:210-214); the check creates nothing, so the
+// file is created by the first save and an existing one is a good cache.
 TEST_F(CliEndToEnd, SingleFileCacheIsDownloadedWhetherTheFileIsThereOrNot) {
     servePyramid();
     writeZmp(maps(),
@@ -2124,8 +2219,8 @@ TEST_F(CliEndToEnd, SingleFileCacheIsDownloadedWhetherTheFileIsThereOrNot) {
     }
 }
 
-// T-0275 (S-15): CacheType=9 with an empty NameInCache keeps RAM (app_context.cpp useFileCacheForRamMaps) and
-// UseMemCache=0 makes the RAM type refuse to build: the cause stops the job at start, no request is sent.
+// CacheType=9 with an empty NameInCache keeps RAM (app_context.cpp useFileCacheForRamMaps) and UseMemCache=0
+// makes the RAM type refuse to build: the cause stops the job at start, no request is sent.
 TEST_F(CliEndToEnd, RamCacheWithoutMemCacheIsRefusedAtStartWithItsCause) {
     servePyramid();
     writeZmp(maps(),
@@ -2169,4 +2264,119 @@ TEST_F(CliEndToEnd, ExistingReadOnlyMapCacheFolderIsRefusedAtStart) {
     EXPECT_TRUE(c.err.contains(u"error: \"Template Map\": cannot write the cache folder "_s))
         << qPrintable(c.err);
     EXPECT_EQ(requestCount(), before);
+}
+
+// === The 403 retry with the curl User-Agent, sticky for the process (a deviation from legacy) ===
+// Offline: the local HttpTestServer on 127.0.0.1 refuses every User-Agent that does not start with
+// "curl/".
+
+namespace {
+
+QByteArray userAgentOfRequest(const QByteArray& blob) {
+    for (const QByteArray& line : blob.split('\n')) {
+        if (line.size() > 11 && line.left(11).toLower() == "user-agent:") {
+            return line.mid(11).trimmed();
+        }
+    }
+    return {};
+}
+
+const QRegularExpression kSwitchLine(u"^Server refused the default User-Agent \\(HTTP 403\\); using "
+                                     u"curl/\\d+\\.\\d+\\.\\d+ for 127\\.0\\.0\\.1 "
+                                     u"until the end of the run$"_s,
+                                     QRegularExpression::MultilineOption);
+
+qsizetype switchLines(const QString& err) {
+    qsizetype n = 0;
+    auto it = kSwitchLine.globalMatch(err);
+    while (it.hasNext()) {
+        it.next();
+        ++n;
+    }
+    return n;
+}
+
+} // namespace
+
+TEST_F(CliEndToEnd, T0472_CurlFallbackIsStickyForTheRun) {
+    servePyramid();
+    server_.setRefuseUserAgentsWithout("curl/");
+    const Captured c = runCapture(job(u"run"_s, u"Template Map"_s, {u"--threads"_s, u"1"_s, u"-v"_s}));
+    ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
+    EXPECT_EQ(rows(outFile()), u"9"_s);
+    EXPECT_EQ(switchLines(c.err), 1) << qPrintable(c.err);
+    EXPECT_FALSE(c.err.contains(u"Server refused: HTTP"_s)) << qPrintable(c.err);
+    EXPECT_FALSE(c.err.contains(u"the server refused"_s)) << qPrintable(c.err);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), 10);
+    EXPECT_FALSE(userAgentOfRequest(log[0]).startsWith("curl/"));
+    for (qsizetype i = 1; i < log.size(); ++i) {
+        EXPECT_TRUE(userAgentOfRequest(log[i]).startsWith("curl/")) << i;
+    }
+}
+
+TEST_F(CliEndToEnd, T0472_ANewRunStartsWithTheDefaultAgent) {
+    servePyramid();
+    server_.setRefuseUserAgentsWithout("curl/");
+    ASSERT_EQ(runCapture(job(u"run"_s, u"Template Map"_s, {u"--threads"_s, u"1"_s, u"-v"_s})).rc, 0);
+    const qsizetype before = server_.requestLog().size();
+    const Captured c = runCapture(
+        job(u"run"_s, u"Template Map"_s,
+            {u"--replace"_s, u"--restart"_s, u"--overwrite"_s, u"--threads"_s, u"1"_s, u"-v"_s}, u"1"_s));
+    ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), before + 2);
+    EXPECT_FALSE(userAgentOfRequest(log[before]).startsWith("curl/"));
+    EXPECT_TRUE(userAgentOfRequest(log[before + 1]).startsWith("curl/"));
+    EXPECT_EQ(switchLines(c.err), 1) << qPrintable(c.err); // a new process forgets the switch
+}
+
+TEST_F(CliEndToEnd, T0472_SwitchAnnouncedOnceWithFourThreads) {
+    servePyramid();
+    server_.setRefuseUserAgentsWithout("curl/");
+    const Captured c = runCapture(job(u"run"_s, u"Template Map"_s, {u"--threads"_s, u"4"_s, u"-v"_s}));
+    ASSERT_EQ(c.rc, 0) << qPrintable(c.err);
+    EXPECT_EQ(switchLines(c.err), 1) << qPrintable(c.err);
+    EXPECT_LE(server_.requestLog().size(), 9 + 4);
+}
+
+TEST_F(CliEndToEnd, T0472_NoSwitchWhenCurlIsRefusedToo) {
+    QHash<QByteArray, HttpTestServer::Reply> refused;
+    refused.insert("/2/2/1.png", status(403, "Forbidden"));
+    refused.insert("/2/3/1.png", status(403, "Forbidden"));
+    servePyramid(0, refused);
+    const Captured c =
+        runCapture(job(u"run"_s, u"Template Map"_s, {u"--threads"_s, u"1"_s, u"-v"_s}, u"2"_s));
+    EXPECT_EQ(c.rc, 4) << qPrintable(c.err);
+    EXPECT_EQ(c.err.count(u"Server refused: HTTP 403"_s), 2) << qPrintable(c.err);
+    EXPECT_TRUE(c.err.contains(u"error: the server refused all 2 requested tiles: HTTP 403"_s))
+        << qPrintable(c.err);
+    EXPECT_EQ(switchLines(c.err), 0) << qPrintable(c.err);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), 4); // default, curl, default, curl
+    EXPECT_FALSE(userAgentOfRequest(log[0]).startsWith("curl/"));
+    EXPECT_TRUE(userAgentOfRequest(log[1]).startsWith("curl/"));
+    EXPECT_FALSE(userAgentOfRequest(log[2]).startsWith("curl/"));
+    EXPECT_TRUE(userAgentOfRequest(log[3]).startsWith("curl/"));
+}
+
+TEST_F(CliEndToEnd, T0472_SourceUserAgentIsNeverSwitched) {
+    servePyramid();
+    server_.setRefuseUserAgentsWithout("curl/");
+    QFile json(maps() + u"/headed.source.json"_s);
+    ASSERT_TRUE(json.open(QIODevice::WriteOnly));
+    json.write(
+        "{\"format\": 1, \"guid\": \"{AB0000F7-0000-0000-0000-0000000000F7}\", \"name\": \"Headed Map\", "
+        "\"url\": \"http://127.0.0.1:" +
+        QByteArray::number(server_.port()) +
+        "/{z}/{x}/{y}.png\", \"contentType\": \"image/png\", \"ext\": \".png\", \"nameInCache\": "
+        "\"cacheheaded\", "
+        "\"headers\": {\"User-Agent\": \"my-charts\"}}");
+    json.close();
+    const Captured c = runCapture(job(u"run"_s, u"Headed Map"_s, {u"--threads"_s, u"1"_s, u"-v"_s}, u"1"_s));
+    EXPECT_EQ(c.rc, 4) << qPrintable(c.err);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), 1);
+    EXPECT_EQ(userAgentOfRequest(log[0]), QByteArrayLiteral("my-charts"));
+    EXPECT_EQ(switchLines(c.err), 0) << qPrintable(c.err);
 }

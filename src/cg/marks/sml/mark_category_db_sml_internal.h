@@ -4,8 +4,8 @@
 
 #pragma once
 // Ports: Src/MarksDB/SML/i_MarkCategoryDBSmlInternal.pas (47): IMarkCategoryDBSmlInternal, the category side
-// of the SML database (docs/specs/marks.md section 2.8.4). Interface only; the implementing class is the S4
-// ticket (u_MarkCategoryDBSml.pas, 632 lines).
+// of the SML database. Interface only; the implementing class (u_MarkCategoryDBSml.pas, 632 lines) is ported
+// separately.
 //
 // Legacy Initialize(AOperationID, ACancelNotifier) is one std::stop_token (core/background_task.h).
 

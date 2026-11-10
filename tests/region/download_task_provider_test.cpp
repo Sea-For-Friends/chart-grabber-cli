@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-REG-014 (DownloadTaskProvider: per-zoom tile iterators for N workers, with resume seek).
-// Ports: Src/RegionProcess/Download/u_DownloadTaskProvider.pas (GetTasksList :170-244).
+// DownloadTaskProvider: per-zoom tile iterators for N workers, with resume seek. Ports: Src/
+// RegionProcess/Download/u_DownloadTaskProvider.pas (GetTasksList :170-244).
 //
 // Geometry used (Google/3857, 256 px tiles; hand-derived from lon -> x = floor((lon+180)/360*2^z) and the
 // Mercator y): the rectangle lon -170..-100, lat -10..30 covers tiles
@@ -108,8 +108,8 @@ Result tasksOf(cg::region::IDownloadTaskProvider& provider, int worker) {
 
 } // namespace
 
-// Proof 1: fresh start (lastProcessedZoom = zoomArr[0], point -1/-1, count -1): one iterator per zoom in
-// array order, tilesTotal is the sum of the zoom totals (u_DownloadTaskProvider.pas:193-241).
+// Fresh start (lastProcessedZoom = zoomArr[0], point -1/-1, count -1): one iterator per zoom in array
+// order, tilesTotal is the sum of the zoom totals (u_DownloadTaskProvider.pas:193-241).
 TEST(DownloadTaskProvider, FreshStartRectangleOneIteratorPerZoomInArrayOrder) {
     Rig rig;
     auto provider = rig.make(rectPolygon(-170, 30, -100, -10), 1, {3, 4, 5}, 3);
@@ -151,8 +151,8 @@ TEST(DownloadTaskProvider, FreshStartPolygonUsesThePolygonIterator) {
     EXPECT_EQ(r.total, 34);
 }
 
-// Proof 2: the workers' tiles are a partition of the single-worker tile set; tilesTotal of a worker is what
-// its iterators yield.
+// The workers' tiles are a partition of the single-worker tile set; tilesTotal of a worker is what its
+// iterators yield.
 TEST(DownloadTaskProvider, WorkersPartitionTheSingleWorkerTileSet) {
     struct Case {
         PolygonPtr polygon;
@@ -196,7 +196,7 @@ TEST(DownloadTaskProvider, WorkersPartitionTheSingleWorkerTileSet) {
     }
 }
 
-// Proof 3: z3 area is one tile, 1 part only; z6 splits 9 tiles into 4 parts (2,2,2,3).
+// z3 area is one tile, 1 part only; z6 splits 9 tiles into 4 parts (2,2,2,3).
 TEST(DownloadTaskProvider, WorkerBeyondPartsCountOfOneZoomSkipsOnlyThatZoom) {
     Rig rig;
     auto provider = rig.make(rectPolygon(-170, 20, -160, 10), 4, {3, 6}, 3);
@@ -220,9 +220,8 @@ TEST(DownloadTaskProvider, WorkerBeyondPartsCountOfOneZoomSkipsOnlyThatZoom) {
     EXPECT_EQ(w3.total, 3);
 }
 
-// Proof 4: resume. the deviation of T-0226 (deviations.md), was LR-2 / L-265: legacy's seek consumes one unit
-// of the iterator budget, so the last tile of the resumed zoom was never requested; the budget gets one more
-// unit.
+// Resume. A deviation from legacy for a legacy defect: legacy's seek consumes one unit of the iterator
+// budget, so the last tile of the resumed zoom was never requested; the budget gets one more unit.
 TEST(DownloadTaskProvider, ResumeSkipsLowerZoomsButCountsThemAndSeeksAtTheResumedZoom) {
     Rig rig;
     // z4 tiles in order: (0,6)(1,6)(2,6)(3,6)(0,7)(1,7)(2,7)(3,7)(0,8)(1,8)(2,8)(3,8); (1,7) is the 6th.
@@ -230,8 +229,8 @@ TEST(DownloadTaskProvider, ResumeSkipsLowerZoomsButCountsThemAndSeeksAtTheResume
     Result r = tasksOf(*provider, 0);
     EXPECT_EQ(r.zooms(), (std::vector<int>{4, 5}));
     EXPECT_EQ(r.total, 4 + 12 + 32);
-    // budget 12 - 6 (+1 for the seek, the deviation of T-0226 (deviations.md)) from (1,7): (1,7) is consumed
-    // by the seek, then the six tiles to the end, (3,8) included.
+    // budget 12 - 6 (+1 for the seek, the deviation) from (1,7): (1,7) is consumed by the seek, then the six
+    // tiles to the end, (3,8) included.
     EXPECT_EQ(drain(*r.tasks[0]), (Tiles{{2, 7}, {3, 7}, {0, 8}, {1, 8}, {2, 8}, {3, 8}}));
     // zoom above the resumed one: untouched, from the start of the area, full count
     Tiles z5 = drain(*r.tasks[1]);
@@ -239,8 +238,7 @@ TEST(DownloadTaskProvider, ResumeSkipsLowerZoomsButCountsThemAndSeeksAtTheResume
     EXPECT_EQ(z5.front(), (std::pair<int, int>{0, 13}));
 }
 
-// the deviation of T-0226 (deviations.md): the resume point is the part's last tile: the seek takes it,
-// nothing follows.
+// The deviation: the resume point is the part's last tile: the seek takes it, nothing follows.
 TEST(DownloadTaskProvider, ResumeAtTheLastTileOfThePartProducesNoTile) {
     Rig rig;
     auto provider = rig.make(rectPolygon(-170, 30, -100, -10), 1, {4}, 4, PointI{3, 8}, 12);
@@ -249,9 +247,8 @@ TEST(DownloadTaskProvider, ResumeAtTheLastTileOfThePartProducesNoTile) {
     EXPECT_EQ(drain(*r.tasks[0]), Tiles{});
 }
 
-// the deviation of T-0226 (deviations.md): two workers over the 12 z4 tiles; each worker's part is 6 tiles.
-// Worker 0 = (0,6)..(1,7), worker 1 = (2,7)..(3,8). The resumed tail reaches the part's last tile and not one
-// tile of the other part.
+// The deviation: two workers over the 12 z4 tiles; each worker's part is 6 tiles. Worker 0 = (0,6)..(1,7),
+// worker 1 = (2,7)..(3,8). The resumed tail reaches the part's last tile and not one tile of the other part.
 TEST(DownloadTaskProvider, ResumeWithTwoWorkersRequestsTheWholeTailOfEachPartAndNothingOfTheOther) {
     Rig rig;
     auto w0 = rig.make(rectPolygon(-170, 30, -100, -10), 2, {4}, 4, PointI{1, 6}, 2);
@@ -260,8 +257,7 @@ TEST(DownloadTaskProvider, ResumeWithTwoWorkersRequestsTheWholeTailOfEachPartAnd
     EXPECT_EQ(drain(*tasksOf(*w1, 1).tasks[0]), (Tiles{{0, 8}, {1, 8}, {2, 8}, {3, 8}}));
 }
 
-// the deviation of T-0226 (deviations.md): the polygon iterator (the triangle) ends its resumed budget on the
-// part's last tile too.
+// The deviation: the polygon iterator (the triangle) ends its resumed budget on the part's last tile too.
 TEST(DownloadTaskProvider, ResumeOfAPolygonPartIncludesItsLastTile) {
     Rig rig;
     // z4 triangle tiles, column by column: worker 0 holds (0,6)(0,7)(0,8)(1,6), worker 1 holds
@@ -305,8 +301,8 @@ TEST(DownloadTaskProvider, NegativeCoordinateOfTheLastPointMeansNoSeek) {
     }
 }
 
-// Proof 5: two threads on one provider. "Prepared once" is not observable from outside; this proves only the
-// absence of a race (TSan binary) and of a divergent result.
+// Two threads on one provider. "Prepared once" is not observable from outside; this proves only the absence
+// of a race (TSan binary) and of a divergent result.
 TEST(DownloadTaskProvider, ConcurrentFirstCallsGiveTheSingleThreadedResult) {
     Rig rig;
     using Shape = std::vector<std::tuple<int, RectI, ScanOrder>>;

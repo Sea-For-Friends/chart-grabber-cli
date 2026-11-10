@@ -3,7 +3,6 @@
 // SAS.Planet development team; modified.
 
 // Ports: u_CoordTransformer.pas, Includes/Proj4/{Proj4.UTM,Proj4.GaussKruger}.pas.
-// docs/specs/geo.md:2178-2238 (§6.4). FEAT-GEO-005, FEAT-GEO-006, FEAT-GEO-007.
 #include "cg/geo/coord_transformer.h"
 
 #include "cg/geo/proj/proj4_defines.h"
@@ -18,20 +17,19 @@ namespace cg::geo {
 namespace {
 
 // One factory shared by every CoordTransformer instance and every static free function below.
-// ProjConverterFactory interns one IProjConverter per init string behind a weak_ptr cache
-// (T-0020, D-10), so repeated calls for the same UTM/Gauss-Kruger zone reuse the same PROJ object
-// instead of rebuilding it on every call the way legacy's own Proj4.Utils re-parses the init
-// string every time.
+// ProjConverterFactory interns one IProjConverter per init string behind a weak_ptr cache, so
+// repeated calls for the same UTM/Gauss-Kruger zone reuse the same PROJ object instead of
+// rebuilding it on every call the way legacy's own Proj4.Utils re-parses the init string every
+// time.
 ProjConverterFactory& sharedFactory() {
     static ProjConverterFactory instance;
     return instance;
 }
 
-// Legacy SysUtils.UpperCase converts only the 7-bit ASCII letters a..z (see
-// docs/handoffs/T-0019B1-review.md finding 1, which applies equally to Proj4.UTM.pas:378's
-// UpperCase call in str_to_mgrs). Duplicated here (rather than shared with coord_from_string.cpp)
-// because each is a small anonymous-namespace helper private to its own translation unit, matching
-// this module's existing pattern.
+// Legacy SysUtils.UpperCase converts only the 7-bit ASCII letters a..z (which applies equally to
+// Proj4.UTM.pas:378's UpperCase call in str_to_mgrs). Duplicated here (rather than shared with
+// coord_from_string.cpp) because each is a small anonymous-namespace helper private to its own
+// translation unit, matching this module's existing pattern.
 QString toUpperAscii(const QString& s) {
     QString result = s;
     for (QChar& c : result) {
@@ -256,7 +254,7 @@ bool CoordTransformer::wgs84ToUtm(LonLat lonLat, UtmCoord& out) {
     // mutate-the-var-parameter-in-place semantics (geodetic_wgs84_to_utm, Proj4.UTM.pas:145-155:
     // AUtm.Zone/.Band/.IsNorth are set unconditionally once wgs84_longlat_to_utm_zone succeeds,
     // regardless of whether the later geodetic_cs_to_projected_cs call fails). This also lets the
-    // zone/band table tests (spec §11.2 "the first six") run without PROJ.
+    // zone/band table tests run without PROJ.
     out.zone = zone;
     out.band = band;
     out.isNorth = isNorth;
@@ -304,7 +302,7 @@ bool CoordTransformer::wgs84ToUps(LonLat lonLat, UtmCoord& out) {
         initStr = kUpsNorth;
         isNorth = true;
     } else if (lonLat.lat <= -80.0) {
-        // Spec §6.4 "legacy bug, fixed here" / §10 D-9: legacy tests `ALat <= 80`, which is
+        // Legacy bug, fixed here (a deviation from legacy): legacy tests `ALat <= 80`, which is
         // wrong-signed for any latitude that actually gets here (this function is only called
         // once geodetic_wgs84_to_utm has already failed, i.e. lat >= 84 (handled above) or
         // lat <= -80) -- observable only when the UTM PROJ leg fails and legacy falls through to
@@ -319,8 +317,7 @@ bool CoordTransformer::wgs84ToUps(LonLat lonLat, UtmCoord& out) {
     // The band depends only on the sign of the input longitude (Proj4.UTM.pas:192-206), not on the
     // projected X/Y, so it is computed here, ahead of the PROJ call -- legacy only assigns it after
     // a successful transform, but the value is identical either way, and `out`'s contents are
-    // unspecified on a false return regardless (this lets UpsNorthAbove84, spec §11.2 "the first
-    // six", run without PROJ).
+    // unspecified on a false return regardless (this lets UpsNorthAbove84 run without PROJ).
     if (isNorth) {
         out.band = (lonLat.lon < 0.0) ? QLatin1Char('Y') : QLatin1Char('Z');
     } else {
@@ -396,7 +393,7 @@ bool CoordTransformer::wgs84ToMgrs(LonLat lonLat, MgrsCoord& out) {
         result.digraph[1] = QLatin1Char(kMgrsUpsRows[i][row - kFnUps[i]]);
     }
 
-    // Trunc, not rounding -- 1 m resolution (spec §6.4).
+    // Trunc, not rounding -- 1 m resolution.
     result.x = static_cast<int>(std::trunc(utm.x)) % 100000;
     result.y = static_cast<int>(std::trunc(utm.y)) % 100000;
 
@@ -533,8 +530,7 @@ bool CoordTransformer::strToMgrs(const QString& text, MgrsCoord& out) {
     }
 
     // Legacy splits the remaining digits floor (easting) / ceil (northing); its final `I = VLen`
-    // check is a tautology and never actually rejects an odd-length tail (docs/handoffs/
-    // T-0019B1.md "legacy-vs-spec conflicts", confirmed by the B1 review).
+    // check is a tautology and never actually rejects an odd-length tail.
     const qsizetype prefixLen = i + 3;
     const qsizetype digitsLen = len - prefixLen;
     const qsizetype eastingLen = digitsLen / 2;
@@ -543,8 +539,8 @@ bool CoordTransformer::strToMgrs(const QString& text, MgrsCoord& out) {
     bool northingOk = false;
     const int easting = s.mid(prefixLen, eastingLen).toInt(&eastingOk);
     const int northing = s.mid(prefixLen + eastingLen).toInt(&northingOk);
-    // D-25 (docs/parity/deviations.md): legacy's StrToInt raises on overflow, unhandled; the port
-    // fails cleanly instead (same ruling as coord_from_string.cpp's zone/MGRS StrToInt sites).
+    // A deviation from legacy: legacy's StrToInt raises on overflow, unhandled; the port fails
+    // cleanly instead (as at coord_from_string.cpp's zone/MGRS StrToInt sites).
     if (!eastingOk || !northingOk) {
         return false;
     }

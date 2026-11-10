@@ -8,13 +8,10 @@
 // A bulk, data-less snapshot of one rectangle at one zoom, used by the "fill map" overlay and by
 // the region downloader to decide what to fetch.
 //
-// T-0021A review (finding D-2) + Tech Lead ruling 2026-09-19 (T-0021A rework): legacy's
-// `ITileRectInfo` (Src/i_TileInfoBasic.pas:53-62) exposes only `TileRect`, `Zoom` and `GetEnum` --
-// no version/content-type accessors -- so this port stores only what that interface needs.
-// `GetEnum` (-> `enumerate()`) needs the concrete `geo::ITileIterator`, which is T-0018 (geo slice
-// C) and does not exist in the tree yet; nothing speculative ships, so `enumerate()` and the
-// version_/contentType_ fields that existed only to feed it are removed until T-0018 lands. See
-// the ticket's Open questions.
+// Legacy's `ITileRectInfo` (Src/i_TileInfoBasic.pas:53-62) exposes only `TileRect`, `Zoom` and
+// `GetEnum` -- no version/content-type accessors -- so this port stores only what that interface
+// needs. `GetEnum` (-> `enumerate()`) needs the concrete `geo::ITileIterator` and is not ported;
+// nothing speculative ships.
 
 #include "cg/geo/geo_types.h"
 #include "cg/storage/tile_info.h"

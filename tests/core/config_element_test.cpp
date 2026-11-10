@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-UI-199; docs/specs/core.md 2.16, test plan 7.13
 #include "cg/core/config_element.h"
 
 #include <gtest/gtest.h>
@@ -22,8 +21,8 @@ using cg::core::IConfigWriterPtr;
 
 namespace {
 
-// T-0093 part 2: rendezvous helpers. Spin-wait with a generous deadline (a failing run, not a
-// passing one, pays the deadline) instead of sleeping a guessed number of milliseconds.
+// Rendezvous helpers. Spin-wait with a generous deadline (a failing run, not a passing one, pays
+// the deadline) instead of sleeping a guessed number of milliseconds.
 constexpr auto kRendezvousDeadline = std::chrono::seconds(10);
 
 template <typename Pred> bool waitUntil(Pred pred) {
@@ -161,9 +160,9 @@ TEST(ConfigElement, NestedWritesNotifyOnce) {
     });
     ASSERT_TRUE(waitUntil([&] { return secondStarted.load(); }));
     // `second` bumps the (private) batch counter inside writeLock() just before it blocks; that is
-    // not observable from a test without a product seam, so this short settle window stays
-    // (T-0093 part 2: left on purpose; it is now only the gap from "thread running" to "counter
-    // bumped", a handful of instructions, not thread start-up).
+    // not observable from a test without a product seam, so this short settle window stays (left
+    // on purpose; it is now only the gap from "thread running" to "counter bumped", a handful of
+    // instructions, not thread start-up).
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     firstShouldRelease.store(true);
     first.join();
@@ -265,8 +264,8 @@ TEST(ConfigElement, ReadConfigWithNullProviderIsSafe) {
     EXPECT_TRUE(elem.lastProviderWasNull.load());
 }
 
-// T-0094: legacy fires DoChangeNotify -> DoBeforeChangeNotify at the moment the stop-notify counter
-// reaches 0 (u_ConfigDataElementBase.pas:163-173, u_ChangeableBase.pas:87-95), and a child change
+// Legacy fires DoChangeNotify -> DoBeforeChangeNotify at the moment the stop-notify counter reaches
+// 0 (u_ConfigDataElementBase.pas:163-173, u_ChangeableBase.pas:87-95), and a child change
 // (OnItemChange, u_ConfigDataElementComplexBase.pas:352-361) that sets the flag after that gets its
 // own full notification including the hook. So a child change arriving between a writer's pre-pass
 // and its finishWrite must never be notified with a derived snapshot that predates it.
@@ -303,11 +302,11 @@ TEST(ConfigElement, ChildChangeBetweenPrePassAndFinishIsNotifiedWithFreshSnapsho
     EXPECT_EQ(snapshotAtChanged, 2);
 }
 
-// T-0094 part 2: legacy rebuilds under LockWrite (u_ConfigDataElementBase.pas:221-238), so a hook run
-// from finishWrite is serialised with writers. Order reproduced: W1 pre-passes, a child token clears
-// the record, W1's finishWrite starts hook U which reads the OLD value, W2 writes 2 and pre-passes
-// fresh, U stores last. Without the lock U's stale store wins permanently. The 300 ms wait only
-// decides whether the buggy order is exercised; the assertion holds on any timing once fixed.
+// Legacy rebuilds under LockWrite (u_ConfigDataElementBase.pas:221-238), so a hook run from
+// finishWrite is serialised with writers. Order reproduced: W1 pre-passes, a child token clears the
+// record, W1's finishWrite starts hook U which reads the OLD value, W2 writes 2 and pre-passes fresh,
+// U stores last. Without the lock U's stale store wins permanently. The 300 ms wait only decides
+// whether the buggy order is exercised; the assertion holds on any timing once fixed.
 TEST(ConfigElement, UnlockedHookRunCannotPublishStateOlderThanALaterWriter) {
     TestElement elem;
     std::atomic<int> value{0};
@@ -319,10 +318,10 @@ TEST(ConfigElement, UnlockedHookRunCannotPublishStateOlderThanALaterWriter) {
     elem.onBeforeChangeNotify = [&] {
         const int call = hookCalls.fetch_add(1) + 1;
         const int seen = value.load();
-        if (call == 1) {                           // W1's pre-pass, under its lock
+        if (call == 1) {                           // The first writer's pre-pass, under its lock
             ConfigElement::BatchToken token(elem); // a child's change clears the hook record
             elem.publicSetChanged();
-        } else if (call == 2) { // U: the hook run from W1's finishWrite
+        } else if (call == 2) { // The hook run from the first writer's finishWrite
             uStarted.set_value();
             w2FinishedF.wait_for(std::chrono::milliseconds(300));
         }

@@ -5,8 +5,8 @@
 #pragma once
 // Ports: Src/Vector/i_Category.pas, u_Category.pas
 //
-// FEAT-GEO-037 (enabler). `marks` derives its own category classes from ICategory; Category is
-// the plain named category used by importers.
+// `marks` derives its own category classes from ICategory; Category is the plain named category
+// used by importers.
 
 #include <QString>
 

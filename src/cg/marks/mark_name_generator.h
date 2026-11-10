@@ -3,7 +3,7 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// Ports: i_MarkNameGenerator.pas (interface, shared), u_MarkNameGenerator.pas (MarkNameGenerator, T-0091)
+// Ports: i_MarkNameGenerator.pas (interface, shared), u_MarkNameGenerator.pas (MarkNameGenerator)
 
 #include "cg/core/config_element_complex.h"
 #include "cg/core/string_config_data_element.h"

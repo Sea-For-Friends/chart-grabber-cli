@@ -2,11 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports u_MarkSystemImplChangeable.pas (spec marks.md section 2.6, ruling A). No FEAT id: ticket T-0102 has
-// Features: —. The factory list, the factory and its list element are fakes written here; the config list
-// is the landed MarkSystemConfig, the base path the landed PathConfig, the error notifier a plain
-// core::Notifier, and the backend the shared testutil::FakeMarkSystemImpl. Synchronisation is by
-// semaphores and latches only: no sleeps.
+// Ports u_MarkSystemImplChangeable.pas. The factory list, the factory and its list element are fakes
+// written here; the config list is MarkSystemConfig, the base path PathConfig, the error notifier a plain
+// core::Notifier, and the backend the shared testutil::FakeMarkSystemImpl. Synchronisation is by semaphores
+// and latches only: no sleeps.
 
 #include "cg/core/notifier.h"
 #include "cg/core/path_config.h"

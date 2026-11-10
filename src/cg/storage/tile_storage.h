@@ -5,14 +5,12 @@
 #pragma once
 // Ports: i_TileStorage.pas
 //
-// docs/specs/storage.md §2.6 (:428-495). The root interface every backend implements. Every
-// method is synchronous and blocking (survey 03 §6, idioms §8): cancellation is layered by
-// callers (tileRectInfo takes a std::stop_token) so the byte-level backend logic stays
-// unit-testable without an event loop.
+// The root interface every backend implements. Every method is synchronous and blocking:
+// cancellation is layered by callers (tileRectInfo takes a std::stop_token) so the
+// byte-level backend logic stays unit-testable without an event loop.
 //
-// Deviation (already flagged by T-0021A, not re-derived here): the tile coordinate type is
-// geo::PointI, not geo::TilePoint, and the tile rect type is geo::RectI, not geo::TileRect --
-// geo slice A (T-0016) landed those names; see tile_info.h / tile_rect_info.h.
+// Deviation: the tile coordinate type is geo::PointI, not geo::TilePoint, and the tile rect
+// type is geo::RectI, not geo::TileRect; see tile_info.h / tile_rect_info.h.
 
 #include "cg/core/changeable.h"
 #include "cg/core/result.h"
@@ -38,7 +36,7 @@
 
 namespace cg::storage {
 
-// FEAT-STO-001. Ports ITileStorage.
+// Ports ITileStorage.
 class ITileStorage {
 public:
     virtual ~ITileStorage() = default;
@@ -59,11 +57,11 @@ public:
     [[nodiscard]] virtual QString tileFileName(geo::PointI xy, quint8 zoom,
                                                const MapVersionInfoPtr& version) const = 0;
 
-    // FEAT-STO-001. Single-version lookup. Must consult the mem-cache BEFORE checking
-    // state()->readAccess (u_TileStorageFileSystem.pas:GetTileInfo, first statement) -- reproduce
-    // the order of each backend, the RAM storage depends on it (the SQLite single-file storage tests
-    // the access first). Where legacy answers nil (folder / SQLite single-file without read access,
-    // archive always) the port answers a default TileInfo, type Unknown, and never caches it.
+    // Single-version lookup. Must consult the mem-cache BEFORE checking state()->readAccess
+    // (u_TileStorageFileSystem.pas:GetTileInfo, first statement) -- reproduce the order of each
+    // backend, the RAM storage depends on it (the SQLite single-file storage tests the access
+    // first). Where legacy answers nil (folder / SQLite single-file without read access, archive
+    // always) the port answers a default TileInfo, type Unknown, and never caches it.
     [[nodiscard]] virtual core::Result<TileInfo>
     tileInfo(geo::PointI xy, quint8 zoom, const MapVersionInfoPtr& version, LoadMode mode) const = 0;
 
@@ -84,36 +82,35 @@ public:
                                                       QByteArrayView contentType, const QByteArray& data,
                                                       bool overwrite) = 0;
 
-    // T-0351 (new): the tiles (zoom, x, y) whose saves under `version` were refused although they carried
-    // data, i.e. skipped as byte-identical to a stored version (SaveFlag::SkipIfSameAsPrev,
-    // u_TileStorageSQLiteHandler.pas:317-347); the record is emptied of them. T-0352: with each tile the
-    // size and CRC-32 of the refused data, the criterion of that skip, so that the caller can tell which
-    // stored row was the identical one. Default: none (only the facade of a map records, and only after
+    // The tiles (zoom, x, y) whose saves under `version` were refused although they carried data, i.e.
+    // skipped as byte-identical to a stored version (SaveFlag::SkipIfSameAsPrev,
+    // u_TileStorageSQLiteHandler.pas:317-347); the record is emptied of them. With each tile the size and
+    // CRC-32 of the refused data, the criterion of that skip, so that the caller can tell which stored
+    // row was the identical one. Default: none (only the facade of a map records, and only after
     // setRecordSkippedSaves(true)).
     struct SkippedSave {
         qint64 size = 0;
         quint32 crc = 0;
         friend bool operator==(const SkippedSave&, const SkippedSave&) = default;
     };
-    // T-0352 (option C): nothing is recorded unless the run switches it on (only a snapshot source needs
-    // the record); default: no-op, like takeSkippedSaves.
+    // Nothing is recorded unless the run switches it on (only a snapshot source needs the record);
+    // default: no-op, like takeSkippedSaves.
     virtual void setRecordSkippedSaves(bool /*on*/) {}
     [[nodiscard]] virtual std::map<std::tuple<quint8, int, int>, SkippedSave>
     takeSkippedSaves(const MapVersionInfoPtr& /*version*/) {
         return {};
     }
 
-    // FEAT-STO-032. Default (u_TileStorageAbstract.pas): an empty list.
+    // Default (u_TileStorageAbstract.pas): an empty list.
     [[nodiscard]] virtual core::Result<MapVersionList>
     listVersions(geo::PointI xy, quint8 zoom, const MapVersionRequest& request) const = 0;
 
-    // FEAT-STO-035. `stop` replaces the legacy (AOperationID, INotifierOperation) pair (idioms 8:
-    // "storage interfaces stay synchronous and take a std::stop_token").
+    // `stop` replaces the legacy (AOperationID, INotifierOperation) pair.
     [[nodiscard]] virtual core::Result<TileRectInfoPtr> tileRectInfo(geo::RectI rect, quint8 zoom,
                                                                      const MapVersionRequest& request,
                                                                      std::stop_token stop) const = 0;
 
-    // FEAT-STO-035. Default (u_TileStorageAbstract.pas): null -- scanning not allowed.
+    // Default (u_TileStorageAbstract.pas): null -- scanning not allowed.
     [[nodiscard]] virtual core::Result<EnumTileInfoPtr> scanTiles(bool ignoreTne,
                                                                   bool ignoreMultiVersionTiles) = 0;
 };

@@ -4,7 +4,6 @@
 
 // New code (no legacy unit). Inherits: the fetch-once pattern of the stock Google/GoogleSat.zmp script, with
 // the result fed into the map version (Src/MapVersion/u_MapVersionRequestConfig.pas).
-// docs/specs/weather-sources.md §2, §3.2, §3.3, §3.4, §6.
 #include "cg/app/snapshot.h"
 
 #include "cg/core/platform/qt_compat.h"
@@ -41,7 +40,7 @@ core::Unexpected parseFail(QString text) {
     return core::fail(core::ErrorCode::ParseError, std::move(text));
 }
 
-// §2: map.zmp()->dataProvider()->subItem(params.txt)->subItem(PARAMS); a null provider on the way = key
+// map.zmp()->dataProvider()->subItem(params.txt)->subItem(PARAMS); a null provider on the way = key
 // absent.
 QString readKey(const maptype::IMapType& map, QStringView key) {
     const auto zmp = map.zmp();
@@ -59,7 +58,7 @@ bool isHttpUrl(const QString& text) {
     return QUrl(text, QUrl::StrictMode).isValid();
 }
 
-// §3.3 version rule.
+// The version rule.
 core::Result<void> checkVersion(const QString& version) {
     bool bad = version.isEmpty() || version.size() > kMaxVersionLength;
     for (const QChar c : version) {
@@ -81,7 +80,7 @@ core::Result<Snapshot> nearestToNow(const QString& item, const QString& values, 
 core::Result<Snapshot> withFrameList(const SnapshotDefinition& def, const QString& values,
                                      core::Result<Snapshot> chosen);
 
-// §3.2 json-last.
+// The json-last index type.
 core::Result<Snapshot> parseJsonLast(const SnapshotDefinition& def, const QByteArray& body) {
     const QJsonDocument doc = QJsonDocument::fromJson(body);
     if (!doc.isObject()) {
@@ -101,11 +100,10 @@ core::Result<Snapshot> parseJsonLast(const SnapshotDefinition& def, const QByteA
     if (array.isEmpty()) {
         return parseFail(Tr::tr("the array at %1 is empty").arg(def.item));
     }
-    if (def.previous && array.size() < 2) { // T-0356
+    if (def.previous && array.size() < 2) {
         return parseFail(Tr::tr("the array at %1 has no entry before the last").arg(def.item));
     }
-    const QJsonValue lastEntry =
-        array.at(array.size() - (def.previous ? 2 : 1)); // T-0356: previous = one back
+    const QJsonValue lastEntry = array.at(array.size() - (def.previous ? 2 : 1)); // previous = one back
     if (!lastEntry.isObject()) {
         return parseFail(Tr::tr("the last entry of %1 has no usable %2").arg(def.item, def.timeField));
     }
@@ -113,7 +111,7 @@ core::Result<Snapshot> parseJsonLast(const SnapshotDefinition& def, const QByteA
     const QString versionField = def.versionField.isEmpty() ? def.timeField : def.versionField;
 
     Snapshot snap;
-    snap.newest = !def.previous; // T-0356: the last entry is the newest frame
+    snap.newest = !def.previous; // The last entry is the newest frame
     const QJsonValue timeValue = entry.value(def.timeField);
     if (timeValue.isString()) {
         auto parsed = snapshotFromText(QStringLiteral("x"), timeValue.toString());
@@ -154,13 +152,13 @@ struct WmsLayer {
     bool hasName = false;
     bool hasTimeDefault = false;
     QString timeDefault;
-    QString timeValues;  // T-0337: the text of that Dimension (list and/or start/end/step)
-    bool hasRef = false; // T-0443: a direct Dimension reference_time was seen
+    QString timeValues;  // The text of that Dimension (list and/or start/end/step)
+    bool hasRef = false; // A direct Dimension reference_time was seen
     QString refDefault;
     QString refValues;
 };
 
-// T-0443: the model run of a reference_time dimension: its default, else the last item of the list (a
+// The model run of a reference_time dimension: its default, else the last item of the list (a
 // start/end/step item gives its end). Nothing to read = no change; an unreadable text is kept in
 // referenceBad.
 core::Result<Snapshot> withRun(core::Result<Snapshot> chosen, bool has, const QString& defaultText,
@@ -188,7 +186,7 @@ core::Result<Snapshot> withRun(core::Result<Snapshot> chosen, bool has, const QS
     return chosen;
 }
 
-// §3.2 wms-default.
+// The wms-default index type.
 core::Result<Snapshot> parseWmsDefault(const SnapshotDefinition& def, const QByteArray& body) {
     QXmlStreamReader xml(body);
     const auto notCapabilities = [&xml]() {
@@ -295,8 +293,8 @@ struct WmtsLayer {
     bool hasTime = false; // a direct Dimension with Identifier time was seen
     QString timeDefault;
     QString timeRange;   // the first Value with a start/end/step form; empty = none
-    QString timeValues;  // T-0337: every Value, joined with ','
-    bool hasRef = false; // T-0443: a direct Dimension with Identifier reference_time was seen
+    QString timeValues;  // Every Value, joined with ','
+    bool hasRef = false; // A direct Dimension with Identifier reference_time was seen
     QString refDefault;
     QString refValues;
 };
@@ -339,7 +337,7 @@ void readWmtsDimension(QXmlStreamReader& xml, WmtsLayer& layer) {
         layer.timeRange = range;
         layer.timeValues = values.join(QLatin1Char(','));
     }
-    if (!layer.hasRef && id.compare(u"reference_time", Qt::CaseInsensitive) == 0) { // T-0443
+    if (!layer.hasRef && id.compare(u"reference_time", Qt::CaseInsensitive) == 0) {
         layer.hasRef = true;
         layer.refDefault = def;
         layer.refValues = values.join(QLatin1Char(','));
@@ -411,12 +409,11 @@ core::Result<Snapshot> chooseWmtsTime(const SnapshotDefinition& def, const WmtsL
     return snapshotFromText(text, text);
 }
 
-// T-0337: the frame of a time dimension nearest to `now` (invalid = the clock). `values` is the text of a
-// WMS Dimension or the Values of a WMTS one: parts separated by ',', each an instant or "start/end/step"
-// (ISO 8601 duration). Distance in whole seconds, a tie goes to the earlier frame. The frame must not lie
-// after now + one step (the step of a range; for a listed instant the gap to the previous one, 0 for the
-// first). A range frame's version is yyyy-MM-ddTHH:mm:ssZ; a listed instant's is its text as the server gave
-// it.
+// The frame of a time dimension nearest to `now` (invalid = the clock). `values` is the text of a WMS
+// Dimension or the Values of a WMTS one: parts separated by ',', each an instant or "start/end/step" (ISO
+// 8601 duration). Distance in whole seconds, a tie goes to the earlier frame. The frame must not lie after
+// now + one step (the step of a range; for a listed instant the gap to the previous one, 0 for the first). A
+// range frame's version is yyyy-MM-ddTHH:mm:ssZ; a listed instant's is its text as the server gave it.
 struct NearFrame {
     QDateTime time;
     QString version;
@@ -463,7 +460,7 @@ core::Result<Snapshot> nearestToNow(const QString& item, const QString& values, 
     }
     std::ranges::sort(listed, [](const NearFrame& a, const NearFrame& b) { return a.time < b.time; });
     for (size_t i = 0; i < listed.size(); ++i) {
-        // T-0352: the first one takes the gap to the next, as a range does (0 for a single instant)
+        // The first one takes the gap to the next, as a range does (0 for a single instant)
         listed[i].step = i > 0               ? listed[i - 1].time.secsTo(listed[i].time)
                          : listed.size() > 1 ? listed[0].time.secsTo(listed[1].time)
                                              : 0;
@@ -489,7 +486,7 @@ core::Result<Snapshot> nearestToNow(const QString& item, const QString& values, 
     return snapshotFromText(best->version, best->timeText);
 }
 
-// T-0356: the frames of a time dimension (`values` as nearestToNow reads them) against the chosen one:
+// The frames of a time dimension (`values` as nearestToNow reads them) against the chosen one:
 // newest = no listed frame is later; previous = the latest listed frame strictly earlier. A range frame's
 // version is yyyy-MM-ddTHH:mm:ssZ, a listed instant's is its text as the server gave it.
 core::Result<Snapshot> withFrameList(const SnapshotDefinition& def, const QString& values,
@@ -549,7 +546,7 @@ core::Result<Snapshot> withFrameList(const SnapshotDefinition& def, const QStrin
     return snapshotFromText(before->version, before->timeText);
 }
 
-// §3.2 wmts-default.
+// The wmts-default index type.
 core::Result<Snapshot> parseWmtsDefault(const SnapshotDefinition& def, const QByteArray& body) {
     QXmlStreamReader xml(body);
     const auto notCapabilities = [&xml]() {
@@ -624,7 +621,7 @@ core::Result<Snapshot> parseWmtsDefault(const SnapshotDefinition& def, const QBy
     return parseFail(Tr::tr("no layer %1").arg(def.item));
 }
 
-// §3.2 wmts-domain.
+// The wmts-domain index type.
 core::Result<Snapshot> parseWmtsDomain(const QByteArray& body) {
     QXmlStreamReader xml(body);
     while (!xml.atEnd() && !xml.isStartElement()) {
@@ -718,7 +715,7 @@ core::Result<std::optional<SnapshotDefinition>> snapshotDefinition(const maptype
     }
     def.versionField = readKey(map, u"SnapshotVersionField");
 
-    // T-0337: SnapshotPick, wms-default and wmts-default only.
+    // SnapshotPick, wms-default and wmts-default only.
     const QString pickText = readKey(map, u"SnapshotPick");
     if (!pickText.isEmpty() && pickText.compare(u"default", Qt::CaseInsensitive) != 0) {
         if (pickText.compare(u"nearest-now", Qt::CaseInsensitive) != 0) {
@@ -756,7 +753,7 @@ core::Result<Snapshot> parseSnapshotIndex(const SnapshotDefinition& definition, 
     case SnapshotIndexType::WmtsDefault:
         return parseWmtsDefault(definition, body);
     case SnapshotIndexType::NoneRefetch: {
-        // T-0337: no body; the instant of the resolve (whole seconds) is the version and the time.
+        // No body; the instant of the resolve (whole seconds) is the version and the time.
         const QDateTime now = definition.now.isValid() ? definition.now : QDateTime::currentDateTimeUtc();
         const QString text = timeIsoZ(now);
         return snapshotFromText(text, text);

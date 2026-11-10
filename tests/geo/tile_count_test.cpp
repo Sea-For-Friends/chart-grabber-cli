@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-015. Ports Test/u_CalcTilesInPolygon_Test.pas (4 cases, exact legacy fixture
-// and constants) plus, per the test policy, a minimal "otherwise" set: the rectangle-shortcut
-// vertex-order rule, the multi-polygon double-count quirk (hand-derived, not from the DUnit
-// suite), the factory's rect-vs-polygon dispatch, and the -1-sentinel -> nullopt mapping.
+// Ports Test/u_CalcTilesInPolygon_Test.pas (4 cases, exact legacy fixture and constants) plus,
+// per the test policy, a minimal "otherwise" set: the rectangle-shortcut vertex-order rule, the
+// multi-polygon double-count quirk (hand-derived, not from the DUnit suite), the factory's
+// rect-vs-polygon dispatch, and the -1-sentinel -> nullopt mapping.
 
 #include "cg/geo/datum.h"
 #include "cg/geo/geo_calc.h"
@@ -156,7 +156,7 @@ TEST(CalcTileCountInProjectedPolygon, MultiPolygonOverlapDoubleCounts) {
     // part independently takes the TryProjectedPolygonToTileRect shortcut and reports area 1, and
     // calcTileCountInProjectedPolygon (u_GeometryFunc.pas:802-823) is a PLAIN SUM over parts, so
     // the two identical, fully-overlapping tiles are counted twice: 1 + 1 = 2, even though only one
-    // distinct tile exists (docs/parity/deviations.md D-5).
+    // distinct tile exists.
     auto factory = makeSetFactory();
     const ProjectionPtr projection = atZoom(factory, kProjEpsgGoogle, 10);
 
@@ -223,14 +223,14 @@ TEST(TileIteratorFactory, NulloptStartPointMapsToTopLeftLikeLegacyNegativeOneSen
     EXPECT_EQ(first, (PointI{2, 5})); // rect.topLeft(), not (-1,-1) or any other sentinel value.
 }
 
-// --- T-0018B rework regression (docs/handoffs/T-0018B-review.md findings 1 and 2) ---------------
+// --- regression cases: a null projected polygon and the bisection count ---------------
 
 TEST(T0018BRework, NullProjectedPolygonEmptyIteratorAndTwoPointPerimeterDoubled) {
-    // F1: TileIteratorFactory::makeTileIterator falls through to
-    // TileIteratorByPolygon(projection, projected, ...) unguarded whenever
-    // GeometryProjectedFactory::createPolygonByLonLatPolygon returns nullptr (no ring survives
-    // projection, geometry_factory.cpp's makeStaticAndClear/collapseProjectedPolygons -- mirrors
-    // legacy u_GeometryProjectedFactory.pas:272). The exact contract under test is
+    // TileIteratorFactory::makeTileIterator falls through to TileIteratorByPolygon(projection,
+    // projected, ...) unguarded whenever GeometryProjectedFactory::createPolygonByLonLatPolygon
+    // returns nullptr (no ring survives projection, geometry_factory.cpp's
+    // makeStaticAndClear/collapseProjectedPolygons -- mirrors legacy
+    // u_GeometryProjectedFactory.pas:272). The exact contract under test is
     // TileIteratorByPolygon's own handling of that null pointer -- the object makeTileIterator
     // constructs in that fallthrough (tile_count.cpp:199-207) -- which must be an EMPTY iterator
     // (tilesTotal() == 0, next() == false), no crash, exactly like legacy
@@ -248,11 +248,11 @@ TEST(T0018BRework, NullProjectedPolygonEmptyIteratorAndTwoPointPerimeterDoubled)
         EXPECT_FALSE(iterator.next(tile));
     }
 
-    // F2: a 2-point contour's perimeter must be 2*d. Legacy's closed enumerator
+    // A 2-point contour's perimeter must be 2*d. Legacy's closed enumerator
     // (u_EnumDoublePointBySingleLine.pas:142, "FClosed and (FCount > 1)") emits the closing point
-    // for a 2-point contour, giving CalcContourPerimeter (u_GeoCalc.pas:167-181) dist(p0,p1) +
-    // dist(p1,p0) = 2d -- NOT Datum::calcPolygonPerimeter's own stricter size() > 2 guard
-    // (datum.cpp:222), which would give just d.
+    // for a 2-point contour, giving CalcContourPerimeter (u_GeoCalc.pas:167-181)
+    // dist(p0,p1) + dist(p1,p0) = 2d -- NOT Datum::calcPolygonPerimeter's own stricter size() > 2
+    // guard (datum.cpp:222), which would give just d.
     {
         DatumFactory datums{HashSeed{}};
         constexpr double kSphereRadius = 6371000.0;

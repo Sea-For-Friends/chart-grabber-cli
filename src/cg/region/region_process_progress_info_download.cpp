@@ -14,8 +14,7 @@ RegionProcessProgressInfoDownload::RegionProcessProgressInfoDownload(
     std::shared_ptr<core::LogRingBuffer> log, std::shared_ptr<IDownloadSession> session, bool paused,
     std::function<double()> now)
     : now_(std::move(now)), log_(std::move(log)), session_(std::move(session)), needPause_(paused),
-      paused_(paused), startTime_(this->now()) {
-} // :128-145, FEAT-REG-013: needPause_ / paused_ start as `paused`
+      paused_(paused), startTime_(this->now()) {} // :128-145: needPause_ / paused_ start as `paused`
 
 double RegionProcessProgressInfoDownload::now() const {
     // Legacy Now: the wall clock, so a clock change shifts the elapsed time (reproduced).
@@ -50,7 +49,7 @@ void RegionProcessProgressInfoDownload::addProcessedTile(geo::PointI tile) { // 
 }
 
 void RegionProcessProgressInfoDownload::finish() { // :203-211
-    // No finish reason: docs/specs/region-download.md OQ-5, not ruled.
+    // No finish reason here (legacy records none).
     const core::WriteLock guard(mutex_);
     finished_ = true;
 }
@@ -152,11 +151,11 @@ void RegionProcessProgressInfoDownload::setZoom(quint8 value) { // :379-387
     session_->setZoom(value);
 }
 
-qint64 RegionProcessProgressInfoDownload::connectionErrorStreak() const { // T-0271, no legacy counterpart
+qint64 RegionProcessProgressInfoDownload::connectionErrorStreak() const { // No legacy counterpart
     return connectionErrorStreak_.load(std::memory_order_relaxed);
 }
 
-void RegionProcessProgressInfoDownload::noteDownloadAnswer(bool connectionError) { // T-0271
+void RegionProcessProgressInfoDownload::noteDownloadAnswer(bool connectionError) {
     if (connectionError) {
         connectionErrorStreak_.fetch_add(1, std::memory_order_relaxed);
     } else {
@@ -164,12 +163,32 @@ void RegionProcessProgressInfoDownload::noteDownloadAnswer(bool connectionError)
     }
 }
 
-FrameAnswers RegionProcessProgressInfoDownload::frameAnswers() const { // T-0356, no legacy counterpart
+RefusalCounts RegionProcessProgressInfoDownload::refusalCounts() const { // No legacy counterpart
+    return {refusalStreak_.load(std::memory_order_relaxed), refused_.load(std::memory_order_relaxed),
+            notRefused_.load(std::memory_order_relaxed), lastRefusalStatus_.load(std::memory_order_relaxed)};
+}
+
+void RegionProcessProgressInfoDownload::noteRefusal(bool refused, quint32 statusCode) {
+    if (refused) {
+        refusalStreak_.fetch_add(1, std::memory_order_relaxed);
+        refused_.fetch_add(1, std::memory_order_relaxed);
+        lastRefusalStatus_.store(statusCode, std::memory_order_relaxed);
+    } else {
+        refusalStreak_.store(0, std::memory_order_relaxed);
+        notRefused_.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void RegionProcessProgressInfoDownload::noteSkippedPresent() {
+    notRefused_.fetch_add(1, std::memory_order_relaxed);
+}
+
+FrameAnswers RegionProcessProgressInfoDownload::frameAnswers() const { // No legacy counterpart
     return {unavailableRun_.load(std::memory_order_relaxed), inClass_.load(std::memory_order_relaxed),
             other_.load(std::memory_order_relaxed)};
 }
 
-void RegionProcessProgressInfoDownload::noteFrameAnswer(FrameAnswer answer) { // T-0356
+void RegionProcessProgressInfoDownload::noteFrameAnswer(FrameAnswer answer) {
     if (answer == FrameAnswer::Unavailable) {
         unavailableRun_.fetch_add(1, std::memory_order_relaxed);
     } else {
@@ -198,9 +217,9 @@ void RegionProcessProgressInfoDownload::getLastTileInfo(quint8& zoom, geo::Point
 void RegionProcessProgressInfoDownload::saveState(core::IConfigWriter& slsSection) { // :419-432
     const core::WriteLock guard(mutex_);
     if (!needPause_) {
-        // DEVIATION (T-0274, L-266, deviations.md): the stretch is folded in once and startTime_ restarts;
-        // legacy keeps FStartTime (u_RegionProcessProgressInfoDownload.pas:419-432) and counts it again in
-        // elapsedTime(). The needPause test and the finish drop stay legacy (spec region-download.md LR-1).
+        // DEVIATION: the stretch is folded in once and startTime_ restarts; legacy keeps FStartTime
+        // (u_RegionProcessProgressInfoDownload.pas:419-432) and counts it again in elapsedTime(). The
+        // needPause test and the finish drop stay legacy.
         const double current = now(); // one read: the stretch ends where the next one starts
         session_->setElapsedTime(session_->elapsedTime() + (current - startTime_));
         startTime_ = current;
@@ -223,13 +242,13 @@ void RegionProcessProgressInfoDownload::setNeedPause(bool value) { // :454-462
     needPause_ = value;
 }
 
-void RegionProcessProgressInfoDownload::setPaused() { // :464-473, FEAT-REG-013
+void RegionProcessProgressInfoDownload::setPaused() { // :464-473
     const core::WriteLock guard(mutex_);
     paused_ = true;
     session_->setElapsedTime(session_->elapsedTime() + (now() - startTime_));
 }
 
-void RegionProcessProgressInfoDownload::setStarted() { // :475-484, FEAT-REG-013
+void RegionProcessProgressInfoDownload::setStarted() { // :475-484
     const core::WriteLock guard(mutex_);
     paused_ = false;
     startTime_ = now();

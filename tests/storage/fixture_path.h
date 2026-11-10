@@ -6,8 +6,7 @@
 // Test helper: resolves tests/fixtures. The CMake build passes CG_FIXTURES_DIR as a compile
 // definition; the tools/nocmake_build.sh fallback passes no definitions, so the directory is
 // found by walking up from the working directory instead. Kept local to tests/storage (rather
-// than reusing another module's copy) per the parallel development rule in
-// docs/conventions/agent-protocol.md -- each module only touches its own test directory.
+// than reusing another module's copy) -- each module only touches its own test directory.
 
 #include <QDir>
 #include <QString>

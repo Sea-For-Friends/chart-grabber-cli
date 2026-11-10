@@ -3,8 +3,8 @@
 // SAS.Planet development team; modified.
 
 #pragma once
-// NEW (T-0239, T-0291, app-cli.md 1.6.1); no legacy counterpart: legacy reads one maps directory
-// (u_ZmpInfoSet.pas:126-185). Ports: nothing.
+// NEW; no legacy counterpart: legacy reads one maps directory (u_ZmpInfoSet.pas:126-185). Ports:
+// nothing.
 //
 // The ZMP sets of the --maps folders as one: a GUID defined in several folders takes the definition of the
 // LAST folder that has it and stands at its first appearance; the sink is told once per such GUID.

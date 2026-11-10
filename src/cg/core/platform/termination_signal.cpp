@@ -50,20 +50,20 @@ int signalForConsoleEvent(unsigned long event) {
 
 namespace {
 
-// TL-3 (app-cli.md 6.1): the one global of the program; a signal handler can reach nothing else
+// The one global of the program; a signal handler can reach nothing else
 std::atomic<int> receivedSignal{0};
 static_assert(std::atomic<int>::is_always_lock_free, "signal handler needs a lock-free atomic");
 
-// T-0262: a second signal within this window of the first is the same delivery repeated (`timeout` signals
-// the child and then its process group; `kill -INT -PGID`; a terminal's Ctrl-C reaches every process of the
-// group), not a user's second Ctrl-C: it is dropped. Later ones end the process (app-cli.md 6.1).
+// A second signal within this window of the first is the same delivery repeated (`timeout` signals the
+// child and then its process group; `kill -INT -PGID`; a terminal's Ctrl-C reaches every process of the
+// group), not a user's second Ctrl-C: it is dropped. Later ones end the process.
 constexpr std::int64_t kSameDeliveryNs = 100'000'000;
 std::atomic<std::int64_t> firstSignalAtNs{0};
 static_assert(std::atomic<std::int64_t>::is_always_lock_free, "signal handler needs a lock-free atomic");
 
 std::int64_t monotonicNs() {
 #ifdef _WIN32
-    // T-0335: the Windows handler runs on its own thread (not in signal context), so the C++ clock is fine.
+    // The Windows handler runs on its own thread (not in signal context), so the C++ clock is fine.
     return std::chrono::duration_cast<std::chrono::nanoseconds>(
                std::chrono::steady_clock::now().time_since_epoch())
         .count();
@@ -74,8 +74,8 @@ std::int64_t monotonicNs() {
 #endif
 }
 
-// T-0332: the stdin reader's side. stdinGeneration is bumped by the destructor, so a reader that outlives its
-// object (it cannot be woken from a blocked read) sets nothing.
+// The stdin reader's side. stdinGeneration is bumped by the destructor, so a reader that outlives its object
+// (it cannot be woken from a blocked read) sets nothing.
 std::atomic<unsigned> stdinGeneration{0};
 std::atomic<bool> stoppedFromStdin{false};
 
@@ -128,8 +128,8 @@ using StdinSource = HANDLE;
 using StdinSource = int;
 #endif
 
-// Blocking read of up to `size` bytes: > 0 data, 0 EOF or a read error (a broken pipe is the Windows EOF,
-// T-0335), < 0 retry (EINTR).
+// Blocking read of up to `size` bytes: > 0 data, 0 EOF or a read error (a broken pipe is the Windows
+// EOF), < 0 retry (EINTR).
 std::ptrdiff_t readSome(StdinSource source, char* buffer, std::size_t size) {
 #ifdef _WIN32
     DWORD got = 0;
@@ -175,13 +175,13 @@ void readStdin(StdinSource source, unsigned generation) {
 }
 
 #ifdef _WIN32
-// T-0335: the console events of a Windows process. The handler runs on a thread the system creates.
+// The console events of a Windows process. The handler runs on a thread the system creates.
 // CTRL_C / CTRL_BREAK are SIGINT (exit 130); CTRL_CLOSE / LOGOFF / SHUTDOWN are SIGTERM (exit 143).
 constexpr DWORD kCloseGraceMs =
     4000; // the system ends the process when the handler returns (closing: after 5 s)
 
-// T-0341: the handler is installed once and stays (see ~TerminationSignal); without a TerminationSignal
-// object it is inert.
+// The handler is installed once and stays (see ~TerminationSignal); without a TerminationSignal object
+// it is inert.
 std::atomic<bool> consoleHandlerInstalled{false};
 
 BOOL WINAPI onConsoleEvent(DWORD event) {
@@ -246,9 +246,9 @@ TerminationSignal::~TerminationSignal() {
     watcher_.request_stop();
     watcher_.join();
 #ifdef _WIN32
-    // T-0341: no SetConsoleCtrlHandler(..., FALSE) here: on CTRL_CLOSE the handler is inside its 4 s grace
-    // sleep while the main thread ends the program, and the removal waits for the handler to return; the
-    // system then ends the process with STATUS_CONTROL_C_EXIT (0xC000013A) instead of the exit code 143. The
+    // No SetConsoleCtrlHandler(..., FALSE) here: on CTRL_CLOSE the handler is inside its 4 s grace sleep
+    // while the main thread ends the program, and the removal waits for the handler to return; the system
+    // then ends the process with STATUS_CONTROL_C_EXIT (0xC000013A) instead of the exit code 143. The
     // handler is inert once objectAlive is false.
     std::signal(SIGINT, oldIntHandler);
     std::signal(SIGTERM, oldTermHandler);
@@ -276,8 +276,8 @@ bool TerminationSignal::stoppedByStdin() const {
 
 StdinWatch TerminationSignal::watchStdin(int fd) {
 #ifdef _WIN32
-    // T-0335. _get_osfhandle on a bad descriptor calls the invalid-parameter handler, which ends the process
-    // by default: silence it for this one call.
+    // _get_osfhandle on a bad descriptor calls the invalid-parameter handler, which ends the process by
+    // default: silence it for this one call.
     const auto previous = _set_invalid_parameter_handler(&noopInvalidParameter);
     const intptr_t raw = _get_osfhandle(fd);
     _set_invalid_parameter_handler(previous);

@@ -54,8 +54,8 @@ const std::vector<CacheTypeDescriptor>& cacheTypes() {
         // CTileStorageTypeBerkeleyDB to BOTH list items. CTileStorageTypeBerkeleyDBVersioned
         // ({CA3868AE-6762-4D17-B72F-6892E61E119B}) is declared in legacy and never used -- do not
         // "fix" this by giving BdbVersioned its own UUID; look storage types up by CacheTypeId.
-        // T-0333 (owner 2026-10-21): the BerkeleyDB backend is removed; the rows stay because the
-        // numbers 6 and 61 are persisted in configs and ZMPs. supportedOnLinux = false.
+        // The BerkeleyDB backend is removed; the rows stay because the numbers 6 and 61 are
+        // persisted in configs and ZMPs. supportedOnLinux = false.
         {CacheTypeId::Bdb, uuidOf("{3DBF81CD-9356-40EB-9778-DE4D98E5BE61}"), "BerkeleyDB", "BDBCache",
          "cache_db", true, true, false},
         {CacheTypeId::BdbVersioned, uuidOf("{3DBF81CD-9356-40EB-9778-DE4D98E5BE61}"),
@@ -69,9 +69,8 @@ const std::vector<CacheTypeDescriptor>& cacheTypes() {
         {CacheTypeId::GeTerrain, uuidOf("{C38B1837-A0E1-4139-89A3-3AB37C7ED702}"), "GoogleEarth Terrain",
          "GECache", "cache_ge", false, false, false},
         // Default folder is 'SASGIS_DBMS\$' verbatim from c_CacheTypeCodes.pas (a literal
-        // backslash, not the forward slash docs/specs/storage.md :798 shows) -- legacy wins
-        // (protocol rule 5); see docs/handoffs/T-0021D.md. The DBMS backend itself is out of
-        // scope (ADR-0005 §7); this row exists only so the registry stays complete/verbatim.
+        // backslash) -- legacy wins. The DBMS backend itself is not ported; this row exists
+        // only so the registry stays complete/verbatim.
         {CacheTypeId::Dbms, uuidOf("{5F9E2D54-A433-4853-B7EB-3EE218160263}"), "DBMS", "DBMSCache",
          "SASGIS_DBMS\\$", true, false, false},
         {CacheTypeId::Ram, uuidOf("{717034B7-B49E-4C89-BC75-002D0523E548}"), "RAM", nullptr, nullptr, true,

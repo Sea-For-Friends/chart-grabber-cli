@@ -96,7 +96,7 @@ QStringList ConfigProviderFolder::subItemNames() const {
 }
 
 // Legacy tests (Ext <> '.INI') or (Ext = '.HTML') or (Ext = '.TXT'), which is true for every
-// extension but .INI (L-117): any stray file counts as a value.
+// extension but .INI: any stray file counts as a value.
 QStringList ConfigProviderFolder::valueNames() const {
     QStringList names;
     const QFileInfoList entries = QDir(folderPath_).entryInfoList(kAllEntries, QDir::Name);

@@ -50,7 +50,6 @@ void sortZoomArray(std::vector<quint8>& array) {
     std::sort(array.begin(), array.end());
 }
 
-// FEAT-REG-004
 bool zoomArrayFromStr(const QString& str, std::vector<quint8>& out) {
     out.clear();
 
@@ -83,7 +82,6 @@ bool zoomArrayFromStr(const QString& str, std::vector<quint8>& out) {
     return result;
 }
 
-// FEAT-REG-004
 QString zoomArrayToStr(const std::vector<quint8>& zoomArr) {
     // An empty input falls through to "" (legacy Assert is off in the shipped build).
     if (zoomArr.size() == 1) {

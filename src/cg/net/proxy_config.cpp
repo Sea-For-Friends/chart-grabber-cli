@@ -2,8 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Ports: i_ProxyConfig.pas, u_ProxyConfig.pas:114-202,279-365. docs/specs/net.md §2.1.
-// FEAT-NET-008.
+// Ports: i_ProxyConfig.pas, u_ProxyConfig.pas:114-202,279-365.
 #include "cg/net/proxy_config.h"
 
 #include "cg/core/log.h"
@@ -49,7 +48,7 @@ void ProxyConfig::setUseSystemSettings(bool v) {
         return;
     }
     useSystemSettings_ = v;
-    setChanged(); // always, on an actual change (spec table)
+    setChanged(); // always, on an actual change
 }
 
 bool ProxyConfig::useProxy() const {
@@ -79,7 +78,7 @@ void ProxyConfig::setType(ProxyType v) {
         return;
     }
     type_ = v;
-    setChanged(); // always, on an actual change (spec table)
+    setChanged(); // always, on an actual change
 }
 
 QByteArray ProxyConfig::host() const {
@@ -194,7 +193,7 @@ void ProxyConfig::doWriteConfig(const cg::core::IConfigWriterPtr& dst) const {
     dst->writeString(u"Host", QString::fromUtf8(host_)); // written raw: no normalizeAddress (asymmetry, kept)
     dst->writeBool(u"UseAuth", useLogin_);
     dst->writeString(u"Login", login_);
-    dst->writeString(u"Password", password_); // [D-8] plaintext, as in legacy
+    dst->writeString(u"Password", password_); // Plaintext, as in legacy
     dst->writeInt(u"ProxyType", static_cast<qint32>(type_));
 }
 

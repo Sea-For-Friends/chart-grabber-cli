@@ -129,7 +129,7 @@ void TileDownloadRequestBuilderConfig::doReadConfig(const core::IConfigProviderP
     setRequestHeaderLocked(src->readString(u"RequestHead", QString::fromUtf8(requestHeader_)).toUtf8());
 }
 
-// Differs-rule; no ServerNames (L-140).
+// Differs-rule; no ServerNames.
 void TileDownloadRequestBuilderConfig::doWriteConfig(const core::IConfigWriterPtr& dst) const {
     if (!dst) {
         return;

@@ -5,15 +5,14 @@
 #pragma once
 // Ports: the share-handle wiring referenced by Src/Network/Curl/u_CurlHttpClient.pas (the curl
 // share handle is set up once per client in legacy's TDownloaderHttpByCurl, not inside
-// t_CurlHttpClient.pas itself). docs/specs/net.md §2.8.2 (curl option #32 of the 32-option
-// table). FEAT-NET-009.
+// t_CurlHttpClient.pas itself). It is the last of the 32 curl options legacy sets.
 //
 // One CurlShare per DownloadQueue (i.e. per map). Shares CURL_LOCK_DATA_DNS and
 // CURL_LOCK_DATA_SSL_SESSION between that map's CurlSessions, each on its own thread; safe
 // because CURLSHOPT_LOCKFUNC/UNLOCKFUNC serialise every access behind one QMutex. Cookies are
-// deliberately NOT shared -- every CurlSession keeps its own in-memory cookie engine (see
-// docs/specs/net.md §2.8.2): putting cookies here would merge sessions that must stay independent
-// and is a user-visible behavior change on session-gated map servers.
+// deliberately NOT shared -- every CurlSession keeps its own in-memory cookie engine: putting
+// cookies here would merge sessions that must stay independent and is a user-visible behavior
+// change on session-gated map servers.
 
 #include <QMutex>
 

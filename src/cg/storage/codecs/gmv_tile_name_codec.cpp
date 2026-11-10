@@ -19,7 +19,7 @@ QString gmvZoomStr(quint8 zoom) {
 }
 } // namespace
 
-// FEAT-STO-003. u_TileFileNameGMV.pas:56-77 GetTileFileName.
+// u_TileFileNameGMV.pas:56-77 GetTileFileName.
 QString GmvTileNameCodec::tilePath(geo::PointI xy, quint8 zoom) const {
     QString path = gmvZoomStr(zoom) + QStringLiteral("/t");
     if (zoom > 0) {

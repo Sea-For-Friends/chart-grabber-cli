@@ -7,7 +7,7 @@
 //
 // Yields the storage::MapVersionRequest (base version built by the current factory plus the
 // show-other-versions flag); rebuilt and notified on every config or factory change, also when
-// nothing differs (spec maptype.md section 2.9).
+// nothing differs.
 
 #include "cg/core/changeable.h"
 #include "cg/core/notifier.h"
@@ -19,7 +19,6 @@
 
 namespace cg::maptype {
 
-// FEAT-NET-002
 class MapVersionRequestChangeable final : public core::Changeable {
 public:
     MapVersionRequestChangeable(std::shared_ptr<MapVersionRequestConfig> config,

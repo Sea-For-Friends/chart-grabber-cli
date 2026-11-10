@@ -2,13 +2,13 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-NET-009 -- docs/specs/net.md §2.8-§2.10, §7.0, §7.10.
 #include "cg/core/content_type.h"
 #include "cg/net/curl_downloader.h"
 #include "cg/net/download_checker.h"
 #include "cg/net/download_request.h"
 #include "cg/net/download_result.h"
 #include "cg/net/inet_config.h"
+#include "cg/net/user_agent_fallback.h"
 
 #include <QByteArray>
 #include <QCoreApplication>
@@ -37,14 +37,15 @@ using cg::net::Method;
 using cg::net::ProxySettings;
 using cg::net::ProxyType;
 using cg::net::ResultKind;
+using cg::net::UserAgentFallback;
 using cg::net::test::HttpTestServer;
 
 namespace {
 
-// T-0010B rework finding 4/5: a minimal IProxyResolver double for the 407-retry-once path.
-// resolve() is never exercised here -- the test drives the request through
-// ProxySettings::useProxy, which builds CurlProxy directly (curl_downloader.cpp) without
-// consulting the resolver -- only credentialsFor() (the 407 credential prompt) is a real call.
+// A minimal IProxyResolver double for the 407-retry-once path. resolve() is never exercised
+// here -- the test drives the request through ProxySettings::useProxy, which builds CurlProxy
+// directly (curl_downloader.cpp) without consulting the resolver -- only credentialsFor() (the
+// 407 credential prompt) is a real call.
 class FakeProxyResolver final : public IProxyResolver {
 public:
     bool resolve(QByteArrayView /*url*/, CurlProxy& /*out*/) override { return false; }
@@ -64,9 +65,9 @@ public:
     QByteArray grantedUser = "proxyuser"; // empty: accepted with an empty name
 };
 
-// docs/specs/net.md §7.0: no test may reach the real network. CurlDownloader reads
-// CG_NET_NO_EXTERNAL_NETWORK once, lazily, on its first call -- set it before anything in this
-// binary can make that first call (a global's constructor, which runs before main()/RUN_ALL_TESTS).
+// No test may reach the real network. CurlDownloader reads CG_NET_NO_EXTERNAL_NETWORK once, lazily,
+// on its first call -- set it before anything in this binary can make that first call (a global's
+// constructor, which runs before main()/RUN_ALL_TESTS).
 struct ForceNoExternalNetwork {
     ForceNoExternalNetwork() { qputenv("CG_NET_NO_EXTERNAL_NETWORK", "1"); }
 };
@@ -360,10 +361,10 @@ TEST_F(CurlDownloaderTest, ContentLengthMismatchGivesBadContentLength) {
     // while CURLOPT_NOBODY means curl delivers 0 actual body bytes -- a real, spec-compliant
     // mismatch, not a malformed one (declared > actual + connection close is a curl-level error
     // before onAfterResponse ever runs; declared < actual is silently truncated by curl to match --
-    // neither of those reaches this app-level check with real HTTP framing).
-    // Corollary this test actually pins down (review deviation (2)): EVERY HEAD against a server
-    // that sends a Content-Length yields BadContentLength -- there is no HEAD exemption, in legacy
-    // (u_DownloaderHttpBase.pas:145-152) or here, so this is not a bug to "fix" later.
+    // neither of those reaches this app-level check with real HTTP framing). Corollary this test
+    // actually pins down: EVERY HEAD against a server that sends a Content-Length yields
+    // BadContentLength -- there is no HEAD exemption, in legacy (u_DownloaderHttpBase.pas:145-152)
+    // or here, so this is not a bug to "fix" later.
     HttpTestServer::Reply reply;
     reply.body = "twelve-bytes"; // 12 bytes -> Content-Length: 12
     server_.addReply("/clmis", reply);
@@ -463,27 +464,25 @@ TEST_F(CurlDownloaderTest, DetectContentTypeRewritesHeader) {
     EXPECT_FALSE(result.rawResponseHeader.contains("application/octet-stream"));
 }
 
-// Deviation (legacy wins, protocol rule 5): the spec's test name USED TO imply ResultKind::Canceled
-// (renamed by the T-0010B rework, deviation ruling 3), but legacy's own mid-transfer abort path
-// (TCurlHttpClient.Disconnect -> FDoDisconnect, then DoRequest's "not VResult" branch,
-// u_DownloaderHttpByCurl.pas:298-300) always builds TDownloadResultUnknownError via
-// BuildLoadErrorByUnknownReason(..., 'Disconnected by user') -- there is no legacy path from a
-// mid-flight cancel to a Canceled result; only the two pre-flight
+// Legacy wins: the test name USED TO imply ResultKind::Canceled (renamed since), but legacy's own
+// mid-transfer abort path (TCurlHttpClient.Disconnect -> FDoDisconnect, then DoRequest's
+// "not VResult" branch, u_DownloaderHttpByCurl.pas:298-300) always builds
+// TDownloadResultUnknownError via BuildLoadErrorByUnknownReason(..., 'Disconnected by user') --
+// there is no legacy path from a mid-flight cancel to a Canceled result; only the two pre-flight
 // ACancelNotifier.IsOperationCanceled() checks (before the network call starts, :222-235) produce
-// BuildCanceled. Ported faithfully; do NOT special-case this into result::canceled() -- see
-// docs/handoffs/T-0010B.md and docs/handoffs/T-0010B-review.md deviation (3).
+// BuildCanceled. Ported faithfully; do NOT special-case this into result::canceled().
 //
-// No DownloaderOptions::onProgress here (T-0010B rework finding 2): this is the PRODUCTION
-// configuration -- TtlDownloader always builds with a null onProgress (u_DownloaderHttpWithTTL.pas
-// :114) -- and the abort heartbeat (CURLOPT_XFERINFOFUNCTION/PROGRESSFUNCTION) is now installed by
-// curlSetup() unconditionally, so disconnect() must still cut this transfer short without one.
+// No DownloaderOptions::onProgress here: this is the PRODUCTION configuration -- TtlDownloader
+// always builds with a null onProgress (u_DownloaderHttpWithTTL.pas :114) -- and the abort
+// heartbeat (CURLOPT_XFERINFOFUNCTION/PROGRESSFUNCTION) is now installed by curlSetup()
+// unconditionally, so disconnect() must still cut this transfer short without one.
 TEST_F(CurlDownloaderTest, CancelDuringTransferGivesUnknownErrorDisconnectedByUser) {
     HttpTestServer::Reply reply;
     reply.body = "slow";
-    // T-0093: the server sleeps before writing anything. Long enough that "cut short" is
-    // unambiguous even when libcurl's abort heartbeat (the progress callback, ticking about once a
-    // second while the transfer idles) is late under CPU load: a transfer that was NOT cancelled
-    // would take ~4 s, a cancelled one ~1 s at worst plus scheduling noise.
+    // The server sleeps before writing anything. Long enough that "cut short" is unambiguous even
+    // when libcurl's abort heartbeat (the progress callback, ticking about once a second while the
+    // transfer idles) is late under CPU load: a transfer that was NOT cancelled would take ~4 s, a
+    // cancelled one ~1 s at worst plus scheduling noise.
     reply.delayMs = 4000;
     server_.addReply("/slow", reply);
 
@@ -496,9 +495,9 @@ TEST_F(CurlDownloaderTest, CancelDuringTransferGivesUnknownErrorDisconnectedByUs
         result = downloader->doRequest(req, source.get_token());
     });
 
-    // T-0093: cancel only once the server has the request, i.e. the transfer is really in flight
-    // (a fixed 200 ms sleep raced the worker's start-up under parallel ctest: a late worker saw
-    // the stop token pre-flight and returned Canceled instead of UnknownError). Polling with a
+    // Cancel only once the server has the request, i.e. the transfer is really in flight (a
+    // fixed 200 ms sleep raced the worker's start-up under parallel ctest: a late worker saw the
+    // stop token pre-flight and returned Canceled instead of UnknownError). Polling with a
     // generous deadline; the assertion below fails if it is ever hit.
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
     while (server_.requestLog().isEmpty() && std::chrono::steady_clock::now() < deadline) {
@@ -517,9 +516,9 @@ TEST_F(CurlDownloaderTest, CancelDuringTransferGivesUnknownErrorDisconnectedByUs
     EXPECT_LT(elapsed, std::chrono::milliseconds(2500));
 }
 
-// T-0010B rework finding 1 ("Test it"): CurlSession::onProgress_ must be invoked with
-// (dlnow, dltotal), forwarded from curlXferInfoCallback/curlProgressCallback exactly as legacy's
-// CurlProgressCallBack (u_CurlHttpClient.pas:159-175) forwards to FCurlProgressCallBack.
+// CurlSession::onProgress_ must be invoked with (dlnow, dltotal), forwarded from
+// curlXferInfoCallback/curlProgressCallback exactly as legacy's CurlProgressCallBack
+// (u_CurlHttpClient.pas:159-175) forwards to FCurlProgressCallBack.
 TEST_F(CurlDownloaderTest, ProgressCallbackForwardsDownloadCounters) {
     HttpTestServer::Reply reply;
     reply.body = QByteArray(65536, 'x'); // large enough that libcurl ticks the callback more than once
@@ -536,11 +535,11 @@ TEST_F(CurlDownloaderTest, ProgressCallbackForwardsDownloadCounters) {
     ASSERT_FALSE(ticks.isEmpty());
     // The final tick always reports the full transfer: dlnow caught up to the bytes actually
     // received. dltotal is asserted separately since libcurl may report it as 0 until the
-    // Content-Length header has been parsed (irrelevant to finding 1 -- forwarding, not totals).
+    // Content-Length header has been parsed (irrelevant here -- forwarding, not totals).
     EXPECT_EQ(ticks.last().first, static_cast<qint64>(reply.body.size()));
 }
 
-// T-0010B rework findings 3, 4, 5 -- the 407-retry-once path, using the fixture's setProxyMode().
+// The 407-retry-once path, using the fixture's setProxyMode().
 TEST_F(CurlDownloaderTest, ProxyAuthRetriesOnceWithCredentialsAndRealm) {
     server_.setProxyMode(true);
     HttpTestServer::Reply reply;
@@ -573,7 +572,7 @@ TEST_F(CurlDownloaderTest, ProxyAuthRetriesOnceWithCredentialsAndRealm) {
 
     // (ii) the retry carries Proxy-Authorization and (iii) CurlProxy::authMask came from the
     // parsed challenge -- both only possible if credentialsFor() was consulted exactly once with
-    // the realm-carrying, translated prompt text (finding 5; HttpTestServer's challenge is
+    // the realm-carrying, translated prompt text (HttpTestServer's challenge is
     // `Basic realm="test"`, u_DownloaderHttpByCurl.pas:271-292's format).
     EXPECT_EQ(fakeResolver->calls, 1);
     EXPECT_TRUE(log.at(1).contains("Proxy-Authorization:"));
@@ -581,16 +580,16 @@ TEST_F(CurlDownloaderTest, ProxyAuthRetriesOnceWithCredentialsAndRealm) {
     EXPECT_TRUE(
         fakeResolver->lastDescription.contains(QStringLiteral("is requesting a username and password")));
 
-    // Finding 3, pinned: curl_easy_reset() (triggered by the retry's CurlProxy-only change) clears
+    // Pinned: curl_easy_reset() (triggered by the retry's CurlProxy-only change) clears
     // CURLOPT_HTTPHEADER, and method/headers are unchanged, so rebuildHeaderList() never re-sets
-    // it -- the retry carries NO custom headers. Legacy-faithful, kept 1:1 [D-18].
+    // it -- the retry carries NO custom headers. Legacy-faithful, kept 1:1.
     const QByteArray retryHeaders = log.at(1).toUpper();
     EXPECT_FALSE(retryHeaders.contains("USER-AGENT:"));
     EXPECT_FALSE(retryHeaders.contains("ACCEPT-ENCODING:"));
 }
 
-// T-0293: no login -> CURLOPT_PROXYUSERPWD must be unset (NULL), not "": on libcurl < 8.2x an empty
-// string counts as credentials and curl answers the 407 itself (empty Basic auth, a second request).
+// No login -> CURLOPT_PROXYUSERPWD must be unset (NULL), not "": on libcurl < 8.2x an empty string
+// counts as credentials and curl answers the 407 itself (empty Basic auth, a second request).
 TEST_F(CurlDownloaderTest, ProxyWithoutCredentialsSendsNoProxyAuthorizationFirst) {
     server_.setProxyMode(true);
     HttpTestServer::Reply reply;
@@ -624,14 +623,14 @@ TEST_F(CurlDownloaderTest, ProxyWithoutCredentialsSendsNoProxyAuthorizationFirst
     ASSERT_EQ(log.size(), 1) << blobs;
     EXPECT_FALSE(log.at(0).toUpper().contains("PROXY-AUTHORIZATION:"));
     EXPECT_EQ(fakeResolver->calls, 1);
-    // T-0302: u_DownloaderHttpByCurl.pas:296-300,313-318 -- no retry, BuildLoadErrorByUnknownReason
+    // u_DownloaderHttpByCurl.pas:296-300,313-318 -- no retry, BuildLoadErrorByUnknownReason
     // (FHttpResponse.ErrorReason): an UnknownError carrying the (empty) curl error text of a response
     // that libcurl delivered normally, NOT the 407 status-code LoadError.
     EXPECT_EQ(result.kind, ResultKind::UnknownError);
     EXPECT_TRUE(result.text.isEmpty()) << result.text.toStdString();
 }
 
-// T-0302: the prompt accepted with an EMPTY user name = the same as cancelled (legacy UserName <> '').
+// The prompt accepted with an EMPTY user name = the same as cancelled (legacy UserName <> '').
 TEST_F(CurlDownloaderTest, ProxyAuthEmptyUserFromResolverDoesNotRetry) {
     server_.setProxyMode(true);
     HttpTestServer::Reply reply;
@@ -697,10 +696,10 @@ TEST_F(CurlDownloaderTest, CheckerExceptionBecomesUnknownReasonLoadError) {
     EXPECT_EQ(r3.data, QByteArrayLiteral("hello"));
 }
 
-// T-0329 (measured, no behaviour change): a refused connection is a connection-level failure that
-// libcurl reports at once; the time a failed tile takes is the retry loop's pause (u_TileDownloaderSimple.pas
-// :152-274, InetConfig SleepOnResetConnection), not this call. No server listens on the port: it is
-// taken from a server that is destroyed first.
+// Measured, no behaviour change: a refused connection is a connection-level failure that libcurl reports at
+// once; the time a failed tile takes is the retry loop's pause (u_TileDownloaderSimple.pas :152-274,
+// InetConfig SleepOnResetConnection), not this call. No server listens on the port: it is taken from a server
+// that is destroyed first.
 TEST_F(CurlDownloaderTest, RefusedPortFailsAtOnceWithoutWaitingForTheTimeout) {
     QByteArray deadUrl;
     {
@@ -720,7 +719,7 @@ TEST_F(CurlDownloaderTest, RefusedPortFailsAtOnceWithoutWaitingForTheTimeout) {
     EXPECT_LT(elapsed, std::chrono::milliseconds(1000));
 }
 
-// T-0329: the configured timeout bounds a server that accepts and then says nothing
+// The configured timeout bounds a server that accepts and then says nothing
 // (u_DownloaderHttpByCurl.pas sets CURLOPT_TIMEOUT_MS and CURLOPT_CONNECTTIMEOUT_MS from the same
 // InetConfig.TimeOut).
 TEST_F(CurlDownloaderTest, TimeoutBoundsASilentServer) {
@@ -737,4 +736,175 @@ TEST_F(CurlDownloaderTest, TimeoutBoundsASilentServer) {
     EXPECT_TRUE(result.text.contains(QStringLiteral("curl error #28"))) << result.text.toStdString();
     EXPECT_GE(elapsed, std::chrono::milliseconds(250));
     EXPECT_LT(elapsed, std::chrono::milliseconds(2000));
+}
+
+// ---- The 403 retry with the curl User-Agent (a deviation from legacy). ----
+namespace {
+
+QByteArray userAgentOf(const QByteArray& requestBlob) {
+    for (const QByteArray& line : requestBlob.split('\n')) {
+        if (line.size() > 11 && line.left(11).toLower() == "user-agent:") {
+            return line.mid(11).trimmed();
+        }
+    }
+    return {};
+}
+
+HttpTestServer::Reply pngReply() {
+    HttpTestServer::Reply reply;
+    reply.body = QByteArray::fromHex("89504e470d0a1a0a") + "restofpngdata";
+    reply.headers.append(hdr("Content-Type", "image/png"));
+    return reply;
+}
+
+HttpTestServer::Reply statusReply(int status, QByteArray reason) {
+    HttpTestServer::Reply reply;
+    reply.status = status;
+    reply.reason = std::move(reason);
+    return reply;
+}
+
+} // namespace
+
+class UserAgentFallbackDownloaderTest : public CurlDownloaderTest {
+protected:
+    void SetUp() override {
+        CurlDownloaderTest::SetUp();
+        fallback_ = std::make_shared<UserAgentFallback>("curl/9.9.9");
+    }
+    [[nodiscard]] std::unique_ptr<CurlDownloader> makeFallbackDownloader() const {
+        return std::make_unique<CurlDownloader>(
+            DownloaderOptions{}, cg::core::ContentTypeRegistry::standard(), nullptr, nullptr, fallback_);
+    }
+    std::shared_ptr<UserAgentFallback> fallback_;
+};
+
+TEST_F(UserAgentFallbackDownloaderTest, FallbackRetriesA403WithCurlAndSticks) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/a", pngReply());
+    server_.addReply("/b", pngReply());
+    const auto downloader = makeFallbackDownloader();
+
+    const DownloadResult a = downloader->doRequest(makeRequest("/a"), std::stop_token{});
+    const DownloadResult b = downloader->doRequest(makeRequest("/b"), std::stop_token{});
+    EXPECT_EQ(a.kind, ResultKind::Ok);
+    EXPECT_EQ(b.kind, ResultKind::Ok);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), 3);
+    EXPECT_EQ(userAgentOf(log[0]), QByteArray(cg::net::kDefaultUserAgent));
+    EXPECT_EQ(userAgentOf(log[1]), QByteArrayLiteral("curl/9.9.9"));
+    EXPECT_EQ(userAgentOf(log[2]), QByteArrayLiteral("curl/9.9.9"));
+    EXPECT_EQ(a.userAgentSwitchHost, QStringLiteral("127.0.0.1"));
+    EXPECT_EQ(a.userAgentSwitchedTo, QByteArrayLiteral("curl/9.9.9"));
+    EXPECT_TRUE(b.userAgentSwitchHost.isEmpty());
+    EXPECT_TRUE(b.userAgentSwitchedTo.isEmpty());
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, FallbackRetryAnswered404Switches) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/x", statusReply(404, "Not Found"));
+    const auto downloader = makeFallbackDownloader();
+    const DownloadResult r = downloader->doRequest(makeRequest("/x"), std::stop_token{});
+    EXPECT_EQ(r.kind, ResultKind::DataNotExists);
+    EXPECT_EQ(r.statusCode, 404u);
+    EXPECT_EQ(r.userAgentSwitchHost, QStringLiteral("127.0.0.1"));
+    EXPECT_EQ(r.userAgentSwitchedTo, QByteArrayLiteral("curl/9.9.9"));
+    EXPECT_EQ(server_.requestLog().size(), 2);
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, FallbackNotTakenWhenCurlIsRefusedToo) {
+    server_.addReply("/403", statusReply(403, "Forbidden"));
+    const auto downloader = makeFallbackDownloader();
+    for (int i = 0; i < 4; ++i) {
+        const DownloadResult r = downloader->doRequest(makeRequest("/403"), std::stop_token{});
+        EXPECT_EQ(r.kind, ResultKind::LoadError);
+        EXPECT_EQ(r.statusCode, 403u);
+        EXPECT_TRUE(r.text.contains(QStringLiteral("Unknown status code")));
+        EXPECT_TRUE(r.userAgentSwitchHost.isEmpty());
+        EXPECT_TRUE(r.userAgentSwitchedTo.isEmpty());
+    }
+    EXPECT_EQ(server_.requestLog().size(), 7); // 2 + 2 + 2 + 1: the host is decided after 3 failed tries
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, FallbackRetryAnswered503DoesNotSwitch) {
+    server_.addReply("/y", statusReply(403, "Forbidden"));
+    server_.addReply("/y", statusReply(503, "Service Unavailable"));
+    server_.addReply("/y", statusReply(403, "Forbidden"));
+    const auto downloader = makeFallbackDownloader();
+    const DownloadResult first = downloader->doRequest(makeRequest("/y"), std::stop_token{});
+    EXPECT_EQ(first.kind, ResultKind::LoadError);
+    EXPECT_EQ(first.statusCode, 403u); // the FIRST answer, not the retry's 503
+    EXPECT_TRUE(first.userAgentSwitchHost.isEmpty());
+    EXPECT_FALSE(fallback_->isSwitched(QStringLiteral("127.0.0.1")));
+    EXPECT_TRUE(fallback_->shouldRetry(QStringLiteral("127.0.0.1")));
+
+    const DownloadResult second = downloader->doRequest(makeRequest("/y"), std::stop_token{});
+    EXPECT_EQ(second.statusCode, 403u);
+    EXPECT_EQ(server_.requestLog().size(), 4); // the next call is retried again
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, SourceUserAgentIsNeverRetried) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/s", pngReply());
+    const auto downloader = makeFallbackDownloader();
+    const DownloadResult r =
+        downloader->doRequest(makeRequest("/s", Method::Get, "User-Agent: my-charts\r\n"), std::stop_token{});
+    EXPECT_EQ(r.kind, ResultKind::LoadError);
+    EXPECT_EQ(r.statusCode, 403u);
+    ASSERT_EQ(server_.requestLog().size(), 1);
+    EXPECT_EQ(userAgentOf(server_.requestLog()[0]), QByteArrayLiteral("my-charts"));
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, UserSetAgentIsNeverRetried) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/u", pngReply());
+    auto inet = makeInet();
+    inet->userAgent = "my-agent";
+    const auto downloader = makeFallbackDownloader();
+    const DownloadResult r =
+        downloader->doRequest(makeRequest("/u", Method::Get, {}, inet), std::stop_token{});
+    EXPECT_EQ(r.statusCode, 403u);
+    EXPECT_EQ(server_.requestLog().size(), 1);
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, Status401And451AreNotRetried) {
+    server_.addReply("/401", statusReply(401, "Unauthorized"));
+    server_.addReply("/451", statusReply(451, "Unavailable For Legal Reasons"));
+    const auto downloader = makeFallbackDownloader();
+    EXPECT_EQ(downloader->doRequest(makeRequest("/401"), std::stop_token{}).statusCode, 401u);
+    EXPECT_EQ(server_.requestLog().size(), 1);
+    EXPECT_EQ(downloader->doRequest(makeRequest("/451"), std::stop_token{}).statusCode, 451u);
+    EXPECT_EQ(server_.requestLog().size(), 2);
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, PostIsNotRetried) {
+    server_.addReply("/p", statusReply(403, "Forbidden"));
+    const auto downloader = makeFallbackDownloader();
+    DownloadRequest req = makeRequest("/p", Method::Post);
+    req.postData = "a=b";
+    EXPECT_EQ(downloader->doRequest(req, std::stop_token{}).statusCode, 403u);
+    EXPECT_EQ(server_.requestLog().size(), 1);
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, FactoryDownloadersShareTheSwitch) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/a", pngReply());
+    server_.addReply("/b", pngReply());
+    cg::net::CurlDownloaderFactory factory(cg::core::ContentTypeRegistry::standard(), nullptr, fallback_);
+    const auto first = factory.build(DownloaderOptions{});
+    const auto second = factory.build(DownloaderOptions{});
+    EXPECT_EQ(first->doRequest(makeRequest("/a"), std::stop_token{}).kind, ResultKind::Ok);
+    EXPECT_EQ(second->doRequest(makeRequest("/b"), std::stop_token{}).kind, ResultKind::Ok);
+    const QList<QByteArray> log = server_.requestLog();
+    ASSERT_EQ(log.size(), 3);
+    EXPECT_EQ(userAgentOf(log[2]), QByteArrayLiteral("curl/9.9.9"));
+}
+
+TEST_F(UserAgentFallbackDownloaderTest, NullFallbackKeepsLegacy) {
+    server_.setRefuseUserAgentsWithout("curl/");
+    server_.addReply("/n", pngReply());
+    const auto downloader = makeDownloader();
+    const DownloadResult r = downloader->doRequest(makeRequest("/n"), std::stop_token{});
+    EXPECT_EQ(r.statusCode, 403u);
+    EXPECT_EQ(server_.requestLog().size(), 1);
 }

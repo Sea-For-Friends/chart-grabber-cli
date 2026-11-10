@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: FEAT-GEO-012. Ports Test/u_EnumDoublePoint{ClosePoly,FilterEqual,Line2Poly,
-// WithClip}_Test.pas (6+8+2+13 = 29 cases); docs/specs/geo.md §11.1 items 4-7, §11.2
-// point_stream_test.cpp (4 new).
+// Ports Test/u_EnumDoublePoint{ClosePoly,FilterEqual,Line2Poly,WithClip}_Test.pas
+// (6+8+2+13 = 29 cases), plus 4 new cases.
 #include "cg/geo/geometry_factory.h"
 #include "cg/geo/point_stream.h"
 #include "cg/geo/projection_set.h"
@@ -135,8 +134,8 @@ TEST(ClosePoly, TwoPoly) {
     expectDone(s);
 }
 
-// T-0110: (5, NaN) is a separator, as PointIsEmpty tests X or Y (u_GeoFunc.pas:552); the same
-// expectations as TwoPoly with a half-NaN separator in place of emptyDoublePoint().
+// (5, NaN) is a separator, as PointIsEmpty tests X or Y (u_GeoFunc.pas:552); the same expectations
+// as TwoPoly with a half-NaN separator in place of emptyDoublePoint().
 TEST(ClosePoly, TwoPolyWithNanYOnlySeparator) {
     const double nan = std::numeric_limits<double>::quiet_NaN();
     std::vector<DoublePoint> data{{1, 1}, {0, 1}, {1, 0}, {5, nan}, {4, 4}};
@@ -348,7 +347,7 @@ TEST(ClipByLeftBorder, SecondPointOut) {
     expectDone(s);
 }
 
-// T-0110: (0.5, NaN) has a finite X outside the border and a NaN Y. PointIsEmpty tests X or Y
+// (0.5, NaN) has a finite X outside the border and a NaN Y. PointIsEmpty tests X or Y
 // (u_GeoFunc.pas:552), so it is a separator (ClipByLeftBorder code 3, u_EnumDoublePointWithClip)
 // and passes through; it is not an outside point that would intersect the segment.
 TEST(ClipByLeftBorder, NanYOnlyPointIsSeparatorNotOutside) {
@@ -404,7 +403,7 @@ TEST(ClipByRectPorted, ClosedAllPointsAround) {
     expectDone(s);
 }
 
-// --- additional coverage (§11.2 point_stream_test.cpp, 4) ------------------------------------
+// --- additional coverage (4) ------------------------------------
 
 TEST(PointStreamNew, LineSetInjectsSeparatorsBetweenNotAround) {
     GeometryLonLatFactory factory{HashSeed{}};

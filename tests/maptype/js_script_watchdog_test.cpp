@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: T-0225 (NEW code, no FEAT id): ADR-0014 point 5, the script-time limit of the JavaScript builders.
+// NEW code: the script-time limit of the JavaScript builders.
 
 #include "cg/maptype/js_script_watchdog.h"
 

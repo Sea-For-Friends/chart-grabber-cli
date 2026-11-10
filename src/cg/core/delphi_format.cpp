@@ -12,15 +12,15 @@ namespace cg::core {
 
 namespace {
 
-// T-0014C1 rework (finding 1/5/8): the one shared digit-string rounding primitive. Every Delphi
-// `FloatToStrF` format (`ffFixed`/`ffExponent`/`ffGeneral`) starts the same way: render the value
-// to `sigDigits` significant decimal digits, half-away-from-zero, computed from the *decimal*
-// expansion - never `pow(10, n)` scaling, which loses the low bits a tie depends on. A binary
-// float always has an exact, finite decimal expansion, so requesting far more digits than
-// `sigDigits` from `snprintf("%Le")` (glibc renders `%e`/`%f` exactly, to any requested precision)
-// gives real digits, not noise; the guard digits are enough to tell whether the cut digit is a
-// genuine tie (`5` followed by nothing but further zeros - `%Le` at high precision would print the
-// non-zero continuation if there were one) from an ordinary round up/down.
+// The one shared digit-string rounding primitive. Every Delphi `FloatToStrF` format
+// (`ffFixed`/`ffExponent`/`ffGeneral`) starts the same way: render the value to `sigDigits`
+// significant decimal digits, half-away-from-zero, computed from the *decimal* expansion - never
+// `pow(10, n)` scaling, which loses the low bits a tie depends on. A binary float always has an
+// exact, finite decimal expansion, so requesting far more digits than `sigDigits` from
+// `snprintf("%Le")` (glibc renders `%e`/`%f` exactly, to any requested precision) gives real
+// digits, not noise; the guard digits are enough to tell whether the cut digit is a genuine tie
+// (`5` followed by nothing but further zeros - `%Le` at high precision would print the non-zero
+// continuation if there were one) from an ordinary round up/down.
 struct RoundedDigits {
     bool negative = false;
     QByteArray digits; // exactly `sigDigits` chars, no sign, no decimal point
@@ -74,7 +74,7 @@ RoundedDigits roundToSignificantDigits(long double v, int sigDigits) {
 
 // `ffExponent`-style layout: one digit, `.`, the rest of `rd.digits`, `E`, a sign, and the
 // exponent zero-padded to at least 3 digits (Delphi docs: `Format('%e',[12345.6789])` =
-// `'1.23456789000000E+004'` - spec F20/finding 3).
+// `'1.23456789000000E+004'`).
 QByteArray sciLayout(const RoundedDigits& rd, char decimalSeparator) {
     QByteArray out;
     if (rd.negative) {
@@ -94,17 +94,15 @@ QByteArray sciLayout(const RoundedDigits& rd, char decimalSeparator) {
     return out + expDigits;
 }
 
-// Delphi's `ffGeneral`/`FloatToStr` render (spec 4.1 N2, F20 %g): `sigDigits` significant digits,
-// fixed notation switching to scientific outside the Borland-convention exponent range, upper-case
-// `E`, no `+`, no zero-padded exponent (an earlier ruling left this exponent spelling disputed -
-// untouched here). `decimalSeparator` lets %g honour FormatEx's separator; `floatToStr` (always
-// '.') is this with sigDigits=15.
+// Delphi's `ffGeneral`/`FloatToStr` render (%g): `sigDigits` significant digits, fixed notation
+// switching to scientific outside the Borland-convention exponent range, upper-case `E`, no `+`,
+// no zero-padded exponent. `decimalSeparator` lets %g honour FormatEx's separator; `floatToStr`
+// (always '.') is this with sigDigits=15.
 //
-// T-0014C1 rework (finding 8): the fixed/scientific threshold is `e < -3` (Delphi's documented
-// `ffGeneral` switches to scientific only when the value's exponent is below -3), not `e < -1` -
-// the old threshold sent everything below 0.01 to scientific form, when Delphi keeps values down
-// to 1e-4 in fixed notation. See docs/handoffs/T-0014C1.md "Rework" for the one place this still
-// disagrees with the ticket's own restatement of the rule.
+// The fixed/scientific threshold is `e < -3` (Delphi's documented `ffGeneral` switches to
+// scientific only when the value's exponent is below -3), not `e < -1` - the old threshold sent
+// everything below 0.01 to scientific form, when Delphi keeps values down to 1e-4 in fixed
+// notation.
 QByteArray generalFloatString(long double v, int sigDigits, char decimalSeparator) {
     if (v == 0.0L) {
         return QByteArrayLiteral("0");
@@ -159,10 +157,10 @@ QByteArray generalFloatString(long double v, int sigDigits, char decimalSeparato
 
 // `ffFixed` layout shared by `roundEx`, `%f`, `%n` and `%m`: lay `rd` (already rounded to 15
 // significant digits) out with exactly `prec` digits after the decimal point, zero-filling any
-// position past the 15th significant digit (spec F25: "digits beyond the 15th print as 0"), with
-// one more half-away-from-zero round when `prec` cuts into the significant digits themselves
-// (e.g. `RoundEx(1.125, 2)`: 15-sig round leaves "112500000000000", asking for only 2 decimals
-// rounds the "12500..." tail again, half away, to "13").
+// position past the 15th significant digit, with one more half-away-from-zero round when `prec`
+// cuts into the significant digits themselves (e.g. `RoundEx(1.125, 2)`: 15-sig round leaves
+// "112500000000000", asking for only 2 decimals rounds the "12500..." tail again, half away, to
+// "13").
 QByteArray fixedLayoutFromDigits(const RoundedDigits& rd, int prec, char decimalSeparator) {
     const int sigDigits = static_cast<int>(rd.digits.size());
     const int intDigits = rd.exp10 + 1;
@@ -217,18 +215,18 @@ QByteArray fixedLayoutFromDigits(const RoundedDigits& rd, int prec, char decimal
     return out;
 }
 
-// `prec` decimal places, zero-padded, on a value first rounded to 15 significant digits (spec
-// F25/F20 - Delphi's `Format`/`FloatToStrF` always uses `Precision=15` for a `Double`/`Extended`
-// argument; only the decimal-place count is caller-supplied). Always locale-`C`, then the decimal
-// point is substituted for `decimalSeparator`.
+// `prec` decimal places, zero-padded, on a value first rounded to 15 significant digits (Delphi's
+// `Format`/`FloatToStrF` always uses `Precision=15` for a `Double`/`Extended` argument; only the
+// decimal-place count is caller-supplied). Always locale-`C`, then the decimal point is
+// substituted for `decimalSeparator`.
 QByteArray fixedDecimalString(double v, int prec, char decimalSeparator) {
     const RoundedDigits rd = roundToSignificantDigits(static_cast<long double>(v), 15);
     return fixedLayoutFromDigits(rd, prec, decimalSeparator);
 }
 
-// F20/F21 %n/%m: `fixedDecimalString` with `sep` inserted every 3 digits of the integer part,
-// counted from the right. `sep == '\0'` (FormatEx's un-set ThousandSeparator, spec F21) still
-// inserts the raw byte - reproducing the documented "garbage" is the point.
+// %n/%m: `fixedDecimalString` with `sep` inserted every 3 digits of the integer part, counted
+// from the right. `sep == '\0'` (FormatEx's un-set ThousandSeparator) still inserts the raw
+// byte - reproducing the documented "garbage" is the point.
 QByteArray groupThousands(double v, int prec, char decimalSeparator, char sep) {
     QByteArray s = fixedDecimalString(v, prec, decimalSeparator);
     const qsizetype sepPos = s.indexOf(decimalSeparator); // -1 when prec == 0 (no fraction at all)
@@ -255,7 +253,7 @@ QByteArray zeroPadUnsigned(QByteArray digits, int minDigits) {
     return digits;
 }
 
-// Signed decimal string for %d: sign then `intToStr`'s magnitude, zero-padded (spec: precision
+// Signed decimal string for %d: sign then `intToStr`'s magnitude, zero-padded (a precision
 // zero-pads integer specifiers) to at least `minDigits` digits, sign never counted as a digit.
 QByteArray zeroPadSigned(qint64 v, int minDigits) {
     const bool negative = v < 0;
@@ -264,9 +262,9 @@ QByteArray zeroPadSigned(qint64 v, int minDigits) {
     return negative ? (QByteArrayLiteral("-") + digits) : digits;
 }
 
-// %e (spec F20, finding 3/4): `prec` is the *total* significant digit count (default 15, Delphi
-// docs), not fractional digits; NaN/Inf print `NAN`/`INF`/`-INF` (finding 4) instead of raising;
-// ties round half-away-from-zero via the shared digit-string helper, not `ad / pow(10, exp)`.
+// %e: `prec` is the *total* significant digit count (default 15, Delphi docs), not fractional
+// digits; NaN/Inf print `NAN`/`INF`/`-INF` instead of raising; ties round half-away-from-zero
+// via the shared digit-string helper, not `ad / pow(10, exp)`.
 QByteArray formatScientific(double d, int prec, char decimalSeparator) {
     if (std::isnan(d)) {
         return QByteArrayLiteral("NAN");
@@ -318,10 +316,10 @@ QByteArray roundEx(double v, int precision) {
     const RoundedDigits rd = roundToSignificantDigits(static_cast<long double>(v), 15);
     const int intDigits = rd.exp10 + 1;
     if (intDigits > 15) {
-        // Magnitude too large for 15 significant fixed digits (spec F25): fall back to scientific
-        // form. No corpus script or spec worked example exercises this path; the exact layout
-        // (Delphi ffExponent convention, matching %e's sign+3-digit exponent) is this port's
-        // reasonable-effort reading - see docs/handoffs/T-0014C1.md "Rework".
+        // Magnitude too large for 15 significant fixed digits: fall back to scientific form. No
+        // corpus script or worked example exercises this path; the exact layout (Delphi
+        // ffExponent convention, matching %e's sign+3-digit exponent) is this port's
+        // reasonable-effort reading.
         return sciLayout(rd, '.');
     }
     return fixedLayoutFromDigits(rd, p, '.'); // FS.DecimalSeparator = '.', always, locale-independent
@@ -370,7 +368,7 @@ Result<QByteArray> delphiFormat(const QByteArray& fmt, std::span<const FormatArg
         }
 
         // Optional `index:` - a leading digit run followed by ':' is an explicit 0-based index;
-        // otherwise (no ':') that same digit run is the field width (spec grammar
+        // otherwise (no ':') that same digit run is the field width (grammar
         // `%[index:][-][width][.prec]type`: index and width are syntactically identical, the
         // trailing ':' is the only disambiguator).
         const qsizetype digitsStart = i;
@@ -384,9 +382,9 @@ Result<QByteArray> delphiFormat(const QByteArray& fmt, std::span<const FormatArg
         if (hadDigits && i < n && fmt.at(i) == ':') {
             explicitIndex = fmt.mid(digitsStart, i - digitsStart).toInt();
             ++i;
-            // T-0014C1 rework (finding 2): an explicit index *moves* the implicit argument
-            // counter to index+1 (documented Delphi: `Format('%d %d %d %0:d %d',[1,2,3,4])` =
-            // `'1 2 3 1 2'`) - it does not just borrow an argument and leave the counter alone.
+            // An explicit index *moves* the implicit argument counter to index+1 (documented
+            // Delphi: `Format('%d %d %d %0:d %d',[1,2,3,4])` = `'1 2 3 1 2'`) - it does not
+            // just borrow an argument and leave the counter alone.
             implicitIdx = static_cast<std::size_t>(explicitIndex) + 1;
         } else if (hadDigits) {
             width = fmt.mid(digitsStart, i - digitsStart).toInt();
@@ -463,12 +461,12 @@ Result<QByteArray> delphiFormat(const QByteArray& fmt, std::span<const FormatArg
             value = &args[implicitIdx++];
         }
 
-        // T-0014C1 rework (finding 6): Delphi's `Format` raises `EConvertError` ("Format '%s'
-        // invalid or incompatible with argument") whenever a specifier's argument isn't the exact
-        // type it wants - `%d/%u/%x` want an `Integer`, `%s` a string, the float family an
-        // `Extended`. The pre-rework code reached this via `Value::toInt()/toReal()/toStr()`,
-        // which are the *interpreter's* general implicit-conversion rules (Bool/Empty -> Int,
-        // Int -> Real, anything -> Str) and are too permissive for `Format` specifically.
+        // Delphi's `Format` raises `EConvertError` ("Format '%s' invalid or incompatible with
+        // argument") whenever a specifier's argument isn't the exact type it wants - `%d/%u/%x`
+        // want an `Integer`, `%s` a string, the float family an `Extended`. The earlier code
+        // reached this via `Value::toInt()/toReal()/toStr()`, which are the *interpreter's*
+        // general implicit-conversion rules (Bool/Empty -> Int, Int -> Real, anything -> Str) and
+        // are too permissive for `Format` specifically.
         auto typeError = [&](char spec) {
             return fail(ErrorCode::IoError,
                         QStringLiteral("Format: '%") + QChar::fromLatin1(spec) +
@@ -524,7 +522,7 @@ Result<QByteArray> delphiFormat(const QByteArray& fmt, std::span<const FormatArg
             }
             const double d = static_cast<double>(std::get<long double>(*value));
             if (std::isnan(d)) {
-                piece = QByteArrayLiteral("NAN"); // finding 4: no runtime error on non-finite input
+                piece = QByteArrayLiteral("NAN"); // No runtime error on non-finite input
             } else if (std::isinf(d)) {
                 piece = d > 0 ? QByteArrayLiteral("INF") : QByteArrayLiteral("-INF");
             } else {

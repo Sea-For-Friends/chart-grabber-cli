@@ -2,9 +2,8 @@
 // Copyright (C) 2026 Chart Grabber contributors. Derived from SAS.Planet, Copyright (C) 2007-Present,
 // SAS.Planet development team; modified.
 
-// Covers: no FEAT yet (T-0013 slice A). docs/specs/script.md 3.7, 11.4 - the blocking gate: every
-// real GetUrlScript.txt in the corpus must lex and parse. One failure fails the build; fix the
-// parser, not the test (ticket T-0013 notes).
+// The blocking gate: every real GetUrlScript.txt in the corpus must lex and parse. One failure
+// fails the build; fix the parser, not the test.
 #include "cg/script/compiled_script.h"
 #include "cg/script/lexer.h"
 #include "cg/script/parser.h"
@@ -48,11 +47,10 @@ QByteArray readRawBytes(const QString& path) {
     return file.readAll();
 }
 
-// Two fixtures are genuinely malformed Pascal, not a parser gap (ticket T-0013 notes: "if a
-// script is genuinely malformed in legacy too, list it in the handoff with evidence"). Both are
-// under `_broken_maps` and both are missing the ';' between an assignment and the `if` that
-// follows it on the next line (`step:=round(...)` / `if gety<3 then step:=...;`, no separator) -
-// a `stmt-list` requires one (spec 3.1). See docs/handoffs/T-0013.md.
+// Two fixtures are genuinely malformed Pascal, not a parser gap. Both are under `_broken_maps`
+// and both are missing the ';' between an assignment and the `if` that follows it on the next
+// line (`step:=round(...)` / `if gety<3 then step:=...;`, no separator) - a `stmt-list` requires
+// one.
 bool isKnownMalformed(const QString& path) {
     return path.endsWith(QStringLiteral("_broken_maps/Balticsmap/balticmaps.eu.map.zmp/GetUrlScript.txt")) ||
            path.endsWith(QStringLiteral("_broken_maps/Balticsmap/balticmaps.eu.topo.zmp/GetUrlScript.txt"));
@@ -78,7 +76,7 @@ TEST(Corpus, AllParse) {
             ADD_FAILURE() << path.toStdString() << ":\n" << compiled.error().what().toStdString();
         }
     }
-    EXPECT_EQ(failures, 0) << "zero tolerance: every corpus script must compile (spec 11.4)";
+    EXPECT_EQ(failures, 0) << "zero tolerance: every corpus script must compile";
     EXPECT_EQ(skippedKnownMalformed, 2) << "the known-malformed exclusion list no longer matches the corpus";
 }
 
@@ -117,10 +115,9 @@ TEST(Corpus, NoIllegalCharacters) {
     }
 }
 
-// D-4 (ruling 2026-09-18 / review recommendation 4): the two-file exclusion above must not become
-// a silent mask for an unrelated parser bug in those files - assert each fails compilation and
-// that its diagnostic actually names the missing-separator defect (F0's evidence), not some other
-// failure.
+// The two-file exclusion above must not become a silent mask for an unrelated parser bug in those
+// files - assert each fails compilation and that its diagnostic actually names the
+// missing-separator defect, not some other failure.
 TEST(Corpus, ExcludedBalticsmapScriptsFailWithExpectedDiagnostic) {
     CG_SKIP_IF_NO_CORPUS();
     const QString root = QDir(cgScriptFixturesDir()).filePath(QStringLiteral("zmp/sas.maps"));
@@ -175,10 +172,10 @@ TEST(Corpus, DeterministicCountMatches) {
             ++nonDeterministic;
         }
     }
-    // Spec 3.7/11.4 measured 240/110 over all 350; both excluded scripts are simple arithmetic
-    // (no Random/Downloader/GetUnixTime/Global/ScriptBuffer/ResponseHead/TileCache/
-    // SaveToLocalFile - spec 2.12) so they would count as deterministic if they compiled:
-    // 238 + 2 == 240, confirming the split holds over the 348 this slice can actually compile.
+    // The corpus split measured 240/110 over all 350; both excluded scripts are simple
+    // arithmetic (no Random/Downloader/GetUnixTime/Global/ScriptBuffer/ResponseHead/TileCache/
+    // SaveToLocalFile) so they would count as deterministic if they compiled: 238 + 2 == 240,
+    // confirming the split holds over the 348 the parser can actually compile.
     EXPECT_EQ(deterministic, 238);
     EXPECT_EQ(nonDeterministic, 110);
 }

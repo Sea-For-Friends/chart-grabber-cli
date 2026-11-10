@@ -3,8 +3,7 @@
 // SAS.Planet development team; modified.
 
 // Ports no legacy test (there is none): u_MarkSystemImplORM.pas, u_MarkSystemImplFactoryORM.pas and the
-// SQLite3 part of u_MarkSystemImplFactoryChangeable.pas (docs/specs/marks.md §2.9.10, §2.6 Ruling A.1, ticket
-// T-0133). This ticket implements no feature (Features: — in its header).
+// SQLite3 part of u_MarkSystemImplFactoryChangeable.pas.
 //
 // Everything runs on files created in a QTemporaryDir. Expectations are literals and plain SQL on the file
 // (a connection opened after the system is destroyed), never the unit's own caches. The end-to-end tests go
@@ -209,8 +208,8 @@ TEST(MarkSystemImplORM, PersistenceThroughTheFacadesAcrossARestart) {
     EXPECT_EQ(sqlRows(file, "SELECT ID,mCategory,mName FROM Mark ORDER BY ID"),
               (QStringList{QStringLiteral("1|1|") + kPointName, QStringLiteral("2|1|") + kLineName,
                            QStringLiteral("3|1|") + kPolyName, QStringLiteral("4|1|") + kHiddenName}));
-    // a view row exists only for a hidden mark / category (LC-16); the visible category's zooms 5/10 are not
-    // stored (L-209, shown after the restart below as 3/23), the hidden one's 4/18 are
+    // a view row exists only for a hidden mark / category; the visible category's zooms 5/10 are not stored
+    // (shown after the restart below as 3/23), the hidden one's 4/18 are
     EXPECT_EQ(sqlRows(file, "SELECT mvMark,mvVisible FROM MarkView ORDER BY mvMark"),
               (QStringList{QStringLiteral("4|0")}));
     EXPECT_EQ(sqlRows(file, "SELECT maColor1,maColor2,maScale1,maScale2 FROM MarkAppearance ORDER BY ID"),
@@ -232,7 +231,7 @@ TEST(MarkSystemImplORM, PersistenceThroughTheFacadesAcrossARestart) {
         ASSERT_TRUE(town);
         ASSERT_TRUE(street);
         EXPECT_TRUE(town->visible());
-        EXPECT_EQ(town->afterScale(), 3);   // L-209: 5 was set, the visible category's zooms are lost
+        EXPECT_EQ(town->afterScale(), 3);   // 5 was set, the visible category's zooms are lost
         EXPECT_EQ(town->beforeScale(), 23); // (10 was set)
         EXPECT_FALSE(street->visible());
         EXPECT_EQ(street->afterScale(), 4);
@@ -476,7 +475,7 @@ TEST(MarkSystemImplFactoryListStatic, HoldsTheSqliteBackendAlone) {
     ASSERT_TRUE(element->factory());
     EXPECT_TRUE(element->factory()->isInitializationRequired());
 
-    EXPECT_FALSE(list->get(m::cSMLMarksDbGUID)); // until S6 registers it
+    EXPECT_FALSE(list->get(m::cSMLMarksDbGUID)); // until the SML backend registers it
     EXPECT_FALSE(list->get(m::cORMMongoDbMarksDbGUID));
     EXPECT_FALSE(list->get(m::cORMODBCMarksDbGUID));
     EXPECT_FALSE(list->get(QUuid()));
