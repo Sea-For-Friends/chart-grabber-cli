@@ -17,7 +17,7 @@ Each binary package lists the third-party components it carries:
 - The Windows zip (chart-grabber-cli-<version>-win64.zip) carries MSYS2 UCRT64 libraries. Its own NOTICE is written when the zip is
   built, from the packages of the DLLs it holds (name, version, licence, upstream URL; template: tools/lib/NOTICE-win64.in), and
   the licence texts are in licenses\<name>\ of the zip.
-- The Linux .deb packages carry no copy of these components: they depend on the libraries of the Debian or Ubuntu release, and those
+- The Linux .deb packages bundle no third-party shared libraries: they depend on the libraries of the Debian or Ubuntu release, and those
   packages ship their own copyright files (/usr/share/doc/<package>/copyright).
 - The self-contained Linux bundles (chart-grabber-cli-<version>-linux-<arch>.tar.gz) carry Debian 12 libraries; their own NOTICE
   lists those packages, and licenses/<package>/copyright holds the copyright file of each.
