@@ -9,6 +9,7 @@ any later version. This port is licensed the same way: GPL-3.0-or-later.
 Licence of this program: GPL-3.0-or-later. The full text is in the file LICENSE next to this one. The source code is in the
 repository this package was built from; the version and the commit are printed by `chart-grabber-cli --version`.
 
+Source code: https://github.com/Sea-For-Friends/chart-grabber-cli tag v2026.11.2
 
 Third-party components
 ----------------------
