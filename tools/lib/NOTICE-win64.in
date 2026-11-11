@@ -1,0 +1,39 @@
+Chart Grabber CLI
+=================
+
+Chart Grabber CLI is an independent port of SAS.Planet (https://github.com/sasgis/sas.planet.src) to C++ and Qt. It is not an official
+SAS.Planet project. Thanks to the SAS.Planet authors.
+SAS.Planet: Copyright (C) 2007-2026 SAS.Planet development team, licensed under the GNU General Public License version 3 or (at your option)
+any later version. This port is licensed the same way: GPL-3.0-or-later.
+
+Licence of this program: GPL-3.0-or-later. The full text is in the file LICENSE next to this one. The source code is in the
+repository this package was built from; the version and the commit are printed by `chart-grabber-cli --version`.
+
+Source code: <public repository URL> tag v<version>
+Source code of the third-party packages (MSYS2): https://repo.msys2.org/mingw/sources/ (source archives named
+mingw-w64-<name>-<version>.src.tar.zst) and https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-<name> (page of each package).
+
+This file lists the third-party components that this Windows zip (chart-grabber-cli-<version>-win64.zip) carries. All of them are
+unmodified binaries of the MSYS2 UCRT64 repository (https://www.msys2.org/, packages mingw-w64-ucrt-x86_64-<name>); the source of
+every package is linked from its page at https://packages.msys2.org/ and is built from the recipes in
+https://github.com/msys2/MINGW-packages. The licence text of each component is in licenses\<name>\ of the zip.
+Where MSYS2 ships no licence file for a package (libidn2, lz4), licenses\<name>\ holds the upstream texts: licenses\lz4\ has
+LICENSE (lz4 v1.10.0, programs: GPL-2.0-or-later) and lib-LICENSE (the library, BSD-2-Clause); licenses\libidn2\ has COPYING (GPL-3.0, the base text of LGPL-3.0),
+COPYING.LESSERv3 (LGPL-3.0) and COPYING.unicode (libidn2 v2.3.8).
+
+Qt (LGPL-3.0-only)
+------------------
+The zip links Qt 6 (Qt6Core.dll, Qt6Gui.dll, Qt6Network.dll, Qt6Qml.dll) and loads its plugins (platforms\, imageformats\, tls\) dynamically.
+The Qt libraries are used under the GNU Lesser General Public Licence version 3 (licenses\qt6-base\LGPL-3.0-only.txt, with the
+GPL-3.0 text next to it). You may replace them with your own build of Qt that has the same minor version (@QT_MINOR@): stop the
+program, put your Qt6Core.dll, Qt6Gui.dll, Qt6Network.dll, Qt6Qml.dll (and the Qt6Qml*.dll it needs) and the plugin DLLs into this folder (the folders platforms, imageformats
+and tls) over the shipped ones, and start chart-grabber-cli.exe again; nothing is linked statically and nothing checks the files.
+The Qt source is available from https://download.qt.io/official_releases/qt/ and from the MSYS2 package source named above.
+
+Components of this zip
+----------------------
+One row per MSYS2 package, written when the zip was built from the packages it was built with: name | version | licence | upstream URL.
+Version, licence and URL are the package metadata (pacman -Qi; several licence entries are separated by commas, as the package lists
+them). The line under each row names the files of the zip that come from that package.
+
+@COMPONENTS@
