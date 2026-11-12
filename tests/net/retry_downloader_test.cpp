@@ -414,13 +414,17 @@ TEST(RetryDownloaderTest, SleepIsInterruptedByHardCancel) {
 // Why a failed tile takes ~35 s with the legacy defaults (TimeOut 40000, DownloadTryCount 2,
 // SleepOnResetConnection 30000, u_InetConfig.pas:99-101): after a connect error the loop pauses
 // SleepOnResetConnection before EACH further try -- tryCount-1 pauses in all -- and a try that
-// answers does not pause. Scaled down: tryCount 3, pause 300 ms.
+// answers does not pause. Scaled down: tryCount 3, pause 300 ms. Each pause is checked where it
+// belongs (between two sends, from below), and its absence where none belongs (before the first send,
+// after the last), so the wake-up delays of a loaded machine never add up against an upper bound.
 TEST(RetryDownloaderTest, ConnectErrorPausesSleepOnResetBeforeEachFurtherTryOnly) {
     static constexpr int kSleepMs = 300;
     auto send = std::make_shared<FakeDownloader>(std::vector{cg::net::result::noConnectToServer(0)});
     RetryDownloader retry(send, /*tryCount=*/3, kSleepMs, /*waitIntervalMs=*/0);
     Job job;
     QElapsedTimer timer;
+    std::vector<qint64> sentAtMs;
+    send->onSend = [&] { sentAtMs.push_back(timer.elapsed()); };
     timer.start();
 
     const RetryOutcome outcome = job.run(retry);
@@ -428,8 +432,11 @@ TEST(RetryDownloaderTest, ConnectErrorPausesSleepOnResetBeforeEachFurtherTryOnly
     const qint64 elapsedMs = timer.elapsed();
     EXPECT_EQ(outcome.result.kind, ResultKind::NoConnectToServer);
     EXPECT_EQ(send->callCount_, 3);
-    EXPECT_GE(elapsedMs, 2 * kSleepMs - 30); // two pauses, none before the first try
-    EXPECT_LT(elapsedMs, 3 * kSleepMs);      // and not one per try
+    ASSERT_EQ(sentAtMs.size(), 3U);
+    EXPECT_LT(sentAtMs[0], kSleepMs);                    // no pause before the first try
+    EXPECT_GE(sentAtMs[1] - sentAtMs[0], kSleepMs - 30); // a pause before each further try
+    EXPECT_GE(sentAtMs[2] - sentAtMs[1], kSleepMs - 30);
+    EXPECT_LT(elapsedMs - sentAtMs[2], kSleepMs); // and none after the last
 
     // An answering server: no pause at all.
     auto ok = std::make_shared<FakeDownloader>(std::vector{cg::net::result::ok(200, {}, {}, {})});
