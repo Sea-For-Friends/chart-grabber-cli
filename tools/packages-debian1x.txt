@@ -8,6 +8,8 @@ ccache
 git
 python3
 python-is-python3
+# file(1): CPack's DEB generator (tools/build_deb.sh) refuses to package without it (shlibdeps). Same name on all systems.
+file
 clang
 qt6-base-dev
 # Qt Qml (QJSEngine) for the maptype module; pulls libqt6qml6 at run time, Qt6Qml.pc for pkg-config. Same name on Debian 12/13, Ubuntu 24.04/26.04.
