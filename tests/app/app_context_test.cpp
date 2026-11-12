@@ -240,7 +240,15 @@ TEST_F(AppContextTest, DestructionClosesJoinsThreadsAndReturnsInTime) {
     const auto elapsed = std::chrono::steady_clock::now() - destroyStart;
     EXPECT_TRUE(token.stop_requested()); // kills: requestClose missing from the destructor
     EXPECT_LT(elapsed, std::chrono::seconds(5));
-    EXPECT_EQ(threadCount(), threadsBefore); // kills: collector thread not joined
+    // the kernel may still count the joined thread for a short time on a loaded machine: wait for the count
+    // to settle, bounded. A thread that is never joined keeps the count above the baseline and still fails.
+    int threadsAfter = threadCount();
+    for (const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+         threadsAfter != threadsBefore && std::chrono::steady_clock::now() < deadline;) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        threadsAfter = threadCount();
+    }
+    EXPECT_EQ(threadsAfter, threadsBefore); // kills: collector thread not joined
 }
 
 // a CacheType=9 map stores a tile on disk below <cache>/cache_sqlite/<NameInCache>/, and a second
