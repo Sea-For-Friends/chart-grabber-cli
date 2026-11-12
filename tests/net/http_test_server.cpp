@@ -19,7 +19,16 @@ namespace cg::net::test {
 
 namespace {
 constexpr int kIoTimeoutMs = 5000;
+
+// When the client has already closed, disconnectFromHost() leaves the socket unconnected at once, and
+// waitForDisconnected() would then print a Qt warning onto the stderr the CLI tests capture.
+void closeSocket(QTcpSocket& socket) {
+    socket.disconnectFromHost();
+    if (socket.state() != QAbstractSocket::UnconnectedState) {
+        socket.waitForDisconnected(kIoTimeoutMs);
+    }
 }
+} // namespace
 
 HttpTestServer::~HttpTestServer() {
     if (worker_.joinable()) {
@@ -168,8 +177,7 @@ void HttpTestServer::handleConnection(QTcpSocket& socket) {
         challenge.headers.append(QPair<QByteArray, QByteArray>{QByteArrayLiteral("Proxy-Authenticate"),
                                                                QByteArrayLiteral("Basic realm=\"test\"")});
         writeResponse(socket, challenge, method == "HEAD");
-        socket.disconnectFromHost();
-        socket.waitForDisconnected(kIoTimeoutMs);
+        closeSocket(socket);
         return;
     }
 
@@ -211,14 +219,12 @@ void HttpTestServer::handleConnection(QTcpSocket& socket) {
         QThread::msleep(static_cast<unsigned long>(reply.delayMs));
     }
     if (reply.closeWithoutResponse) {
-        socket.disconnectFromHost();
-        socket.waitForDisconnected(kIoTimeoutMs);
+        closeSocket(socket);
         return;
     }
 
     writeResponse(socket, reply, method == "HEAD");
-    socket.disconnectFromHost();
-    socket.waitForDisconnected(kIoTimeoutMs);
+    closeSocket(socket);
 }
 
 void HttpTestServer::writeResponse(QTcpSocket& socket, const Reply& reply, bool suppressBody) {

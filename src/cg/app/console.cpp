@@ -48,8 +48,9 @@ void Console::endProgressLocked() {
 
 void Console::writeLine(std::FILE* stream, const QString& text) {
     endProgressLocked();
-    put(stream, text);
-    put(stream, QStringLiteral("\n"));
+    // One write for the text and its line feed: stderr is unbuffered, and a message another thread prints
+    // there (a Qt warning) must not land between the two.
+    put(stream, text + QLatin1Char('\n'));
     std::fflush(stream);
 }
 

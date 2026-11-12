@@ -322,6 +322,45 @@ TEST(ConsoleTest, RecordsAndWarningsFromTwoThreadsNeverInterleaveInsideALine) {
     EXPECT_EQ(nWarnings, kCount);
 }
 
+// Another writer on the same unbuffered stream (stderr is unbuffered; Qt's message handler writes there
+// from any thread) never lands between a message and its line feed.
+TEST(ConsoleTest, AnOutsideWriterOnUnbufferedErrNeverSplitsAMessageFromItsLineFeed) {
+    Stream out;
+    Stream err;
+    ASSERT_EQ(std::setvbuf(err.get(), nullptr, _IONBF, 0), 0);
+    Console console(0, false, out.get(), err.get());
+    constexpr int kCount = 2000;
+    const QString padding(200, QLatin1Char('x'));
+    {
+        std::jthread outside([&] {
+            for (int i = 0; i < kCount; ++i) {
+                std::fputs("outside\n", err.get());
+            }
+        });
+        std::jthread warnings([&] {
+            for (int i = 0; i < kCount; ++i) {
+                console.warning(QStringLiteral("w%1 %2").arg(i).arg(padding));
+            }
+        });
+    }
+    int nOutside = 0;
+    int nWarnings = 0;
+    for (const QByteArray& line : err.text().split('\n')) {
+        if (line.isEmpty()) {
+            continue;
+        }
+        if (line == "outside") {
+            ++nOutside;
+        } else if (line.startsWith("warning: w") && line.endsWith(padding.toUtf8())) {
+            ++nWarnings;
+        } else {
+            ADD_FAILURE() << line.left(60).constData() << " ... " << line.right(20).constData();
+        }
+    }
+    EXPECT_EQ(nOutside, kCount);
+    EXPECT_EQ(nWarnings, kCount);
+}
+
 // A non-terminal run that ends inside the 30 s window still shows the last text it was given.
 TEST(ConsoleTest, NonTerminalEndProgressPrintsTheDroppedLastLine) {
     Stream out;
