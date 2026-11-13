@@ -8,6 +8,8 @@ progress line or `--version` always gets an entry here.
 
 ## [Unreleased]
 
+## [2026.11.3] — 2026-11-13
+
 ### Added
 - A `.deb` for Debian 13 on 32-bit ARM (armhf) and Raspberry Pi OS 32-bit (trixie), `chart-grabber-cli_<version>_debian13_armhf.deb`,
   next to the armhf bundle.

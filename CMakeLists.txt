@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(chart_grabber LANGUAGES CXX C VERSION 2026.11.2)  # C: third_party/geodesic/geodesic.c (vendored)
+project(chart_grabber LANGUAGES CXX C VERSION 2026.11.3)  # C: third_party/geodesic/geodesic.c (vendored)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
