@@ -8,7 +8,8 @@
 // Rig: write into a QTemporaryDir, read the finished file back with storage::sqlite::SqliteDb.
 // Expected values are literals taken from the Pascal. The expected sqlite_master texts were made by
 // running the Pascal DDL / index texts (:404-410, :415) once in the sqlite3 command-line tool (SQLite
-// stores them without "IF NOT EXISTS"), not by reading what the class produced.
+// stores them without "IF NOT EXISTS"), not by reading what the class produced. The one exception is the
+// UNIQUE tiles_idx text of a new file, which is the deliberate difference below, written out by hand.
 //
 // Deliberate difference: a new file gets a UNIQUE tiles_idx (MBTiles 1.3), so OR REPLACE / OR IGNORE
 // fire; a file that already exists keeps its schema and, when it has no unique key, a warning is logged
@@ -455,7 +456,7 @@ TEST(MbtilesClassic, AppendRefusesAFileOfAnotherFormatTypeOrScheme) {
     }
 }
 
-// ---- 5. duplicates kept, and forceDropTarget (:409, :412-415, :380-388)
+// ---- 5. the unique tile key of a new file, old files, and forceDropTarget (:409, :412-415, :380-388)
 
 TEST(MbtilesClassic, FreshFileHasAUniqueTileKeyAndTheReplaceFlagDecides) {
     for (const bool replace : {true, false}) {
@@ -561,7 +562,15 @@ TEST(MbtilesClassic, ForceDropTargetDeletesTheOldFile) {
     ASSERT_TRUE(exportOnce(d, Cfg{}, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}}).has_value());
     Cfg c;
     c.name = QStringLiteral("second");
-    ASSERT_TRUE(exportOnce(d, c, kRectB, {7, 8}, {{PointI(2, 2), 7, kJpg}}).has_value());
+    uniqueKeyWarnings = 0;
+    const QtMessageHandler previous = qInstallMessageHandler(countUniqueKeyWarnings);
+    const auto r = exportOnce(d, c, kRectB, {7, 8}, {{PointI(2, 2), 7, kJpg}});
+    qInstallMessageHandler(previous);
+    ASSERT_TRUE(r.has_value());
+    // the file is new once the old one is removed: unique key, no warning
+    EXPECT_EQ(uniqueKeyWarnings, 0);
+    EXPECT_EQ(query(fileOf(d), "SELECT sql FROM sqlite_master WHERE name='tiles_idx'", 1)[0][0],
+              "CREATE UNIQUE INDEX tiles_idx ON tiles (zoom_level, tile_column, tile_row)");
     const std::vector<TileRow> expected = {{7, 2, 125, kJpg}}; // 128 - 2 - 1
     EXPECT_EQ(tilesOf(fileOf(d)), expected);
     EXPECT_EQ(metaValue(fileOf(d), "name"), "second");
