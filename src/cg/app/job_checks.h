@@ -14,6 +14,7 @@
 #include "cg/app/snapshot.h"
 #include "cg/maptype/map_type_set.h"
 
+#include <QDateTime>
 #include <QString>
 #include <QStringList>
 
@@ -87,5 +88,17 @@ struct ResolvedSource {
 // apostrophe removed from a derived name) go to `warn`. Commands without sources give an empty vector.
 [[nodiscard]] std::expected<std::vector<ResolvedSource>, CliError>
 resolveJob(const Job& job, const AppContext& app, const std::function<void(const QString&)>& warn);
+
+// Which cached tiles and TNE markers a download requests again. The user's flags, and for a snapshot whose
+// model run changed (Snapshot::referenceSeen) every tile and marker loaded before the run was first seen.
+// DownloadRunner::run and the estimate printed before a download both read it, so the table counts what the
+// download then asks for. An invalid date = no date.
+struct TileRetryRule {
+    bool replace = false;
+    QDateTime replaceOlderThan;
+    bool retryMissing = false;
+    QDateTime retryMissingOlderThan;
+};
+[[nodiscard]] TileRetryRule tileRetryRule(const Job& job, const std::optional<Snapshot>& snapshot);
 
 } // namespace cg::app

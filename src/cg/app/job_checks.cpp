@@ -552,4 +552,31 @@ bool navigationWarning(const maptype::IMapType& map) {
     return value == u"1" || value.compare(u"true", Qt::CaseInsensitive) == 0;
 }
 
+TileRetryRule tileRetryRule(const Job& job, const std::optional<Snapshot>& snapshot) {
+    TileRetryRule rule{job.replace, job.replaceOlderThan, job.retryMissing, job.retryMissingOlderThan};
+    if (!snapshot || !snapshot->referenceSeen.isValid()) {
+        return rule;
+    }
+    const QDateTime seen = snapshot->referenceSeen.toLocalTime();
+    if (!(job.replace && !job.replaceOlderThan.isValid())) {
+        // Tiles loaded before the model run was first seen are of an older run. The legacy skip of an
+        // existing tile (u_ThreadDownloadTiles.pas:322-325) comes before its date check (:328-333), so
+        // the replace flag is set too.
+        rule.replace = true;
+        if (!job.replaceOlderThan.isValid() || seen > job.replaceOlderThan) {
+            rule.replaceOlderThan = seen;
+        }
+    }
+    if (!(job.retryMissing && !job.retryMissingOlderThan.isValid())) {
+        // A TNE marker loaded before the model run was first seen is of an older run, the new run may
+        // serve the tile (legacy skip of a marker: u_ThreadDownloadTiles.pas:335-345). Also under a bare
+        // --replace (it replaces tiles, never markers). A bare --retry-missing retries every marker.
+        rule.retryMissing = true;
+        rule.retryMissingOlderThan = job.retryMissingOlderThan.isValid() && job.retryMissingOlderThan > seen
+                                         ? job.retryMissingOlderThan
+                                         : seen;
+    }
+    return rule;
+}
+
 } // namespace cg::app

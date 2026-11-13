@@ -6,6 +6,7 @@
 // window's loop and its buttons, without the window).
 #include "cg/app/download_runner.h"
 
+#include "cg/app/job_checks.h"
 #include "cg/app/machine_output.h"
 #include "cg/app/probe.h"
 #include "cg/core/config_provider_ini.h"
@@ -684,36 +685,13 @@ DownloadOutcome DownloadRunner::run(const ResolvedSource& source,
         region::TilesDownloadParams params;
         params.mapType = source.map;
         params.zoomArray = source.zooms;
-        params.isIgnoreTne = job_.retryMissing;
-        params.loadTneOlderDate = job_.retryMissingOlderThan;
-        params.isReplace = job_.replace;
+        const TileRetryRule rule = tileRetryRule(job_, source.snapshot);
+        params.isIgnoreTne = rule.retryMissing;
+        params.loadTneOlderDate = rule.retryMissingOlderThan;
+        params.isReplace = rule.replace;
         params.isReplaceIfDifSize = job_.replaceIfSizeDiffers;
-        params.isReplaceIfOlder = job_.replaceOlderThan.isValid();
-        params.replaceDate = job_.replaceOlderThan.isValid() ? job_.replaceOlderThan : storage::tileDateNow();
-        if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
-            !(job_.replace && !job_.replaceOlderThan.isValid())) {
-            // Tiles loaded before the model run was first seen are of an older run. The legacy skip of an
-            // existing tile (u_ThreadDownloadTiles.pas:322-325) comes before its date check (:328-333), so
-            // the replace flag is set too.
-            const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
-            params.isReplace = true;
-            params.isReplaceIfOlder = true;
-            if (!job_.replaceOlderThan.isValid() || seen > job_.replaceOlderThan) {
-                params.replaceDate = seen;
-            }
-        }
-        if (source.snapshot && source.snapshot->referenceSeen.isValid() &&
-            !(job_.retryMissing && !job_.retryMissingOlderThan.isValid())) {
-            // A TNE marker loaded before the model run was first seen is of an older run, the new run may
-            // serve the tile (legacy skip of a marker: u_ThreadDownloadTiles.pas:335-345). Also under a bare
-            // --replace (it replaces tiles, never markers). A bare --retry-missing retries every marker.
-            const QDateTime seen = source.snapshot->referenceSeen.toLocalTime();
-            params.isIgnoreTne = true;
-            params.loadTneOlderDate =
-                job_.retryMissingOlderThan.isValid() && job_.retryMissingOlderThan > seen
-                    ? job_.retryMissingOlderThan
-                    : seen;
-        }
+        params.isReplaceIfOlder = rule.replaceOlderThan.isValid();
+        params.replaceDate = rule.replaceOlderThan.isValid() ? rule.replaceOlderThan : storage::tileDateNow();
         params.sessionAutosaveInterval = job_.autosaveMin;
         params.sessionAutosaveFilePrefix = id + QLatin1Char('/') + guid + QLatin1Char('/');
         params.splitCount = region::clampSplitCount(*source.map, job_.threads);

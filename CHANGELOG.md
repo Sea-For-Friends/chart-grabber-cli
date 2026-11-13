@@ -12,6 +12,11 @@ progress line or `--version` always gets an entry here.
 - A `.deb` for Debian 13 on 32-bit ARM (armhf) and Raspberry Pi OS 32-bit (trixie), `chart-grabber-cli_<version>_debian13_armhf.deb`,
   next to the armhf bundle.
 
+### Changed
+- The table that `download` and `run` print before fetching now counts the tiles and missing-tile markers that a
+  new model run makes the download request again, so it no longer shows about 0 KB for a frame that is fetched
+  again. The `estimate` command is unchanged.
+
 ## [2026.10.14] — 2026-11-02
 
 ### Added
