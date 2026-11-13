@@ -40,7 +40,6 @@
 #include <QStringList>
 #include <QTemporaryDir>
 #include <QtGlobal>
-#include <QtLogging>
 
 #include <gtest/gtest.h>
 
