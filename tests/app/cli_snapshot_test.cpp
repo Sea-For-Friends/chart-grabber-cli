@@ -24,12 +24,14 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
+#include <QMap>
 #include <QRegularExpression>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <stop_token>
 #include <thread>
@@ -2177,6 +2179,64 @@ TEST_F(CliSnapshotRunRetry, AMarkerOfTheNewRunIsAskedOnceAndThenKept) {
     mark = server_.requestCount();
     const Captured third = runJob();
     ASSERT_EQ(third.rc, 0) << qPrintable(third.err);
+    EXPECT_EQ(tileRequestsOfFrame(mark), QStringList());
+}
+
+// The table printed before the download counts what the download then asks for. Per zoom, the bytes still to
+// load are tiles x mean size of the present tiles when every tile is asked again: after a run change the
+// eight replaced tiles and the marker of T give the whole frame; the next run of the same model run gives 0.
+// Not passing the run's replace and retry rule to the estimate in cli_main.cpp fails the second step.
+TEST_F(CliSnapshotRunRetry, ThePreDownloadTableCountsTheTilesTheRunChangeRequestsAgain) {
+    serveCaps({kRunR1, kRunR2, kRunR2});
+    serveFrameWithout(kShadeR1);
+    serveFrameWithout(kShadeR2);
+    ASSERT_EQ(runJob().rc, 0);
+
+    const auto estimateBytes = [](const Captured& c) {
+        QMap<int, qint64> tiles;
+        QMap<int, qint64> bytes;
+        for (const QString& record : c.out.split(u'\n', Qt::SkipEmptyParts)) {
+            const QStringList f = record.split(u'\t');
+            if (f.value(0) == u"estimate"_s) {
+                tiles[f[2].toInt()] = f[3].toLongLong();
+                bytes[f[2].toInt()] = f[7].toLongLong();
+            }
+        }
+        return std::pair{tiles, bytes};
+    };
+    // tiles x mean size of the stored (R1) tiles of the zoom: T is not stored, it has no size
+    QMap<int, qint64> tilesPerZoom;
+    QMap<int, qint64> sizeSum;
+    QMap<int, qint64> stored;
+    for (const QString& path : areaPaths()) {
+        const QStringList parts = path.split(u'/', Qt::SkipEmptyParts);
+        const int zoom = parts[0].toInt();
+        ++tilesPerZoom[zoom];
+        if (path != kMissingTile) {
+            ++stored[zoom];
+            sizeSum[zoom] += tilePng(kShadeR1, zoom, parts[1].toInt(), parts[2].left(1).toInt()).size();
+        }
+    }
+
+    qsizetype mark = server_.requestCount();
+    const Captured second = runJob({u"--format=tsv"_s});
+    ASSERT_EQ(second.rc, 0) << qPrintable(second.err);
+    const auto [tiles2, bytes2] = estimateBytes(second);
+    qint64 counted = 0;
+    for (auto it = tilesPerZoom.cbegin(); it != tilesPerZoom.cend(); ++it) {
+        const int zoom = it.key();
+        counted += tiles2.value(zoom);
+        const double mean = static_cast<double>(sizeSum[zoom]) / static_cast<double>(stored[zoom]);
+        EXPECT_EQ(bytes2.value(zoom), std::llround(static_cast<double>(it.value()) * mean)) << zoom;
+    }
+    EXPECT_EQ(counted, tileRequestsOfFrame(mark).size());
+
+    mark = server_.requestCount();
+    const Captured third = runJob({u"--format=tsv"_s});
+    ASSERT_EQ(third.rc, 0) << qPrintable(third.err);
+    for (const qint64 value : estimateBytes(third).second) {
+        EXPECT_EQ(value, 0);
+    }
     EXPECT_EQ(tileRequestsOfFrame(mark), QStringList());
 }
 

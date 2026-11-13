@@ -530,8 +530,9 @@ int runJobCommand(const Job& job, AppContext& app, Console& console, const std::
         if (job.progressMode == ProgressMode::Lines) {
             console.progressRecord(phaseRecord(u"estimate", guidText(*source.map)));
         }
-        auto estimates = estimateTiles(*source.map, **area, source.zooms, app, job.assumeTileKb, job.replace,
-                                       job.replaceOlderThan, job.retryMissing, job.retryMissingOlderThan,
+        const TileRetryRule rule = tileRetryRule(job, source.snapshot);
+        auto estimates = estimateTiles(*source.map, **area, source.zooms, app, job.assumeTileKb, rule.replace,
+                                       rule.replaceOlderThan, rule.retryMissing, rule.retryMissingOlderThan,
                                        termination, estimateOnly);
         if (!estimates) {
             if (estimates.error().code() == core::ErrorCode::Cancelled) {

@@ -15,6 +15,9 @@ progress line or `--version` always gets an entry here.
 ### Changed
 - New MBTiles files have a unique key on the tile (zoom, column, row), as MBTiles 1.3 asks. A tile written twice into
   one file is stored once. Files that were written before are not changed.
+- The table that `download` and `run` print before fetching now counts the tiles and missing-tile markers that a
+  new model run makes the download request again, so it no longer shows about 0 KB for a frame that is fetched
+  again. The `estimate` command is unchanged.
 
 ## [2026.10.14] — 2026-11-02
 
