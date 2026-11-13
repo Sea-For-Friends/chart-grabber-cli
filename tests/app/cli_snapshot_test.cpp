@@ -2156,14 +2156,18 @@ TEST_F(CliSnapshotRunRetry, ANewRunRetriesTheMarkerTheOldRunLeft) {
 }
 
 // R2 does not serve T either: one request, the marker stays; a marker written by R2 itself is not retried by
-// the next R2 run (the date is the first sight of the run). Removing the `seen` date (loadTneOlderDate left
-// invalid) in the TNE-marker block fails the last step.
+// the next R2 run (the date is the first sight of the run), and the tiles R2 stored are newer than it, so the
+// next R2 run asks for nothing at all. The R2 bytes are queued before the first run: the test server answers
+// a path from its queue by the number of requests made, so a reply added later would not be reached and the
+// replaced tiles would be stored as identical to the old ones (the region cache keeps the old load date of a
+// tile whose bytes did not change). Removing the `seen` date (loadTneOlderDate left invalid) in the
+// TNE-marker block fails the last step.
 TEST_F(CliSnapshotRunRetry, AMarkerOfTheNewRunIsAskedOnceAndThenKept) {
     serveCaps({kRunR1, kRunR2, kRunR2});
     serveFrameWithout(kShadeR1);
+    serveFrameWithout(kShadeR2);
     ASSERT_EQ(runJob().rc, 0);
 
-    serveFrameWithout(kShadeR2);
     qsizetype mark = server_.requestCount();
     const Captured second = runJob();
     ASSERT_EQ(second.rc, 0) << qPrintable(second.err);
@@ -2173,9 +2177,7 @@ TEST_F(CliSnapshotRunRetry, AMarkerOfTheNewRunIsAskedOnceAndThenKept) {
     mark = server_.requestCount();
     const Captured third = runJob();
     ASSERT_EQ(third.rc, 0) << qPrintable(third.err);
-    // Only T is asserted: the other eight tiles keep their old load date in this rig (cause not investigated)
-    // and are asked again.
-    EXPECT_EQ(missingRequests(mark), QStringList());
+    EXPECT_EQ(tileRequestsOfFrame(mark), QStringList());
 }
 
 // The user's flags keep their meaning: a bare --retry-missing retries every marker, also one the new run
