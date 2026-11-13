@@ -63,6 +63,7 @@ protected:
 
     bool forceDropTarget_;
     bool replaceTiles_;
+    bool fileIsNew_ = false; // no file existed when openInternal ran
 
     std::optional<storage::sqlite::SqliteDb> db_;
 
@@ -81,6 +82,10 @@ public:
     [[nodiscard]] core::Result<void> close() override;
 
 private:
+    // A new file gets the unique tile index; an existing one is only checked, and a warning is logged
+    // when it has no unique index over the three tile columns.
+    [[nodiscard]] core::Result<void> ensureUniqueTileKey();
+
     std::optional<storage::sqlite::SqliteStmt> insertStmt_;
 };
 
