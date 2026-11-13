@@ -49,6 +49,15 @@ out=$(CG_MARK="$mk" CG_MODULES=core timeout 20 tools/validate.sh --changed 2>&1)
 out=$(CG_MARK="$mk" CG_STUB_FAIL=rawnew CG_MODULES=core timeout 20 tools/validate.sh --changed 2>&1)
 { grep -q '^FAIL (tool selftests)' <<<"$out" && ! grep -q 'scoped to modules' <<<"$out"; } \
   || { echo "tools/validate_selftest.sh:1: SELFTEST: a failing raw-new selftest did not fail a code+tools diff: $(head -c 300 <<<"$out")"; bad=1; }
+# A diff that touches tools/build_deb.sh runs its selftest (a stub records the call), a failing one fails the gate
+printf '%s\n' '#!/usr/bin/env bash' 'echo bdeb >>"$CG_MARK"' '[[ ${CG_STUB_FAIL:-} != bdeb ]]' > tools/build_deb_selftest.sh; chmod +x tools/build_deb_selftest.sh
+echo x > tools/build_deb.sh; git add tools/build_deb.sh tools/build_deb_selftest.sh; git commit -qm bdebstub
+: > "$mk"
+out=$(CG_MARK="$mk" CG_MODULES=core timeout 20 tools/validate.sh --changed 2>&1)
+grep -q '^bdeb$' "$mk" || { echo "tools/validate_selftest.sh:1: SELFTEST: a diff touching tools/build_deb.sh did not run its selftest: $(head -c 300 <<<"$out")"; bad=1; }
+: > "$mk"
+out=$(CG_MARK="$mk" CG_STUB_FAIL=bdeb CG_MODULES=core timeout 20 tools/validate.sh --changed 2>&1)
+grep -q '^FAIL (tool selftests)' <<<"$out" || { echo "tools/validate_selftest.sh:1: SELFTEST: a failing build_deb selftest did not fail the gate: $(head -c 300 <<<"$out")"; bad=1; }
 # The gate never sets CG_REQUIRE_FIXTURES (an inherited value reaches the tests) and writes its logs under build/logs/, none at the
 # repository root (a stub build records the value it sees). Rows: inherited value | value the build must see
 printf '%s\n' '#!/usr/bin/env bash' 'echo "req=[${CG_REQUIRE_FIXTURES:-}]" > "$CG_MARK"' 'echo "nocmake: OK"' > tools/nocmake_build.sh; chmod +x tools/nocmake_build.sh

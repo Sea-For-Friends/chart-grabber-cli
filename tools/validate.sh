@@ -147,6 +147,7 @@ if [[ -n "$CHANGED_BASE" ]]; then
         TB=0
         if grep -qE '^tools/(validate(_selftest)?\.sh|lib/.*)$' <<<"$TF"; then tools/validate.sh --selftest >/dev/null 2>&1 || { echo "tools/validate.sh:1: SELFTEST: tools/validate.sh --selftest failed"; TB=1; }; fi
         if grep -qE '^tools/raw_new_check\.py$' <<<"$TF"; then python3 tools/raw_new_check.py --self-test || TB=1; fi
+        if grep -qE '^tools/build_deb(_selftest)?\.sh$' <<<"$TF"; then tools/build_deb_selftest.sh >/dev/null 2>&1 || { echo "tools/build_deb_selftest.sh:1: SELFTEST: tools/build_deb_selftest.sh failed"; TB=1; }; fi
         if [[ $TB -ne 0 ]]; then echo "FAIL (tool selftests)"; exit 1; fi
         if [[ $DCLS == tools ]]; then echo "gate: tools-only diff, selftests run"; echo PASS; exit 0; fi
         if [[ $DCLS == code-tools ]]; then echo "gate: code diff touching tools/, tool selftests passed, full gate follows"; else echo "gate: tools diff, selftests passed, plain run follows"; fi ;;
