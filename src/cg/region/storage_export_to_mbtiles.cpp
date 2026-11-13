@@ -49,6 +49,11 @@ constexpr QByteArrayView kInsertTilesSqlReplace(
 constexpr QByteArrayView kInsertTilesSqlIgnore(
     "INSERT OR IGNORE INTO tiles (zoom_level, tile_column, tile_row, tile_data) VALUES (?,?,?,?)");
 
+// A new file gets the unique key MBTiles 1.3 asks for, under the legacy index name, so that the plain
+// index statement below is a no-op on it and the OR REPLACE / OR IGNORE of the insert statements fire.
+constexpr QByteArrayView kCreateUniqueIndexSql(
+    "CREATE UNIQUE INDEX IF NOT EXISTS tiles_idx ON tiles (zoom_level, tile_column, tile_row)");
+
 constexpr QByteArrayView
     kCreateIndexSql("CREATE INDEX IF NOT EXISTS tiles_idx on tiles (zoom_level, tile_column, tile_row)");
 
@@ -294,6 +299,8 @@ core::Result<void> SqliteStorageMbtilesBase::openInternal(std::span<const QByteA
             return core::fail(ErrorCode::IoError, QStringLiteral("Can't delete database: %1").arg(fileName));
     }
 
+    fileIsNew_ = !QFile::exists(fileName);
+
     auto db = SqliteDb::open(fileName, SqliteDb::OpenMode::ReadWriteCreate);
     if (!db)
         return std::unexpected(db.error());
@@ -314,9 +321,63 @@ core::Result<void> SqliteStorageMbtilesBase::openInternal(std::span<const QByteA
 
 // ---- TSQLiteStorageMBTilesClassic ------------------------------------------------------------
 
+core::Result<void> SqliteStorageMbtilesClassic::ensureUniqueTileKey() {
+    if (!db_)
+        return core::fail(ErrorCode::IoError, QStringLiteral("MBTiles storage is not open"));
+    if (fileIsNew_) {
+        if (auto r = db_->exec(kCreateUniqueIndexSql); !r)
+            return std::unexpected(r.error());
+        return {};
+    }
+
+    QStringList uniqueIndexes;
+    { // the statement is finalised before the next PRAGMA runs
+        auto list = db_->prepare("PRAGMA index_list(tiles)");
+        if (!list)
+            return std::unexpected(list.error());
+        for (;;) {
+            auto step = list->step();
+            if (!step)
+                return std::unexpected(step.error());
+            if (*step != SqliteStmt::StepResult::Row)
+                break;
+            if (list->columnInt(2) == 1) // column "unique"
+                uniqueIndexes.push_back(list->columnText(1));
+        }
+    }
+
+    const QStringList key = {QStringLiteral("tile_column"), QStringLiteral("tile_row"),
+                             QStringLiteral("zoom_level")}; // sorted
+    for (const QString& index : uniqueIndexes) {
+        auto info = db_->prepare("PRAGMA index_info(\"" + index.toUtf8().replace('"', "\"\"") + "\")");
+        if (!info)
+            return std::unexpected(info.error());
+        QStringList columns;
+        for (;;) {
+            auto step = info->step();
+            if (!step)
+                return std::unexpected(step.error());
+            if (*step != SqliteStmt::StepResult::Row)
+                break;
+            columns.push_back(info->columnText(2)); // column "name"
+        }
+        columns.sort();
+        if (columns == key)
+            return {};
+    }
+    qCWarning(logRegion).noquote()
+        << QStringLiteral("%1 has no unique tile key (written by an older version or another tool); "
+                          "tiles added again are stored twice")
+               .arg(exportPath_ + exportFileName_);
+    return {};
+}
+
 core::Result<void> SqliteStorageMbtilesClassic::open(const geo::LonLatRect& lonLatRect,
                                                      std::span<const quint8> zooms) { // :417-498
     if (auto r = openInternal(kMbtilesDdl, forceDropTarget_); !r)
+        return r;
+
+    if (auto r = ensureUniqueTileKey(); !r)
         return r;
 
     // zooms is never empty: the only caller passes the non-empty zoom list of a started task

@@ -8,10 +8,13 @@
 // Rig: write into a QTemporaryDir, read the finished file back with storage::sqlite::SqliteDb.
 // Expected values are literals taken from the Pascal. The expected sqlite_master texts were made by
 // running the Pascal DDL / index texts (:404-410, :415) once in the sqlite3 command-line tool (SQLite
-// stores them without "IF NOT EXISTS"), not by reading what the class produced.
+// stores them without "IF NOT EXISTS"), not by reading what the class produced. The one exception is the
+// UNIQUE tiles_idx text of a new file, which is the deliberate difference below, written out by hand.
 //
-// Legacy defects, reproduced: the tiles table has no unique key, so OR REPLACE / OR IGNORE never fire
-// and duplicates are kept (:409, :412-415); metadata values are spliced between quotes without
+// Deliberate difference: a new file gets a UNIQUE tiles_idx (MBTiles 1.3), so OR REPLACE / OR IGNORE
+// fire; a file that already exists keeps its schema and, when it has no unique key, a warning is logged
+// (the legacy plain index at :415 keeps duplicates).
+// Legacy defects, reproduced: metadata values are spliced between quotes without
 // escaping (:250); the centre of an appended file is taken from the NEW rect with the merged minimum
 // zoom (:465 vs :474).
 #include "cg/core/content_type.h"
@@ -29,6 +32,7 @@
 #include "cg/storage/tile_info.h"
 
 #include <QByteArray>
+#include <QByteArrayView>
 #include <QDir>
 #include <QFile>
 #include <QFileDevice>
@@ -142,7 +146,7 @@ std::vector<QStringList> query(const QString& path, const QByteArray& sql, int c
 void execSql(const QString& path, const QByteArray& sql) {
     auto db = SqliteDb::open(path, SqliteDb::OpenMode::ReadWrite);
     ASSERT_TRUE(db.has_value());
-    ASSERT_TRUE(db->exec(sql).has_value()) << sql.constData();
+    ASSERT_TRUE(db->exec(sql).has_value()) << sql.data();
 }
 
 std::vector<TileRow> tilesOf(const QString& path) {
@@ -194,12 +198,12 @@ TEST(MbtilesClassic, SqliteMasterAfterCloseHasTheThreeDdlTextsAndTheIndexLast) {
         {"index", "metadata_idx", "CREATE UNIQUE INDEX metadata_idx ON metadata (name)"},
         {"table", "tiles",
          "CREATE TABLE tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob)"},
-        {"index", "tiles_idx", "CREATE INDEX tiles_idx on tiles (zoom_level, tile_column, tile_row)"},
+        {"index", "tiles_idx", "CREATE UNIQUE INDEX tiles_idx ON tiles (zoom_level, tile_column, tile_row)"},
     };
     EXPECT_EQ(rows, expected);
 }
 
-TEST(MbtilesClassic, NoTilesIndexBeforeCloseAndTheMetadataIsAlreadyCommitted) {
+TEST(MbtilesClassic, TilesIndexExistsFromOpenAndTheMetadataIsAlreadyCommitted) {
     QTemporaryDir d;
     ASSERT_TRUE(d.isValid());
     {
@@ -207,10 +211,10 @@ TEST(MbtilesClassic, NoTilesIndexBeforeCloseAndTheMetadataIsAlreadyCommitted) {
         const std::vector<quint8> zooms = {3, 5};
         ASSERT_TRUE(w->open(kRectA, zooms).has_value());
         ASSERT_TRUE(w->add(PointI(1, 1), 3, kPng).has_value());
-        // destroyed without close(): the open transaction is not committed (:500-517 index at the end)
+        // destroyed without close(): the open transaction is not committed
     }
     const auto rows = query(fileOf(d), "SELECT name FROM sqlite_master ORDER BY rowid", 1);
-    const std::vector<QStringList> expected = {{"metadata"}, {"metadata_idx"}, {"tiles"}};
+    const std::vector<QStringList> expected = {{"metadata"}, {"metadata_idx"}, {"tiles"}, {"tiles_idx"}};
     EXPECT_EQ(rows, expected);
     EXPECT_EQ(metaNames(fileOf(d)), kMetaNames); // writeMetadata committed (:306-330)
 }
@@ -451,23 +455,87 @@ TEST(MbtilesClassic, AppendRefusesAFileOfAnotherFormatTypeOrScheme) {
     }
 }
 
-// ---- 5. duplicates kept, and forceDropTarget (:409, :412-415, :380-388)
+// ---- 5. the unique tile key of a new file, old files, and forceDropTarget (:409, :412-415, :380-388)
 
-TEST(MbtilesClassic, DuplicateTilesAreKeptBecauseTheTilesTableHasNoUniqueKey) {
+TEST(MbtilesClassic, FreshFileHasAUniqueTileKeyAndTheReplaceFlagDecides) {
     for (const bool replace : {true, false}) {
         QTemporaryDir d;
         ASSERT_TRUE(d.isValid());
         Cfg c;
         c.replace = replace;
-        // Same tile twice in one run ...
+        // Same tile twice in one run: one row, the last write wins with replace, the first without
         ASSERT_TRUE(
             exportOnce(d, c, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}, {PointI(1, 1), 3, kJpg}}).has_value())
             << replace;
-        // ... and once more into the existing file
+        const std::vector<TileRow> afterFirst = {{3, 1, 6, replace ? kJpg : kPng}};
+        EXPECT_EQ(tilesOf(fileOf(d)), afterFirst) << replace;
+        // ... and once more into the existing file, which keeps its unique key
         c.force = false;
         ASSERT_TRUE(exportOnce(d, c, kRectA, {3, 5}, {{PointI(1, 1), 3, kBlob3}}).has_value()) << replace;
-        const std::vector<TileRow> expected = {{3, 1, 6, kPng}, {3, 1, 6, kJpg}, {3, 1, 6, kBlob3}};
+        const std::vector<TileRow> expected = {{3, 1, 6, replace ? kBlob3 : kPng}};
         EXPECT_EQ(tilesOf(fileOf(d)), expected) << replace;
+        EXPECT_EQ(
+            query(fileOf(d), "SELECT count(*) FROM pragma_index_list('tiles') WHERE \"unique\" = 1", 1)[0][0],
+            "1")
+            << replace;
+    }
+}
+
+namespace {
+int uniqueKeyWarnings = 0;
+void countUniqueKeyWarnings(QtMsgType type, const QMessageLogContext& ctx, const QString& msg) {
+    if (type == QtWarningMsg && qstrcmp(ctx.category, "cg.region") == 0 &&
+        msg.contains(QStringLiteral("has no unique tile key")))
+        ++uniqueKeyWarnings;
+}
+} // namespace
+
+TEST(MbtilesClassic, OldFileWithoutUniqueKeyStillDuplicatesAndWarns) {
+    QTemporaryDir d;
+    ASSERT_TRUE(d.isValid());
+    // the schema an older version wrote: plain index
+    {
+        auto db = SqliteDb::open(fileOf(d), SqliteDb::OpenMode::ReadWriteCreate);
+        ASSERT_TRUE(db.has_value());
+        for (const QByteArrayView sql :
+             {QByteArrayView("CREATE TABLE metadata (name text, value text)"),
+              QByteArrayView("CREATE UNIQUE INDEX metadata_idx ON metadata (name)"),
+              QByteArrayView("CREATE TABLE tiles (zoom_level integer, tile_column integer, tile_row integer, "
+                             "tile_data blob)"),
+              QByteArrayView("CREATE INDEX tiles_idx on tiles (zoom_level, tile_column, tile_row)"),
+              QByteArrayView("INSERT INTO tiles VALUES (3, 1, 6, x'01')")})
+            ASSERT_TRUE(db->exec(sql).has_value()) << sql.data();
+    }
+
+    uniqueKeyWarnings = 0;
+    const QtMessageHandler previous = qInstallMessageHandler(countUniqueKeyWarnings);
+    Cfg c;
+    c.force = false;
+    const auto r = exportOnce(d, c, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}});
+    qInstallMessageHandler(previous);
+    ASSERT_TRUE(r.has_value());
+    EXPECT_EQ(uniqueKeyWarnings, 1);
+    const std::vector<TileRow> expected = {{3, 1, 6, QByteArray::fromHex("01")}, {3, 1, 6, kPng}};
+    EXPECT_EQ(tilesOf(fileOf(d)), expected);
+    EXPECT_EQ(query(fileOf(d), "SELECT sql FROM sqlite_master WHERE name='tiles_idx'", 1)[0][0],
+              "CREATE INDEX tiles_idx on tiles (zoom_level, tile_column, tile_row)");
+}
+
+TEST(MbtilesClassic, NoWarningForANewFileOrAnOldFileWithAUniqueKey) {
+    for (const bool oldFileWithKey : {false, true}) {
+        QTemporaryDir d;
+        ASSERT_TRUE(d.isValid());
+        Cfg c;
+        if (oldFileWithKey) {
+            ASSERT_TRUE(exportOnce(d, c, kRectA, {3, 5}, {}).has_value());
+            c.force = false;
+        }
+        uniqueKeyWarnings = 0;
+        const QtMessageHandler previous = qInstallMessageHandler(countUniqueKeyWarnings);
+        const auto r = exportOnce(d, c, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}});
+        qInstallMessageHandler(previous);
+        ASSERT_TRUE(r.has_value());
+        EXPECT_EQ(uniqueKeyWarnings, 0) << oldFileWithKey;
     }
 }
 
@@ -493,7 +561,15 @@ TEST(MbtilesClassic, ForceDropTargetDeletesTheOldFile) {
     ASSERT_TRUE(exportOnce(d, Cfg{}, kRectA, {3, 5}, {{PointI(1, 1), 3, kPng}}).has_value());
     Cfg c;
     c.name = QStringLiteral("second");
-    ASSERT_TRUE(exportOnce(d, c, kRectB, {7, 8}, {{PointI(2, 2), 7, kJpg}}).has_value());
+    uniqueKeyWarnings = 0;
+    const QtMessageHandler previous = qInstallMessageHandler(countUniqueKeyWarnings);
+    const auto r = exportOnce(d, c, kRectB, {7, 8}, {{PointI(2, 2), 7, kJpg}});
+    qInstallMessageHandler(previous);
+    ASSERT_TRUE(r.has_value());
+    // the file is new once the old one is removed: unique key, no warning
+    EXPECT_EQ(uniqueKeyWarnings, 0);
+    EXPECT_EQ(query(fileOf(d), "SELECT sql FROM sqlite_master WHERE name='tiles_idx'", 1)[0][0],
+              "CREATE UNIQUE INDEX tiles_idx ON tiles (zoom_level, tile_column, tile_row)");
     const std::vector<TileRow> expected = {{7, 2, 125, kJpg}}; // 128 - 2 - 1
     EXPECT_EQ(tilesOf(fileOf(d)), expected);
     EXPECT_EQ(metaValue(fileOf(d), "name"), "second");
@@ -530,7 +606,7 @@ TEST(MbtilesClassic, ApostropheInTheNameFailsOpenAndLeavesTablesWithNoMetadata) 
     }
     ASSERT_TRUE(QFile::exists(fileOf(d)));
     const auto rows = query(fileOf(d), "SELECT name FROM sqlite_master ORDER BY rowid", 1);
-    const std::vector<QStringList> expected = {{"metadata"}, {"metadata_idx"}, {"tiles"}};
+    const std::vector<QStringList> expected = {{"metadata"}, {"metadata_idx"}, {"tiles"}, {"tiles_idx"}};
     EXPECT_EQ(rows, expected);
     EXPECT_TRUE(metaNames(fileOf(d)).isEmpty());
 }

@@ -338,7 +338,7 @@ QString meta(const QString& path, const QString& name) {
     return rows.size() == 1 ? rows[0][0] : QStringLiteral("<%1 rows>").arg(rows.size());
 }
 
-// The index of the Classic flavour is created by close() (:500-517) and nowhere else.
+// The index of the Classic flavour: one tiles_idx, unique on a new file.
 int classicIndexCount(const QString& path) {
     return count(path, "SELECT count(*) FROM sqlite_master WHERE name='tiles_idx'");
 }
@@ -519,9 +519,10 @@ TEST(ExportTaskToMbtiles, AppendKeepsTheOldTilesAndTheReplaceFlagDecidesDuplicat
         if (tileMill) { // map_index is unique: REPLACE keeps the new id for (3,2,2); the old (3,3,3) stays
             const TileMap expected = {{{3, 2, 2}, png2()}, {{3, 3, 3}, jpg()}};
             EXPECT_EQ(readBack(first.path, {3}), expected);
-        } else { // the Classic tiles table has no unique key: the duplicate is kept
-            EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles"), 3);
-            EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles WHERE zoom_level=3"), 3);
+        } else { // the new Classic file has a unique tile key: one row per tile, the newer (3,2,2) wins
+            EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles"), 2);
+            EXPECT_EQ(count(first.path, "SELECT count(*) FROM tiles WHERE zoom_level=3"), 2);
+            EXPECT_EQ(readBack(first.path, {3}), (TileMap{{{3, 2, 2}, png2()}, {{3, 3, 3}, jpg()}}));
         }
     }
 }
