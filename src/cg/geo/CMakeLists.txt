@@ -58,8 +58,19 @@ target_link_libraries(cg_geo
 # PROJ >= 9 is optional. Absent, cg_geo still builds -- proj_converter.cpp compiles its
 # PROJ-less stub (CG_HAVE_PROJ unset -> 0) and custom-CRS display is disabled.
 find_package(PROJ 9 QUIET)
+if (NOT PROJ_FOUND)
+  # Debian 12's PROJ CMake package refuses a cross build (its version file records cross-compiling = FALSE) while proj.pc has no such check:
+  # fall back to pkg-config only when the CMake package was not found, so a native build resolves PROJ exactly as before.
+  find_package(PkgConfig QUIET)
+  if (PkgConfig_FOUND)
+    pkg_check_modules(CG_PROJ QUIET IMPORTED_TARGET proj>=9)
+  endif()
+endif()
 if (PROJ_FOUND)
   target_link_libraries(cg_geo PRIVATE PROJ::proj)
+  target_compile_definitions(cg_geo PRIVATE CG_HAVE_PROJ=1)
+elseif (CG_PROJ_FOUND)
+  target_link_libraries(cg_geo PRIVATE PkgConfig::CG_PROJ)
   target_compile_definitions(cg_geo PRIVATE CG_HAVE_PROJ=1)
 else()
   message(WARNING "PROJ >= 9 not found: custom CRS, UTM/MGRS/SK-42/GSK-2011 display disabled")

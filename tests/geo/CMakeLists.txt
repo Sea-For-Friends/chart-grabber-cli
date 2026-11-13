@@ -42,6 +42,12 @@ target_compile_definitions(geo_test PRIVATE
 # NativeAgreesWithProjWithin1e7) need the same CG_HAVE_PROJ the library was built with -- it is a
 # PRIVATE define of cg_geo and does not otherwise reach a consumer target.
 find_package(PROJ 9 QUIET)
-if (PROJ_FOUND)
+if (NOT PROJ_FOUND)   # the same pkg-config fallback as src/cg/geo/CMakeLists.txt
+  find_package(PkgConfig QUIET)
+  if (PkgConfig_FOUND)
+    pkg_check_modules(CG_PROJ QUIET proj>=9)
+  endif()
+endif()
+if (PROJ_FOUND OR CG_PROJ_FOUND)
   target_compile_definitions(geo_test PRIVATE CG_HAVE_PROJ=1)
 endif()
